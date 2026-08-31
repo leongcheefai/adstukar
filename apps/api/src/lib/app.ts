@@ -73,6 +73,15 @@ if (!embedDistExists && serverEnv.NODE_ENV === "production") {
 }
 
 if (embedDistExists) {
+  // The bundles are public; playground.html is a development tool. Allow the bundles
+  // only, so a new file in the embed build never becomes public by accident.
+  if (serverEnv.NODE_ENV === "production") {
+    app.use("/embed/*", async (c, next) => {
+      if (!c.req.path.endsWith(".js")) return c.notFound();
+      await next();
+    });
+  }
+
   app.use(
     "/embed/*",
     serveStatic({
