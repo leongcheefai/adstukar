@@ -17,7 +17,7 @@ You are building a production-ready, sellable SaaS boilerplate for indie hackers
 
 ## Project Overview
 
-- **Working name**: `praxor-kit` (placeholder — will be confirmed before public launch)
+- **Working name**: `adstukar` (placeholder — will be confirmed before public launch)
 - **Tagline**: Ship paid SaaS faster, without lock-in.
 - **Target User**: Indie hackers and small agencies who want a typed, lightweight, AI-coding-friendly SaaS starter that isn't tied to Next.js, Vercel, or any single auth/DB vendor.
 - **Distribution model**: Sold via private GitHub repo access (Stripe payment → buyer added as collaborator). Out of scope for v1 — focus only on the codebase itself.
@@ -138,7 +138,7 @@ All env access goes through `packages/env`. Each app re-exports a typed env obje
 
 ### Project identity
 
-Use `Praxor Kit` as the default identity in `packages/config/src/project.ts`. Apps consume that module for the product name, slug, tagline, site URL, and email addresses. Keep `@repo/*` as the permanent neutral package scope; buyers should never need to rename imports when rebranding.
+Use `AdsTukar` as the default identity in `packages/config/src/project.ts`. Apps consume that module for the product name, slug, tagline, site URL, and email addresses. Keep `@repo/*` as the permanent neutral package scope; buyers should never need to rename imports when rebranding.
 
 ### Brand archetype (provisional, until confirmed)
 

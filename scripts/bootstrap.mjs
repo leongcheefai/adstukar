@@ -8,7 +8,7 @@ import { join } from "node:path";
 const MIN_NODE_MAJOR = 22;
 const DATABASE_ATTEMPTS = 60;
 const DATABASE_RETRY_MS = 1_000;
-const HELP = `Praxor Kit bootstrap
+const HELP = `AdsTukar bootstrap
 
 Usage: node scripts/bootstrap.mjs
 
@@ -47,7 +47,7 @@ function assertProjectRoot(root) {
   const requiredFiles = ["package.json", "docker-compose.yml", ".env.example"];
   const missing = requiredFiles.filter((file) => !existsSync(join(root, file)));
   if (missing.length > 0) {
-    fail(`Run this command from the Praxor Kit repository root. Missing: ${missing.join(", ")}`);
+    fail(`Run this command from the AdsTukar repository root. Missing: ${missing.join(", ")}`);
   }
 }
 
@@ -125,7 +125,7 @@ async function waitForDatabase() {
 
 async function bootstrap() {
   const root = process.cwd();
-  console.log("Praxor Kit bootstrap\n");
+  console.log("AdsTukar bootstrap\n");
 
   assertProjectRoot(root);
   assertNodeVersion();

@@ -1,4 +1,4 @@
-# Praxor Kit
+# AdsTukar
 
 ## Purpose
 Production-ready SaaS boilerplate for indie hackers. Vite + Hono + Better Auth. pnpm + Turborepo monorepo: three apps (`web`, `app`, `api`), seven shared packages (`ui`, `db`, `auth`, `emails`, `env`, `config`, `contracts`).

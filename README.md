@@ -1,4 +1,4 @@
-# Praxor Kit
+# AdsTukar
 
 Ship paid SaaS faster, without lock-in.
 
