@@ -1,4 +1,4 @@
-# Praxor Kit
+# AdsTukar
 
 ## Purpose
 Production-ready SaaS boilerplate for indie hackers. Vite + Hono + Better Auth. pnpm + Turborepo monorepo: three apps (`web`, `app`, `api`), seven shared packages (`ui`, `db`, `auth`, `emails`, `env`, `config`, `contracts`).
@@ -33,6 +33,7 @@ Single source of truth for every type crossing the API boundary. Hand-copying a 
 - "Add new app" → create `apps/<name>/`, add `package.json` name `@repo/<name>`, add tsconfig extending `@repo/config/tsconfig`, register turbo pipelines
 - "Add new package" → create `packages/<name>/`, add `package.json` name `@repo/<name>`, run `pnpm install`
 - "Start local DB" → `pnpm db:up`
+- "Create the first admin" → `pnpm db:seed` (reads `SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD`, or takes `--email` and `--password`). It signs the user up through Better Auth, then sets `role = 'admin'`. It promotes an existing email instead of failing, and it refuses to run when `NODE_ENV=production`.
 - "Run everything locally" → `pnpm bootstrap && pnpm dev`
 - "Set up a worktree" → from inside it, `pnpm worktree:init` (links the main checkout's `.env`, installs deps). Add `--db` to give it its own database instead of sharing
 - "Try a branch a worktree is building" → from the main checkout, `pnpm review <branch>`; `pnpm review --back` returns. Detached checkout, so it works while the worktree holds the branch

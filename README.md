@@ -1,4 +1,4 @@
-# Praxor Kit
+# AdsTukar
 
 Ship paid SaaS faster, without lock-in.
 
@@ -58,6 +58,7 @@ Open:
 | `pnpm db:push` | Push schema to DB (dev only) |
 | `pnpm db:migrate` | Run migrations |
 | `pnpm db:studio` | Open Drizzle Studio |
+| `pnpm db:seed` | Create the first admin user, or promote an existing user to admin |
 
 ## Branding
 

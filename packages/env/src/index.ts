@@ -26,6 +26,10 @@ export const serverEnv = createEnv({
     GITHUB_TOKEN: z.string().min(1).optional(),
     GITHUB_OWNER: z.string().min(1).optional(),
     GITHUB_REPO: z.string().min(1).optional(),
+    // Read only by `pnpm db:seed`. The running API never uses them.
+    SEED_ADMIN_EMAIL: z.string().email().optional(),
+    SEED_ADMIN_PASSWORD: z.string().min(8).optional(),
+    SEED_ADMIN_NAME: z.string().min(1).optional(),
   },
   runtimeEnv: process.env,
 });

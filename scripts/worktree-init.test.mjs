@@ -32,7 +32,7 @@ function git(args, cwd) {
 }
 
 function createFixture({ env = true } = {}) {
-  const base = mkdtempSync(join(tmpdir(), "praxor-worktree-"));
+  const base = mkdtempSync(join(tmpdir(), "adstukar-worktree-"));
   const main = join(base, "main");
   const worktree = join(base, "feature");
   const bin = join(base, "bin");
@@ -40,7 +40,7 @@ function createFixture({ env = true } = {}) {
   mkdirSync(main);
   mkdirSync(bin);
 
-  writeFileSync(join(main, "package.json"), '{"name":"praxor-kit","private":true}\n');
+  writeFileSync(join(main, "package.json"), '{"name":"adstukar","private":true}\n');
   writeFileSync(join(main, ".gitignore"), ".env\n");
   git(["-c", "init.defaultBranch=master", "init"], main);
   git(["add", "."], main);
@@ -51,7 +51,7 @@ function createFixture({ env = true } = {}) {
     writeFileSync(
       join(main, ".env"),
       [
-        "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/praxor_kit",
+        "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/adstukar",
         "BETTER_AUTH_SECRET=a-secret-that-is-at-least-32-characters",
         "",
       ].join("\n"),
@@ -93,7 +93,7 @@ test("a worktree shares the main checkout's env through a symlink", (t) => {
 
   assert.equal(result.status, 0, result.stderr);
   assert.ok(link.isSymbolicLink());
-  assert.match(readFileSync(join(fixture.worktree, ".env"), "utf8"), /praxor_kit/);
+  assert.match(readFileSync(join(fixture.worktree, ".env"), "utf8"), /adstukar/);
   assert.match(commands, /corepack pnpm install/);
   assert.doesNotMatch(commands, /db:push/);
   assert.match(result.stdout, /Linked \.env to the main checkout/);
@@ -111,12 +111,12 @@ test("a worktree can take its own database derived from the branch", (t) => {
   assert.equal(lstatSync(join(fixture.worktree, ".env")).isSymbolicLink(), false);
   assert.match(
     env,
-    /DATABASE_URL=postgresql:\/\/postgres:postgres@localhost:5432\/praxor_feat_thing$/m,
+    /DATABASE_URL=postgresql:\/\/postgres:postgres@localhost:5432\/adstukar_feat_thing$/m,
   );
   assert.match(env, /BETTER_AUTH_SECRET=a-secret-that-is-at-least-32-characters/);
   assert.match(
     commands,
-    /docker compose exec -T postgres psql -U postgres -c CREATE DATABASE "praxor_feat_thing"/,
+    /docker compose exec -T postgres psql -U postgres -c CREATE DATABASE "adstukar_feat_thing"/,
   );
   assert.match(commands, /corepack pnpm db:push/);
 });
@@ -138,7 +138,7 @@ test("a database name that is not a plain identifier is rejected", (t) => {
   const fixture = createFixture();
   t.after(() => rmSync(fixture.base, { recursive: true, force: true }));
 
-  const result = runInit(fixture, ["--db", 'x"; DROP DATABASE praxor_kit; --']);
+  const result = runInit(fixture, ["--db", 'x"; DROP DATABASE adstukar; --']);
 
   assert.equal(result.status, 1);
   assert.match(result.stderr, /Invalid database name/);

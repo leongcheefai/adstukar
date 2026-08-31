@@ -5,7 +5,7 @@ import { existsSync, readFileSync, realpathSync, symlinkSync, writeFileSync } fr
 import { dirname, join, relative } from "node:path";
 
 const MAX_DATABASE_NAME_LENGTH = 63;
-const HELP = `Praxor Kit worktree init
+const HELP = `AdsTukar worktree init
 
 Usage: node scripts/worktree-init.mjs [options]
 
@@ -126,7 +126,7 @@ function databaseNameFor(option, worktree) {
     fail("Could not derive a database name from the worktree's branch. Pass `--db <name>`.");
   }
 
-  return `praxor_${slug}`.slice(0, MAX_DATABASE_NAME_LENGTH);
+  return `adstukar_${slug}`.slice(0, MAX_DATABASE_NAME_LENGTH);
 }
 
 function assertDatabaseName(name) {
@@ -211,7 +211,7 @@ function initialise(argv, cwd) {
   const options = parseArgs(argv);
   const { worktree, mainCheckout } = resolveWorktree(options.path ?? cwd);
   console.log(
-    `Praxor Kit worktree init\n\n  Worktree      ${worktree}\n  Main checkout ${mainCheckout}\n`,
+    `AdsTukar worktree init\n\n  Worktree      ${worktree}\n  Main checkout ${mainCheckout}\n`,
   );
 
   const pnpm = resolvePnpm();

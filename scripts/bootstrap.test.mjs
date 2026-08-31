@@ -22,12 +22,12 @@ function writeExecutable(path, contents) {
 }
 
 function createFixture() {
-  const root = mkdtempSync(join(tmpdir(), "praxor-bootstrap-"));
+  const root = mkdtempSync(join(tmpdir(), "adstukar-bootstrap-"));
   const bin = join(root, "bin");
   const log = join(root, "commands.log");
   mkdirSync(bin);
 
-  writeFileSync(join(root, "package.json"), '{"name":"praxor-kit","private":true}\n');
+  writeFileSync(join(root, "package.json"), '{"name":"adstukar","private":true}\n');
   writeFileSync(
     join(root, "docker-compose.yml"),
     "services:\n  postgres:\n    image: postgres:16-alpine\n",
@@ -35,7 +35,7 @@ function createFixture() {
   writeFileSync(
     join(root, ".env.example"),
     [
-      "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/praxor_kit",
+      "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/adstukar",
       "BETTER_AUTH_SECRET=change-me-at-least-32-characters-long!!",
       "APP_URL=http://localhost:3000",
       "BETTER_AUTH_URL=http://localhost:3001",

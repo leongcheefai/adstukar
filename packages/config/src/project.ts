@@ -15,14 +15,14 @@ export interface ProjectIdentity {
  * Environment-specific app and API origins remain in the root `.env`.
  */
 export const project = {
-  name: "Praxor Kit",
-  slug: "praxor-kit",
+  name: "AdsTukar",
+  slug: "adstukar",
   tagline: "Ship paid SaaS faster, without lock-in.",
   description:
     "A production-ready SaaS foundation with authentication, billing, email, and a dashboard.",
-  siteUrl: "https://kit.praxor.dev",
+  siteUrl: "https://adstukar.com",
   email: {
-    from: "noreply@kit.praxor.dev",
-    support: "support@praxor.dev",
+    from: "noreply@adstukar.com",
+    support: "support@adstukar.com",
   },
 } as const satisfies ProjectIdentity;

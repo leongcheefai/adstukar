@@ -9,7 +9,7 @@ import { fileURLToPath } from "node:url";
 const scriptPath = join(dirname(fileURLToPath(import.meta.url)), "launch-check.mjs");
 
 function createReadyFixture() {
-  const root = mkdtempSync(join(tmpdir(), "praxor-launch-check-"));
+  const root = mkdtempSync(join(tmpdir(), "adstukar-launch-check-"));
   mkdirSync(join(root, "packages/config/src"), { recursive: true });
   mkdirSync(join(root, "apps/web/src/pages"), { recursive: true });
 

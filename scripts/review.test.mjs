@@ -36,7 +36,7 @@ function git(args, cwd) {
 }
 
 function createFixture({ lockfileChanges = false } = {}) {
-  const base = mkdtempSync(join(tmpdir(), "praxor-review-"));
+  const base = mkdtempSync(join(tmpdir(), "adstukar-review-"));
   const main = join(base, "main");
   const worktree = join(base, "feature");
   const bin = join(base, "bin");
@@ -44,7 +44,7 @@ function createFixture({ lockfileChanges = false } = {}) {
   mkdirSync(main);
   mkdirSync(bin);
 
-  writeFileSync(join(main, "package.json"), '{"name":"praxor-kit","private":true}\n');
+  writeFileSync(join(main, "package.json"), '{"name":"adstukar","private":true}\n');
   writeFileSync(join(main, "pnpm-lock.yaml"), "lockfileVersion: '9.0'\n");
   writeFileSync(join(main, ".gitignore"), ".env\n");
   git(["-c", "init.defaultBranch=master", "init"], main);
@@ -144,7 +144,7 @@ test("back returns to the branch that was checked out before", (t) => {
 test("uncommitted changes block the checkout", (t) => {
   const fixture = createFixture();
   t.after(() => rmSync(fixture.base, { recursive: true, force: true }));
-  writeFileSync(join(fixture.main, "package.json"), '{"name":"praxor-kit","private":true,"x":1}\n');
+  writeFileSync(join(fixture.main, "package.json"), '{"name":"adstukar","private":true,"x":1}\n');
 
   const result = runReview(fixture, ["feat/thing"]);
 

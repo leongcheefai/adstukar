@@ -1,4 +1,5 @@
 import { project } from "@repo/config/project";
+import * as React from "react";
 
 interface Props {
   name: string;
