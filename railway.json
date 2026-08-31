@@ -1,0 +1,10 @@
+{
+  "$schema": "https://railway.com/railway.schema.json",
+  "build": {
+    "buildCommand": "pnpm --filter @repo/embed build"
+  },
+  "deploy": {
+    "preDeployCommand": "pnpm db:migrate",
+    "startCommand": "pnpm --filter @repo/api start"
+  }
+}
