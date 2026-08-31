@@ -1,25 +1,29 @@
 import { describe, expect, it } from "vitest";
-import { bodyContainsToken, txtContainsToken } from "./verification";
+import { VERIFY_PREFIX, bodyContainsToken, txtContainsToken } from "./verification";
+
+// Test fixture, not a credential: any string works because the check is equality.
+const TOKEN = "test-token";
+const LINE = `${VERIFY_PREFIX}${TOKEN}`;
 
 describe("bodyContainsToken", () => {
   it("accepts the exact line with surrounding whitespace", () => {
-    expect(bodyContainsToken("  adstukar-verify=abc123 \n", "abc123")).toBe(true);
+    expect(bodyContainsToken(`  ${LINE} \n`, TOKEN)).toBe(true);
   });
   it("accepts the token among other lines", () => {
-    expect(bodyContainsToken("# hello\nadstukar-verify=abc123\nfoo", "abc123")).toBe(true);
+    expect(bodyContainsToken(`# hello\n${LINE}\nfoo`, TOKEN)).toBe(true);
   });
   it("rejects a partial or different token", () => {
-    expect(bodyContainsToken("adstukar-verify=abc1234", "abc123")).toBe(false);
-    expect(bodyContainsToken("adstukar-verify=xyz", "abc123")).toBe(false);
-    expect(bodyContainsToken("", "abc123")).toBe(false);
+    expect(bodyContainsToken(`${LINE}4`, TOKEN)).toBe(false);
+    expect(bodyContainsToken(`${VERIFY_PREFIX}other`, TOKEN)).toBe(false);
+    expect(bodyContainsToken("", TOKEN)).toBe(false);
   });
 });
 
 describe("txtContainsToken", () => {
   it("joins chunked TXT records", () => {
-    expect(txtContainsToken([["adstukar-verify=", "abc123"]], "abc123")).toBe(true);
+    expect(txtContainsToken([[VERIFY_PREFIX, TOKEN]], TOKEN)).toBe(true);
   });
   it("ignores unrelated records", () => {
-    expect(txtContainsToken([["v=spf1 -all"], ["adstukar-verify=other"]], "abc123")).toBe(false);
+    expect(txtContainsToken([["v=spf1 -all"], [`${VERIFY_PREFIX}other`]], TOKEN)).toBe(false);
   });
 });
