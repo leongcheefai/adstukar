@@ -1,3 +1,4 @@
+import * as React from "react";
 interface Props {
   url: string;
   oldEmail: string;
