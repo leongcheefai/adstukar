@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AdsTukar playground</title>
+    <style>
+      body {
+        margin: 0;
+        background: #fafafa;
+        color: #18181b;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        line-height: 1.5;
+      }
+      main {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 32px 16px 96px;
+      }
+      h1 {
+        font-size: 20px;
+        margin: 0 0 8px;
+      }
+      p {
+        margin: 0 0 16px;
+        color: #52525b;
+      }
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 13px;
+        background: #f4f4f5;
+        padding: 1px 4px;
+        border-radius: 4px;
+      }
+      .slot-label {
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #71717a;
+        margin: 24px 0 8px;
+      }
+      .gap {
+        height: 2000px;
+        margin: 24px 0;
+        border-left: 2px dashed #e4e4e7;
+        padding-left: 12px;
+        color: #a1a1aa;
+        font-size: 13px;
+      }
+      [hidden] {
+        display: none !important;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>AdsTukar playground</h1>
+
+      <section id="help" hidden>
+        <p>
+          Add a placement key to the URL, for example
+          <code>?key=pk_your_key</code>. Copy the key from the placement page in the dashboard.
+        </p>
+        <p>
+          The page then renders two slots: one at the top, one 2000 px lower. Scroll down and
+          watch the network panel for <code>/serve</code> and <code>/beacon</code> requests.
+        </p>
+      </section>
+
+      <section id="slots" hidden>
+        <p>
+          Two slots for key <code id="key-label"></code>. Each slot calls <code>/serve</code>
+          once. The beacon fires when a card stays at least 50% visible for 1 s.
+        </p>
+
+        <div class="slot-label">Top slot (visible on load)</div>
+        <div data-adstukar-key></div>
+
+        <div class="gap">Scroll down to reveal the second slot.</div>
+
+        <div class="slot-label">Bottom slot (viewable after scroll)</div>
+        <div data-adstukar-key></div>
+      </section>
+    </main>
+
+    <script>
+      (function () {
+        var key = new URLSearchParams(location.search).get("key");
+        var help = document.getElementById("help");
+        var slots = document.getElementById("slots");
+        if (!key) {
+          help.hidden = false;
+          return;
+        }
+        document.getElementById("key-label").textContent = key;
+        var targets = document.querySelectorAll("[data-adstukar-key]");
+        for (var i = 0; i < targets.length; i++) {
+          targets[i].setAttribute("data-adstukar-key", key);
+        }
+        slots.hidden = false;
+      })();
+    </script>
+    <script src="./adstukar.js"></script>
+  </body>
+</html>

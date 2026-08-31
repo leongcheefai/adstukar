@@ -9,7 +9,9 @@
     "build": "tsup src/index.ts --format esm --out-dir dist --no-splitting",
     "start": "node dist/index.js",
     "lint": "biome check .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "jobs:run": "tsx scripts/jobs.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1044.0",
@@ -26,12 +28,13 @@
     "drizzle-orm": "^0.45.0",
     "hono": "^4.6.0",
     "stripe": "^22.1.0",
-    "zod": "^3.25.0"
+    "zod": "^3.25.0",
+    "@repo/config": "workspace:*"
   },
   "devDependencies": {
-    "@repo/config": "workspace:*",
     "tsup": "^8.3.0",
     "tsx": "^4.19.0",
-    "typescript": "^5.6.0"
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
   }
 }

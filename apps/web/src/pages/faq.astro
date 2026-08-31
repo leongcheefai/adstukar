@@ -2,46 +2,14 @@
 import { project } from "@repo/config/project";
 import { FAQ } from "@repo/ui";
 import BaseLayout from "../layouts/BaseLayout.astro";
+import { FAQ_PAGE } from "../lib/faq";
 import { requirePage } from "../lib/pages";
 import { breadcrumbSchema, faqSchema } from "../lib/structured-data";
 
 const page = requirePage("faq");
 const site = Astro.site ?? new URL(project.siteUrl);
 
-const faqItems = [
-  {
-    question: "TODO: First frequently asked question?",
-    answer: "TODO: Answer to the first question.",
-  },
-  {
-    question: "TODO: Second frequently asked question?",
-    answer: "TODO: Answer to the second question.",
-  },
-  {
-    question: "TODO: Third frequently asked question?",
-    answer: "TODO: Answer to the third question.",
-  },
-  {
-    question: "TODO: Fourth frequently asked question?",
-    answer: "TODO: Answer to the fourth question.",
-  },
-  {
-    question: "TODO: Fifth frequently asked question?",
-    answer: "TODO: Answer to the fifth question.",
-  },
-  {
-    question: "TODO: Sixth frequently asked question?",
-    answer: "TODO: Answer to the sixth question.",
-  },
-  {
-    question: "TODO: Seventh frequently asked question?",
-    answer: "TODO: Answer to the seventh question.",
-  },
-  {
-    question: "TODO: Eighth frequently asked question?",
-    answer: "TODO: Answer to the eighth question.",
-  },
-];
+const faqItems = FAQ_PAGE;
 
 const jsonLd = [
   faqSchema(faqItems),
@@ -58,5 +26,5 @@ const jsonLd = [
   ogSlug={page.slug}
   jsonLd={jsonLd}
 >
-  <FAQ eyebrow="FAQ" headline="TODO: Frequently asked questions" items={faqItems} />
+  <FAQ eyebrow="FAQ" headline={`Questions about ${project.name}`} items={faqItems} />
 </BaseLayout>

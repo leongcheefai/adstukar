@@ -1,6 +1,12 @@
 # AdsTukar
 
-Ship paid SaaS faster, without lock-in.
+Show two ads, earn one for yourself. A cross-promotion ad exchange for indie hackers:
+register a product, paste one snippet, show a small sponsored card for another member's
+product, and earn points to show yours in theirs. No money moves in v1.
+
+How it works: every verified impression a host shows earns +1 point (settles after 24 h);
+every impression of a member's own card costs −2. A human moderation queue approves each
+product before it serves. Every number lives in `packages/config/src/economy.ts`.
 
 ## Stack
 
@@ -10,9 +16,10 @@ Ship paid SaaS faster, without lock-in.
 | Marketing | Astro + React islands |
 | Dashboard | Vite + React + React Router + TanStack Query |
 | API | Hono on Node |
+| Embed | Vanilla TS snippet, Vite library mode, < 10 kB gzip |
 | Database | Postgres + Drizzle ORM |
 | Auth | Better Auth |
-| Payments | Stripe |
+| Payments | Stripe (dormant in v1 — no money moves) |
 | Email | Resend + React Email |
 | UI | shadcn/ui + Tailwind CSS |
 
@@ -41,6 +48,11 @@ Open:
 - Dashboard: http://localhost:3000
 - API: http://localhost:3001
 - Marketing: http://localhost:4321
+- Embed playground: http://localhost:3001/embed/playground.html?key=<placement api key> (after the embed builds)
+
+First run: `pnpm db:seed` creates the admin who approves products. Register a product in
+the dashboard, verify its domain, approve it under Admin → Moderation, then create a
+placement and paste the snippet.
 
 ## Commands
 
@@ -59,6 +71,8 @@ Open:
 | `pnpm db:migrate` | Run migrations |
 | `pnpm db:studio` | Open Drizzle Studio |
 | `pnpm db:seed` | Create the first admin user, or promote an existing user to admin |
+| `pnpm --filter @repo/embed build` | Build the embed bundle and check its size budget |
+| `pnpm --filter @repo/api jobs:run` | Run ledger settlement and expiry once (for an external cron) |
 
 ## Branding
 

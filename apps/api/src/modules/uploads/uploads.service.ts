@@ -33,6 +33,22 @@ export async function presignAvatarUpload(
   userId: string,
   input: PresignAvatarInput,
 ): Promise<PresignAvatarResponse> {
+  return presignUpload("avatars", userId, input);
+}
+
+/** Product logos share the avatar rules (png/jpeg/webp, 5 MB) under a separate prefix. */
+export async function presignLogoUpload(
+  userId: string,
+  input: PresignAvatarInput,
+): Promise<PresignAvatarResponse> {
+  return presignUpload("logos", userId, input);
+}
+
+async function presignUpload(
+  prefix: "avatars" | "logos",
+  userId: string,
+  input: PresignAvatarInput,
+): Promise<PresignAvatarResponse> {
   if (
     !serverEnv.S3_BUCKET ||
     !serverEnv.S3_ACCESS_KEY_ID ||
@@ -43,7 +59,7 @@ export async function presignAvatarUpload(
   }
 
   const ext = getExtension(input.contentType);
-  const key = `avatars/${userId}/${crypto.randomUUID()}.${ext}`;
+  const key = `${prefix}/${userId}/${crypto.randomUUID()}.${ext}`;
 
   const client = getS3Client();
   const command = new PutObjectCommand({

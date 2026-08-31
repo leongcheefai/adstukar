@@ -6,9 +6,8 @@ const groups = [
   {
     title: "Product",
     links: [
-      { label: "Features", href: "/#features" },
-      { label: "Pricing", href: "/pricing" },
-      { label: "Customers", href: "/customers" },
+      { label: "How it works", href: "/#how-it-works" },
+      { label: "Points economy", href: "/#points" },
       { label: "Blog", href: "/blog" },
     ],
   },

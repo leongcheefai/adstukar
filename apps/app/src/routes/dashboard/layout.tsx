@@ -1,33 +1,56 @@
 import { project } from "@repo/config/project";
 import { Button, DashboardShell, DashboardTopbar, type NavItem } from "@repo/ui";
-import { CreditCard, LayoutDashboard, Rocket, Settings, Shield } from "lucide-react";
+import {
+  BookOpen,
+  Code2,
+  Inbox,
+  LayoutDashboard,
+  Package,
+  Rocket,
+  Settings,
+  Shield,
+} from "lucide-react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router";
 import { FeedbackDialog } from "../../components/feedback-dialog";
 import { ProtectedRoute } from "../../components/protected-route";
 import { ThemeToggle } from "../../components/theme-toggle";
-import { UpgradeCard } from "../../components/upgrade-card";
 import { signOut, useSession } from "../../lib/auth";
 
 const PAGE_TITLES: Record<string, string> = {
-  "/dashboard": "Dashboard",
-  "/dashboard/billing": "Billing",
+  "/dashboard": "Overview",
+  "/dashboard/products": "Products",
+  "/dashboard/placements": "Placements",
+  "/dashboard/ledger": "Ledger",
   "/dashboard/settings": "Settings",
+  "/dashboard/admin/moderation": "Moderation",
   "/dashboard/admin/releases": "Releases",
 };
 
 function navItems(pathname: string, role?: string | null): NavItem[] {
   const items: NavItem[] = [
     {
-      label: "Dashboard",
+      label: "Overview",
       href: "/dashboard",
       active: pathname === "/dashboard",
       icon: <LayoutDashboard size={16} />,
     },
     {
-      label: "Billing",
-      href: "/dashboard/billing",
-      active: pathname === "/dashboard/billing",
-      icon: <CreditCard size={16} />,
+      label: "Products",
+      href: "/dashboard/products",
+      active: pathname === "/dashboard/products",
+      icon: <Package size={16} />,
+    },
+    {
+      label: "Placements",
+      href: "/dashboard/placements",
+      active: pathname === "/dashboard/placements",
+      icon: <Code2 size={16} />,
+    },
+    {
+      label: "Ledger",
+      href: "/dashboard/ledger",
+      active: pathname === "/dashboard/ledger",
+      icon: <BookOpen size={16} />,
     },
     {
       label: "Settings",
@@ -42,6 +65,12 @@ function navItems(pathname: string, role?: string | null): NavItem[] {
       label: "Admin",
       icon: <Shield size={16} />,
       children: [
+        {
+          label: "Moderation",
+          href: "/dashboard/admin/moderation",
+          active: pathname === "/dashboard/admin/moderation",
+          icon: <Inbox size={16} />,
+        },
         {
           label: "Releases",
           href: "/dashboard/admin/releases",
@@ -66,7 +95,7 @@ function DashboardContent() {
   }
 
   const items = navItems(pathname, session?.user.role);
-  const title = PAGE_TITLES[pathname] ?? "Dashboard";
+  const title = PAGE_TITLES[pathname] ?? "Overview";
 
   function renderNavLink({
     href,
@@ -85,7 +114,6 @@ function DashboardContent() {
 
   const sidebarFooter = (
     <div className="flex flex-col gap-2">
-      <UpgradeCard />
       <div className="flex items-center gap-2">
         <FeedbackDialog>
           <Button variant="ghost" size="sm" className="flex-1 justify-start text-muted-foreground">

@@ -1,7 +1,15 @@
 # apps/app
 
 ## Purpose
-Vite + React 19 SPA. The authenticated dashboard — signup, login, and all post-auth product UI (billing, settings). Runs on port 3000 and calls the API origin configured by `VITE_API_URL`.
+Vite + React 19 SPA. The publisher dashboard — signup, login, Overview, Products, Placements, Ledger, Settings, and the admin Moderation queue. Runs on port 3000 and calls the API origin configured by `VITE_API_URL`. `VITE_EMBED_URL` is the script URL shown in placement snippets (defaults to the API's `/embed/adstukar.js`).
+
+## Pages
+- `routes/dashboard/index.tsx` Overview — balance (settled + pending with tooltip), today's shown/received/clicks/CTR, 30-day chart
+- `routes/dashboard/products.tsx` — list, create/edit dialog with live `AdCard` preview, verify dialog, advertise/show-ads toggles
+- `routes/dashboard/placements.tsx` — snippet (HTML + React) with copy buttons, API key + rotate, size, house-ad slider, excluded terms
+- `routes/dashboard/ledger.tsx` — filterable, cursor-paginated table
+- `routes/dashboard/admin/moderation.tsx` — approve/reject with reason
+- Query hooks live in `src/lib/{products,placements,stats,ledger,admin}.ts` on top of `src/lib/api.ts` (`apiFetch`)
 
 ## Conventions
 - All env access through `src/lib/env.ts` (validated via `@t3-oss/env-core`) — never `import.meta.env.VITE_*` directly
@@ -27,5 +35,4 @@ Navigate to `http://localhost:3000/_dev/components` in dev mode. This route is t
 
 ## Gotchas
 - Dev server: port 3000; the API defaults to `http://localhost:3001`. A Vite `/api/*` proxy exists for relative requests, but the current clients use the absolute `VITE_API_URL`.
-- Billing price IDs come from `GET /billing/config` (server env `STRIPE_PRO_PRICE_ID_MONTHLY` / `STRIPE_PRO_PRICE_ID_YEARLY`) — set these in the root `.env` before launch
 - The `/_dev/components` route only exists in dev; it is absent from production builds

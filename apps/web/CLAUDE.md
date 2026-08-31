@@ -1,20 +1,21 @@
 # apps/web
 
 ## Purpose
-Astro 5 marketing site, statically generated at the canonical URL from `@repo/config/project`. It has no protected pages, but interactive pricing can call the API for billing configuration and checkout. It also generates OG images at build time with Satori.
+Astro 5 marketing site, statically generated at the canonical URL from `@repo/config/project`. One landing page ("Show two ads, earn one for yourself") plus FAQ, blog, releases, and legal pages. No pricing page — v1 has no money. It also generates OG images at build time with Satori.
 
 ## Conventions
 - Pages live in `src/pages/` as `.astro` files — use `BaseLayout` for consistent `<head>` SEO and OG meta
 - Product name, site URL, and public email addresses come from `@repo/config/project` — do not duplicate them here
 - React components in `src/components/*.tsx` render server-side by default — add `client:load`, `client:visible`, or another `client:*` directive only when they need browser-side behavior
-- Landing and pricing section copy lives in `src/components/LandingContent.tsx` and `src/components/PricingContent.tsx`; page metadata is centralized in `src/lib/pages.ts`; page-specific copy stays with its route or content entry
+- Landing copy lives in `src/components/LandingContent.tsx`; FAQ items shared by the landing page, the FAQ page, and the JSON-LD live in `src/lib/faq.ts`; page metadata is centralized in `src/lib/pages.ts`; page-specific copy stays with its route or content entry
+- Economy numbers shown on the site come from `@repo/config/economy` — never type a point amount
 - Browser-exposed env goes through `src/lib/env.ts` (validated via `@t3-oss/env-core`) — never read `import.meta.env` directly, and never import `@repo/env`, which is server-only. Add new vars to the schema there and to the root `.env.example`; they must carry the `PUBLIC_` prefix to reach the bundle.
 - Tailwind utility classes from `@repo/ui` patterns are only generated because of the `@source` directive in `src/styles/global.css` — do not remove it
 
 ## Common tasks
 
 ### Update marketing copy
-Edit `src/components/LandingContent.tsx` for the landing page, `src/components/PricingContent.tsx` for pricing, and `src/lib/pages.ts` for page metadata. Legal, FAQ, customer, security, and blog copy lives in the corresponding route or `src/content/` entry. `pnpm launch:check` lists remaining placeholders.
+Edit `src/components/LandingContent.tsx` for the landing page, `src/lib/faq.ts` for FAQ items, and `src/lib/pages.ts` for page metadata. Legal, FAQ, customer, security, and blog copy lives in the corresponding route or `src/content/` entry. `pnpm launch:check` lists remaining placeholders.
 
 ### Add a new page
 1. Create `src/pages/<name>.astro`

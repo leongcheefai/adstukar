@@ -10,6 +10,13 @@ export const serverEnv = createEnv({
     WEB_URL: z.string().url().default("http://localhost:4321"),
     BETTER_AUTH_SECRET: z.string().min(32),
     BETTER_AUTH_URL: z.string().url().default("http://localhost:3001"),
+    // Public origin of this API. The embed's click links point here.
+    API_URL: z.string().url().default("http://localhost:3001"),
+    // Set to "false" when a separate cron process runs `pnpm --filter @repo/api jobs:run`.
+    JOBS_ENABLED: z
+      .enum(["true", "false"])
+      .default("true")
+      .transform((v) => v === "true"),
     GOOGLE_CLIENT_ID: z.string().optional(),
     GOOGLE_CLIENT_SECRET: z.string().optional(),
     STRIPE_SECRET_KEY: z.string().min(1).optional(),

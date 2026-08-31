@@ -17,9 +17,9 @@ export interface ProjectIdentity {
 export const project = {
   name: "AdsTukar",
   slug: "adstukar",
-  tagline: "Ship paid SaaS faster, without lock-in.",
+  tagline: "Show two ads, earn one for yourself.",
   description:
-    "A production-ready SaaS foundation with authentication, billing, email, and a dashboard.",
+    "A cross-promotion ad exchange for indie hackers. Show a small sponsored card in your product and earn points to show yours in theirs. No money moves.",
   siteUrl: "https://adstukar.com",
   email: {
     from: "noreply@adstukar.com",

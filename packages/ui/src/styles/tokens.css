@@ -163,18 +163,19 @@
   --ink-950: #09090b;
   --white: #ffffff;
 
-  --brand-50: #eef2ff;
-  --brand-100: #e0e7ff;
-  --brand-200: #c7d2fe;
-  --brand-400: #6366f1;
-  --brand-500: #4f46e5;
-  --brand-600: #4338ca;
-  --brand-700: #3730a3;
+  /* Teal — the single accent of AdsTukar */
+  --brand-50: #f0fdfa;
+  --brand-100: #ccfbf1;
+  --brand-200: #99f6e4;
+  --brand-400: #2dd4bf;
+  --brand-500: #14b8a6;
+  --brand-600: #0d9488;
+  --brand-700: #0f766e;
 
-  --accent-50: #ecfeff;
-  --accent-100: #cffafe;
-  --accent-500: #06b6d4;
-  --accent-600: #0891b2;
+  --accent-50: #fffbeb;
+  --accent-100: #fef3c7;
+  --accent-500: #f59e0b;
+  --accent-600: #d97706;
 
   --success-100: #d1fae5;
   --success-500: #10b981;
@@ -182,7 +183,7 @@
   --warning-500: #f59e0b;
   --danger-100: #fee2e2;
   --danger-500: #ef4444;
-  --info-500: #4f46e5;
+  --info-500: #0d9488;
 
   /* --- shadcn semantic tokens --- */
   --background: var(--ink-50);
@@ -235,11 +236,11 @@
   --color-text-subtle: var(--ink-400);
   --color-accent: var(--brand-500);
   --color-accent-hover: var(--brand-600);
-  --focus-ring: 0 0 0 2px rgba(79, 70, 229, 0.4);
+  --focus-ring: 0 0 0 2px rgba(20, 184, 166, 0.4);
 
   /* --- Font families --- */
   --font-sans: "Poppins", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: "Poppins", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
   /* --- Type scale --- */
   --fs-display-xl: 48px;
@@ -371,7 +372,7 @@
   --color-text-subtle: var(--ink-500);
   --color-accent: var(--brand-400);
   --color-accent-hover: var(--brand-500);
-  --focus-ring: 0 0 0 2px rgba(99, 102, 241, 0.5);
+  --focus-ring: 0 0 0 2px rgba(45, 212, 191, 0.5);
 
   --elev-1: inset 0 0 0 0.5px rgba(255, 255, 255, 0.06);
   --elev-2: inset 0 0 0 0.5px rgba(255, 255, 255, 0.06), 0 4px 12px rgba(0, 0, 0, 0.24);
