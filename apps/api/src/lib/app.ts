@@ -58,15 +58,31 @@ app.route("/ledger", ledgerRouter);
 app.route("/admin", adminRouter);
 app.route("/", serveRouter);
 
-// Development convenience: serve the built embed bundle (and its playground) from the
-// API so a snippet works with no CDN. Production points VITE_EMBED_URL at a CDN path.
+// The embed bundle ships from the API so a member snippet needs no CDN. The bundle
+// bakes in VITE_API_URL at build time, so it deploys with the API it calls. Production
+// points VITE_EMBED_URL at this path, or at a CDN placed in front of it.
 const embedDist = resolve(process.cwd(), "../embed/dist");
-if (existsSync(embedDist)) {
+const embedDistExists = existsSync(embedDist);
+
+// Without this guard a production build that skipped the embed boots clean and 404s
+// every snippet. Fail at startup instead.
+if (!embedDistExists && serverEnv.NODE_ENV === "production") {
+  throw new Error(
+    `Embed bundle not found at ${embedDist}. Run "pnpm --filter @repo/embed build" before you start the API.`,
+  );
+}
+
+if (embedDistExists) {
   app.use(
     "/embed/*",
     serveStatic({
       root: embedDist,
       rewriteRequestPath: (path) => path.replace(/^\/embed/, ""),
+      // The URL carries no version, so keep the TTL short enough to ship a same-day
+      // embed fix. Version the path before you raise it.
+      onFound: (_path, c) => {
+        c.header("Cache-Control", "public, max-age=300, stale-while-revalidate=86400");
+      },
     }),
   );
 }
