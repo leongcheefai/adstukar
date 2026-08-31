@@ -15,10 +15,10 @@
   "dependencies": {
     "@repo/db": "workspace:*",
     "drizzle-zod": "^0.8.3",
-    "zod": "^3.25.0"
+    "zod": "^3.25.0",
+    "@repo/config": "workspace:*"
   },
   "devDependencies": {
-    "@repo/config": "workspace:*",
     "typescript": "^5.6.0",
     "vitest": "^2.1.0"
   }

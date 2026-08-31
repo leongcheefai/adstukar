@@ -6,7 +6,8 @@
   "exports": {
     "./project": "./src/project.ts",
     "./tsconfig": "./tsconfig.base.json",
-    "./biome": "./biome.json"
+    "./biome": "./biome.json",
+    "./economy": "./src/economy.ts"
   },
   "scripts": {
     "lint": "biome check src",

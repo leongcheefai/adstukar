@@ -13,3 +13,11 @@ export const SUBSCRIPTION_STATUSES = [
   "unpaid",
   "paused",
 ] as const;
+
+export const PRODUCT_STATUSES = ["pending", "approved", "rejected"] as const;
+
+export const PLACEMENT_SIZES = ["small", "medium"] as const;
+
+export const LEDGER_STATES = ["pending", "settled", "void"] as const;
+
+export const LEDGER_REASONS = ["earn", "spend", "grant", "expiry", "void"] as const;

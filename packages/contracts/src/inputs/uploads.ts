@@ -10,3 +10,6 @@ export const presignAvatarInput = z.object({
 });
 
 export type PresignAvatarInput = z.infer<typeof presignAvatarInput>;
+
+export const presignLogoInput = presignAvatarInput;
+export type PresignLogoInput = z.infer<typeof presignLogoInput>;

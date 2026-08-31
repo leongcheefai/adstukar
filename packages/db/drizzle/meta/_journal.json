@@ -22,6 +22,13 @@
       "when": 1779179522237,
       "tag": "0002_daffy_skaar",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1788157250367,
+      "tag": "0003_mute_switch",
+      "breakpoints": true
     }
   ]
 }

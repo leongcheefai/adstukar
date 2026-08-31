@@ -7,3 +7,6 @@ export const presignAvatarOutput = z.object({
 });
 
 export type PresignAvatarResponse = z.output<typeof presignAvatarOutput>;
+
+export const presignLogoOutput = presignAvatarOutput;
+export type PresignLogoResponse = z.output<typeof presignLogoOutput>;
