@@ -16,14 +16,7 @@ export const MARKETING_PAGES: MarketingPage[] = [
     path: "/",
     title: `${project.name} — ${project.tagline}`,
     description:
-      "TODO: Your marketing site description. Make it compelling and include your key value proposition.",
-  },
-  {
-    slug: "pricing",
-    path: "/pricing",
-    title: `Pricing — ${project.name}`,
-    description: "TODO: Pricing page description. Mention your free tier and key plan benefits.",
-    ogDescription: "Simple, transparent pricing for every stage.",
+      "A cross-promotion ad exchange for indie hackers. Show one small sponsored card on your site and earn points to show your product on other members' sites. No money moves.",
   },
   {
     slug: "blog",
@@ -41,13 +34,7 @@ export const MARKETING_PAGES: MarketingPage[] = [
     slug: "faq",
     path: "/faq",
     title: `FAQ — ${project.name}`,
-    description: `TODO: Frequently asked questions about ${project.name}.`,
-  },
-  {
-    slug: "customers",
-    path: "/customers",
-    title: `Customers — ${project.name}`,
-    description: `TODO: Stories and testimonials from teams using ${project.name}.`,
+    description: `How ${project.name} points, verified impressions, moderation, and the embed snippet work.`,
   },
   {
     slug: "terms",
@@ -83,7 +70,7 @@ export const MARKETING_PAGES: MarketingPage[] = [
     slug: "security",
     path: "/security",
     title: `Security — ${project.name}`,
-    description: `TODO: How ${project.name} keeps your data safe.`,
+    description: `How ${project.name} protects member accounts and keeps the embed snippet free of tracking.`,
   },
 ];
 

@@ -16,7 +16,6 @@ export * from "./modules/billing";
 export * from "./modules/feedback";
 export * from "./modules/health";
 export * from "./modules/me";
-export * from "./modules/metrics";
 export * from "./modules/releases";
 export * from "./modules/uploads";
 export * from "./modules/products";

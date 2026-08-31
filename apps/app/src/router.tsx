@@ -1,10 +1,13 @@
 import { Suspense, lazy } from "react";
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router";
 import { AdminRoute } from "./components/admin-route";
+import { ModerationPage } from "./routes/dashboard/admin/moderation";
 import { AdminReleasesPage } from "./routes/dashboard/admin/releases";
-import { BillingPage } from "./routes/dashboard/billing";
 import { DashboardHome } from "./routes/dashboard/index";
 import { DashboardLayout } from "./routes/dashboard/layout";
+import { LedgerPage } from "./routes/dashboard/ledger";
+import { PlacementsPage } from "./routes/dashboard/placements";
+import { ProductsPage } from "./routes/dashboard/products";
 import { SettingsPage } from "./routes/dashboard/settings";
 import { ForgotPasswordPage } from "./routes/forgot-password";
 import { LoginPage } from "./routes/login";
@@ -23,7 +26,9 @@ export function Router() {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<DashboardHome />} />
-          <Route path="billing" element={<BillingPage />} />
+          <Route path="products" element={<ProductsPage />} />
+          <Route path="placements" element={<PlacementsPage />} />
+          <Route path="ledger" element={<LedgerPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route
             path="admin"
@@ -33,6 +38,7 @@ export function Router() {
               </AdminRoute>
             }
           >
+            <Route path="moderation" element={<ModerationPage />} />
             <Route path="releases" element={<AdminReleasesPage />} />
           </Route>
         </Route>

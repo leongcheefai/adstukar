@@ -1,7 +1,21 @@
 # apps/api
 
 ## Purpose
-Hono API server on Node.js. Handles auth (Better Auth), billing (Stripe), and all business logic. Runs on port 3001 in development.
+Hono API server on Node.js. Handles auth (Better Auth), the AdsTukar exchange (products, placements, serve/beacon/click, ledger, stats, moderation, jobs), and the dormant Stripe billing module kept for a later paid tier. Runs on port 3001 in development.
+
+## Exchange modules
+| Module | Routes | Auth |
+|---|---|---|
+| `products` | `GET/POST /products`, `PATCH/DELETE /products/:id`, `POST /products/:id/verify` | owner |
+| `placements` | `GET/POST /placements`, `PATCH/DELETE /placements/:id`, `POST /placements/:id/rotate-key`, `PUT /placements/:id/excluded-terms` | owner |
+| `serve` | `GET /serve?key=`, `POST /beacon` (text/plain JSON), `GET /click/:impressionId` | public, rate-limited |
+| `stats` | `GET /stats/overview` | member |
+| `ledger` | `GET /ledger?reason&state&cursor&limit` | member |
+| `admin` | `GET /admin/moderation`, `POST /admin/products/:id/approve|reject` | admin |
+| `jobs` | `startJobs()` from `index.ts`; `pnpm jobs:run` one-shot | — |
+| `uploads` | `POST /uploads/logo/presign` (S3, optional) | member |
+
+`GET /embed/*` serves `apps/embed/dist` when that directory exists (dev convenience).
 
 ## Conventions
 - Every feature lives in `src/modules/<name>/`. A route file is required; add a service file when business logic warrants it. Shared request and response schemas belong in `packages/contracts`, not in API-local schema files.

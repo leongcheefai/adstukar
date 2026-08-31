@@ -15,7 +15,6 @@ export type {
 export type { CreateFeedbackResponse } from "./modules/feedback";
 export type { HealthStatusResponse } from "./modules/health";
 export type { MeHasPasswordResponse, MeUser, MeUserResponse } from "./modules/me";
-export type { KpiMetric, MetricsOverview } from "./modules/metrics";
 export type { SyncReleasesResponse } from "./modules/releases";
 export type { PresignAvatarResponse } from "./modules/uploads";
 export type { CreateCheckoutInput, CreatePortalInput } from "./inputs/billing";

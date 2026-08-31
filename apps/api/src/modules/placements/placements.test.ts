@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { generateApiKey, normalizeTerms } from "./placements.service";
+import { generateApiKey, normalizeTerms } from "./keys";
 
 describe("normalizeTerms", () => {
   it("lower-cases, trims, de-duplicates and drops empties", () => {

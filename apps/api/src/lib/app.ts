@@ -1,3 +1,6 @@
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
+import { serveStatic } from "@hono/node-server/serve-static";
 import { auth } from "@repo/auth";
 import { serverEnv } from "@repo/env";
 import { Hono } from "hono";
@@ -11,7 +14,6 @@ import { feedbackRouter } from "../modules/feedback/feedback.routes";
 import { healthRouter } from "../modules/health/health.routes";
 import { ledgerRouter } from "../modules/ledger/ledger.routes";
 import { meRouter } from "../modules/me/me.routes";
-import { metricsRouter } from "../modules/metrics";
 import { placementsRouter } from "../modules/placements/placements.routes";
 import { productsRouter } from "../modules/products/products.routes";
 import { releasesRouter } from "../modules/releases/releases.routes";
@@ -48,7 +50,6 @@ app.route("/me", meRouter);
 app.route("/billing", billingRouter);
 app.route("/feedback", feedbackRouter);
 app.route("/uploads", uploadsRouter);
-app.route("/metrics", metricsRouter);
 app.route("/releases", releasesRouter);
 app.route("/products", productsRouter);
 app.route("/placements", placementsRouter);
@@ -56,3 +57,16 @@ app.route("/stats", statsRouter);
 app.route("/ledger", ledgerRouter);
 app.route("/admin", adminRouter);
 app.route("/", serveRouter);
+
+// Development convenience: serve the built embed bundle (and its playground) from the
+// API so a snippet works with no CDN. Production points VITE_EMBED_URL at a CDN path.
+const embedDist = resolve(process.cwd(), "../embed/dist");
+if (existsSync(embedDist)) {
+  app.use(
+    "/embed/*",
+    serveStatic({
+      root: embedDist,
+      rewriteRequestPath: (path) => path.replace(/^\/embed/, ""),
+    }),
+  );
+}

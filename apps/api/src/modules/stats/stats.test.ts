@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { emptySeries } from "./stats.service";
+import { emptySeries } from "./series";
 
 describe("emptySeries", () => {
   it("returns 30 consecutive UTC days ending today", () => {

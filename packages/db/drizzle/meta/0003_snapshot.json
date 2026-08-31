@@ -93,12 +93,8 @@
           "name": "account_user_id_user_id_fk",
           "tableFrom": "account",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -174,12 +170,8 @@
           "name": "session_user_id_user_id_fk",
           "tableFrom": "session",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -189,9 +181,7 @@
         "session_token_unique": {
           "name": "session_token_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "token"
-          ]
+          "columns": ["token"]
         }
       },
       "policies": {},
@@ -276,9 +266,7 @@
         "user_email_unique": {
           "name": "user_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -409,12 +397,8 @@
           "name": "subscription_user_id_user_id_fk",
           "tableFrom": "subscription",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -424,16 +408,12 @@
         "subscription_stripe_customer_id_unique": {
           "name": "subscription_stripe_customer_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "stripe_customer_id"
-          ]
+          "columns": ["stripe_customer_id"]
         },
         "subscription_stripe_subscription_id_unique": {
           "name": "subscription_stripe_subscription_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "stripe_subscription_id"
-          ]
+          "columns": ["stripe_subscription_id"]
         }
       },
       "policies": {},
@@ -515,12 +495,8 @@
           "name": "feedback_user_id_user_id_fk",
           "tableFrom": "feedback",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -639,12 +615,8 @@
           "name": "excluded_term_placement_id_placement_id_fk",
           "tableFrom": "excluded_term",
           "tableTo": "placement",
-          "columnsFrom": [
-            "placement_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["placement_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -794,12 +766,8 @@
           "name": "impression_placement_id_placement_id_fk",
           "tableFrom": "impression",
           "tableTo": "placement",
-          "columnsFrom": [
-            "placement_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["placement_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -807,12 +775,8 @@
           "name": "impression_served_product_id_product_id_fk",
           "tableFrom": "impression",
           "tableTo": "product",
-          "columnsFrom": [
-            "served_product_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["served_product_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -967,12 +931,8 @@
           "name": "ledger_entry_user_id_user_id_fk",
           "tableFrom": "ledger_entry",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -980,12 +940,8 @@
           "name": "ledger_entry_impression_id_impression_id_fk",
           "tableFrom": "ledger_entry",
           "tableTo": "impression",
-          "columnsFrom": [
-            "impression_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["impression_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -995,9 +951,7 @@
         "ledger_entry_idempotency_key_unique": {
           "name": "ledger_entry_idempotency_key_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "idempotency_key"
-          ]
+          "columns": ["idempotency_key"]
         }
       },
       "policies": {},
@@ -1071,12 +1025,8 @@
           "name": "placement_product_id_product_id_fk",
           "tableFrom": "placement",
           "tableTo": "product",
-          "columnsFrom": [
-            "product_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["product_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1086,9 +1036,7 @@
         "placement_api_key_unique": {
           "name": "placement_api_key_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "api_key"
-          ]
+          "columns": ["api_key"]
         }
       },
       "policies": {},
@@ -1233,12 +1181,8 @@
           "name": "product_user_id_user_id_fk",
           "tableFrom": "product",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1268,48 +1212,27 @@
     "public.feedback_type": {
       "name": "feedback_type",
       "schema": "public",
-      "values": [
-        "bug",
-        "feature",
-        "other"
-      ]
+      "values": ["bug", "feature", "other"]
     },
     "public.ledger_reason": {
       "name": "ledger_reason",
       "schema": "public",
-      "values": [
-        "earn",
-        "spend",
-        "grant",
-        "expiry",
-        "void"
-      ]
+      "values": ["earn", "spend", "grant", "expiry", "void"]
     },
     "public.ledger_state": {
       "name": "ledger_state",
       "schema": "public",
-      "values": [
-        "pending",
-        "settled",
-        "void"
-      ]
+      "values": ["pending", "settled", "void"]
     },
     "public.placement_size": {
       "name": "placement_size",
       "schema": "public",
-      "values": [
-        "small",
-        "medium"
-      ]
+      "values": ["small", "medium"]
     },
     "public.product_status": {
       "name": "product_status",
       "schema": "public",
-      "values": [
-        "pending",
-        "approved",
-        "rejected"
-      ]
+      "values": ["pending", "approved", "rejected"]
     }
   },
   "schemas": {},

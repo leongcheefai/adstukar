@@ -158,3 +158,8 @@ export { EmptyState } from "./primitives/empty-state";
 export type { EmptyStateProps } from "./primitives/empty-state";
 export { Logo } from "./primitives/logo";
 export type { LogoProps } from "./primitives/logo";
+
+// AdsTukar
+export { Slider } from "./primitives/slider";
+export { AdCard, AD_CARD_DIMENSIONS } from "./patterns/ad-card";
+export type { AdCardProps, AdCardSize } from "./patterns/ad-card";

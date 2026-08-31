@@ -2,39 +2,15 @@
 import { project } from "@repo/config/project";
 import { LandingContent } from "../components/LandingContent";
 import BaseLayout from "../layouts/BaseLayout.astro";
+import { LANDING_FAQ } from "../lib/faq";
 import { requirePage } from "../lib/pages";
 import { faqSchema, orgSchema, websiteSchema } from "../lib/structured-data";
 
 const page = requirePage("home");
 const site = Astro.site ?? new URL(project.siteUrl);
 
-const faqItems = [
-  {
-    question: "What's actually included?",
-    answer:
-      "Auth, Stripe billing, a React dashboard with charts, transactional emails, file uploads, GitHub integration, and a typed Hono API — wired together across a pnpm + Turborepo monorepo.",
-  },
-  {
-    question: "What's the stack?",
-    answer:
-      "Vite + Hono + Better Auth, Postgres with Drizzle ORM, Tailwind v4 with shadcn/ui, and Astro for the marketing site. Type-safe end to end.",
-  },
-  {
-    question: "Is there vendor lock-in?",
-    answer:
-      "No. There's no Next.js, Prisma, Clerk, or tRPC. The stack is deliberately locked to swappable, well-understood pieces you own.",
-  },
-  {
-    question: "Can I self-host?",
-    answer:
-      "Yes. It's a standard Node + Postgres app. Uploads use any S3-compatible store (AWS S3 or Cloudflare R2). Deploy it wherever you like.",
-  },
-  {
-    question: "How do I rebrand it?",
-    answer:
-      "Edit packages/config/src/project.ts for product identity and packages/ui/src/styles/tokens.css for the visual theme. The internal @repo/* package scope stays unchanged.",
-  },
-];
+// The same five questions the landing page renders, so the JSON-LD cannot drift from the copy.
+const faqItems = LANDING_FAQ;
 
 const jsonLd = [orgSchema(site), websiteSchema(site), faqSchema(faqItems)];
 ---

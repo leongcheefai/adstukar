@@ -1,0 +1,23 @@
+{
+  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+  "extends": ["../../packages/config/biome.json", "../../biome.json"],
+  "overrides": [
+    {
+      "include": ["src/**"],
+      "linter": {
+        "rules": {
+          "nursery": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "@repo/contracts": "The embed declares its wire types in src/types.ts — @repo/contracts pulls drizzle-orm into the snippet bundle."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

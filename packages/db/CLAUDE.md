@@ -7,6 +7,8 @@ Drizzle ORM schema, the Postgres client singleton, and migration tooling. Every 
 - `drizzle.config.ts` reads `process.env.DATABASE_URL` directly (Drizzle Kit CLI runs outside the app context and cannot use `serverEnv`) — all application code uses `serverEnv` from `@repo/env`
 - `auth.ts` schema table shapes must stay in sync with Better Auth's adapter — do not rename columns without checking Better Auth's adapter requirements
 - No build step — exports point to TypeScript source directly
+- `exchange.ts` holds the AdsTukar tables (`product`, `placement`, `excluded_term`, `impression`, `ledger_entry`); enum tuples for them live in `enums.ts`
+- `ledger_entry` is append-only: only `state` (pending → settled → void) and `settled_at` ever change, and only through `apps/api/src/modules/ledger/ledger.service.ts`
 
 ## Common tasks
 

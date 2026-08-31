@@ -1,7 +1,15 @@
 # AdsTukar
 
 ## Purpose
-Production-ready SaaS boilerplate for indie hackers. Vite + Hono + Better Auth. pnpm + Turborepo monorepo: three apps (`web`, `app`, `api`), seven shared packages (`ui`, `db`, `auth`, `emails`, `env`, `config`, `contracts`).
+AdsTukar is a cross-promotion ad exchange for indie hackers: "Show two ads, earn one for yourself." Members register a product, paste one embed snippet, and trade points (+1 per verified impression shown, −2 per impression received). No money moves in v1. Built on the Vite + Hono + Better Auth boilerplate: pnpm + Turborepo monorepo with four apps (`web` landing, `app` dashboard, `api`, `embed` snippet) and seven shared packages (`ui`, `db`, `auth`, `emails`, `env`, `config`, `contracts`). Design and decisions: `docs/superpowers/specs/2026-08-31-adstukar-mvp-design.md` (local, gitignored) and `CONTEXT.md` (glossary).
+
+## Exchange rules (where things live)
+- **Economy numbers** — `packages/config/src/economy.ts` only. Earn/spend amounts, grants, caps, settlement delay, expiry, viewability thresholds, rate limits, card sizes. Never a literal in a route, job, page, or the embed.
+- **Ledger** — `apps/api/src/modules/ledger/ledger.service.ts` is the only writer of `ledger_entry`. Append-only rows, `idempotency_key` unique (`earn:<impressionId>`, `spend:<impressionId>`, `grant:approval:<productId>`, `grant:milestone:<userId>`, `expiry:<entryId>`, `void:<entryId>`). Balances are `SUM(delta)`; never store a counter.
+- **Serve path** — `apps/api/src/modules/serve/`: `ranking.ts` is the pure extension point for AI matching; `serve.service.ts` writes the impression on `/serve` and both ledger rows on `/beacon` in one transaction.
+- **Moderation** — `apps/api/src/modules/admin/`: human queue; approval requires a verified domain and posts the welcome grant. AI pre-scoring would add a score column and an ordering here.
+- **Jobs** — `apps/api/src/modules/jobs/`: settlement (pending → settled) and expiry run in-process (`JOBS_ENABLED=true`) or once via `pnpm --filter @repo/api jobs:run`.
+- **Embed** — `apps/embed`: vanilla TS, < 10 kB gzip (build fails above), no cookies/storage/third-party calls. `packages/ui` `AdCard` is the React mirror of the same template — change both together.
 
 ## Conventions
 - Package scope: `@repo/*`
@@ -33,6 +41,10 @@ Single source of truth for every type crossing the API boundary. Hand-copying a 
 - "Add new app" → create `apps/<name>/`, add `package.json` name `@repo/<name>`, add tsconfig extending `@repo/config/tsconfig`, register turbo pipelines
 - "Add new package" → create `packages/<name>/`, add `package.json` name `@repo/<name>`, run `pnpm install`
 - "Start local DB" → `pnpm db:up`
+- "Apply schema changes locally" → `pnpm db:push` (dev DBs are created by push, so `db:migrate` fails on them); still run `pnpm db:generate` so a migration file ships for production
+- "Change a point amount or a cap" → edit `packages/config/src/economy.ts`; nothing else
+- "Test the embed by hand" → build it (`pnpm --filter @repo/embed build`), start the API, open `http://localhost:3001/embed/playground.html?key=<placement api key>`
+- "Run the ledger jobs once" → `pnpm --filter @repo/api jobs:run`
 - "Create the first admin" → `pnpm db:seed` (reads `SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD`, or takes `--email` and `--password`). It signs the user up through Better Auth, then sets `role = 'admin'`. It promotes an existing email instead of failing, and it refuses to run when `NODE_ENV=production`.
 - "Run everything locally" → `pnpm bootstrap && pnpm dev`
 - "Set up a worktree" → from inside it, `pnpm worktree:init` (links the main checkout's `.env`, installs deps). Add `--db` to give it its own database instead of sharing
@@ -49,6 +61,9 @@ Single source of truth for every type crossing the API boundary. Hand-copying a 
 - `pnpm verify` is the single gate definition — CI (`.github/workflows/ci.yml`), `.githooks/pre-push`, and the Claude Code hook all call it, so they cannot drift apart. Change the gate there, not in three places. `typecheck` is what enforces `expectTypeOf` assertions — vitest does not.
 - The gate must keep passing with **no `.env` present** — that is what CI and a fresh clone get. If a task starts needing a database, add a postgres service to the CI workflow rather than weakening the gate.
 - `.githooks/` installs via the root `prepare` script (`git config core.hooksPath`). A fresh `pnpm install` wires it up; no husky or lefthook dep. Emergency bypass: `git push --no-verify`.
+- `/serve`, `/beacon`, `/click/*` accept any origin (the embed runs on member sites); every other route keeps the `APP_URL`/`WEB_URL` allow-list. The check lives in the `cors()` origin function in `apps/api/src/lib/app.ts`.
+- `/beacon` reads a **text/plain** body (`navigator.sendBeacon` cannot send JSON content types) and parses it by hand — do not add `zValidator("json")` there.
+- Rate limiting and the visitor session salt are in-process memory. Fine for one API instance; move both to Redis before scaling out.
 - `pnpm` only — never `npm install` or `yarn`
 - Server env is validated through `@repo/env`; `apps/app` and `apps/web` validate public variables in their respective `apps/app/src/lib/env.ts` and `apps/web/src/lib/env.ts`
 - Turbo caches aggressively — run `pnpm turbo <task> --force` if output is stale

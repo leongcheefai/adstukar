@@ -1,0 +1,8 @@
+{
+  "extends": "@repo/config/tsconfig",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["vite/client"]
+  },
+  "include": ["src/**/*", "vite.config.ts", "vite.react.config.ts", "vitest.config.ts"]
+}
