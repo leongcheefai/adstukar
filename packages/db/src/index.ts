@@ -1,3 +1,3 @@
-export { db } from "./client";
+export { db, closeDb } from "./client";
 export * as schema from "./schema";
 export type { InferSelectModel, InferInsertModel } from "drizzle-orm";
