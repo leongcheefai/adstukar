@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cmd=$(jq -r '.tool_input.command // empty'); case \"$cmd\" in *\"git commit\"*|*\"git push\"*) pnpm verify;; esac",
+            "timeout": 300,
+            "statusMessage": "Running lint, typecheck, test, build before commit/push..."
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,78 @@
+---
+import { Container, LogoCloud, Section, SectionHeader, Testimonial } from "@repo/ui";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { requirePage } from "../lib/pages";
+
+const page = requirePage("customers");
+
+const testimonials = [
+  {
+    quote: "TODO: This is where a customer testimonial goes. It should be genuine and specific.",
+    author: "TODO: Full Name",
+    role: "TODO: Title, Company",
+  },
+  {
+    quote: "TODO: Another testimonial from a satisfied customer.",
+    author: "TODO: Full Name",
+    role: "TODO: Title, Company",
+  },
+  {
+    quote: "TODO: A third testimonial highlighting a different benefit.",
+    author: "TODO: Full Name",
+    role: "TODO: Title, Company",
+  },
+  {
+    quote: "TODO: A fourth testimonial from a power user.",
+    author: "TODO: Full Name",
+    role: "TODO: Title, Company",
+  },
+  {
+    quote: "TODO: A fifth testimonial about a specific use case.",
+    author: "TODO: Full Name",
+    role: "TODO: Title, Company",
+  },
+  {
+    quote: "TODO: A sixth testimonial focusing on business outcomes.",
+    author: "TODO: Full Name",
+    role: "TODO: Title, Company",
+  },
+];
+---
+
+<BaseLayout
+  title={page.title}
+  description={page.description}
+  ogSlug={page.slug}
+>
+  <Section spacing="tight">
+    <Container size="prose">
+      <SectionHeader
+        as="h1"
+        align="center"
+        headline="TODO: Loved by teams who ship"
+        lede="TODO: Supporting copy about your customers — who they are and what they've achieved."
+      />
+    </Container>
+  </Section>
+
+  <LogoCloud
+    label="TODO: Trusted by teams at"
+    logos={[
+      { name: "Company A" },
+      { name: "Company B" },
+      { name: "Company C" },
+      { name: "Company D" },
+      { name: "Company E" },
+    ]}
+  />
+
+  <Section>
+    <Container>
+      <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {testimonials.map((t) => (
+          <Testimonial quote={t.quote} author={t.author} role={t.role} />
+        ))}
+      </div>
+    </Container>
+  </Section>
+</BaseLayout>

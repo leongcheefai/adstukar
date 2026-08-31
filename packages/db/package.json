@@ -1,0 +1,30 @@
+{
+  "name": "@repo/db",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema": "./src/schema/index.ts",
+    "./enums": "./src/schema/enums.ts"
+  },
+  "scripts": {
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "lint": "biome check .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@repo/env": "workspace:*",
+    "drizzle-orm": "^0.45.0",
+    "postgres": "^3.4.5"
+  },
+  "devDependencies": {
+    "@repo/config": "workspace:*",
+    "dotenv": "^16.4.7",
+    "drizzle-kit": "^0.31.0",
+    "typescript": "^5.6.0"
+  }
+}

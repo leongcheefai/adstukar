@@ -1,0 +1,89 @@
+---
+import { project } from "@repo/config/project";
+import { Container, Section, SectionHeader } from "@repo/ui";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { requirePage } from "../lib/pages";
+
+const page = requirePage("security");
+
+const highlights = [
+  {
+    title: "TODO: Encryption",
+    description: "TODO: Describe your data encryption approach (at rest and in transit).",
+  },
+  {
+    title: "TODO: Infrastructure",
+    description:
+      "TODO: Describe where you host (e.g. AWS, Fly.io, Hetzner) and any certifications.",
+  },
+  {
+    title: "TODO: Access Control",
+    description: "TODO: Describe how access to production systems is controlled.",
+  },
+  {
+    title: "TODO: Backups",
+    description: "TODO: Describe your backup frequency and retention policy.",
+  },
+  {
+    title: "TODO: Compliance",
+    description: "TODO: List compliance frameworks you adhere to (SOC 2, GDPR, ISO 27001, etc.).",
+  },
+  {
+    title: "TODO: Vulnerability Disclosure",
+    description: "TODO: Describe your responsible disclosure process or bug bounty program.",
+  },
+];
+---
+
+<BaseLayout
+  title={page.title}
+  description={page.description}
+  ogSlug={page.slug}
+>
+  <Section spacing="tight">
+    <Container size="prose">
+      <SectionHeader
+        as="h1"
+        align="center"
+        headline={`TODO: Security at ${project.name}`}
+        lede="TODO: A brief statement about your commitment to security."
+      />
+    </Container>
+  </Section>
+
+  <Section spacing="tight">
+    <Container>
+      <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+        {highlights.map((h) => (
+          <div class="rounded-lg border border-border bg-card p-6">
+            <h2 class="text-lg font-semibold">{h.title}</h2>
+            <p class="mt-2 text-sm text-muted-foreground">{h.description}</p>
+          </div>
+        ))}
+      </div>
+    </Container>
+  </Section>
+
+  <Section>
+    <Container size="prose">
+      <div class="prose">
+        <h2>Reporting a Vulnerability</h2>
+        <p>
+          TODO: Describe how to report a security vulnerability. Include an email address or link
+          to your security.txt / HackerOne / Bugcrowd program.
+        </p>
+
+        <h2>Subprocessors</h2>
+        <p>
+          TODO: List key subprocessors (databases, email, payment, CDN, monitoring). Link to your
+          DPA if applicable.
+        </p>
+
+        <h2>Contact</h2>
+        <p>
+          TODO: Provide a dedicated security contact email (e.g. security@yourdomain.com).
+        </p>
+      </div>
+    </Container>
+  </Section>
+</BaseLayout>

@@ -1,0 +1,36 @@
+{
+  "name": "@repo/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsup src/index.ts --format esm --out-dir dist --no-splitting",
+    "start": "node dist/index.js",
+    "lint": "biome check .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1044.0",
+    "@aws-sdk/s3-request-presigner": "^3.1044.0",
+    "@hono/node-server": "^1.13.0",
+    "@hono/zod-validator": "^0.7.6",
+    "@octokit/rest": "^22.0.1",
+    "@repo/auth": "workspace:*",
+    "@repo/contracts": "workspace:*",
+    "@repo/db": "workspace:*",
+    "@repo/emails": "workspace:*",
+    "@repo/env": "workspace:*",
+    "dotenv": "^16.4.7",
+    "drizzle-orm": "^0.45.0",
+    "hono": "^4.6.0",
+    "stripe": "^22.1.0",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@repo/config": "workspace:*",
+    "tsup": "^8.3.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}

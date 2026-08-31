@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="180" height="48" viewBox="0 0 180 48" aria-label="Voltage">
+  <rect width="48" height="48" rx="4" fill="#4F46E5"></rect>
+  <path d="M27 10 L15 27 H22 L20 38 L33 21 H26 L27 10 Z" fill="#FFFFFF"></path>
+  <text x="60" y="32" font-family="Geist, system-ui, -apple-system, sans-serif" font-size="24" font-weight="600" fill="#18181B" letter-spacing="-0.6">Voltage</text>
+</svg>

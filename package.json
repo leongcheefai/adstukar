@@ -1,0 +1,36 @@
+{
+  "name": "praxor-kit",
+  "private": true,
+  "version": "0.0.0",
+  "packageManager": "pnpm@9.0.0",
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=9"
+  },
+  "scripts": {
+    "bootstrap": "node scripts/bootstrap.mjs",
+    "launch:check": "node scripts/launch-check.mjs",
+    "worktree:init": "node scripts/worktree-init.mjs",
+    "review": "node scripts/review.mjs",
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint:scripts": "biome check scripts",
+    "lint": "pnpm lint:scripts && turbo lint",
+    "typecheck": "turbo typecheck",
+    "test:scripts": "node --test scripts/*.test.mjs",
+    "test": "pnpm test:scripts && turbo test",
+    "verify": "pnpm lint:scripts && pnpm test:scripts && turbo lint typecheck test build",
+    "prepare": "git config core.hooksPath .githooks || true",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "db:generate": "pnpm --filter @repo/db db:generate",
+    "db:migrate": "pnpm --filter @repo/db db:migrate",
+    "db:push": "pnpm --filter @repo/db db:push",
+    "db:studio": "pnpm --filter @repo/db db:studio"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "turbo": "^2.0.0",
+    "typescript": "^5.6.0"
+  }
+}

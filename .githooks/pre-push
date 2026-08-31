@@ -1,0 +1,11 @@
+#!/bin/sh
+# Runs lint, typecheck, test and build before anything leaves the machine.
+#
+# Installed by the root `prepare` script (git config core.hooksPath .githooks),
+# so a plain `pnpm install` is enough — no husky, no lefthook, no extra dep.
+#
+# Bypass for a genuine emergency:  git push --no-verify
+set -e
+
+echo "pre-push: running pnpm verify..."
+pnpm verify

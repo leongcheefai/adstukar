@@ -1,0 +1,45 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { requirePage } from "../lib/pages";
+
+const page = requirePage("refund");
+---
+
+<BaseLayout
+  title={page.title}
+  description={page.description}
+  ogSlug={page.slug}
+>
+  <div class="mx-auto max-w-3xl px-6 py-24 sm:py-32">
+    <h1 class="text-4xl font-bold tracking-tight">Refund Policy</h1>
+    <p class="mt-2 text-sm text-muted-foreground">Last updated: TODO: Date</p>
+
+    <div class="prose mt-10">
+      <p>
+        TODO: Replace this placeholder with your actual Refund Policy. Be clear about eligibility,
+        timelines, and how to request a refund.
+      </p>
+
+      <h2>1. Eligibility</h2>
+      <p>TODO: Describe who is eligible for a refund and under what circumstances.</p>
+
+      <h2>2. Refund Window</h2>
+      <p>TODO: State how many days after purchase a refund can be requested.</p>
+
+      <h2>3. How to Request a Refund</h2>
+      <p>TODO: Describe the process for requesting a refund (e.g. email, in-app request).</p>
+
+      <h2>4. Processing Time</h2>
+      <p>TODO: State how long refunds take to process and appear on the customer's statement.</p>
+
+      <h2>5. Non-Refundable Items</h2>
+      <p>TODO: List any items or situations not eligible for a refund.</p>
+
+      <h2>6. Partial Refunds</h2>
+      <p>TODO: Explain if and when partial refunds are granted.</p>
+
+      <h2>7. Contact</h2>
+      <p>TODO: Provide contact information for refund requests.</p>
+    </div>
+  </div>
+</BaseLayout>

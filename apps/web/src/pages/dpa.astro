@@ -1,0 +1,64 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { requirePage } from "../lib/pages";
+
+const page = requirePage("dpa");
+---
+
+<BaseLayout
+  title={page.title}
+  description={page.description}
+  ogSlug={page.slug}
+>
+  <div class="mx-auto max-w-3xl px-6 py-24 sm:py-32">
+    <h1 class="text-4xl font-bold tracking-tight">Data Processing Agreement</h1>
+    <p class="mt-2 text-sm text-muted-foreground">Last updated: TODO: Date</p>
+
+    <div class="prose mt-10">
+      <p>
+        TODO: Replace this placeholder with your actual Data Processing Agreement. This document is
+        required for GDPR compliance when you process personal data on behalf of your customers.
+        Consider consulting a lawyer familiar with data protection law.
+      </p>
+
+      <h2>1. Definitions</h2>
+      <p>TODO: Define key terms such as Controller, Processor, Data Subject, Personal Data, etc.</p>
+
+      <h2>2. Subject Matter and Duration</h2>
+      <p>TODO: Describe what data is processed and for how long.</p>
+
+      <h2>3. Nature and Purpose of Processing</h2>
+      <p>TODO: Describe why and how personal data is processed.</p>
+
+      <h2>4. Type of Personal Data</h2>
+      <p>TODO: List the categories of personal data processed.</p>
+
+      <h2>5. Categories of Data Subjects</h2>
+      <p>TODO: Identify whose data is being processed (e.g. end users, employees).</p>
+
+      <h2>6. Obligations of the Processor</h2>
+      <p>TODO: Describe the obligations and rights of the data processor.</p>
+
+      <h2>7. Sub-processors</h2>
+      <p>TODO: List authorized sub-processors and the process for approving new ones.</p>
+
+      <h2>8. Security Measures</h2>
+      <p>TODO: Describe technical and organizational measures to protect personal data.</p>
+
+      <h2>9. Data Subject Rights</h2>
+      <p>TODO: Explain how you assist controllers in fulfilling data subject rights requests.</p>
+
+      <h2>10. Data Breaches</h2>
+      <p>TODO: Describe notification obligations and timelines in case of a data breach.</p>
+
+      <h2>11. Deletion or Return of Data</h2>
+      <p>TODO: Describe what happens to personal data at the end of the agreement.</p>
+
+      <h2>12. Governing Law</h2>
+      <p>TODO: State the governing law and jurisdiction for this agreement.</p>
+
+      <h2>13. Contact</h2>
+      <p>TODO: Provide contact information for data protection inquiries.</p>
+    </div>
+  </div>
+</BaseLayout>

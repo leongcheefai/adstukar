@@ -1,0 +1,73 @@
+---
+import { getCollection } from "astro:content";
+import { Badge } from "@repo/ui";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { requirePage } from "../../lib/pages";
+
+const page = requirePage("blog");
+const posts = (await getCollection("blog"))
+  .filter((post) => !post.data.draft)
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+---
+
+<BaseLayout
+  title={page.title}
+  description={page.description}
+  ogSlug={page.slug}
+>
+  <div class="mx-auto max-w-3xl px-6 py-24 sm:py-32">
+    <h1 class="text-4xl font-bold tracking-tight">Blog</h1>
+    <p class="mt-4 text-lg text-muted-foreground">
+      TODO: Brief intro to your blog — what you write about and who it's for.
+    </p>
+    <div class="mt-12 space-y-10 divide-y divide-border">
+      {
+        posts.map((post) => (
+          <article class="pt-10 first:pt-0">
+            {post.data.image && (
+              <a href={`/blog/${post.id}`}>
+                <img
+                  src={post.data.image}
+                  alt={post.data.imageAlt ?? post.data.title}
+                  class="mb-4 aspect-video w-full rounded-lg object-cover"
+                  loading="lazy"
+                />
+              </a>
+            )}
+            <div class="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+              <time datetime={post.data.date.toISOString()}>
+                {post.data.date.toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </time>
+              {post.data.tags.length > 0 && (
+                <>
+                  <span aria-hidden="true">·</span>
+                  {post.data.tags.map((tag) => (
+                    <Badge key={tag} variant="secondary" className="text-xs">
+                      {tag}
+                    </Badge>
+                  ))}
+                </>
+              )}
+            </div>
+            <h2 class="mt-2 text-2xl font-bold tracking-tight">
+              <a href={`/blog/${post.id}`} class="transition-colors hover:text-primary">
+                {post.data.title}
+              </a>
+            </h2>
+            <p class="mt-2 text-muted-foreground">{post.data.description}</p>
+            <a
+              href={`/blog/${post.id}`}
+              class="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+            >
+              Read more →
+            </a>
+          </article>
+        ))
+      }
+    </div>
+  </div>
+</BaseLayout>

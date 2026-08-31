@@ -1,0 +1,19 @@
+{
+  "name": "@repo/config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./project": "./src/project.ts",
+    "./tsconfig": "./tsconfig.base.json",
+    "./biome": "./biome.json"
+  },
+  "scripts": {
+    "lint": "biome check src",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "typescript": "^5.6.0"
+  }
+}

@@ -1,0 +1,175 @@
+@import "tailwindcss";
+@import "./tokens.css";
+
+@source "../";
+
+@variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  --font-sans: "Poppins", ui-sans-serif, sans-serif;
+  --font-mono: "Poppins", ui-sans-serif, sans-serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-full: var(--radius-full);
+
+  /* --- Voltage elevation as shadows --- */
+  --shadow-elev-0: var(--elev-0);
+  --shadow-elev-1: var(--elev-1);
+  --shadow-elev-2: var(--elev-2);
+  --shadow-elev-3: var(--elev-3);
+
+  /* --- Voltage motion --- */
+  --ease-out: var(--ease-out);
+  --ease-in-out: var(--ease-in-out);
+  --ease-in: var(--ease-in);
+  --duration-fast: var(--dur-fast);
+  --duration-base: var(--dur-base);
+  --duration-slow: var(--dur-slow);
+  --duration-slower: var(--dur-slower);
+
+  /* --- Voltage semantic colors --- */
+  --color-bg: var(--color-bg);
+  --color-bg-surface: var(--color-bg-surface);
+  --color-bg-muted: var(--color-bg-muted);
+  --color-bg-hover: var(--color-bg-hover);
+  --color-border-strong: var(--color-border-strong);
+  --color-text-subtle: var(--color-text-subtle);
+  --color-accent-hover: var(--color-accent-hover);
+
+  /* --- Status colors --- */
+  --color-success: var(--success-500);
+  --color-success-bg: var(--success-100);
+  --color-warning: var(--warning-500);
+  --color-warning-bg: var(--warning-100);
+  --color-danger: var(--danger-500);
+  --color-danger-bg: var(--danger-100);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+@layer base {
+  .t-display-xl {
+    font-family: var(--font-sans);
+    font-size: var(--fs-display-xl);
+    line-height: var(--lh-display-xl);
+    letter-spacing: var(--tr-display-xl);
+    font-weight: var(--fw-display);
+  }
+  .t-display-lg {
+    font-family: var(--font-sans);
+    font-size: var(--fs-display-lg);
+    line-height: var(--lh-display-lg);
+    letter-spacing: var(--tr-display-lg);
+    font-weight: var(--fw-display);
+  }
+  .t-display-md {
+    font-family: var(--font-sans);
+    font-size: var(--fs-display-md);
+    line-height: var(--lh-display-md);
+    letter-spacing: var(--tr-display-md);
+    font-weight: var(--fw-display);
+  }
+  .t-heading {
+    font-family: var(--font-sans);
+    font-size: var(--fs-heading);
+    line-height: var(--lh-heading);
+    letter-spacing: var(--tr-heading);
+    font-weight: var(--fw-medium);
+  }
+  .t-subheading {
+    font-family: var(--font-sans);
+    font-size: var(--fs-subheading);
+    line-height: var(--lh-subheading);
+    letter-spacing: var(--tr-subheading);
+    font-weight: var(--fw-medium);
+  }
+  .t-body-lg {
+    font-family: var(--font-sans);
+    font-size: var(--fs-body-lg);
+    line-height: var(--lh-body-lg);
+    font-weight: var(--fw-regular);
+  }
+  .t-body {
+    font-family: var(--font-sans);
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    font-weight: var(--fw-regular);
+  }
+  .t-body-sm {
+    font-family: var(--font-sans);
+    font-size: var(--fs-body-sm);
+    line-height: var(--lh-body-sm);
+    font-weight: var(--fw-regular);
+  }
+  .t-caption {
+    font-family: var(--font-sans);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    letter-spacing: var(--tr-caption);
+    font-weight: var(--fw-regular);
+  }
+  .t-eyebrow {
+    font-family: var(--font-mono);
+    font-size: var(--fs-eyebrow);
+    line-height: var(--lh-eyebrow);
+    letter-spacing: var(--tr-eyebrow);
+    font-weight: var(--fw-medium);
+    text-transform: uppercase;
+  }
+  .t-mono {
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono);
+    line-height: var(--lh-mono);
+    font-weight: var(--fw-regular);
+  }
+  .t-mono-sm {
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono-sm);
+    line-height: var(--lh-mono);
+    font-weight: var(--fw-regular);
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm install *)",
+      "Bash(pnpm typecheck *)",
+      "Bash(git branch *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(pnpm add *)",
+      "Bash(node *)",
+      "Bash(git push *)",
+      "Bash(pnpm *)",
+      "Bash(git *)",
+      "Bash(psql *)"
+    ]
+  }
+}

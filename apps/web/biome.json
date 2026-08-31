@@ -1,0 +1,23 @@
+{
+  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+  "extends": ["../../packages/config/biome.json", "../../biome.json"],
+  "overrides": [
+    {
+      "include": ["src/**"],
+      "linter": {
+        "rules": {
+          "nursery": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "@repo/contracts": "Import types from '@repo/contracts/types' instead — the root specifier exports values that pull drizzle-orm/pg-core into the browser bundle."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}
