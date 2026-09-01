@@ -1,9 +1,9 @@
+import { BookOpen } from "@phosphor-icons/react";
 import type { LedgerEntry, LedgerReason, LedgerState } from "@repo/contracts/types";
 import {
   Badge,
   Button,
   EmptyState,
-  Label,
   Select,
   SelectContent,
   SelectItem,
@@ -16,8 +16,8 @@ import {
   TableHeader,
   TableRow,
 } from "@repo/ui";
-import { BookOpen } from "lucide-react";
 import { useState } from "react";
+import { LedgerRow } from "../../components/ledger/ledger-row";
 import { useLedger } from "../../lib/ledger";
 
 const REASONS: { value: LedgerReason | "all"; label: string }[] = [
@@ -36,48 +36,6 @@ const STATES: { value: LedgerState | "all"; label: string }[] = [
   { value: "void", label: "Void" },
 ];
 
-const REASON_TEXT: Record<LedgerReason, string> = {
-  earn: "Impression shown on your site",
-  spend: "Your card shown elsewhere",
-  grant: "Grant",
-  expiry: "Expired after 12 months",
-  void: "Voided by an admin",
-};
-
-function stateVariant(state: LedgerState): "success" | "warning" | "neutral" {
-  if (state === "settled") return "success";
-  if (state === "pending") return "warning";
-  return "neutral";
-}
-
-function Row({ entry }: { entry: LedgerEntry }) {
-  const dimmed = entry.state === "pending";
-  return (
-    <TableRow className={dimmed ? "text-muted-foreground" : undefined}>
-      <TableCell className="whitespace-nowrap font-mono text-xs">
-        {new Date(entry.createdAt).toLocaleString()}
-      </TableCell>
-      <TableCell>
-        <span className="font-medium capitalize">{entry.reason}</span>
-        <span className="block text-xs text-muted-foreground">{REASON_TEXT[entry.reason]}</span>
-      </TableCell>
-      <TableCell>
-        <Badge variant={stateVariant(entry.state)}>{entry.state}</Badge>
-      </TableCell>
-      <TableCell
-        className={`text-right font-mono tabular-nums ${entry.delta > 0 ? "text-[color:var(--success-500)]" : ""}`}
-      >
-        {entry.delta > 0 ? `+${entry.delta}` : entry.delta}
-      </TableCell>
-      <TableCell className="font-mono text-xs text-muted-foreground">
-        {entry.impressionId
-          ? entry.impressionId.slice(0, 8)
-          : (entry.relatedEntryId?.slice(0, 8) ?? "—")}
-      </TableCell>
-    </TableRow>
-  );
-}
-
 export function LedgerPage() {
   const [reason, setReason] = useState<LedgerReason | "all">("all");
   const [state, setState] = useState<LedgerState | "all">("all");
@@ -89,18 +47,18 @@ export function LedgerPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Ledger</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Every point movement. Balances are always the sum of this list.
-        </p>
-      </div>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Ledger</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Every point movement. Balances are always the sum of this list.
+          </p>
+        </div>
 
-      <div className="flex flex-wrap gap-4">
-        <div className="space-y-1.5">
-          <Label>Reason</Label>
+        {/* The visible value names the filter, so no separate label is needed. */}
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
           <Select value={reason} onValueChange={(v) => setReason(v as LedgerReason | "all")}>
-            <SelectTrigger className="w-44">
+            <SelectTrigger className="w-40" aria-label="Filter by reason">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -111,11 +69,8 @@ export function LedgerPage() {
               ))}
             </SelectContent>
           </Select>
-        </div>
-        <div className="space-y-1.5">
-          <Label>State</Label>
           <Select value={state} onValueChange={(v) => setState(v as LedgerState | "all")}>
-            <SelectTrigger className="w-44">
+            <SelectTrigger className="w-40" aria-label="Filter by state">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -153,7 +108,7 @@ export function LedgerPage() {
             </TableHeader>
             <TableBody>
               {items.map((entry) => (
-                <Row key={entry.id} entry={entry} />
+                <LedgerRow key={entry.id} entry={entry} />
               ))}
             </TableBody>
           </Table>

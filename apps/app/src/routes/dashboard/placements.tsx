@@ -1,3 +1,4 @@
+import { Code, Plus } from "@phosphor-icons/react";
 import type { PlacementSize } from "@repo/contracts/types";
 import {
   Button,
@@ -13,8 +14,10 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
 } from "@repo/ui";
-import { Code2, Plus } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
@@ -56,24 +59,30 @@ export function PlacementsPage() {
             A placement is one spot on your site. Each has its own key and rules.
           </p>
         </div>
-        <Button
-          size="sm"
-          onClick={() => {
-            setProductId(products?.[0]?.id ?? "");
-            setOpen(true);
-          }}
-          disabled={!canCreate}
-        >
-          <Plus size={14} />
-          New placement
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              size="icon"
+              className="rounded-full"
+              onClick={() => {
+                setProductId(products?.[0]?.id ?? "");
+                setOpen(true);
+              }}
+              disabled={!canCreate}
+              aria-label="New placement"
+            >
+              <Plus size={18} />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>New placement</TooltipContent>
+        </Tooltip>
       </div>
 
       {isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
 
       {!canCreate && products !== undefined && (
         <EmptyState
-          icon={<Code2 />}
+          icon={<Code />}
           title="Register a product first"
           description="Placements belong to a product. Add one, then come back here for the snippet."
           action={
@@ -86,7 +95,7 @@ export function PlacementsPage() {
 
       {canCreate && placements && placements.length === 0 && (
         <EmptyState
-          icon={<Code2 />}
+          icon={<Code />}
           title="No placements yet"
           description="Create one to get the embed snippet and API key."
           action={

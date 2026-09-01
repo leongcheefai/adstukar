@@ -1,17 +1,5 @@
 import type { PresignAvatarResponse } from "@repo/contracts/types";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Input,
-  Label,
-  Separator,
-} from "@repo/ui";
+import { Avatar, AvatarFallback, AvatarImage, Button, Input, Label, Separator } from "@repo/ui";
 import { useMutation } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -106,97 +94,92 @@ export function ProfileSection() {
     .toUpperCase();
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Profile</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Name subform */}
+    <div className="space-y-6">
+      {/* Name subform */}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          nameMutation.mutate(name);
+        }}
+        className="space-y-3"
+      >
+        <div className="space-y-1.5">
+          <Label htmlFor="profile-name">Display name</Label>
+          <Input
+            id="profile-name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Your name"
+            required
+          />
+        </div>
+        <Button type="submit" disabled={nameMutation.isPending}>
+          {nameMutation.isPending ? "Saving…" : "Save name"}
+        </Button>
+      </form>
+
+      <Separator />
+
+      {/* Email subform */}
+      <div className="space-y-3">
+        <div className="space-y-1.5">
+          <Label htmlFor="profile-current-email">Current email</Label>
+          <Input id="profile-current-email" value={user?.email ?? ""} disabled readOnly />
+        </div>
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            nameMutation.mutate(name);
+            emailMutation.mutate(newEmail);
           }}
           className="space-y-3"
         >
           <div className="space-y-1.5">
-            <Label htmlFor="profile-name">Display name</Label>
+            <Label htmlFor="profile-new-email">New email</Label>
             <Input
-              id="profile-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Your name"
+              id="profile-new-email"
+              type="email"
+              value={newEmail}
+              onChange={(e) => setNewEmail(e.target.value)}
+              placeholder="new@example.com"
               required
             />
           </div>
-          <Button type="submit" disabled={nameMutation.isPending}>
-            {nameMutation.isPending ? "Saving…" : "Save name"}
+          <Button type="submit" disabled={emailMutation.isPending}>
+            {emailMutation.isPending ? "Sending…" : "Send verification"}
           </Button>
         </form>
+      </div>
 
-        <Separator />
+      <Separator />
 
-        {/* Email subform */}
-        <div className="space-y-3">
-          <div className="space-y-1.5">
-            <Label htmlFor="profile-current-email">Current email</Label>
-            <Input id="profile-current-email" value={user?.email ?? ""} disabled readOnly />
-          </div>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              emailMutation.mutate(newEmail);
-            }}
-            className="space-y-3"
-          >
-            <div className="space-y-1.5">
-              <Label htmlFor="profile-new-email">New email</Label>
-              <Input
-                id="profile-new-email"
-                type="email"
-                value={newEmail}
-                onChange={(e) => setNewEmail(e.target.value)}
-                placeholder="new@example.com"
-                required
-              />
-            </div>
-            <Button type="submit" disabled={emailMutation.isPending}>
-              {emailMutation.isPending ? "Sending…" : "Send verification"}
+      {/* Avatar subform */}
+      <div className="space-y-3">
+        <Label>Profile picture</Label>
+        <div className="flex items-center gap-4">
+          <Avatar className="h-16 w-16">
+            <AvatarImage src={user?.image ?? ""} alt={user?.name ?? ""} />
+            <AvatarFallback>{initials}</AvatarFallback>
+          </Avatar>
+          <div className="space-y-1">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={avatarMutation.isPending}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {avatarMutation.isPending ? "Uploading…" : "Change avatar"}
             </Button>
-          </form>
-        </div>
-
-        <Separator />
-
-        {/* Avatar subform */}
-        <div className="space-y-3">
-          <Label>Profile picture</Label>
-          <div className="flex items-center gap-4">
-            <Avatar className="h-16 w-16">
-              <AvatarImage src={user?.image ?? ""} alt={user?.name ?? ""} />
-              <AvatarFallback>{initials}</AvatarFallback>
-            </Avatar>
-            <div className="space-y-1">
-              <Button
-                type="button"
-                variant="outline"
-                disabled={avatarMutation.isPending}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                {avatarMutation.isPending ? "Uploading…" : "Change avatar"}
-              </Button>
-              <p className="text-xs text-muted-foreground">PNG, JPEG or WebP — max 5 MB</p>
-            </div>
+            <p className="text-xs text-muted-foreground">PNG, JPEG or WebP — max 5 MB</p>
           </div>
-          <Input
-            ref={fileInputRef}
-            type="file"
-            accept="image/png,image/jpeg,image/webp"
-            className="hidden"
-            onChange={handleFileChange}
-          />
         </div>
-      </CardContent>
-    </Card>
+        <Input
+          ref={fileInputRef}
+          type="file"
+          accept="image/png,image/jpeg,image/webp"
+          className="hidden"
+          onChange={handleFileChange}
+        />
+      </div>
+    </div>
   );
 }

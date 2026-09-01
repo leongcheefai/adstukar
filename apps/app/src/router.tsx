@@ -1,8 +1,5 @@
 import { Suspense, lazy } from "react";
-import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router";
-import { AdminRoute } from "./components/admin-route";
-import { ModerationPage } from "./routes/dashboard/admin/moderation";
-import { AdminReleasesPage } from "./routes/dashboard/admin/releases";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router";
 import { DashboardHome } from "./routes/dashboard/index";
 import { DashboardLayout } from "./routes/dashboard/layout";
 import { LedgerPage } from "./routes/dashboard/ledger";
@@ -30,17 +27,15 @@ export function Router() {
           <Route path="placements" element={<PlacementsPage />} />
           <Route path="ledger" element={<LedgerPage />} />
           <Route path="settings" element={<SettingsPage />} />
+          {/* Admin lives in Settings now; keep the old links working. */}
           <Route
-            path="admin"
-            element={
-              <AdminRoute>
-                <Outlet />
-              </AdminRoute>
-            }
-          >
-            <Route path="moderation" element={<ModerationPage />} />
-            <Route path="releases" element={<AdminReleasesPage />} />
-          </Route>
+            path="admin/moderation"
+            element={<Navigate to="/dashboard/settings?tab=moderation" replace />}
+          />
+          <Route
+            path="admin/releases"
+            element={<Navigate to="/dashboard/settings?tab=releases" replace />}
+          />
         </Route>
         {import.meta.env.DEV && DevComponentsPage && (
           <Route

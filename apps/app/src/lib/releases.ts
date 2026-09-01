@@ -1,14 +1,17 @@
 import type { Release, SyncReleasesResponse } from "@repo/contracts/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { designMode, designResponse } from "./design-mode";
 import { env } from "./env";
 
 async function fetchReleases(): Promise<Release[]> {
+  if (designMode) return designResponse("/releases", "GET") as Release[];
   const res = await fetch(`${env.VITE_API_URL}/releases`, { credentials: "include" });
   if (!res.ok) throw new Error("Failed to fetch releases");
   return res.json() as Promise<Release[]>;
 }
 
 async function syncReleasesRequest(): Promise<SyncReleasesResponse> {
+  if (designMode) throw new Error("Design mode is on. Start the API to sync releases.");
   const res = await fetch(`${env.VITE_API_URL}/releases/sync`, {
     method: "POST",
     credentials: "include",

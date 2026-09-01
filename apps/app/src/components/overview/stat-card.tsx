@@ -4,23 +4,21 @@ import type * as React from "react";
 export function StatCard({
   label,
   value,
-  hint,
-  children,
+  meta,
 }: {
   label: string;
   value: string;
-  hint?: string;
-  children?: React.ReactNode;
+  /** Secondary figure, shown small at the top right. */
+  meta?: React.ReactNode;
 }) {
   return (
     <Card>
-      <CardHeader className="pb-2">
+      <CardHeader className="flex flex-row items-start justify-between gap-2 pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">{label}</CardTitle>
+        {meta && <span className="shrink-0 text-xs text-muted-foreground">{meta}</span>}
       </CardHeader>
       <CardContent>
-        <p className="font-mono text-2xl font-semibold tabular-nums">{value}</p>
-        {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
-        {children}
+        <p className="text-4xl font-normal tracking-tight tabular-nums">{value}</p>
       </CardContent>
     </Card>
   );

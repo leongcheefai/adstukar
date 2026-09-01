@@ -1,8 +1,8 @@
-import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { CaretDown } from "@phosphor-icons/react";
 import type * as React from "react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { cn } from "../lib/utils";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../primitives/tooltip";
+import { TooltipProvider } from "../primitives/tooltip";
 
 export interface NavItem {
   label: string;
@@ -12,47 +12,17 @@ export interface NavItem {
   children?: NavItem[];
 }
 
+export type RenderNavLink = (item: NavItem & { className: string }) => React.ReactNode;
+
 function NavGroup({
   item,
-  isCollapsed,
   renderNavLink,
 }: {
   item: NavItem;
-  isCollapsed: boolean;
-  renderNavLink?: DashboardShellProps["renderNavLink"];
+  renderNavLink?: RenderNavLink;
 }) {
   const anyChildActive = item.children?.some((c) => c.active) ?? false;
   const [open, setOpen] = useState(anyChildActive);
-
-  if (isCollapsed) {
-    return (
-      <>
-        {item.children?.map((child) => {
-          const className = cn(
-            "flex w-full items-center justify-center rounded-md py-2 text-sm transition-colors",
-            child.active
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-          );
-          const linkNode = renderNavLink ? (
-            renderNavLink({ ...child, className, isCollapsed: true })
-          ) : (
-            <a href={child.href ?? "#"} className={className} aria-label={child.label}>
-              {child.icon && <span className="size-4 shrink-0">{child.icon}</span>}
-            </a>
-          );
-          return (
-            <li key={child.href ?? child.label}>
-              <Tooltip>
-                <TooltipTrigger asChild>{linkNode}</TooltipTrigger>
-                <TooltipContent side="right">{child.label}</TooltipContent>
-              </Tooltip>
-            </li>
-          );
-        })}
-      </>
-    );
-  }
 
   return (
     <li>
@@ -63,7 +33,7 @@ function NavGroup({
       >
         {item.icon && <span className="size-4 shrink-0">{item.icon}</span>}
         <span className="flex-1 text-left">{item.label}</span>
-        <ChevronDown
+        <CaretDown
           size={14}
           className={cn("shrink-0 transition-transform", open && "rotate-180")}
         />
@@ -78,7 +48,7 @@ function NavGroup({
                 : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
             );
             const linkNode = renderNavLink ? (
-              renderNavLink({ ...child, className, isCollapsed: false })
+              renderNavLink({ ...child, className })
             ) : (
               <a href={child.href ?? "#"} className={className}>
                 {child.icon && <span className="size-4 shrink-0">{child.icon}</span>}
@@ -98,7 +68,7 @@ export interface DashboardShellProps {
   children: React.ReactNode;
   topbar?: React.ReactNode;
   navItems: NavItem[];
-  renderNavLink?: (item: NavItem & { className: string; isCollapsed: boolean }) => React.ReactNode;
+  renderNavLink?: RenderNavLink;
   sidebarFooter?: React.ReactNode;
 }
 
@@ -110,101 +80,40 @@ export function DashboardShell({
   renderNavLink,
   sidebarFooter,
 }: DashboardShellProps) {
-  const [isCollapsed, setIsCollapsed] = useState(false);
-
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key !== "[") return;
-      const target = e.target as HTMLElement;
-      if (
-        target.tagName === "INPUT" ||
-        target.tagName === "TEXTAREA" ||
-        target.tagName === "SELECT" ||
-        target.isContentEditable
-      )
-        return;
-      setIsCollapsed((prev) => !prev);
-    }
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, []);
-
   return (
     <TooltipProvider>
       <div className="flex h-screen overflow-hidden bg-background">
-        <aside
-          className={cn(
-            "hidden shrink-0 flex-col border-r bg-card md:flex overflow-hidden transition-[width] duration-200 ease-in-out",
-            isCollapsed ? "w-16" : "w-60",
-          )}
-        >
-          <div className="flex h-14 shrink-0 items-center border-b px-3 gap-2">
-            {!isCollapsed && (
-              <span className="flex-1 font-semibold tracking-tight whitespace-nowrap">{brand}</span>
-            )}
-            <button
-              type="button"
-              onClick={() => setIsCollapsed((prev) => !prev)}
-              className={cn(
-                "flex shrink-0 items-center justify-center rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
-                isCollapsed && "w-full",
-              )}
-              aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-              title={isCollapsed ? "Expand sidebar ([ key)" : "Collapse sidebar ([ key)"}
-            >
-              {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-            </button>
+        <aside className="hidden w-60 shrink-0 flex-col overflow-hidden border-r bg-card md:flex">
+          <div className="flex h-14 shrink-0 items-center border-b px-4">
+            <span className="flex-1 font-semibold tracking-tight whitespace-nowrap">{brand}</span>
           </div>
 
           <nav className="flex-1 overflow-y-auto px-3 py-4">
             <ul className="space-y-0.5">
               {navItems.map((item) => {
                 if (item.children) {
-                  return (
-                    <NavGroup
-                      key={item.label}
-                      item={item}
-                      isCollapsed={isCollapsed}
-                      renderNavLink={renderNavLink}
-                    />
-                  );
+                  return <NavGroup key={item.label} item={item} renderNavLink={renderNavLink} />;
                 }
                 const className = cn(
-                  "flex w-full items-center rounded-md py-2 text-sm transition-colors",
-                  isCollapsed ? "justify-center px-0" : "gap-2.5 px-3",
+                  "flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors",
                   item.active
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                 );
                 const linkNode = renderNavLink ? (
-                  renderNavLink({ ...item, className, isCollapsed })
+                  renderNavLink({ ...item, className })
                 ) : (
-                  <a
-                    href={item.href ?? "#"}
-                    className={className}
-                    aria-label={isCollapsed ? item.label : undefined}
-                  >
+                  <a href={item.href ?? "#"} className={className}>
                     {item.icon && <span className="size-4 shrink-0">{item.icon}</span>}
-                    {!isCollapsed && item.label}
+                    {item.label}
                   </a>
                 );
-                return (
-                  <li key={item.href ?? item.label}>
-                    {isCollapsed ? (
-                      <Tooltip>
-                        <TooltipTrigger asChild>{linkNode}</TooltipTrigger>
-                        <TooltipContent side="right">{item.label}</TooltipContent>
-                      </Tooltip>
-                    ) : (
-                      linkNode
-                    )}
-                  </li>
-                );
+                return <li key={item.href ?? item.label}>{linkNode}</li>;
               })}
             </ul>
           </nav>
 
-          {!isCollapsed && sidebarFooter && <div className="px-3 pb-3">{sidebarFooter}</div>}
+          {sidebarFooter && <div className="border-t px-3 py-3">{sidebarFooter}</div>}
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden">

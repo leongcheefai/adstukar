@@ -2,6 +2,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "@repo/ui/styles";
+import "@repo/ui/styles/theme-dashboard";
 import { Toaster } from "@repo/ui";
 import { queryClient } from "./lib/query";
 import { ThemeProvider } from "./lib/theme";

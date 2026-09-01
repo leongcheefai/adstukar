@@ -1,3 +1,4 @@
+import { ArrowsClockwise, Trash, X } from "@phosphor-icons/react";
 import { economy } from "@repo/config/economy";
 import type { PlacementSize, PlacementWithTerms, Product } from "@repo/contracts/types";
 import {
@@ -30,7 +31,6 @@ import {
   TabsList,
   TabsTrigger,
 } from "@repo/ui";
-import { RefreshCw, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -101,7 +101,7 @@ export function PlacementCard({ item, product }: { item: PlacementWithTerms; pro
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button size="sm" variant="ghost" className="text-destructive">
-                  <Trash2 size={14} />
+                  <Trash size={14} />
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
@@ -140,7 +140,7 @@ export function PlacementCard({ item, product }: { item: PlacementWithTerms; pro
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button size="icon" variant="outline" aria-label="Rotate API key">
-                  <RefreshCw size={14} className={rotate.isPending ? "animate-spin" : ""} />
+                  <ArrowsClockwise size={14} className={rotate.isPending ? "animate-spin" : ""} />
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>

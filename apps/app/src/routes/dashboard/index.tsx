@@ -1,23 +1,19 @@
-import { economy } from "@repo/config/economy";
-import {
-  Button,
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@repo/ui";
-import { Info } from "lucide-react";
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui";
 import { Link } from "react-router";
 import { ImpressionsChart } from "../../components/overview/impressions-chart";
+import { RecentLedger } from "../../components/overview/recent-ledger";
 import { StatCard } from "../../components/overview/stat-card";
 import { useSession } from "../../lib/auth";
 import { useProducts } from "../../lib/products";
 import { useStats } from "../../lib/stats";
+
+/** Local clock, so the greeting matches the room the reader is sitting in. */
+function greeting(now = new Date()): string {
+  const hour = now.getHours();
+  if (hour < 12) return "Good Morning";
+  if (hour < 18) return "Good Afternoon";
+  return "Good Evening";
+}
 
 function Skeleton({ className = "" }: { className?: string }) {
   return <div className={`rounded-xl border bg-card animate-pulse ${className}`} />;
@@ -33,12 +29,10 @@ export function DashboardHome() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Overview{session?.user.name ? ` · ${session.user.name}` : ""}
+          <h1 data-slot="greeting">
+            {greeting()}
+            {session?.user.name ? `, ${session.user.name}` : ""}
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Show {economy.spendPerImpression} ads, earn {economy.earnPerImpression} for yourself.
-          </p>
         </div>
         {noProducts && (
           <Button asChild size="sm">
@@ -58,42 +52,20 @@ export function DashboardHome() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {isLoading || !stats ? (
           <>
-            <Skeleton className="h-[110px]" />
-            <Skeleton className="h-[110px]" />
-            <Skeleton className="h-[110px]" />
-            <Skeleton className="h-[110px]" />
+            <Skeleton className="h-[124px]" />
+            <Skeleton className="h-[124px]" />
+            <Skeleton className="h-[124px]" />
+            <Skeleton className="h-[124px]" />
           </>
         ) : (
           <>
-            <StatCard label="Points" value={stats.balance.settled.toLocaleString()}>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <p className="mt-1 inline-flex cursor-help items-center gap-1 font-mono text-xs text-muted-foreground/70">
-                      +{stats.balance.pending.toLocaleString()} pending
-                      <Info size={11} />
-                    </p>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    Earned points settle {economy.settlementDelayHours} hours after the impression.
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </StatCard>
-            <StatCard
-              label="Shown today"
-              value={stats.today.shown.toLocaleString()}
-              hint={`+${economy.earnPerImpression} each once verified`}
-            />
-            <StatCard
-              label="Received today"
-              value={stats.today.received.toLocaleString()}
-              hint={`−${economy.spendPerImpression} each`}
-            />
+            <StatCard label="Points" value={stats.balance.settled.toLocaleString()} />
+            <StatCard label="Shown today" value={stats.today.shown.toLocaleString()} />
+            <StatCard label="Received today" value={stats.today.received.toLocaleString()} />
             <StatCard
               label="Clicks today"
               value={stats.today.clicks.toLocaleString()}
-              hint={`CTR ${(stats.today.ctr * 100).toFixed(1)}%`}
+              meta={`CTR ${(stats.today.ctr * 100).toFixed(1)}%`}
             />
           </>
         )}
@@ -114,6 +86,8 @@ export function DashboardHome() {
           )}
         </CardContent>
       </Card>
+
+      <RecentLedger />
     </div>
   );
 }

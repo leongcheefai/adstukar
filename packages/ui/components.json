@@ -17,5 +17,5 @@
     "lib": "@repo/ui/lib",
     "hooks": "@repo/ui/hooks"
   },
-  "iconLibrary": "lucide"
+  "iconLibrary": "phosphor"
 }

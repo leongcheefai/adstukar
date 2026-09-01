@@ -1,53 +1,28 @@
-import { Bell, LogOut, Menu, Search } from "lucide-react";
+import { Bell, List } from "@phosphor-icons/react";
 // packages/ui/src/patterns/dashboard-topbar.tsx
 import type * as React from "react";
-import { useEffect, useState } from "react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "../primitives/dropdown-menu";
-import type { NavItem } from "./dashboard-shell";
+import { useState } from "react";
+import type { NavItem, RenderNavLink } from "./dashboard-shell";
 import { MobileNavDrawer } from "./mobile-nav-drawer";
 
 export interface DashboardTopbarProps {
   brand: React.ReactNode;
-  title: string;
   navItems: NavItem[];
-  userName?: string;
-  userEmail?: string;
-  onSignOut?: () => void;
-  onSearch?: () => void;
-  renderNavLink?: (item: NavItem & { className: string; isCollapsed: boolean }) => React.ReactNode;
+  renderNavLink?: RenderNavLink;
+  /** Same node the sidebar shows; the drawer carries it on mobile, account menu included. */
   sidebarFooter?: React.ReactNode;
+  /** App-supplied controls, placed at the right end before the bell. */
+  actions?: React.ReactNode;
 }
 
 export function DashboardTopbar({
   brand,
-  title,
   navItems,
-  userName,
-  userEmail,
-  onSignOut,
-  onSearch,
   renderNavLink,
   sidebarFooter,
+  actions,
 }: DashboardTopbarProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
-
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-        e.preventDefault();
-        onSearch?.();
-      }
-    }
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [onSearch]);
 
   return (
     <>
@@ -58,22 +33,11 @@ export function DashboardTopbar({
           className="flex items-center justify-center rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:hidden"
           aria-label="Open navigation"
         >
-          <Menu size={18} />
+          <List size={18} />
         </button>
 
-        <h1 className="text-sm font-semibold">{title}</h1>
-
-        <div className="flex flex-1 items-center justify-end gap-1">
-          <button
-            type="button"
-            onClick={onSearch}
-            disabled={!onSearch}
-            className="flex items-center justify-center rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-40"
-            aria-label="Search (⌘K)"
-            title="Search (⌘K)"
-          >
-            <Search size={16} />
-          </button>
+        <div className="flex flex-1 items-center justify-end gap-2">
+          {actions}
 
           <button
             type="button"
@@ -84,39 +48,6 @@ export function DashboardTopbar({
           >
             <Bell size={16} />
           </button>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                className="ml-1 flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-semibold text-primary-foreground transition-opacity hover:opacity-80"
-                aria-label="User menu"
-              >
-                {(userName ?? userEmail ?? "?")[0]?.toUpperCase()}
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              {(userName || userEmail) && (
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col gap-0.5">
-                    {userName && <span className="text-sm font-medium">{userName}</span>}
-                    {userEmail && (
-                      <span className="text-xs text-muted-foreground">{userEmail}</span>
-                    )}
-                  </div>
-                </DropdownMenuLabel>
-              )}
-              {onSignOut && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onSelect={onSignOut} className="text-muted-foreground">
-                    <LogOut size={14} className="mr-2" />
-                    Sign out
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </header>
 
@@ -125,9 +56,6 @@ export function DashboardTopbar({
         open={drawerOpen}
         onOpenChange={setDrawerOpen}
         navItems={navItems}
-        userName={userName}
-        userEmail={userEmail}
-        onSignOut={onSignOut}
         renderNavLink={renderNavLink}
         sidebarFooter={sidebarFooter}
       />

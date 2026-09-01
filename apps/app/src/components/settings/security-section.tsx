@@ -1,15 +1,5 @@
 import type { MeHasPasswordResponse } from "@repo/contracts/types";
-import {
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Input,
-  Label,
-  Separator,
-  Switch,
-} from "@repo/ui";
+import { Button, Input, Label, Separator, Switch } from "@repo/ui";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -97,85 +87,73 @@ export function SecuritySection() {
 
   if (hasPasswordQuery.data?.hasPassword === false) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Password</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Your account uses social login. Set a password first by requesting a password reset.
-          </p>
-          <Button
-            variant="outline"
-            onClick={() => resetEmailMutation.mutate()}
-            disabled={resetEmailMutation.isPending}
-          >
-            {resetEmailMutation.isPending ? "Sending…" : "Send password reset email"}
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        <p className="text-sm text-muted-foreground">
+          Your account uses social login. Set a password first by requesting a password reset.
+        </p>
+        <Button
+          variant="outline"
+          onClick={() => resetEmailMutation.mutate()}
+          disabled={resetEmailMutation.isPending}
+        >
+          {resetEmailMutation.isPending ? "Sending…" : "Send password reset email"}
+        </Button>
+      </div>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Change Password</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="current-password">Current password</Label>
-            <Input
-              id="current-password"
-              type="password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              placeholder="Current password"
-              required
-            />
-          </div>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-1.5">
+        <Label htmlFor="current-password">Current password</Label>
+        <Input
+          id="current-password"
+          type="password"
+          value={currentPassword}
+          onChange={(e) => setCurrentPassword(e.target.value)}
+          placeholder="Current password"
+          required
+        />
+      </div>
 
-          <Separator />
+      <Separator />
 
-          <div className="space-y-1.5">
-            <Label htmlFor="new-password">New password</Label>
-            <Input
-              id="new-password"
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="New password (min 8 chars)"
-              required
-            />
-          </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="new-password">New password</Label>
+        <Input
+          id="new-password"
+          type="password"
+          value={newPassword}
+          onChange={(e) => setNewPassword(e.target.value)}
+          placeholder="New password (min 8 chars)"
+          required
+        />
+      </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="confirm-password">Confirm new password</Label>
-            <Input
-              id="confirm-password"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Repeat new password"
-              required
-            />
-          </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="confirm-password">Confirm new password</Label>
+        <Input
+          id="confirm-password"
+          type="password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          placeholder="Repeat new password"
+          required
+        />
+      </div>
 
-          {validationError && <p className="text-sm text-destructive">{validationError}</p>}
+      {validationError && <p className="text-sm text-destructive">{validationError}</p>}
 
-          <div className="flex items-center gap-3">
-            <Switch id="revoke-others" checked={revokeOthers} onCheckedChange={setRevokeOthers} />
-            <Label htmlFor="revoke-others" className="cursor-pointer">
-              Sign out all other devices after changing password
-            </Label>
-          </div>
+      <div className="flex items-center gap-3">
+        <Switch id="revoke-others" checked={revokeOthers} onCheckedChange={setRevokeOthers} />
+        <Label htmlFor="revoke-others" className="cursor-pointer">
+          Sign out all other devices after changing password
+        </Label>
+      </div>
 
-          <Button type="submit" disabled={changePasswordMutation.isPending}>
-            {changePasswordMutation.isPending ? "Changing…" : "Change password"}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+      <Button type="submit" disabled={changePasswordMutation.isPending}>
+        {changePasswordMutation.isPending ? "Changing…" : "Change password"}
+      </Button>
+    </form>
   );
 }

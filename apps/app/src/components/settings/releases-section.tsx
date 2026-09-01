@@ -1,22 +1,16 @@
+import { ArrowsClockwise } from "@phosphor-icons/react";
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from "@repo/ui";
-import { RefreshCw } from "lucide-react";
-import { useReleases, useSyncReleases } from "../../../lib/releases";
+import { useReleases, useSyncReleases } from "../../lib/releases";
 
-export function AdminReleasesPage() {
+export function ReleasesSection() {
   const { data: releases, isLoading } = useReleases();
   const sync = useSyncReleases();
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Releases</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            GitHub releases synced to the database.
-          </p>
-        </div>
+      <div className="flex justify-end">
         <Button onClick={() => sync.mutate()} disabled={sync.isPending} size="sm">
-          <RefreshCw size={14} className={sync.isPending ? "animate-spin" : ""} />
+          <ArrowsClockwise size={14} className={sync.isPending ? "animate-spin" : ""} />
           {sync.isPending ? "Pulling…" : "Pull from GitHub"}
         </Button>
       </div>
