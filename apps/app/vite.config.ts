@@ -17,6 +17,8 @@ export default defineConfig({
   ],
   server: {
     port: 3000,
+    // Fail loudly instead of falling back onto the API port.
+    strictPort: true,
     proxy: {
       "/api": {
         target: "http://localhost:3001",
