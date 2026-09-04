@@ -24,9 +24,19 @@ import { domainOf } from "./url";
  * Turn on:  http://localhost:3000/dashboard?design=1
  * Turn off: http://localhost:3000/dashboard?design=0
  *
- * The choice persists in localStorage, so navigation keeps it. Every check is
- * gated on `import.meta.env.DEV`, so a production build always reports false and
- * the bundler drops the fixtures.
+ * The choice persists in localStorage, so navigation keeps it.
+ *
+ * `designMode` starts with `import.meta.env.DEV`, which Vite replaces at transform
+ * time. A production build gets `false && readFlag()`. The flag is then false, the
+ * module has no start-up side effect, and the bundler removes the fixtures below.
+ *
+ * Vite reads NODE_ENV from the repo-root `.env`. `NODE_ENV=development` there makes
+ * `vite build` produce a DEVELOPMENT bundle, which keeps these fixtures. Local dist
+ * output is therefore not proof of what production contains. `pnpm launch:check`
+ * rejects a production env that sets NODE_ENV to anything but `production`.
+ *
+ * Keep the fixture values obviously fake. Realistic tokens or keys trigger secret
+ * scanners on every pull request.
  */
 
 const STORAGE_KEY = "adstukar:design-mode";
@@ -50,7 +60,7 @@ function readFlag(): boolean {
   }
 }
 
-export const designMode = readFlag();
+export const designMode = import.meta.env.DEV && readFlag();
 
 const NOW = new Date("2026-09-01T12:00:00.000Z");
 
@@ -90,7 +100,7 @@ let products: Product[] = [
     logoUrl: null,
     status: "approved",
     rejectionReason: null,
-    verificationToken: "adstukar-verify-8f3a21c7",
+    verificationToken: "demo-verify-token-1",
     verifiedAt: iso(28),
     advertise: true,
     showAds: true,
@@ -107,7 +117,7 @@ let products: Product[] = [
     logoUrl: null,
     status: "approved",
     rejectionReason: null,
-    verificationToken: "adstukar-verify-11c4b6d2",
+    verificationToken: "demo-verify-token-2",
     verifiedAt: iso(20),
     advertise: true,
     showAds: true,
@@ -123,7 +133,7 @@ let products: Product[] = [
     logoUrl: null,
     status: "pending",
     rejectionReason: null,
-    verificationToken: "adstukar-verify-77ba0e59",
+    verificationToken: "demo-verify-token-3",
     verifiedAt: iso(4),
     advertise: false,
     showAds: true,
@@ -139,7 +149,7 @@ let products: Product[] = [
     logoUrl: null,
     status: "approved",
     rejectionReason: null,
-    verificationToken: "adstukar-verify-3f9d18ac",
+    verificationToken: "demo-verify-token-4",
     verifiedAt: iso(12),
     advertise: true,
     showAds: true,
@@ -155,7 +165,7 @@ let products: Product[] = [
     logoUrl: null,
     status: "pending",
     rejectionReason: null,
-    verificationToken: "adstukar-verify-2b7e94d0",
+    verificationToken: "demo-verify-token-5",
     verifiedAt: null,
     advertise: true,
     showAds: false,
@@ -171,7 +181,7 @@ let products: Product[] = [
     logoUrl: null,
     status: "rejected",
     rejectionReason: "The landing page did not carry the verification token.",
-    verificationToken: "adstukar-verify-5c1d08fa",
+    verificationToken: "demo-verify-token-6",
     verifiedAt: null,
     advertise: false,
     showAds: true,
@@ -185,7 +195,7 @@ let placements: PlacementWithTerms[] = [
     placement: {
       id: "plc_launchkit_docs",
       productId: "prd_launchkit",
-      apiKey: "pk_live_7Qa2mVx9LdRt4Nb1",
+      apiKey: "pk_demo_launchkit_docs",
       size: "small",
       houseAdPct: 10,
       createdAt: iso(27),
@@ -196,7 +206,7 @@ let placements: PlacementWithTerms[] = [
     placement: {
       id: "plc_launchkit_blog",
       productId: "prd_launchkit",
-      apiKey: "pk_live_3Zc8kWq5PjHy6Mv0",
+      apiKey: "pk_demo_launchkit_blog",
       size: "medium",
       houseAdPct: 0,
       createdAt: iso(9),
@@ -314,7 +324,7 @@ function fakeId(prefix: string): string {
 }
 
 function fakeApiKey(): string {
-  return `pk_live_${Math.random().toString(36).slice(2, 10)}${Math.random().toString(36).slice(2, 10)}`;
+  return `pk_demo_${Math.random().toString(36).slice(2, 10)}${Math.random().toString(36).slice(2, 10)}`;
 }
 
 function hostOf(url: string): string {
@@ -358,7 +368,7 @@ function designWrite(route: string, method: string, body?: unknown): unknown {
       logoUrl: input.logoUrl ?? null,
       status: "pending",
       rejectionReason: null,
-      verificationToken: `adstukar-verify-${fakeId("").slice(1)}`,
+      verificationToken: `demo-verify-token-${fakeId("").slice(1)}`,
       verifiedAt: null,
       advertise: true,
       showAds: true,
