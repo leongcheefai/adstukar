@@ -31,9 +31,17 @@ import { domainOf } from "./url";
  * module has no start-up side effect, and the bundler removes the fixtures below.
  *
  * Vite reads NODE_ENV from the repo-root `.env`. `NODE_ENV=development` there makes
- * `vite build` produce a DEVELOPMENT bundle, which keeps these fixtures. Local dist
- * output is therefore not proof of what production contains. `pnpm launch:check`
- * rejects a production env that sets NODE_ENV to anything but `production`.
+ * plain `pnpm build` produce a DEVELOPMENT bundle, which keeps these fixtures. To
+ * check what production really contains, override it:
+ *
+ *   NODE_ENV=production pnpm --filter @repo/app build
+ *   grep -c "prd_\|LaunchKit" apps/app/dist/assets/index-*.js
+ *
+ * `pnpm launch:check` rejects a production env whose NODE_ENV is not `production`.
+ *
+ * Keep every fixture inside a function or a plain data literal. A top-level
+ * expression that spreads another fixture defeats the whole thing: a spread may
+ * call a getter, so the bundler keeps it and pins the data it reads.
  *
  * Credential fields stay empty strings. `verificationToken` and `apiKey` carry no
  * fixture value, because any literal there looks like a leaked secret to a scanner.
@@ -269,27 +277,38 @@ const stats: StatsOverview = {
   series: series(),
 };
 
-let moderation: ModerationItem[] = [
-  {
-    product: products[1] as Product,
-    owner: { name: "Wai Hong", email: "waihong@example.com" },
-  },
-  {
-    product: {
-      ...(products[2] as Product),
-      id: "prd_queued",
-      name: "TinyCharts",
-      domain: "tinycharts.dev",
-      url: "https://tinycharts.dev",
-      tagline: "Charts that fit in a tweet.",
-      status: "pending",
-      rejectionReason: null,
-      createdAt: iso(1),
-      updatedAt: iso(1),
+/**
+ * Built on first read, never at module load. The second row spreads a product, and a
+ * spread can call a getter, so a bundler must assume the initializer has a side effect
+ * and keep it. A top-level one would therefore pin `products` into every production
+ * bundle. Inside a function it is unreachable, so the whole fixture set drops.
+ */
+let moderation: ModerationItem[] | null = null;
+
+function moderationRows(): ModerationItem[] {
+  moderation ??= [
+    {
+      product: products[1] as Product,
+      owner: { name: "Wai Hong", email: "waihong@example.com" },
     },
-    owner: { name: "Sam Rivera", email: "sam@tinycharts.dev" },
-  },
-];
+    {
+      product: {
+        ...(products[2] as Product),
+        id: "prd_queued",
+        name: "TinyCharts",
+        domain: "tinycharts.dev",
+        url: "https://tinycharts.dev",
+        tagline: "Charts that fit in a tweet.",
+        status: "pending",
+        rejectionReason: null,
+        createdAt: iso(1),
+        updatedAt: iso(1),
+      },
+      owner: { name: "Sam Rivera", email: "sam@tinycharts.dev" },
+    },
+  ];
+  return moderation;
+}
 
 const releases: Release[] = [
   {
@@ -401,7 +420,7 @@ function designWrite(route: string, method: string, body?: unknown): unknown {
     if (method === "DELETE" && seg.length === 2) {
       products = products.filter((row) => row.id !== target.id);
       placements = placements.filter((row) => row.placement.productId !== target.id);
-      moderation = moderation.filter((row) => row.product.id !== target.id);
+      moderation = moderationRows().filter((row) => row.product.id !== target.id);
       return { id: target.id };
     }
     if (method === "POST" && seg[2] === "verify") {
@@ -467,7 +486,7 @@ function designWrite(route: string, method: string, body?: unknown): unknown {
   // A queued item is not always in `products`, so the moderation row is the source.
   if (method === "POST" && seg[0] === "admin" && seg[1] === "products" && seg[2]) {
     const productId = seg[2];
-    const queued = moderation.find((row) => row.product.id === productId);
+    const queued = moderationRows().find((row) => row.product.id === productId);
     const target = products.find((row) => row.id === productId) ?? queued?.product;
     if (!target) return undefined;
 
@@ -491,7 +510,7 @@ function designWrite(route: string, method: string, body?: unknown): unknown {
     }
     if (!decided) return undefined;
 
-    moderation = moderation.filter((row) => row.product.id !== productId);
+    moderation = moderationRows().filter((row) => row.product.id !== productId);
     if (products.some((row) => row.id === productId)) replaceProduct(decided);
     return decided;
   }
@@ -545,7 +564,10 @@ export function designResponse(path: string, method: string, body?: unknown): un
         excludedTerms: [...row.excludedTerms],
       }));
     case "/admin/moderation":
-      return moderation.map((row) => ({ product: { ...row.product }, owner: { ...row.owner } }));
+      return moderationRows().map((row) => ({
+        product: { ...row.product },
+        owner: { ...row.owner },
+      }));
     case "/releases":
       return releases;
     case "/me/has-password":

@@ -41,7 +41,7 @@ Open `http://localhost:3000/dashboard?design=1`. Design mode fakes an admin sess
 - `apiFetch` in `src/lib/api.ts` and `fetchReleases` in `src/lib/releases.ts` return fixtures instead of calling the API
 - Writes are faked too, so every control responds. `designWrite()` replaces the matching fixture in memory; a reload restores the starting data. Each update builds a new object, because React Query would treat an edit in place as no change and skip the repaint
 - Settings writes (profile, password, sessions) go through the better-auth client, not `apiFetch`, so they still need the API
-- Every check is gated on `import.meta.env.DEV`, so production builds report false and the bundler drops the fixtures. Note that Vite reads `NODE_ENV` from the repo-root `.env`; with `NODE_ENV=development` there, even `vite build` emits a development bundle that keeps the fixtures, so a local `dist/` is not evidence of what production ships
+- Every check is gated on `import.meta.env.DEV`, so production builds report false and the bundler drops the fixtures. Verify with `NODE_ENV=production pnpm --filter @repo/app build`, because the repo-root `.env` sets `NODE_ENV=development` and a plain `pnpm build` therefore emits a development bundle that keeps them. Keep each fixture inside a function or a plain literal: a top-level expression that spreads another fixture is treated as side-effecting and pins that data into production
 - Add a read by adding a case to `designResponse()`; add a write by adding a branch to `designWrite()`. An unknown path throws instead of failing quietly
 
 ## Gotchas
