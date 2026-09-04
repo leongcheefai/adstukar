@@ -7,7 +7,7 @@ export function ReleasesSection() {
   const sync = useSyncReleases();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex justify-end">
         <Button onClick={() => sync.mutate()} disabled={sync.isPending} size="sm">
           <ArrowsClockwise size={14} className={sync.isPending ? "animate-spin" : ""} />

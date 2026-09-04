@@ -14,6 +14,39 @@ export interface NavItem {
 
 export type RenderNavLink = (item: NavItem & { className: string }) => React.ReactNode;
 
+/**
+ * Arrow-key movement inside one nav.
+ *
+ * Up and Down walk the items, Home and End jump to the ends, and both wrap. It
+ * reads the DOM rather than an index, so a collapsed group contributes no items
+ * and the order always matches what is on screen.
+ *
+ * Tab is left alone. This is a list of links, not a composite widget, so every
+ * item keeps its own tab stop; the arrows are a faster way through, not the
+ * only way in.
+ *
+ * Exported so the mobile drawer binds the same handler to the same nav.
+ */
+export function handleNavArrowKeys(event: React.KeyboardEvent<HTMLElement>) {
+  const keys = ["ArrowDown", "ArrowUp", "Home", "End"];
+  if (!keys.includes(event.key) || event.metaKey || event.ctrlKey || event.altKey) return;
+
+  const nav = event.currentTarget;
+  const items = [...nav.querySelectorAll<HTMLElement>("a[href], button:not(:disabled)")];
+  if (items.length === 0) return;
+
+  const current = items.indexOf(document.activeElement as HTMLElement);
+  let next: number;
+  if (event.key === "Home") next = 0;
+  else if (event.key === "End") next = items.length - 1;
+  else if (event.key === "ArrowDown") next = current < 0 ? 0 : (current + 1) % items.length;
+  else next = current < 0 ? items.length - 1 : (current - 1 + items.length) % items.length;
+
+  // Only after an item is found, so an unhandled key still scrolls the page.
+  event.preventDefault();
+  items[next]?.focus();
+}
+
 function NavGroup({
   item,
   renderNavLink,
@@ -29,6 +62,7 @@ function NavGroup({
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
+        aria-expanded={open}
         className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
       >
         {item.icon && <span className="size-4 shrink-0">{item.icon}</span>}
@@ -88,7 +122,11 @@ export function DashboardShell({
             <span className="flex-1 font-semibold tracking-tight whitespace-nowrap">{brand}</span>
           </div>
 
-          <nav className="flex-1 overflow-y-auto px-3 py-4">
+          <nav
+            className="flex-1 overflow-y-auto px-3 py-4"
+            onKeyDown={handleNavArrowKeys}
+            aria-label="Main"
+          >
             <ul className="space-y-0.5">
               {navItems.map((item) => {
                 if (item.children) {
@@ -118,7 +156,11 @@ export function DashboardShell({
 
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
           {topbar}
-          <main className="flex-1 overflow-y-auto p-6">{children}</main>
+          {/* The home indicator sits over the last 34px on iOS, so the scroll
+              area ends above it rather than under it. */}
+          <main className="flex-1 overflow-y-auto p-6 pb-[calc(var(--space-6)+env(safe-area-inset-bottom))]">
+            {children}
+          </main>
         </div>
       </div>
     </TooltipProvider>

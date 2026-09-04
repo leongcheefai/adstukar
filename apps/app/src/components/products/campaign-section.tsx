@@ -1,11 +1,17 @@
-import { Plus } from "@phosphor-icons/react";
+import { SealCheck } from "@phosphor-icons/react";
 import type { Product } from "@repo/contracts/types";
-import { Button, Tooltip, TooltipContent, TooltipTrigger } from "@repo/ui";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@repo/ui";
+import { CampaignActions } from "./campaign-actions";
 import { ProductTile } from "./product-tile";
 
 export interface Campaign {
   /** The verified domain every ad in the group points at. */
   domain: string;
+  /**
+   * The product name the group's ads carry. There is no campaign table, so this
+   * is the newest ad's name rather than a field of its own.
+   */
+  name: string;
   /** Newest first, so a fresh variant lands where the eye already is. */
   ads: Product[];
 }
@@ -23,10 +29,10 @@ export function groupIntoCampaigns(products: Product[]): Campaign[] {
     else byDomain.set(product.domain, [product]);
   }
   return [...byDomain.entries()]
-    .map(([domain, ads]) => ({
-      domain,
-      ads: [...ads].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
-    }))
+    .map(([domain, group]) => {
+      const ads = [...group].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      return { domain, name: ads[0]?.name ?? domain, ads };
+    })
     .sort((a, b) => a.domain.localeCompare(b.domain));
 }
 
@@ -34,34 +40,44 @@ export function CampaignSection({
   campaign,
   onEdit,
   onDuplicate,
+  onAddAd,
 }: {
   campaign: Campaign;
   onEdit: (product: Product) => void;
   onDuplicate: (product: Product) => void;
+  /** Starts a new ad on this campaign's site with an empty tagline. */
+  onAddAd: (campaign: Campaign) => void;
 }) {
-  const newest = campaign.ads[0];
+  // Every ad in the group shares one domain, so one verified ad verifies all.
+  const verified = campaign.ads.some((ad) => ad.verifiedAt);
 
   return (
     <section className="border-b">
       {/* Only a bottom rule: the grid above already closed the previous section. */}
-      <header className="flex h-12 items-center gap-3 border-b px-6">
-        <h2 className="truncate text-sm font-medium">{campaign.domain}</h2>
-        {newest && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                size="icon"
-                variant="ghost"
-                className="ml-auto"
-                onClick={() => onDuplicate(newest)}
-                aria-label={`Add a variant to ${campaign.domain}`}
-              >
-                <Plus size={18} />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Add a variant</TooltipContent>
-          </Tooltip>
+      <header className="flex h-14 items-center gap-2 border-b px-6">
+        {/* The domain moved into the tooltip. It is the grouping key, so it was
+            on screen once per campaign saying what the name already said. */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <h2 className="min-w-0 shrink cursor-default truncate text-lg font-semibold tracking-tight">
+              {campaign.name}
+            </h2>
+          </TooltipTrigger>
+          <TooltipContent className="font-mono text-xs">{campaign.domain}</TooltipContent>
+        </Tooltip>
+
+        {/* Only when the domain really is verified. A seal on an unverified
+            campaign would be a claim the product cannot back. */}
+        {verified && (
+          <SealCheck
+            size={18}
+            weight="fill"
+            aria-label="Verified domain"
+            className="shrink-0 text-primary"
+          />
         )}
+
+        <CampaignActions campaign={campaign} onAddAd={onAddAd} />
       </header>
 
       {/* No gap: each cell draws its own right and bottom rule. */}

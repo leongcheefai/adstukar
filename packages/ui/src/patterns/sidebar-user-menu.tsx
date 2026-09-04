@@ -31,10 +31,13 @@ export function SidebarUserMenu({
 }: SidebarUserMenuProps) {
   const label = userName ?? userEmail ?? "Account";
 
+  /* 32px, not the 24px "sm": it is the exact height of the two-line name and
+     email block beside it, so the row reads as one object rather than a small
+     dot next to text. */
   const avatar = (
-    <Avatar size="sm" className="shrink-0">
+    <Avatar className="shrink-0">
       {userImage && <AvatarImage src={userImage} alt={label} />}
-      <AvatarFallback className="bg-primary text-[11px] font-semibold text-primary-foreground">
+      <AvatarFallback className="bg-primary text-xs font-semibold text-primary-foreground">
         {initial(userName, userEmail)}
       </AvatarFallback>
     </Avatar>

@@ -27,10 +27,12 @@ export function DashboardTopbar({
   return (
     <>
       <header className="flex h-14 shrink-0 items-center gap-3 border-b bg-card px-4">
+        {/* The drawn box is 30px; the transparent ::before takes the touch
+            target to 44px without moving the icon. */}
         <button
           type="button"
           onClick={() => setDrawerOpen(true)}
-          className="flex items-center justify-center rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:hidden"
+          className="relative flex items-center justify-center rounded-md p-1.5 text-muted-foreground transition-colors before:absolute before:-inset-[7px] before:content-[''] hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:hidden"
           aria-label="Open navigation"
         >
           <List size={18} />

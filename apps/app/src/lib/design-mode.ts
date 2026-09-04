@@ -8,6 +8,7 @@ import type {
   StatsOverview,
   VerifyProductResponse,
 } from "@repo/contracts/types";
+import { domainOf } from "./url";
 
 /**
  * Dev-only design mode.
@@ -292,8 +293,8 @@ const releases: Release[] = [
   {
     id: "rel_001",
     tag: "v0.2.0",
-    name: "Ledger filters",
-    body: "- Filter the ledger by reason and state\n- Infinite scroll at 50 rows a page",
+    name: "CapyPoints filters",
+    body: "- Filter CapyPoints by reason and state\n- Infinite scroll at 50 rows a page",
     url: "https://github.com/example/adstukar/releases/tag/v0.2.0",
     prerelease: false,
     publishedAt: iso(20),
@@ -373,7 +374,21 @@ function designWrite(route: string, method: string, body?: unknown): unknown {
     if (!target) return undefined;
 
     if (method === "PATCH" && seg.length === 2) {
-      return replaceProduct({ ...target, ...(patch as Partial<Product>), updatedAt: nowIso() });
+      const input = patch as Partial<Product>;
+      const next: Product = { ...target, ...input, updatedAt: nowIso() };
+      // Mirror updateProduct in the API: a new domain needs new proof of
+      // ownership and a fresh review. Without this the fixture reports success
+      // while the listing never moves the ad to its new campaign.
+      if (input.url) {
+        const domain = domainOf(input.url);
+        if (domain && domain !== target.domain) {
+          next.domain = domain;
+          next.verifiedAt = null;
+          next.status = "pending";
+          next.rejectionReason = null;
+        }
+      }
+      return replaceProduct(next);
     }
     if (method === "DELETE" && seg.length === 2) {
       products = products.filter((row) => row.id !== target.id);

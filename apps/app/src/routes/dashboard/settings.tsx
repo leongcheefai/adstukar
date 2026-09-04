@@ -1,12 +1,10 @@
 import { CaretRight } from "@phosphor-icons/react";
 import { cn } from "@repo/ui";
 import { useSearchParams } from "react-router";
-import { AppearanceSection } from "../../components/settings/appearance-section";
 import { DangerSection } from "../../components/settings/danger-section";
 import { ModerationSection } from "../../components/settings/moderation-section";
 import { ProfileSection } from "../../components/settings/profile-section";
 import { ReleasesSection } from "../../components/settings/releases-section";
-import { SecuritySection } from "../../components/settings/security-section";
 import { SessionsSection } from "../../components/settings/sessions-section";
 import { useSession } from "../../lib/auth";
 
@@ -22,22 +20,13 @@ interface SettingsSection {
 
 const SECTIONS: SettingsSection[] = [
   {
+    // The id stays "profile" so saved ?tab=profile links keep working. An
+    // unknown tab — ?tab=security from an old link — falls back to this one,
+    // which is where the password lives now.
     id: "profile",
-    label: "Profile",
-    title: "Profile",
-    description: "Your display name, email address, and profile picture.",
-  },
-  {
-    id: "appearance",
-    label: "Appearance",
-    title: "Appearance",
-    description: "Choose light, dark, or follow your device setting.",
-  },
-  {
-    id: "security",
-    label: "Security",
-    title: "Security",
-    description: "Change your password and keep your account protected.",
+    label: "Account",
+    title: "Account",
+    description: "Your name, email, password, and profile picture.",
   },
   {
     id: "sessions",
@@ -60,7 +49,8 @@ const ADMIN_SECTIONS: SettingsSection[] = [
     id: "moderation",
     label: "Moderation",
     title: "Moderation",
-    description: "Products waiting for review, oldest first. Approval grants the welcome points.",
+    description:
+      "Products waiting for review, oldest first. Approval grants the welcome CapyPoints.",
     group: "Admin",
   },
   {
@@ -73,14 +63,10 @@ const ADMIN_SECTIONS: SettingsSection[] = [
 
 function SectionBody({ id }: { id: string }) {
   switch (id) {
-    case "appearance":
-      return <AppearanceSection />;
     case "moderation":
       return <ModerationSection />;
     case "releases":
       return <ReleasesSection />;
-    case "security":
-      return <SecuritySection />;
     case "sessions":
       return <SessionsSection />;
     case "danger":
@@ -156,7 +142,6 @@ export function SettingsPage() {
           >
             {active.title}
           </h2>
-          <p className="mt-1 text-sm text-muted-foreground">{active.description}</p>
         </header>
 
         <div className="mt-6 max-w-2xl">

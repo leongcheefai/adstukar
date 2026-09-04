@@ -17,6 +17,9 @@
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
+  --color-slab: var(--slab);
+  --color-slab-foreground: var(--slab-foreground);
+  --color-surface-tint: var(--surface-tint);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
@@ -70,6 +73,28 @@
   --color-text-subtle: var(--color-text-subtle);
   --color-accent-hover: var(--color-accent-hover);
 
+  /* --- Palette primitives, for the few places that need a specific step of
+         the ramp rather than a semantic role (brand slabs, code blocks, the
+         page-mock skeleton). Prefer the semantic tokens above. --- */
+  --color-brand-50: var(--brand-50);
+  --color-brand-100: var(--brand-100);
+  --color-brand-200: var(--brand-200);
+  --color-brand-300: var(--brand-300);
+  --color-brand-400: var(--brand-400);
+  --color-brand-500: var(--brand-500);
+  --color-brand-600: var(--brand-600);
+  --color-brand-700: var(--brand-700);
+  --color-brand-900: var(--brand-900);
+  --color-ink-50: var(--ink-50);
+  --color-ink-100: var(--ink-100);
+  --color-ink-200: var(--ink-200);
+  --color-ink-300: var(--ink-300);
+  --color-ink-400: var(--ink-400);
+  --color-ink-500: var(--ink-500);
+  --color-ink-700: var(--ink-700);
+  --color-ink-900: var(--ink-900);
+  --color-ink-950: var(--ink-950);
+
   /* --- Status colors --- */
   --color-success: var(--success-500);
   --color-success-bg: var(--success-100);
@@ -85,6 +110,9 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Poppins renders heavy without this, which reads as accidental boldness. */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   button:not(:disabled) {
     cursor: pointer;

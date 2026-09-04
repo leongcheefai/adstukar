@@ -6,7 +6,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./styles": "./src/styles/index.css",
-    "./styles/theme-dashboard": "./src/styles/theme-dashboard.css"
+    "./styles/theme-dashboard": "./src/styles/theme-dashboard.css",
+    "./assets/fonts/*": "./src/assets/fonts/*"
   },
   "scripts": {
     "lint": "biome check .",

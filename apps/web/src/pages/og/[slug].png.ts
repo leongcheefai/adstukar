@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 import { getCollection } from "astro:content";
 import { project } from "@repo/config/project";
 import { Resvg } from "@resvg/resvg-js";
@@ -24,23 +26,35 @@ export const getStaticPaths: GetStaticPaths = async () => {
   return [...staticPaths, ...blogPaths];
 };
 
-// Swap to fs.readFileSync('./public/fonts/Inter-Regular.woff') for offline builds
-let fontRegular: ArrayBuffer | null = null;
-let fontBold: ArrayBuffer | null = null;
+// Poppins is already vendored in @repo/ui for the site itself, so the OG card
+// uses the same faces from disk. A network fetch here made every offline build
+// fail, and it let the card drift to a different typeface than the pages it
+// represents.
+const resolveFont = (file: string) =>
+  createRequire(import.meta.url).resolve(`@repo/ui/assets/fonts/${file}`);
+const BRAND_BLUE = "#001CD8";
 
-async function getFonts(): Promise<[ArrayBuffer, ArrayBuffer]> {
-  if (fontRegular && fontBold) return [fontRegular, fontBold];
-  const base = "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest";
-  [fontRegular, fontBold] = await Promise.all([
-    fetch(`${base}/latin-400-normal.woff`).then((r) => r.arrayBuffer()),
-    fetch(`${base}/latin-700-normal.woff`).then((r) => r.arrayBuffer()),
-  ]);
+let fontRegular: Buffer | null = null;
+let fontBold: Buffer | null = null;
+
+async function getFonts(): Promise<[Buffer, Buffer]> {
+  if (!fontRegular || !fontBold) {
+    [fontRegular, fontBold] = await Promise.all([
+      readFile(resolveFont("Poppins-Regular.ttf")),
+      readFile(resolveFont("Poppins-Bold.ttf")),
+    ]);
+  }
   return [fontRegular, fontBold];
 }
 
 export const GET: APIRoute = async ({ props }) => {
   const { title, description } = props as { title: string; description: string };
   const [regular, bold] = await getFonts();
+  // The card already carries the brand as its own line, so drop the "CapyAds — "
+  // that MARKETING_PAGES prefixes onto every title.
+  const headline = title.startsWith(`${project.name} — `)
+    ? title.slice(project.name.length + 3)
+    : title;
 
   const svg = await satori(
     createElement(
@@ -52,34 +66,44 @@ export const GET: APIRoute = async ({ props }) => {
           display: "flex",
           flexDirection: "column",
           justifyContent: "flex-end",
-          padding: "64px",
-          backgroundColor: "#0a0a0a",
-          fontFamily: "Inter",
+          padding: "72px",
+          backgroundColor: BRAND_BLUE,
+          fontFamily: "Poppins",
         },
       },
       createElement(
         "p",
-        { style: { fontSize: "20px", color: "#6b7280", margin: "0 0 16px 0", fontWeight: 400 } },
+        {
+          style: {
+            fontSize: "22px",
+            color: "#CBDAF9",
+            margin: "0 0 20px 0",
+            fontWeight: 700,
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+          },
+        },
         project.name,
       ),
       createElement(
         "h1",
         {
           style: {
-            fontSize: title.length > 40 ? "44px" : "56px",
+            fontSize: headline.length > 40 ? "48px" : "60px",
             fontWeight: 700,
             color: "#ffffff",
             margin: "0",
-            lineHeight: 1.1,
+            lineHeight: 1.05,
+            letterSpacing: "-0.03em",
           },
         },
-        title,
+        headline,
       ),
       description
         ? createElement(
             "p",
             {
-              style: { fontSize: "22px", color: "#9ca3af", margin: "20px 0 0 0", fontWeight: 400 },
+              style: { fontSize: "22px", color: "#CBDAF9", margin: "22px 0 0 0", fontWeight: 400 },
             },
             description,
           )
@@ -89,8 +113,8 @@ export const GET: APIRoute = async ({ props }) => {
       width: 1200,
       height: 630,
       fonts: [
-        { name: "Inter", data: regular, weight: 400, style: "normal" },
-        { name: "Inter", data: bold, weight: 700, style: "normal" },
+        { name: "Poppins", data: regular, weight: 400, style: "normal" },
+        { name: "Poppins", data: bold, weight: 700, style: "normal" },
       ],
     },
   );

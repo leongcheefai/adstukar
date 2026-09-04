@@ -1,4 +1,4 @@
-import { BookOpen } from "@phosphor-icons/react";
+import { Coins } from "@phosphor-icons/react";
 import type { LedgerEntry, LedgerReason, LedgerState } from "@repo/contracts/types";
 import {
   Badge,
@@ -18,6 +18,7 @@ import {
 } from "@repo/ui";
 import { useState } from "react";
 import { LedgerRow } from "../../components/ledger/ledger-row";
+import { PointsSummary } from "../../components/ledger/points-summary";
 import { useLedger } from "../../lib/ledger";
 
 const REASONS: { value: LedgerReason | "all"; label: string }[] = [
@@ -46,51 +47,51 @@ export function LedgerPage() {
   const items = query.data?.pages.flatMap((p) => p.items) ?? [];
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Ledger</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Every point movement. Balances are always the sum of this list.
-          </p>
-        </div>
+    <div className="space-y-4">
+      <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
+        CapyPoints
+        <Coins size={24} weight="fill" aria-hidden="true" className="text-primary" />
+      </h1>
 
-        {/* The visible value names the filter, so no separate label is needed. */}
-        <div className="flex shrink-0 flex-wrap items-center gap-2">
-          <Select value={reason} onValueChange={(v) => setReason(v as LedgerReason | "all")}>
-            <SelectTrigger className="w-40" aria-label="Filter by reason">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {REASONS.map((r) => (
-                <SelectItem key={r.value} value={r.value}>
-                  {r.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={state} onValueChange={(v) => setState(v as LedgerState | "all")}>
-            <SelectTrigger className="w-40" aria-label="Filter by state">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {STATES.map((s) => (
-                <SelectItem key={s.value} value={s.value}>
-                  {s.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+      <PointsSummary />
+
+      {/* On the list, not by the title: these change what the table below shows,
+          and nothing above it. The visible value names each filter, so neither
+          needs a separate label. */}
+      <div className="flex flex-wrap items-center gap-2">
+        <Select value={reason} onValueChange={(v) => setReason(v as LedgerReason | "all")}>
+          <SelectTrigger className="w-40" aria-label="Filter by reason">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {REASONS.map((r) => (
+              <SelectItem key={r.value} value={r.value}>
+                {r.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={state} onValueChange={(v) => setState(v as LedgerState | "all")}>
+          <SelectTrigger className="w-40" aria-label="Filter by state">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {STATES.map((s) => (
+              <SelectItem key={s.value} value={s.value}>
+                {s.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {query.isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
 
       {!query.isLoading && items.length === 0 && (
         <EmptyState
-          icon={<BookOpen />}
-          title="No entries"
-          description="Points appear here once a product is approved or a placement serves."
+          icon={<Coins />}
+          title="No CapyPoints yet"
+          description="CapyPoints appear here once a product is approved or a placement serves."
         />
       )}
 
@@ -102,7 +103,7 @@ export function LedgerPage() {
                 <TableHead>When</TableHead>
                 <TableHead>Reason</TableHead>
                 <TableHead>State</TableHead>
-                <TableHead className="text-right">Points</TableHead>
+                <TableHead>CapyPoints</TableHead>
                 <TableHead>Ref</TableHead>
               </TableRow>
             </TableHeader>

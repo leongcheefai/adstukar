@@ -1,13 +1,13 @@
 import { project } from "@repo/config/project";
-import { Footer as UIFooter } from "@repo/ui";
-import { NewsletterForm } from "./NewsletterForm";
+import { Logo, Footer as UIFooter } from "@repo/ui";
 
 const groups = [
   {
     title: "Product",
     links: [
       { label: "How it works", href: "/#how-it-works" },
-      { label: "Points economy", href: "/#points" },
+      { label: "Who earns", href: "/#where" },
+      { label: "Credits", href: "/#credits" },
       { label: "Blog", href: "/blog" },
     ],
   },
@@ -24,7 +24,6 @@ const groups = [
     links: [
       { label: "TODO: Docs", href: "/docs" },
       { label: "RSS", href: "/rss.xml" },
-      { label: "Releases", href: "/releases" },
     ],
   },
   {
@@ -46,9 +45,9 @@ export default function Footer() {
         name: project.name,
         tagline: project.tagline,
         href: "/",
+        logo: <Logo size={24} />,
       }}
       groups={groups}
-      newsletter={<NewsletterForm />}
     />
   );
 }

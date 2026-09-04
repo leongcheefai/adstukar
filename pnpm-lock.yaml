@@ -213,9 +213,6 @@ importers:
       '@astrojs/sitemap':
         specifier: ^3.0.0
         version: 3.7.2
-      '@octokit/rest':
-        specifier: ^22.0.1
-        version: 22.0.1
       '@resvg/resvg-js':
         specifier: ^2.6.2
         version: 2.6.2

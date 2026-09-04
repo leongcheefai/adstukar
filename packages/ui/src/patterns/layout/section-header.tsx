@@ -21,14 +21,17 @@ export function SectionHeader({
   return (
     <div className={cn("mx-auto max-w-2xl", isCenter && "text-center", className)}>
       {eyebrow && (
-        <p className="text-sm font-semibold uppercase tracking-widest text-primary">{eyebrow}</p>
+        <p className="text-sm font-medium uppercase tracking-widest text-primary">{eyebrow}</p>
       )}
       <Heading
-        className={cn("mt-2 text-3xl font-bold tracking-tight sm:text-4xl", eyebrow && "mt-3")}
+        className={cn(
+          "mt-2 text-balance text-3xl font-medium tracking-tight sm:text-4xl",
+          eyebrow && "mt-3",
+        )}
       >
         {headline}
       </Heading>
-      {lede && <p className="mt-4 text-lg text-muted-foreground">{lede}</p>}
+      {lede && <p className="mt-4 text-pretty text-lg text-muted-foreground">{lede}</p>}
     </div>
   );
 }

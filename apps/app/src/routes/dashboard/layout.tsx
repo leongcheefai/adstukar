@@ -1,6 +1,6 @@
-import { BookOpen, Code, Package, Gear as Settings, SquaresFour } from "@phosphor-icons/react";
+import { Code, Coins, Package, Gear as Settings, SquaresFour } from "@phosphor-icons/react";
 import { project } from "@repo/config/project";
-import { DashboardShell, DashboardTopbar, type NavItem } from "@repo/ui";
+import { DashboardShell, DashboardTopbar, Logo, type NavItem } from "@repo/ui";
 import { Link, Outlet, useLocation, useNavigate } from "react-router";
 import { DashboardSidebarFooter } from "../../components/dashboard-sidebar-footer";
 import { ProtectedRoute } from "../../components/protected-route";
@@ -28,10 +28,12 @@ function navItems(pathname: string): NavItem[] {
       icon: <Code size={16} />,
     },
     {
-      label: "Ledger",
+      label: "CapyPoints",
+      // The path stays /ledger. It is the append-only record either way, and a
+      // rename here would break every link people already saved.
       href: "/dashboard/ledger",
       active: pathname === "/dashboard/ledger",
-      icon: <BookOpen size={16} />,
+      icon: <Coins size={16} />,
     },
     {
       label: "Settings",
@@ -63,6 +65,16 @@ function DashboardContent() {
     );
   }
 
+  /* The same mark the browser tab carries. Logo draws in currentColor and
+     knocks the capybara out of the square, so the sidebar shows through it and
+     it needs no second colour in dark mode. */
+  const brand = (
+    <span className="inline-flex items-center gap-2">
+      <Logo variant="mark" size={22} className="text-primary" />
+      {project.name}
+    </span>
+  );
+
   const sidebarFooter = (
     <DashboardSidebarFooter
       userName={session?.user.name}
@@ -74,13 +86,13 @@ function DashboardContent() {
 
   return (
     <DashboardShell
-      brand={project.name}
+      brand={brand}
       navItems={items}
       renderNavLink={renderNavLink}
       sidebarFooter={sidebarFooter}
       topbar={
         <DashboardTopbar
-          brand={project.name}
+          brand={brand}
           navItems={items}
           renderNavLink={renderNavLink}
           sidebarFooter={sidebarFooter}

@@ -107,7 +107,7 @@ export function ModerationSection() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
 
       {queue && queue.length === 0 && (

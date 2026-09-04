@@ -1,7 +1,7 @@
 import type { LedgerEntry, LedgerReason, LedgerState } from "@repo/contracts/types";
 import { Badge, TableCell, TableRow } from "@repo/ui";
 
-/** Shared by the Ledger page and the Overview summary, so the two cannot drift. */
+/** Shared by the CapyPoints page and the Overview summary, so the two cannot drift. */
 export const REASON_TEXT: Record<LedgerReason, string> = {
   earn: "Impression shown on your site",
   spend: "Your card shown elsewhere",
@@ -16,6 +16,8 @@ export function stateVariant(state: LedgerState): "success" | "warning" | "neutr
   return "neutral";
 }
 
+/** No coin here. The column header names the unit once; a coin on every row
+    repeats it a hundred times and turns the column into texture. */
 export function LedgerAmount({ delta }: { delta: number }) {
   return (
     <span
@@ -42,7 +44,7 @@ export function LedgerRow({ entry, compact = false }: { entry: LedgerEntry; comp
       <TableCell>
         <Badge variant={stateVariant(entry.state)}>{entry.state}</Badge>
       </TableCell>
-      <TableCell className="text-right">
+      <TableCell>
         <LedgerAmount delta={entry.delta} />
       </TableCell>
       {!compact && (

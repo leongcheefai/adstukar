@@ -2,8 +2,8 @@
    Dashboard theme — shadcn preset b27GdjG4 (neutral)
 
    Scope: apps/app only. Import it AFTER "@repo/ui/styles" so these values win.
-   apps/web does not import this file, so the landing page keeps the Voltage
-   teal theme from tokens.css.
+   apps/web does not import this file, so the landing page keeps the CapyAds
+   blue brand theme from tokens.css.
 
    This file overrides the shadcn semantic layer only. Every other Voltage
    token — type scale, spacing, elevation, motion, icon sizes — still comes
@@ -31,8 +31,12 @@
   --card-foreground: var(--neutral-950);
   --popover: var(--neutral-0);
   --popover-foreground: var(--neutral-950);
-  --primary: var(--neutral-900);
-  --primary-foreground: var(--neutral-50);
+  /* The accent is the only hue in this theme, and it is the same blue the
+     landing page uses: --brand-500 in tokens.css (#001CD8). Every other token
+     below stays neutral, so the blue reads as the action colour and nothing
+     competes with it. */
+  --primary: var(--brand-500);
+  --primary-foreground: var(--white);
   --secondary: var(--neutral-100);
   --secondary-foreground: var(--neutral-900);
   --muted: var(--neutral-100);
@@ -44,31 +48,51 @@
   --destructive-foreground: var(--neutral-50);
   --border: var(--neutral-200);
   --input: var(--neutral-200);
-  --ring: var(--neutral-400);
-  --radius: 0.625rem;
+  --ring: var(--brand-500);
+  /* The base the preset multiplies. Nothing reads it directly any more — the
+     scale below sets each step by hand — so it is kept only at the control
+     radius, for any shadcn component added later that reaches for it. */
+  --radius: 6px;
 
-  /* --- Chart tokens --- */
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: var(--neutral-500);
-  --chart-3: var(--neutral-600);
-  --chart-4: var(--neutral-700);
-  --chart-5: var(--neutral-800);
+  /* --- Chart tokens ---
+     Ordered by prominence, not by the preset's ramp. --chart-1 draws the series
+     that matters most, so it carries the brand blue and every other series stays
+     grey. A line chart strokes 2px, which needs about 3:1 against the card to
+     stay readable; --brand-500 sits at L 0.41, well past that on white. The
+     .dark block keeps the same order and inverts the greys. */
+  --chart-1: var(--brand-500);
+  --chart-2: oklch(0.45 0 0);
+  --chart-3: oklch(0.62 0 0);
+  --chart-4: oklch(0.72 0 0);
+  --chart-5: oklch(0.82 0 0);
 
   /* --- Sidebar tokens --- */
   --sidebar: var(--neutral-50);
   --sidebar-foreground: var(--neutral-950);
-  --sidebar-primary: var(--neutral-900);
-  --sidebar-primary-foreground: var(--neutral-50);
+  --sidebar-primary: var(--brand-500);
+  --sidebar-primary-foreground: var(--white);
   --sidebar-accent: var(--neutral-100);
   --sidebar-accent-foreground: var(--neutral-900);
   --sidebar-border: var(--neutral-200);
-  --sidebar-ring: var(--neutral-400);
+  --sidebar-ring: var(--brand-500);
 
-  /* --- Radius scale (preset derives every step from --radius) --- */
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
+  /* --- Radius scale ---
+     Set by hand, not derived. The preset scales every step from --radius, which
+     forces xl above lg; this dashboard wants the opposite — near-square panels
+     with slightly softer controls inside them — so the multipliers are gone.
+
+       sm  4px  select items, skeleton bars
+       md  4px  select trigger and menu, sidebar nav links, badge, kbd
+       lg  6px  button, input
+       xl  4px  card, dialog, empty state, the table frame
+
+     Controls are the only round thing on the page. That is deliberate: a 6px
+     button inside a 4px card reads as a control sitting on a panel, rather than
+     as one more box. */
+  --radius-sm: 4px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+  --radius-xl: 4px;
   /* Not in the preset; tokens.css defines it and index.css maps it. */
   --radius-full: 9999px;
 
@@ -82,14 +106,15 @@
   --color-text: var(--neutral-950);
   --color-text-muted: var(--neutral-500);
   --color-text-subtle: var(--neutral-400);
-  --color-accent: var(--neutral-900);
-  --color-accent-hover: var(--neutral-800);
-  --focus-ring: 0 0 0 2px oklch(0.708 0 0 / 40%);
+  --color-accent: var(--brand-500);
+  --color-accent-hover: var(--brand-600);
+  --focus-ring: 0 0 0 2px oklch(0.4141 0.2659 264.2 / 0.4);
 
-  /* The one colour in a greyscale theme: a positive check has to read as
-     positive, and neutral cannot carry that. Value from the shadcn blue ramp. */
-  --verified: oklch(0.546 0.245 262.881);
-  --verified-foreground: oklch(0.97 0.014 254.604);
+  /* Green, not blue. A positive check has to read as positive, and it must not
+     be mistaken for the accent: --primary is blue now, so a blue tick would say
+     "action" where it means "this passed". */
+  --verified: oklch(0.55 0.14 163.2);
+  --verified-foreground: var(--white);
 
   /* --- Font family ---
      Geist comes from the Google Fonts links in apps/app/index.html.
@@ -120,8 +145,11 @@
   --card-foreground: var(--neutral-50);
   --popover: var(--neutral-900);
   --popover-foreground: var(--neutral-50);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: var(--neutral-900);
+  /* --brand-500 is too dark to sit on a near-black card, so dark mode steps up
+     the ramp the way tokens.css does. White on --brand-400 is only 3.5:1, so the
+     foreground goes dark instead. */
+  --primary: var(--brand-400);
+  --primary-foreground: var(--neutral-950);
   --secondary: var(--neutral-800);
   --secondary-foreground: var(--neutral-50);
   --muted: var(--neutral-800);
@@ -132,22 +160,27 @@
   --destructive-foreground: var(--neutral-50);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: var(--neutral-500);
+  --ring: var(--brand-400);
 
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: var(--neutral-500);
-  --chart-3: var(--neutral-600);
-  --chart-4: var(--neutral-700);
-  --chart-5: var(--neutral-800);
+  /* Same order, inverted: the card is oklch(0.205) here, so prominence means
+     lighter. The preset shipped the light values unchanged, which made the
+     first three series darker than the surface they sit on. --chart-1 keeps the
+     brand blue; its chroma carries the lead series even though the greys below
+     it sit higher on the lightness ramp. */
+  --chart-1: var(--brand-400);
+  --chart-2: oklch(0.78 0 0);
+  --chart-3: oklch(0.6 0 0);
+  --chart-4: oklch(0.5 0 0);
+  --chart-5: oklch(0.42 0 0);
 
   --sidebar: var(--neutral-900);
   --sidebar-foreground: var(--neutral-50);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: var(--neutral-50);
+  --sidebar-primary: var(--brand-400);
+  --sidebar-primary-foreground: var(--neutral-950);
   --sidebar-accent: var(--neutral-800);
   --sidebar-accent-foreground: var(--neutral-50);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: var(--neutral-500);
+  --sidebar-ring: var(--brand-400);
 
   --color-bg: var(--neutral-950);
   --color-bg-surface: var(--neutral-900);
@@ -158,12 +191,29 @@
   --color-text: var(--neutral-50);
   --color-text-muted: var(--neutral-400);
   --color-text-subtle: var(--neutral-500);
-  --color-accent: oklch(0.922 0 0);
-  --color-accent-hover: var(--neutral-0);
-  --focus-ring: 0 0 0 2px oklch(0.556 0 0 / 50%);
+  --color-accent: var(--brand-400);
+  --color-accent-hover: var(--brand-300);
+  --focus-ring: 0 0 0 2px oklch(0.64 0.17 264.2 / 0.5);
 
-  --verified: oklch(0.623 0.214 259.815);
-  --verified-foreground: oklch(0.97 0.014 254.604);
+  --verified: oklch(0.696 0.146 163.2);
+  --verified-foreground: var(--neutral-950);
+}
+
+/* =============================================================================
+   Base rendering
+
+   Geist is a grid-fitted face and the dashboard sets it on light surfaces at
+   13-14px. The default subpixel smoothing thickens those stems on macOS, which
+   reads as a heavier weight than the one asked for. Greyscale smoothing keeps
+   the drawn weight.
+
+   The rule is unlayered, so it outranks the @layer base body rule in index.css.
+   apps/web never imports this file, so the landing page keeps its own rendering.
+   ============================================================================= */
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* =============================================================================
@@ -192,6 +242,35 @@
 [data-slot="textarea"][aria-invalid="true"]:focus-visible,
 [data-slot="select-trigger"][aria-invalid="true"]:focus-visible {
   border-color: var(--destructive);
+}
+
+/* =============================================================================
+   Labels and badges
+
+   Small, monospaced and upper-cased, so a label reads as a tag on a field
+   rather than as a sentence about it. The mono face and the caps do the work
+   that size and weight used to, which is why the size can drop this far.
+
+   Badges are in the same rule because a status chip is a label: "Pending
+   review" names the row it sits on, exactly as "Email" names the field.
+
+   The one exception is a badge holding text the member typed — an excluded
+   term. Upper-casing that would show them something other than what they
+   entered, so those carry data-usertext and keep the sans face.
+
+   Keyed off data-slot, so no component file changes and apps/web keeps the
+   sans, sentence-case labels its marketing pages want. Unlayered, so it
+   outranks the Tailwind utilities the primitives carry.
+   ============================================================================= */
+
+[data-slot="label"],
+[data-slot="badge"]:not([data-usertext]) {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 /* =============================================================================
@@ -255,6 +334,9 @@
   line-height: var(--lh-display-lg);
   letter-spacing: var(--tr-display-lg);
   font-weight: 500;
+  /* A long name pushes the line to two; balance keeps the second line from
+     holding one orphan word. */
+  text-wrap: balance;
 }
 
 @media (width >= 640px) {

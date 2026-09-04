@@ -1,7 +1,7 @@
 import type * as React from "react";
 import { cn } from "../lib/utils";
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle } from "../primitives/sheet";
-import type { NavItem, RenderNavLink } from "./dashboard-shell";
+import { type NavItem, type RenderNavLink, handleNavArrowKeys } from "./dashboard-shell";
 
 export interface MobileNavDrawerProps {
   brand: React.ReactNode;
@@ -28,7 +28,7 @@ export function MobileNavDrawer({
           <SheetTitle className="flex-1 font-semibold tracking-tight">{brand}</SheetTitle>
         </SheetHeader>
 
-        <nav className="flex-1 overflow-y-auto px-3 py-4">
+        <nav className="flex-1 overflow-y-auto px-3 py-4" onKeyDown={handleNavArrowKeys}>
           <ul className="space-y-0.5">
             {navItems.map((item) => {
               if (item.children) {

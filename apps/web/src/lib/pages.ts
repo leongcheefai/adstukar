@@ -16,7 +16,7 @@ export const MARKETING_PAGES: MarketingPage[] = [
     path: "/",
     title: `${project.name} — ${project.tagline}`,
     description:
-      "A cross-promotion ad exchange for indie hackers. Show one small sponsored card on your site and earn points to show your product on other members' sites. No money moves.",
+      "Show one small sponsored card where your audience already looks — a site, a blog, a stream, or a screen in your shop — and earn credits you can cash out.",
   },
   {
     slug: "blog",
@@ -25,16 +25,10 @@ export const MARKETING_PAGES: MarketingPage[] = [
     description: `Insights, updates, and tutorials from the ${project.name} team.`,
   },
   {
-    slug: "releases",
-    path: "/releases",
-    title: `Releases — ${project.name}`,
-    description: `What's new in ${project.name}. Release notes, improvements, and changelog.`,
-  },
-  {
     slug: "faq",
     path: "/faq",
     title: `FAQ — ${project.name}`,
-    description: `How ${project.name} points, verified impressions, moderation, and the embed snippet work.`,
+    description: `How ${project.name} credits, verified views, cash out, moderation, and the embed snippet work.`,
   },
   {
     slug: "terms",

@@ -16,7 +16,7 @@ const posts = (await getCollection("blog"))
   ogSlug={page.slug}
 >
   <div class="mx-auto max-w-3xl px-6 py-24 sm:py-32">
-    <h1 class="text-4xl font-bold tracking-tight">Blog</h1>
+    <h1 class="text-4xl font-medium tracking-tight">Blog</h1>
     <p class="mt-4 text-lg text-muted-foreground">
       TODO: Brief intro to your blog — what you write about and who it's for.
     </p>
@@ -53,7 +53,7 @@ const posts = (await getCollection("blog"))
                 </>
               )}
             </div>
-            <h2 class="mt-2 text-2xl font-bold tracking-tight">
+            <h2 class="mt-2 text-2xl font-medium tracking-tight">
               <a href={`/blog/${post.id}`} class="transition-colors hover:text-primary">
                 {post.data.title}
               </a>

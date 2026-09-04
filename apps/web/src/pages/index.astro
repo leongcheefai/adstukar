@@ -9,7 +9,7 @@ import { faqSchema, orgSchema, websiteSchema } from "../lib/structured-data";
 const page = requirePage("home");
 const site = Astro.site ?? new URL(project.siteUrl);
 
-// The same five questions the landing page renders, so the JSON-LD cannot drift from the copy.
+// The same questions the landing page renders, so the JSON-LD cannot drift from the copy.
 const faqItems = LANDING_FAQ;
 
 const jsonLd = [orgSchema(site), websiteSchema(site), faqSchema(faqItems)];
