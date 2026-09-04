@@ -35,8 +35,10 @@ import { domainOf } from "./url";
  * output is therefore not proof of what production contains. `pnpm launch:check`
  * rejects a production env that sets NODE_ENV to anything but `production`.
  *
- * Keep the fixture values obviously fake. Realistic tokens or keys trigger secret
- * scanners on every pull request.
+ * Credential fields stay empty strings. `verificationToken` and `apiKey` carry no
+ * fixture value, because any literal there looks like a leaked secret to a scanner.
+ * The verify panel and the placement snippet therefore render a blank key in design
+ * mode. That is expected. Start the API to see a real one. Never put a value back.
  */
 
 const STORAGE_KEY = "adstukar:design-mode";
@@ -100,7 +102,7 @@ let products: Product[] = [
     logoUrl: null,
     status: "approved",
     rejectionReason: null,
-    verificationToken: "demo-verify-token-1",
+    verificationToken: "",
     verifiedAt: iso(28),
     advertise: true,
     showAds: true,
@@ -117,7 +119,7 @@ let products: Product[] = [
     logoUrl: null,
     status: "approved",
     rejectionReason: null,
-    verificationToken: "demo-verify-token-2",
+    verificationToken: "",
     verifiedAt: iso(20),
     advertise: true,
     showAds: true,
@@ -133,7 +135,7 @@ let products: Product[] = [
     logoUrl: null,
     status: "pending",
     rejectionReason: null,
-    verificationToken: "demo-verify-token-3",
+    verificationToken: "",
     verifiedAt: iso(4),
     advertise: false,
     showAds: true,
@@ -149,7 +151,7 @@ let products: Product[] = [
     logoUrl: null,
     status: "approved",
     rejectionReason: null,
-    verificationToken: "demo-verify-token-4",
+    verificationToken: "",
     verifiedAt: iso(12),
     advertise: true,
     showAds: true,
@@ -165,7 +167,7 @@ let products: Product[] = [
     logoUrl: null,
     status: "pending",
     rejectionReason: null,
-    verificationToken: "demo-verify-token-5",
+    verificationToken: "",
     verifiedAt: null,
     advertise: true,
     showAds: false,
@@ -181,7 +183,7 @@ let products: Product[] = [
     logoUrl: null,
     status: "rejected",
     rejectionReason: "The landing page did not carry the verification token.",
-    verificationToken: "demo-verify-token-6",
+    verificationToken: "",
     verifiedAt: null,
     advertise: false,
     showAds: true,
@@ -195,7 +197,7 @@ let placements: PlacementWithTerms[] = [
     placement: {
       id: "plc_launchkit_docs",
       productId: "prd_launchkit",
-      apiKey: "pk_demo_launchkit_docs",
+      apiKey: "",
       size: "small",
       houseAdPct: 10,
       createdAt: iso(27),
@@ -206,7 +208,7 @@ let placements: PlacementWithTerms[] = [
     placement: {
       id: "plc_launchkit_blog",
       productId: "prd_launchkit",
-      apiKey: "pk_demo_launchkit_blog",
+      apiKey: "",
       size: "medium",
       houseAdPct: 0,
       createdAt: iso(9),
@@ -323,10 +325,6 @@ function fakeId(prefix: string): string {
   return `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
 }
 
-function fakeApiKey(): string {
-  return `pk_demo_${Math.random().toString(36).slice(2, 10)}${Math.random().toString(36).slice(2, 10)}`;
-}
-
 function hostOf(url: string): string {
   try {
     return new URL(url).hostname.replace(/^www\./, "");
@@ -368,7 +366,7 @@ function designWrite(route: string, method: string, body?: unknown): unknown {
       logoUrl: input.logoUrl ?? null,
       status: "pending",
       rejectionReason: null,
-      verificationToken: `demo-verify-token-${fakeId("").slice(1)}`,
+      verificationToken: "",
       verifiedAt: null,
       advertise: true,
       showAds: true,
@@ -423,7 +421,7 @@ function designWrite(route: string, method: string, body?: unknown): unknown {
       placement: {
         id: fakeId("plc"),
         productId: input.productId,
-        apiKey: fakeApiKey(),
+        apiKey: "",
         size: input.size ?? "small",
         houseAdPct: input.houseAdPct ?? 0,
         createdAt: nowIso(),
@@ -453,7 +451,7 @@ function designWrite(route: string, method: string, body?: unknown): unknown {
     if (method === "POST" && seg[2] === "rotate-key") {
       return replacePlacement({
         ...target,
-        placement: { ...target.placement, apiKey: fakeApiKey() },
+        placement: { ...target.placement, apiKey: "" },
       });
     }
     if (method === "PUT" && seg[2] === "excluded-terms") {

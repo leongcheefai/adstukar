@@ -49,3 +49,4 @@ Open `http://localhost:3000/dashboard?design=1`. Design mode fakes an admin sess
 - Icons come from `@phosphor-icons/react`, not lucide. Phosphor takes `weight` (`bold`, `fill`, …) instead of `strokeWidth`
 - The `/_dev/components` route only exists in dev; it is absent from production builds
 - Design mode data is fake. The badge in the top-right nav is the only signal, so check it before trusting a number on screen
+- Design mode leaves `verificationToken` and `apiKey` empty on purpose, so no fixture value can look like a leaked secret. The verify panel and the placement snippet show a blank key. Start the API to see a real one
