@@ -1,4 +1,11 @@
-import { Copy, CursorClick, DotsThreeVertical, PencilSimple, Trash } from "@phosphor-icons/react";
+import {
+  Copy,
+  CursorClick,
+  DotsThreeVertical,
+  Eye,
+  PencilSimple,
+  Trash,
+} from "@phosphor-icons/react";
 import type { Product } from "@repo/contracts/types";
 import {
   AlertDialog,
@@ -26,18 +33,22 @@ import { useDeleteProduct, useUpdateProduct } from "../../lib/products";
 import { StatusBadge } from "../status-badge";
 
 /**
- * PLACEHOLDER. `Product` carries no click data, so there is no real per-ad
- * count to show. This derives a stable figure from the id purely so the tile
- * can be laid out — the same ad always reads the same, and two ads differ, but
- * none of it is counted.
+ * PLACEHOLDER. `Product` carries no impression or click data, so there is no
+ * real per-ad figure to show. These derive stable numbers from the id purely so
+ * the tile can be laid out — the same ad always reads the same, and two ads
+ * differ, but none of it is counted.
  *
- * Replace the call site with a real field the moment the API returns one; do
- * not build anything on this number.
+ * Replace both call sites with real fields the moment the API returns them; do
+ * not build anything on these numbers.
  */
-function placeholderClicks(productId: string): number {
+function placeholderCounts(productId: string): { impressions: number; clicks: number } {
   let hash = 0;
   for (const char of productId) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
-  return hash % 2400;
+  const clicks = hash % 2400;
+  // Impressions are derived from clicks, never independently: two free numbers
+  // would sooner or later show more clicks than views.
+  const perClick = 24 + ((hash >>> 8) % 40);
+  return { impressions: clicks * perClick + (hash % 97), clicks };
 }
 
 /**
@@ -48,10 +59,17 @@ export function ProductTile({
   product,
   onEdit,
   onDuplicate,
+  onDeleted,
+  canDuplicate,
 }: {
   product: Product;
   onEdit: (product: Product) => void;
   onDuplicate: (product: Product) => void;
+  /** Runs once the API has dropped the ad. The campaign needs it: the ad it
+      loses may be the last one holding the campaign on screen. */
+  onDeleted: (product: Product) => void;
+  /** False once the campaign holds every ad it may. A copy would be the fifth. */
+  canDuplicate: boolean;
 }) {
   const update = useUpdateProduct();
   const remove = useDeleteProduct();
@@ -67,6 +85,7 @@ export function ProductTile({
   }
 
   const rejected = product.status === "rejected" && product.rejectionReason;
+  const counts = placeholderCounts(product.id);
 
   return (
     <div className="flex min-h-56 flex-col gap-4 border-r border-b p-5">
@@ -100,9 +119,9 @@ export function ProductTile({
               <PencilSimple size={14} className="mr-2" />
               Edit
             </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => onDuplicate(product)}>
+            <DropdownMenuItem disabled={!canDuplicate} onSelect={() => onDuplicate(product)}>
               <Copy size={14} className="mr-2" />
-              Duplicate
+              {canDuplicate ? "Duplicate" : "Duplicate (campaign full)"}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             {/* variant, not hand-written classes: it is what turns the trash icon
@@ -133,42 +152,60 @@ export function ProductTile({
         </div>
       </div>
 
-      {/* mt-auto pins the switch to the bottom rule whatever the tagline does,
-          so the control sits on one line across the whole grid. The state word
-          is beside it because a lone switch does not say what it toggles. */}
-      <div className="mt-auto flex items-center gap-2">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Switch
-              checked={product.advertise}
-              onCheckedChange={toggleCampaign}
-              disabled={update.isPending}
-              aria-label={`Campaign for ${product.name}`}
-            />
-          </TooltipTrigger>
-          <TooltipContent>
-            {product.advertise
-              ? "Running. This ad shows on other members' sites."
-              : "Paused. This ad shows nowhere."}
-          </TooltipContent>
-        </Tooltip>
-        <span className="text-sm text-muted-foreground">
-          {product.advertise ? "Running" : "Paused"}
-        </span>
-
-        {/* Right rule, so the rate lands on one line across the whole grid. A
-            paused ad shows none: it has had no chance to be clicked. */}
+      {/* mt-auto pins the block to the bottom rule whatever the tagline does,
+          so the controls sit on one line across the whole grid. */}
+      <div className="mt-auto space-y-2">
+        {/* Impressions ride their own line, right-aligned with the click count
+            below, so the two figures read as one column. A paused ad shows
+            neither: it has had no chance to be seen. */}
         {product.advertise && (
+          <div className="flex justify-end">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="flex shrink-0 cursor-help items-center gap-1.5 text-sm text-muted-foreground tabular-nums">
+                  <Eye size={15} />
+                  {counts.impressions.toLocaleString()}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>Impressions of this ad</TooltipContent>
+            </Tooltip>
+          </div>
+        )}
+
+        {/* The state word is beside the switch because a lone switch does not
+            say what it toggles. */}
+        <div className="flex items-center gap-2">
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className="ml-auto flex shrink-0 cursor-help items-center gap-1.5 text-sm text-muted-foreground tabular-nums">
-                <CursorClick size={15} />
-                {placeholderClicks(product.id).toLocaleString()}
-              </span>
+              <Switch
+                checked={product.advertise}
+                onCheckedChange={toggleCampaign}
+                disabled={update.isPending}
+                aria-label={`Campaign for ${product.name}`}
+              />
             </TooltipTrigger>
-            <TooltipContent>Clicks on this ad</TooltipContent>
+            <TooltipContent>
+              {product.advertise
+                ? "Running. This ad shows on other members' sites."
+                : "Paused. This ad shows nowhere."}
+            </TooltipContent>
           </Tooltip>
-        )}
+          <span className="text-sm text-muted-foreground">
+            {product.advertise ? "Running" : "Paused"}
+          </span>
+
+          {product.advertise && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="ml-auto flex shrink-0 cursor-help items-center gap-1.5 text-sm text-muted-foreground tabular-nums">
+                  <CursorClick size={15} />
+                  {counts.clicks.toLocaleString()}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>Clicks on this ad</TooltipContent>
+            </Tooltip>
+          )}
+        </div>
       </div>
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
@@ -185,7 +222,10 @@ export function ProductTile({
               variant="destructive"
               onClick={() =>
                 remove.mutate(product.id, {
-                  onSuccess: () => toast.success("Product deleted"),
+                  onSuccess: () => {
+                    onDeleted(product);
+                    toast.success("Product deleted");
+                  },
                   onError: (err) => toast.error(err.message),
                 })
               }

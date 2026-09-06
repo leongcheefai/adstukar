@@ -14,6 +14,9 @@ const buttonVariants = cva(
         outline:
           "border border-border bg-background hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
         secondary: "bg-secondary text-secondary-foreground hover:bg-muted",
+        // Ink, not brand. For the one commit action on a step where blue would
+        // compete with the brand marks around it. Inverts with the theme.
+        inverted: "bg-foreground text-background hover:bg-foreground/90",
         ghost: "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
         link: "text-primary underline-offset-4 hover:underline",
       },

@@ -1,9 +1,13 @@
 import { Coin } from "@phosphor-icons/react";
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui";
+import { Button, Card, CardContent } from "@repo/ui";
 import { Link } from "react-router";
-import { ImpressionsChart } from "../../components/overview/impressions-chart";
+import {
+  ImpressionsCard,
+  ImpressionsCardSkeleton,
+} from "../../components/overview/impressions-card";
+import { PayoutHistory, PayoutHistorySkeleton } from "../../components/overview/payout-history";
 import { RecentLedger } from "../../components/overview/recent-ledger";
-import { StatCard, StatCardSkeleton } from "../../components/overview/stat-card";
+import { StatCard, StatCardSkeleton } from "../../components/stat-card";
 import { useSession } from "../../lib/auth";
 import { useProducts } from "../../lib/products";
 import { useStats } from "../../lib/stats";
@@ -28,11 +32,6 @@ const STAT_LABELS = {
   received: "Received today",
   clicks: "Clicks today",
 } as const;
-
-/** Fills the chart's own box, so the card does not resize when the series lands. */
-function ChartSkeleton() {
-  return <div className="h-[240px] w-full animate-pulse rounded-lg bg-muted" aria-hidden="true" />;
-}
 
 export function DashboardHome() {
   const { data: session } = useSession();
@@ -105,17 +104,12 @@ export function DashboardHome() {
             )}
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Last 30 days</CardTitle>
-              <CardDescription>
-                Verified impressions shown and received, and clicks on your card
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {stats ? <ImpressionsChart data={stats.series} /> : <ChartSkeleton />}
-            </CardContent>
-          </Card>
+          {/* Two charts, one row from xl. Below that the sidebar leaves each
+              half too narrow for a thirty-day series, so they stack. */}
+          <div className="grid gap-3 xl:grid-cols-2">
+            {stats ? <PayoutHistory data={stats.series} /> : <PayoutHistorySkeleton />}
+            {stats ? <ImpressionsCard data={stats.series} /> : <ImpressionsCardSkeleton />}
+          </div>
         </>
       )}
 

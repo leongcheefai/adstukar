@@ -19,6 +19,10 @@ const badgeVariants = cva(
           "border-transparent bg-[#D1FAE5] text-[#10B981] dark:bg-[#10B981]/20 dark:text-[#34D399]",
         warning:
           "border-transparent bg-[#FEF3C7] text-[#92400E] dark:bg-[#F59E0B]/20 dark:text-[#FCD34D]",
+        // The tinted twin of `success`. `destructive` is solid red, which shouts
+        // next to a tinted green in the same row of figures.
+        danger:
+          "border-transparent bg-[#FEE2E2] text-[#B91C1C] dark:bg-[#EF4444]/20 dark:text-[#FCA5A5]",
         info: "border-transparent bg-[#EEF2FF] text-[#4F46E5] dark:bg-[#4F46E5]/20 dark:text-[#818CF8]",
       },
     },

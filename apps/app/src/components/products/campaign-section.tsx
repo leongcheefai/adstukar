@@ -1,39 +1,39 @@
-import { SealCheck } from "@phosphor-icons/react";
+import { Plus, SealCheck } from "@phosphor-icons/react";
 import type { Product } from "@repo/contracts/types";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@repo/ui";
+import {
+  type Campaign,
+  MAX_ADS_PER_CAMPAIGN,
+  isVerified,
+  keepCampaignAfterLastAd,
+} from "../../lib/campaigns";
 import { CampaignActions } from "./campaign-actions";
 import { ProductTile } from "./product-tile";
 
-export interface Campaign {
-  /** The verified domain every ad in the group points at. */
-  domain: string;
-  /**
-   * The product name the group's ads carry. There is no campaign table, so this
-   * is the newest ad's name rather than a field of its own.
-   */
-  name: string;
-  /** Newest first, so a fresh variant lands where the eye already is. */
-  ads: Product[];
-}
-
 /**
- * Ads that share a domain are variants of one campaign, because Duplicate copies
- * the URL and only the tagline changes. There is no campaign table yet, so the
- * domain is the grouping key.
+ * An empty slot in the ad grid.
+ *
+ * It is the only way to add an ad, and it stands where the new ad will appear.
+ * Same rules and same min height as a tile, so a row of slots measures a row of
+ * ads and the grid keeps one unbroken set of lines.
  */
-export function groupIntoCampaigns(products: Product[]): Campaign[] {
-  const byDomain = new Map<string, Product[]>();
-  for (const product of products) {
-    const group = byDomain.get(product.domain);
-    if (group) group.push(product);
-    else byDomain.set(product.domain, [product]);
-  }
-  return [...byDomain.entries()]
-    .map(([domain, group]) => {
-      const ads = [...group].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-      return { domain, name: ads[0]?.name ?? domain, ads };
-    })
-    .sort((a, b) => a.domain.localeCompare(b.domain));
+function AddAdCell({
+  campaign,
+  onAddAd,
+}: {
+  campaign: Campaign;
+  onAddAd: (campaign: Campaign) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onAddAd(campaign)}
+      aria-label={`Write an ad for ${campaign.name}`}
+      className="flex min-h-56 items-center justify-center border-r border-b text-muted-foreground/60 transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40"
+    >
+      <Plus size={24} />
+    </button>
+  );
 }
 
 export function CampaignSection({
@@ -48,8 +48,14 @@ export function CampaignSection({
   /** Starts a new ad on this campaign's site with an empty tagline. */
   onAddAd: (campaign: Campaign) => void;
 }) {
-  // Every ad in the group shares one domain, so one verified ad verifies all.
-  const verified = campaign.ads.some((ad) => ad.verifiedAt);
+  const verified = isVerified(campaign);
+  // One slot per ad the campaign may still hold. A full campaign shows none.
+  // Each slot is keyed by the space it fills, so adding an ad shortens the list
+  // from the front and the slots that stay keep their identity.
+  const freeSlots = Array.from(
+    { length: Math.max(0, MAX_ADS_PER_CAMPAIGN - campaign.ads.length) },
+    (_, index) => `${campaign.domain}#${campaign.ads.length + index}`,
+  );
 
   return (
     <section className="border-b">
@@ -77,13 +83,26 @@ export function CampaignSection({
           />
         )}
 
-        <CampaignActions campaign={campaign} onAddAd={onAddAd} />
+        <CampaignActions campaign={campaign} />
       </header>
 
       {/* No gap: each cell draws its own right and bottom rule. */}
       <div className="-mb-px grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {campaign.ads.map((ad) => (
-          <ProductTile key={ad.id} product={ad} onEdit={onEdit} onDuplicate={onDuplicate} />
+          <ProductTile
+            key={ad.id}
+            product={ad}
+            onEdit={onEdit}
+            onDuplicate={onDuplicate}
+            onDeleted={(deleted) => keepCampaignAfterLastAd(campaign, deleted)}
+            canDuplicate={freeSlots.length > 0}
+          />
+        ))}
+
+        {/* The free spaces, drawn. Four cells always stand in the row, so the
+            campaign shows both what it holds and what it can still hold. */}
+        {freeSlots.map((slot) => (
+          <AddAdCell key={slot} campaign={campaign} onAddAd={onAddAd} />
         ))}
       </div>
     </section>

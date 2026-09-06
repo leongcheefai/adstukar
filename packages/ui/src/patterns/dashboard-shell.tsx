@@ -118,7 +118,9 @@ export function DashboardShell({
     <TooltipProvider>
       <div className="flex h-screen overflow-hidden bg-background">
         <aside className="hidden w-60 shrink-0 flex-col overflow-hidden border-r bg-card md:flex">
-          <div className="flex h-14 shrink-0 items-center border-b px-4">
+          {/* No rule under the brand. The topbar drops its own at the same
+              height, and the two together drew one line across the whole top. */}
+          <div className="flex h-14 shrink-0 items-center px-4">
             <span className="flex-1 font-semibold tracking-tight whitespace-nowrap">{brand}</span>
           </div>
 

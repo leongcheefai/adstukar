@@ -26,6 +26,8 @@ export function DashboardTopbar({
 
   return (
     <>
+      {/* The bar carries the same rule as the sidebar's right edge, so the two
+          meet in one line and the bar stops floating over the page. */}
       <header className="flex h-14 shrink-0 items-center gap-3 border-b bg-card px-4">
         {/* The drawn box is 30px; the transparent ::before takes the touch
             target to 44px without moving the icon. */}

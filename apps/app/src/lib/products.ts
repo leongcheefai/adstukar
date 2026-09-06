@@ -38,7 +38,11 @@ export function useDeleteProduct() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => apiFetch<{ id: string }>(`/products/${id}`, { method: "DELETE" }),
-    onSuccess: () => {
+    onSuccess: (_data, id) => {
+      // The row goes before the refetch, not after it. Callers act on the list
+      // in their own onSuccess, and a stale ad there would read as a campaign
+      // that still has ads.
+      qc.setQueryData<Product[]>(productsKey, (old) => old?.filter((row) => row.id !== id));
       qc.invalidateQueries({ queryKey: productsKey });
       qc.invalidateQueries({ queryKey: ["placements"] });
     },
