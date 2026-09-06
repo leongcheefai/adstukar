@@ -5,6 +5,10 @@ import { cn } from "../lib/utils";
  * The fixed sponsored-card template, React edition. `apps/embed/src/card.ts` renders the
  * same layout in vanilla DOM on member sites; keep the two in step when either changes.
  * Understated by design: neutral surface, one label, never louder than the host page.
+ *
+ * The radii are literals, not radius tokens, because card.ts hardcodes 8px and 6px on
+ * member sites. A retheme of this app must not silently reshape the card that the
+ * landing page presents as a preview of the real thing.
  */
 export type AdCardSize = "small" | "medium";
 
@@ -27,7 +31,7 @@ function Monogram({ name, className }: { name: string; className?: string }) {
     <span
       aria-hidden
       className={cn(
-        "flex shrink-0 items-center justify-center rounded-md bg-muted font-semibold text-muted-foreground",
+        "flex shrink-0 items-center justify-center rounded-[6px] bg-muted font-semibold text-muted-foreground",
         className,
       )}
     >
@@ -68,7 +72,7 @@ export function AdCard({
       data-slot="ad-card"
       style={{ width: dims.width, height: dims.height }}
       className={cn(
-        "relative box-border flex max-w-full items-center gap-3 overflow-hidden rounded-lg border border-border bg-card px-3 text-card-foreground no-underline shadow-none transition-colors hover:border-[color:var(--color-border-strong)]",
+        "relative box-border flex max-w-full items-center gap-3 overflow-hidden rounded-[8px] border border-border bg-card px-3 text-card-foreground no-underline shadow-none transition-colors hover:border-[color:var(--color-border-strong)]",
         size === "medium" && "items-start pt-3",
         className,
       )}

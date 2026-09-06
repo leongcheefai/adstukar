@@ -8,11 +8,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   Button,
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
   Input,
   Label,
 } from "@repo/ui";
@@ -65,73 +60,63 @@ export function DangerSection() {
   }
 
   return (
-    <Card className="border-destructive">
-      <CardHeader>
-        <CardTitle className="text-destructive">Danger Zone</CardTitle>
-        <CardDescription>
-          Irreversible actions that permanently affect your account.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="flex items-center justify-between rounded-lg border border-destructive/30 p-4">
-          <div>
-            <p className="text-sm font-medium">Delete account</p>
-            <p className="text-xs text-muted-foreground">
-              Permanently delete your account and all associated data.
+    <div className="flex items-center justify-between rounded-lg border border-destructive/30 p-4">
+      <div>
+        <p className="text-sm font-medium">Delete account</p>
+        <p className="text-xs text-muted-foreground">
+          Permanently delete your account and all associated data.
+        </p>
+      </div>
+      <Button variant="destructive" onClick={() => setOpen(true)}>
+        Delete account
+      </Button>
+      <AlertDialog
+        open={open}
+        onOpenChange={(isOpen) => {
+          setOpen(isOpen);
+          if (!isOpen) setPassword("");
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete account?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action is permanent. All your data will be deleted and cannot be recovered.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          {hasPasswordQuery.data?.hasPassword ? (
+            <div className="space-y-1.5">
+              <Label htmlFor="delete-password">Confirm your password</Label>
+              <Input
+                id="delete-password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Your current password"
+              />
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              We will email you a link to confirm account deletion.
             </p>
-          </div>
-          <Button variant="destructive" onClick={() => setOpen(true)}>
-            Delete account
-          </Button>
-          <AlertDialog
-            open={open}
-            onOpenChange={(isOpen) => {
-              setOpen(isOpen);
-              if (!isOpen) setPassword("");
-            }}
-          >
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete account?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This action is permanent. All your data will be deleted and cannot be recovered.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
+          )}
 
-              {hasPasswordQuery.data?.hasPassword ? (
-                <div className="space-y-1.5">
-                  <Label htmlFor="delete-password">Confirm your password</Label>
-                  <Input
-                    id="delete-password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Your current password"
-                  />
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  We will email you a link to confirm account deletion.
-                </p>
-              )}
-
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <Button
-                  className="bg-destructive text-white hover:bg-destructive/90"
-                  onClick={handleDelete}
-                  disabled={
-                    deleteMutation.isPending ||
-                    (hasPasswordQuery.data?.hasPassword === true && !password)
-                  }
-                >
-                  {deleteMutation.isPending ? "Deleting…" : "Delete account"}
-                </Button>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
-      </CardContent>
-    </Card>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <Button
+              className="bg-destructive text-white hover:bg-destructive/90"
+              onClick={handleDelete}
+              disabled={
+                deleteMutation.isPending ||
+                (hasPasswordQuery.data?.hasPassword === true && !password)
+              }
+            >
+              {deleteMutation.isPending ? "Deleting…" : "Delete account"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
   );
 }

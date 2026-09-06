@@ -1,6 +1,46 @@
 @import "@repo/ui/styles";
 @source "../../../../packages/ui/src";
 
+/* -----------------------------------------------------------------------------
+   Marketing-site rules
+   -------------------------------------------------------------------------- */
+
+:root {
+  /* Fixed z-index scale. Two layers is the whole site; anything that wants a
+     third should reach for `isolation: isolate` before adding a step here. */
+  --z-header: 50;
+  --z-skip-link: 60;
+}
+
+/* The sticky header is 4rem tall, so an anchored section would otherwise land
+   underneath it. */
+[id] {
+  scroll-margin-top: 5rem;
+}
+
+/* Headings break at the least awkward point rather than the last possible one. */
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+/* The capybara drifts on the water. 6s and 8px keep it below the threshold
+   where peripheral motion starts competing with the headline for attention.
+   tokens.css already flattens every animation under prefers-reduced-motion. */
+@keyframes capy-drift {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-0.4deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(0.4deg);
+  }
+}
+.capy-float {
+  animation: capy-drift 6s var(--ease-in-out) infinite;
+}
+
 /* Blog prose styles — applied via .prose wrapper on rendered markdown */
 .prose {
   color: var(--foreground);
@@ -8,14 +48,14 @@
 }
 .prose h2 {
   font-size: 1.5rem;
-  font-weight: 700;
+  font-weight: var(--fw-medium);
   letter-spacing: -0.025em;
   margin-top: 2rem;
   margin-bottom: 0.75rem;
 }
 .prose h3 {
   font-size: 1.25rem;
-  font-weight: 600;
+  font-weight: var(--fw-medium);
   margin-top: 1.5rem;
   margin-bottom: 0.5rem;
 }

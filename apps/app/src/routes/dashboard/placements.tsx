@@ -1,4 +1,5 @@
-import type { PlacementSize } from "@repo/contracts/types";
+import { Code, Monitor, Plus } from "@phosphor-icons/react";
+import type { PlacementWithTerms } from "@repo/contracts/types";
 import {
   Button,
   Dialog,
@@ -7,75 +8,109 @@ import {
   DialogHeader,
   DialogTitle,
   EmptyState,
-  Label,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
 } from "@repo/ui";
-import { Code2, Plus } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
-import { PlacementCard } from "../../components/placements/placement-card";
+import { PlacementDetail } from "../../components/placements/placement-detail";
+import { PlacementTile } from "../../components/placements/placement-tile";
+import { type DeliveryMode, readDeliveryMode, rememberDeliveryMode } from "../../lib/delivery-mode";
 import { useCreatePlacement, usePlacements } from "../../lib/placements";
 import { useProducts } from "../../lib/products";
+
+/**
+ * The two things a placement can be. They are separate products, not two
+ * settings of one: a snippet is code on someone else's page, CapyTV is a screen
+ * in a room. Nothing else is asked at creation — the snippet serves random ads
+ * from the advertiser pool, so there is no campaign to pick.
+ */
+const CHOICES: {
+  mode: DeliveryMode;
+  label: string;
+  hint: string;
+  icon: typeof Code;
+}[] = [
+  {
+    mode: "snippet",
+    label: "Snippet",
+    hint: "One line in your site. Shows random ads from the pool.",
+    icon: Code,
+  },
+  {
+    mode: "tv",
+    label: "CapyTV",
+    hint: "No code. Plays full screen on any display.",
+    icon: Monitor,
+  },
+];
 
 export function PlacementsPage() {
   const { data: products } = useProducts();
   const { data: placements, isLoading } = usePlacements();
   const create = useCreatePlacement();
-  const [open, setOpen] = useState(false);
-  const [productId, setProductId] = useState("");
-  const [size, setSize] = useState<PlacementSize>("small");
+
+  const [chooserOpen, setChooserOpen] = useState(false);
+  const [openItem, setOpenItem] = useState<PlacementWithTerms | null>(null);
 
   const productById = new Map((products ?? []).map((p) => [p.id, p]));
   const canCreate = (products?.length ?? 0) > 0;
 
-  function submit(e: React.FormEvent) {
-    e.preventDefault();
+  /**
+   * Picking a mode is the whole form. The product is the member's first one and
+   * the size is the default, because neither changes what the placement is —
+   * both stay editable in the expanded view.
+   */
+  function choose(mode: DeliveryMode) {
+    const productId = products?.[0]?.id;
+    if (!productId) return;
     create.mutate(
-      { productId, size, houseAdPct: 0 },
+      { productId, size: "small", houseAdPct: 0 },
       {
-        onSuccess: () => {
-          toast.success("Placement created. Paste the snippet into your site.");
-          setOpen(false);
+        onSuccess: (created) => {
+          // The tile reads its mode from storage, so write it before the list
+          // repaints. Otherwise a new CapyTV placement appears as a snippet.
+          rememberDeliveryMode(created.placement.id, mode);
+          setChooserOpen(false);
+          setOpenItem(created);
+          toast.success(mode === "tv" ? "CapyTV placement created" : "Snippet placement created");
         },
         onError: (err) => toast.error(err.message),
       },
     );
   }
 
+  const openProduct = openItem ? productById.get(openItem.placement.productId) : undefined;
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Placements</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            A placement is one spot on your site. Each has its own key and rules.
-          </p>
-        </div>
-        <Button
-          size="sm"
-          onClick={() => {
-            setProductId(products?.[0]?.id ?? "");
-            setOpen(true);
-          }}
-          disabled={!canCreate}
-        >
-          <Plus size={14} />
-          New placement
-        </Button>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-2xl font-semibold tracking-tight">Placements</h1>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              size="icon"
+              className="rounded-full"
+              onClick={() => setChooserOpen(true)}
+              disabled={!canCreate}
+              aria-label="New placement"
+            >
+              <Plus size={18} />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>New placement</TooltipContent>
+        </Tooltip>
       </div>
 
       {isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
 
       {!canCreate && products !== undefined && (
         <EmptyState
-          icon={<Code2 />}
+          icon={<Code />}
           title="Register a product first"
-          description="Placements belong to a product. Add one, then come back here for the snippet."
+          description="Placements belong to a product. Add one, then come back here."
           action={
             <Button asChild>
               <Link to="/dashboard/products">Go to products</Link>
@@ -86,71 +121,68 @@ export function PlacementsPage() {
 
       {canCreate && placements && placements.length === 0 && (
         <EmptyState
-          icon={<Code2 />}
+          icon={<Code />}
           title="No placements yet"
-          description="Create one to get the embed snippet and API key."
-          action={
-            <Button
-              onClick={() => {
-                setProductId(products?.[0]?.id ?? "");
-                setOpen(true);
-              }}
-            >
-              New placement
-            </Button>
-          }
+          description="Pick a snippet for your site, or CapyTV for a screen."
+          action={<Button onClick={() => setChooserOpen(true)}>New placement</Button>}
         />
       )}
 
-      <div className="space-y-4">
-        {placements?.map((item) => {
-          const product = productById.get(item.placement.productId);
-          return product ? (
-            <PlacementCard key={item.placement.id} item={item} product={product} />
-          ) : null;
-        })}
-      </div>
+      {/* No gap: each tile draws its own right and bottom rule, the same grid the
+          Listing page uses. */}
+      {placements && placements.length > 0 && (
+        <div className="-mx-6 border-t">
+          <div className="-mb-px grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {placements.map((item) => {
+              const product = productById.get(item.placement.productId);
+              return product ? (
+                <PlacementTile
+                  key={item.placement.id}
+                  item={item}
+                  product={product}
+                  mode={readDeliveryMode(item.placement.id)}
+                  onOpen={() => setOpenItem(item)}
+                />
+              ) : null;
+            })}
+          </div>
+        </div>
+      )}
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      {/* Two choices and nothing else. Picking one creates the placement. */}
+      <Dialog open={chooserOpen} onOpenChange={setChooserOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>New placement</DialogTitle>
-            <DialogDescription>Pick the product whose site will host this spot.</DialogDescription>
+            <DialogDescription>Where should the ads show?</DialogDescription>
           </DialogHeader>
-          <form onSubmit={submit} className="space-y-4">
-            <div className="space-y-1.5">
-              <Label>Product</Label>
-              <Select value={productId} onValueChange={setProductId}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Choose a product" />
-                </SelectTrigger>
-                <SelectContent>
-                  {products?.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.name} · {p.domain}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Size</Label>
-              <Select value={size} onValueChange={(v) => setSize(v as PlacementSize)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="small">Small banner · 320×64</SelectItem>
-                  <SelectItem value="medium">Medium card · 300×120</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Button type="submit" className="w-full" disabled={!productId || create.isPending}>
-              {create.isPending ? "Creating…" : "Create placement"}
-            </Button>
-          </form>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {CHOICES.map(({ mode, label, hint, icon: Icon }) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => choose(mode)}
+                disabled={create.isPending}
+                className="flex cursor-pointer flex-col gap-2 rounded-lg border p-4 text-left transition-colors hover:border-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+              >
+                <Icon size={20} className="text-primary" />
+                <span className="text-sm font-medium">{label}</span>
+                <span className="text-xs text-muted-foreground">{hint}</span>
+              </button>
+            ))}
+          </div>
         </DialogContent>
       </Dialog>
+
+      {openItem && openProduct && (
+        <PlacementDetail
+          item={openItem}
+          product={openProduct}
+          mode={readDeliveryMode(openItem.placement.id)}
+          open
+          onOpenChange={(next) => !next && setOpenItem(null)}
+        />
+      )}
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { ArrowSquareOut, Check, Tray, X } from "@phosphor-icons/react";
 import type { ModerationItem } from "@repo/contracts/types";
 import {
   AdCard,
@@ -14,10 +15,9 @@ import {
   Label,
   Textarea,
 } from "@repo/ui";
-import { Check, ExternalLink, Inbox, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useApproveProduct, useModerationQueue, useRejectProduct } from "../../../lib/admin";
+import { useApproveProduct, useModerationQueue, useRejectProduct } from "../../lib/admin";
 
 function QueueRow({
   item,
@@ -48,7 +48,7 @@ function QueueRow({
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 font-mono text-xs underline-offset-4 hover:underline"
           >
-            Open landing page <ExternalLink size={11} />
+            Open landing page <ArrowSquareOut size={11} />
           </a>
         </div>
         <div className="flex flex-col gap-3 lg:items-end">
@@ -84,7 +84,7 @@ function QueueRow({
   );
 }
 
-export function ModerationPage() {
+export function ModerationSection() {
   const { data: queue, isLoading } = useModerationQueue();
   const reject = useRejectProduct();
   const [target, setTarget] = useState<ModerationItem | null>(null);
@@ -107,19 +107,12 @@ export function ModerationPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Moderation</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Products waiting for review, oldest first. Approval grants the welcome points.
-        </p>
-      </div>
-
+    <div className="space-y-4">
       {isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
 
       {queue && queue.length === 0 && (
         <EmptyState
-          icon={<Inbox />}
+          icon={<Tray />}
           title="Queue is empty"
           description="Nothing waits for review."
         />

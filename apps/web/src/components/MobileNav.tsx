@@ -34,7 +34,11 @@ export function MobileNav({ navItems, appUrl, brand }: MobileNavProps) {
       <SheetContent side="left" className="w-72 sm:max-w-72">
         <SheetHeader>
           <SheetTitle>
-            <a href="/" className="text-lg font-bold tracking-tight" onClick={() => setOpen(false)}>
+            <a
+              href="/"
+              className="text-lg font-medium tracking-tight"
+              onClick={() => setOpen(false)}
+            >
               {brand}
             </a>
           </SheetTitle>
@@ -44,7 +48,7 @@ export function MobileNav({ navItems, appUrl, brand }: MobileNavProps) {
             <SheetClose asChild key={item.href}>
               <a
                 href={item.href}
-                className="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                className="flex min-h-11 items-center rounded-md px-3 text-sm text-muted-foreground transition-colors duration-150 ease-out hover:bg-accent hover:text-accent-foreground"
               >
                 {item.label}
               </a>
@@ -54,14 +58,14 @@ export function MobileNav({ navItems, appUrl, brand }: MobileNavProps) {
         <div className="mt-6 flex flex-col gap-2 px-1">
           <a
             href={`${appUrl}/login`}
-            className="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+            className="flex min-h-11 items-center rounded-md px-3 text-sm text-muted-foreground transition-colors duration-150 ease-out hover:bg-accent hover:text-accent-foreground"
             onClick={() => setOpen(false)}
           >
             Sign in
           </a>
           <a
             href={`${appUrl}/signup`}
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground transition-[background-color,transform] duration-150 ease-out hover:bg-[color:var(--color-accent-hover)] active:scale-[0.98]"
             onClick={() => setOpen(false)}
           >
             Get started

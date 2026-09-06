@@ -5,7 +5,7 @@ const STATUS: Record<
   ProductStatus,
   { label: string; variant: "warning" | "success" | "destructive" }
 > = {
-  pending: { label: "Pending review", variant: "warning" },
+  pending: { label: "Pending", variant: "warning" },
   approved: { label: "Approved", variant: "success" },
   rejected: { label: "Rejected", variant: "destructive" },
 };

@@ -18,11 +18,11 @@ export function FAQ({ eyebrow, headline, items, className }: FAQProps) {
       <div className="mx-auto max-w-3xl px-6">
         <div className="text-center">
           {eyebrow && (
-            <p className="text-sm font-semibold uppercase tracking-widest text-primary">
-              {eyebrow}
-            </p>
+            <p className="text-sm font-medium uppercase tracking-widest text-primary">{eyebrow}</p>
           )}
-          <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">{headline}</h2>
+          <h2 className="mt-2 text-balance text-3xl font-medium tracking-tight sm:text-4xl">
+            {headline}
+          </h2>
         </div>
         <dl className="mt-16 space-y-4">
           {items.map((item) => (
@@ -30,7 +30,7 @@ export function FAQ({ eyebrow, headline, items, className }: FAQProps) {
               key={item.question}
               className="group rounded-lg border border-border bg-card open:ring-1 open:ring-ring"
             >
-              <summary className="flex cursor-pointer list-none items-center justify-between px-6 py-4 font-medium [&::-webkit-details-marker]:hidden">
+              <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 px-6 py-3.5 font-medium [&::-webkit-details-marker]:hidden">
                 {item.question}
                 <svg
                   className="h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-200 group-open:rotate-45"

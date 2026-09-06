@@ -1,4 +1,4 @@
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from "@repo/ui";
+import { Badge, Button } from "@repo/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { authClient, useSession } from "../../lib/auth";
@@ -52,55 +52,49 @@ export function SessionsSection() {
   const sessions = sessionsQuery.data ?? [];
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Active Sessions</CardTitle>
+    <div className="space-y-3">
+      <div className="flex justify-end">
         <Button
           variant="outline"
+          size="sm"
           disabled={sessions.length <= 1 || revokeOthersMutation.isPending}
           onClick={() => revokeOthersMutation.mutate()}
         >
           {revokeOthersMutation.isPending ? "Signing out…" : "Sign out other devices"}
         </Button>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {sessionsQuery.isPending && (
-          <p className="text-sm text-muted-foreground">Loading sessions…</p>
-        )}
-        {sessionsQuery.isError && (
-          <p className="text-sm text-destructive">Failed to load sessions</p>
-        )}
-        {sessions.map((session) => {
-          const isCurrent = session.token === currentToken;
-          const userAgentDisplay = (session.userAgent ?? "Unknown device").slice(0, 60);
-          const lastActive = new Date(session.updatedAt).toLocaleDateString();
+      </div>
 
-          return (
-            <div
-              key={session.id}
-              className="flex items-center justify-between rounded-lg border p-3"
-            >
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-medium">{userAgentDisplay}</p>
-                  {isCurrent && <Badge variant="secondary">Current</Badge>}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {session.ipAddress ?? "Unknown IP"} · Last active {lastActive}
-                </p>
+      {sessionsQuery.isPending && (
+        <p className="text-sm text-muted-foreground">Loading sessions…</p>
+      )}
+      {sessionsQuery.isError && <p className="text-sm text-destructive">Failed to load sessions</p>}
+      {sessions.map((session) => {
+        const isCurrent = session.token === currentToken;
+        const userAgentDisplay = (session.userAgent ?? "Unknown device").slice(0, 60);
+        const lastActive = new Date(session.updatedAt).toLocaleDateString();
+
+        return (
+          <div key={session.id} className="flex items-center justify-between rounded-lg border p-3">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-medium">{userAgentDisplay}</p>
+                {isCurrent && <Badge variant="secondary">Current</Badge>}
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={isCurrent || revokeMutation.isPending}
-                onClick={() => revokeMutation.mutate(session.token)}
-              >
-                Revoke
-              </Button>
+              <p className="text-xs text-muted-foreground">
+                {session.ipAddress ?? "Unknown IP"} · Last active {lastActive}
+              </p>
             </div>
-          );
-        })}
-      </CardContent>
-    </Card>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={isCurrent || revokeMutation.isPending}
+              onClick={() => revokeMutation.mutate(session.token)}
+            >
+              Revoke
+            </Button>
+          </div>
+        );
+      })}
+    </div>
   );
 }

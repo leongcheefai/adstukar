@@ -5,10 +5,10 @@ Vite + React 19 SPA. The publisher dashboard — signup, login, Overview, Produc
 
 ## Pages
 - `routes/dashboard/index.tsx` Overview — balance (settled + pending with tooltip), today's shown/received/clicks/CTR, 30-day chart
-- `routes/dashboard/products.tsx` — list, create/edit dialog with live `AdCard` preview, verify dialog, advertise/show-ads toggles
+- `routes/dashboard/products.tsx` — list, create/edit/duplicate dialog with live `AdCard` preview, verify dialog, campaign toggle (`advertise`)
 - `routes/dashboard/placements.tsx` — snippet (HTML + React) with copy buttons, API key + rotate, size, house-ad slider, excluded terms
 - `routes/dashboard/ledger.tsx` — filterable, cursor-paginated table
-- `routes/dashboard/admin/moderation.tsx` — approve/reject with reason
+- `routes/dashboard/settings.tsx` — two-panel layout; sections live in `src/components/settings/`. Admin-only Moderation and Releases sections appear there for `role === 'admin'`; `/dashboard/admin/*` redirects in
 - Query hooks live in `src/lib/{products,placements,stats,ledger,admin}.ts` on top of `src/lib/api.ts` (`apiFetch`)
 
 ## Conventions
@@ -33,6 +33,20 @@ Add a button calling `signIn.social({ provider: 'google', callbackURL: '/dashboa
 ### Browse the component library
 Navigate to `http://localhost:3000/_dev/components` in dev mode. This route is tree-shaken from production builds.
 
+### Work on the UI with no API or database
+Open `http://localhost:3000/dashboard?design=1`. Design mode fakes an admin session and answers every read endpoint from fixtures, so every page renders populated. Leave it with `?design=0`, or click the "design mode" badge in the top-right nav.
+
+- `src/lib/design-mode.ts` holds the flag, the fake session, and all fixtures
+- `useSession()` in `src/lib/auth.ts` returns the fake session, so `ProtectedRoute` passes and the admin settings sections appear
+- `apiFetch` in `src/lib/api.ts` and `fetchReleases` in `src/lib/releases.ts` return fixtures instead of calling the API
+- Writes are faked too, so every control responds. `designWrite()` replaces the matching fixture in memory; a reload restores the starting data. Each update builds a new object, because React Query would treat an edit in place as no change and skip the repaint
+- Settings writes (profile, password, sessions) go through the better-auth client, not `apiFetch`, so they still need the API
+- Every check is gated on `import.meta.env.DEV`, so production builds report false and the bundler drops the fixtures. Verify with `NODE_ENV=production pnpm --filter @repo/app build`, because the repo-root `.env` sets `NODE_ENV=development` and a plain `pnpm build` therefore emits a development bundle that keeps them. Keep each fixture inside a function or a plain literal: a top-level expression that spreads another fixture is treated as side-effecting and pins that data into production
+- Add a read by adding a case to `designResponse()`; add a write by adding a branch to `designWrite()`. An unknown path throws instead of failing quietly
+
 ## Gotchas
 - Dev server: port 3000; the API defaults to `http://localhost:3001`. A Vite `/api/*` proxy exists for relative requests, but the current clients use the absolute `VITE_API_URL`.
+- Icons come from `@phosphor-icons/react`, not lucide. Phosphor takes `weight` (`bold`, `fill`, …) instead of `strokeWidth`
 - The `/_dev/components` route only exists in dev; it is absent from production builds
+- Design mode data is fake. The badge in the top-right nav is the only signal, so check it before trusting a number on screen
+- Design mode leaves `verificationToken` and `apiKey` empty on purpose, so no fixture value can look like a leaked secret. The verify panel and the placement snippet show a blank key. Start the API to see a real one

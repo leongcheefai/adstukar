@@ -36,8 +36,22 @@ async function submitFeedback(input: { type: FeedbackType; message: string }) {
   return res.json() as Promise<CreateFeedbackResponse>;
 }
 
-export function FeedbackDialog({ children }: { children: React.ReactNode }) {
-  const [open, setOpen] = useState(false);
+export interface FeedbackDialogProps {
+  /** Trigger node. Omit it when the dialog is controlled from a menu item. */
+  children?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export function FeedbackDialog({ children, open, onOpenChange }: FeedbackDialogProps) {
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const isOpen = open ?? uncontrolledOpen;
+
+  function setOpen(next: boolean) {
+    setUncontrolledOpen(next);
+    onOpenChange?.(next);
+  }
+
   const [type, setType] = useState<FeedbackType>("bug");
   const [message, setMessage] = useState("");
 
@@ -52,8 +66,8 @@ export function FeedbackDialog({ children }: { children: React.ReactNode }) {
   });
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={setOpen}>
+      {children && <DialogTrigger asChild>{children}</DialogTrigger>}
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>Send feedback</DialogTitle>

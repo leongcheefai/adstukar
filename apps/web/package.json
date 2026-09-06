@@ -8,8 +8,7 @@
     "build": "astro build",
     "preview": "astro preview --port 4321",
     "lint": "biome check .",
-    "typecheck": "astro check",
-    "releases:sync": "tsx scripts/sync-releases.ts"
+    "typecheck": "astro check"
   },
   "dependencies": {
     "@repo/config": "workspace:*",
@@ -27,7 +26,6 @@
     "@astrojs/react": "^4.0.0",
     "@astrojs/rss": "^4.0.0",
     "@astrojs/sitemap": "^3.0.0",
-    "@octokit/rest": "^22.0.1",
     "@resvg/resvg-js": "^2.6.2",
     "@tailwindcss/vite": "^4.0.0",
     "@types/react": "^19.0.0",

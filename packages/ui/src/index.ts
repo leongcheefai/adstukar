@@ -75,7 +75,9 @@ export {
 
 export { cn } from "./lib/utils";
 export { DashboardShell } from "./patterns/dashboard-shell";
-export type { NavItem, DashboardShellProps } from "./patterns/dashboard-shell";
+export type { NavItem, DashboardShellProps, RenderNavLink } from "./patterns/dashboard-shell";
+export { SidebarUserMenu } from "./patterns/sidebar-user-menu";
+export type { SidebarUserMenuProps } from "./patterns/sidebar-user-menu";
 export { Hero } from "./patterns/hero";
 export type { HeroProps } from "./patterns/hero";
 export { FeatureSection } from "./patterns/feature-section";

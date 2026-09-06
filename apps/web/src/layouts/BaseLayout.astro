@@ -1,7 +1,6 @@
 ---
 import "../styles/global.css";
 import { project } from "@repo/config/project";
-import { Toaster } from "@repo/ui";
 import Footer from "../components/Footer";
 import Nav from "../components/Nav.astro";
 
@@ -27,18 +26,9 @@ const jsonLdArray = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
-    <!-- Theme: read localStorage before paint to avoid flash -->
-    <script is:inline>
-      (function () {
-        try {
-          var t = localStorage.getItem("theme");
-          var prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-          if (t === "dark" || (!t && prefersDark)) {
-            document.documentElement.classList.add("dark");
-          }
-        } catch (_) {}
-      })();
-    </script>
+    <!-- The marketing site is light only. This keeps the browser from painting
+         form controls and scrollbars dark for a visitor whose OS is set to dark. -->
+    <meta name="color-scheme" content="light" />
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonicalURL} />
@@ -62,10 +52,9 @@ const jsonLdArray = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
   </head>
   <body>
     <Nav />
-    <main>
+    <main id="main">
       <slot />
     </main>
     <Footer client:visible />
-    <Toaster client:load />
   </body>
 </html>

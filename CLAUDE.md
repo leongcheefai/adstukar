@@ -1,7 +1,7 @@
-# AdsTukar
+# CapyAds
 
 ## Purpose
-AdsTukar is a cross-promotion ad exchange for indie hackers: "Show two ads, earn one for yourself." Members register a product, paste one embed snippet, and trade points (+1 per verified impression shown, −2 per impression received). No money moves in v1. Built on the Vite + Hono + Better Auth boilerplate: pnpm + Turborepo monorepo with four apps (`web` landing, `app` dashboard, `api`, `embed` snippet) and seven shared packages (`ui`, `db`, `auth`, `emails`, `env`, `config`, `contracts`). Design and decisions: `docs/superpowers/specs/2026-08-31-adstukar-mvp-design.md` (local, gitignored) and `CONTEXT.md` (glossary).
+CapyAds is a cross-promotion ad exchange for indie hackers: "Show two ads, earn one for yourself." Members register a product, paste one embed snippet, and trade points (+1 per verified impression shown, −2 per impression received). No money moves in v1. Built on the Vite + Hono + Better Auth boilerplate: pnpm + Turborepo monorepo with four apps (`web` landing, `app` dashboard, `api`, `embed` snippet) and seven shared packages (`ui`, `db`, `auth`, `emails`, `env`, `config`, `contracts`). Design and decisions: `docs/superpowers/specs/2026-08-31-adstukar-mvp-design.md` (local, gitignored) and `CONTEXT.md` (glossary).
 
 ## Exchange rules (where things live)
 - **Economy numbers** — `packages/config/src/economy.ts` only. Earn/spend amounts, grants, caps, settlement delay, expiry, viewability thresholds, rate limits, card sizes. Never a literal in a route, job, page, or the embed.

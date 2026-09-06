@@ -151,27 +151,39 @@
    ============================================================================= */
 
 :root {
-  /* --- Color primitives (Voltage) --- */
-  --ink-50: #fafafa;
-  --ink-100: #f4f4f5;
-  --ink-200: #e4e4e7;
-  --ink-300: #d4d4d8;
-  --ink-400: #a1a1aa;
-  --ink-500: #71717a;
-  --ink-700: #3f3f46;
-  --ink-900: #18181b;
-  --ink-950: #09090b;
+  /* --- Color primitives ---------------------------------------------------
+     Every value is OKLCH so lightness steps are perceptually even and the hue
+     never drifts when a step is lightened or darkened. Hue 264.2 is the deck
+     blue; the neutrals carry a trace of the same hue, because a blue interface
+     on warm greys reads as two different products. --------------------------- */
+
+  /* Neutrals — cool, tinted toward the brand hue. */
+  --ink-50: oklch(0.985 0.003 264.2);
+  --ink-100: oklch(0.968 0.005 264.2);
+  --ink-200: oklch(0.925 0.009 264.2);
+  --ink-300: oklch(0.872 0.012 264.2);
+  --ink-400: oklch(0.715 0.015 264.2);
+  --ink-500: oklch(0.522 0.017 264.2);
+  --ink-700: oklch(0.395 0.019 264.2);
+  --ink-900: oklch(0.235 0.021 264.2);
+  --ink-950: oklch(0.163 0.023 264.2);
   --white: #ffffff;
 
-  /* Teal — the single accent of AdsTukar */
-  --brand-50: #f0fdfa;
-  --brand-100: #ccfbf1;
-  --brand-200: #99f6e4;
-  --brand-400: #2dd4bf;
-  --brand-500: #14b8a6;
-  --brand-600: #0d9488;
-  --brand-700: #0f766e;
+  /* CapyAds blue — the single accent. --brand-500 is the deck blue #001CD8
+     exactly. White on it reads 9.7:1, and it reads 9.7:1 on white, so the same
+     colour carries both a filled button and body-sized link text. */
+  --brand-50: oklch(0.955 0.018 264.2);
+  --brand-100: oklch(0.94 0.024 264.2);
+  --brand-200: oklch(0.888 0.046 264.2);
+  --brand-300: oklch(0.792 0.093 264.2);
+  --brand-400: oklch(0.64 0.17 264.2);
+  --brand-500: oklch(0.4141 0.2659 264.2);
+  --brand-600: oklch(0.362 0.234 264.2);
+  --brand-700: oklch(0.31 0.2 264.2);
+  --brand-900: oklch(0.228 0.14 264.2);
 
+  /* Status colours stay off the brand hue. Blue is the primary action, so a
+     blue "success" would be unreadable as confirmation. */
   --accent-50: #fffbeb;
   --accent-100: #fef3c7;
   --accent-500: #f59e0b;
@@ -183,10 +195,10 @@
   --warning-500: #f59e0b;
   --danger-100: #fee2e2;
   --danger-500: #ef4444;
-  --info-500: #0d9488;
+  --info-500: var(--brand-500);
 
   /* --- shadcn semantic tokens --- */
-  --background: var(--ink-50);
+  --background: oklch(0.976 0.005 264.2);
   --foreground: var(--ink-900);
   --card: var(--white);
   --card-foreground: var(--ink-900);
@@ -202,10 +214,20 @@
   --accent-foreground: var(--ink-700);
   --destructive: var(--danger-500);
   --destructive-foreground: var(--white);
+  /* The full-bleed brand panel. --primary flips to a lighter blue in dark mode
+     so filled controls stay readable; a slab must not, or the marketing site
+     changes brand colour with the theme. This one holds the deck blue in both,
+     and white sits on it at 9.7:1 either way. */
+  --slab: var(--brand-500);
+  --slab-foreground: var(--white);
+  /* The quiet brand tint that alternates with white down the page. Unlike
+     --slab it does follow the theme, because it is a page surface, not a
+     panel of brand colour. */
+  --surface-tint: var(--brand-50);
   --border: var(--ink-200);
   --input: var(--ink-200);
   --ring: var(--brand-500);
-  --radius: 0.5rem;
+  --radius: 0.875rem;
 
   /* --- Chart tokens --- */
   --chart-1: var(--brand-500);
@@ -225,7 +247,7 @@
   --sidebar-ring: var(--brand-500);
 
   /* --- Voltage semantic tokens --- */
-  --color-bg: var(--ink-50);
+  --color-bg: var(--background);
   --color-bg-surface: var(--white);
   --color-bg-muted: var(--ink-100);
   --color-bg-hover: var(--ink-100);
@@ -236,17 +258,24 @@
   --color-text-subtle: var(--ink-400);
   --color-accent: var(--brand-500);
   --color-accent-hover: var(--brand-600);
-  --focus-ring: 0 0 0 2px rgba(20, 184, 166, 0.4);
+  --focus-ring: 0 0 0 2px oklch(0.4141 0.2659 264.2 / 0.4);
 
   /* --- Font families --- */
   --font-sans: "Poppins", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
   /* --- Type scale --- */
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+
   --fs-display-xl: 48px;
   --lh-display-xl: 1.05;
   --tr-display-xl: -0.03em;
-  --fw-display: 600;
+  /* Display type is set in medium, not bold. At 48px and up, weight 500 already
+     carries the hierarchy, and bold at that size reads as shouting. */
+  --fw-display: var(--fw-medium);
   --fs-display-lg: 36px;
   --lh-display-lg: 1.1;
   --tr-display-lg: -0.025em;
@@ -256,14 +285,12 @@
   --fs-heading: 20px;
   --lh-heading: 1.3;
   --tr-heading: -0.01em;
-  --fw-medium: 500;
   --fs-subheading: 16px;
   --lh-subheading: 1.35;
   --tr-subheading: -0.005em;
   --fs-body-lg: 16px;
   --lh-body-lg: 1.55;
   --tr-body: 0;
-  --fw-regular: 400;
   --fs-body: 14px;
   --lh-body: 1.5;
   --fs-body-sm: 13px;
@@ -292,18 +319,27 @@
   --space-16: 64px;
   --space-20: 80px;
 
-  /* --- Radius --- */
-  --radius-sm: 2px;
-  --radius-md: 4px;
-  --radius-lg: 8px;
-  --radius-xl: 12px;
+  /* --- Radius ---
+     Rounder than a dense product UI wants, because the brand is a soft-cornered
+     capybara drawing. apps/app derives its own scale in theme-dashboard.css,
+     so these values reshape the marketing site only. */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 24px;
   --radius-full: 9999px;
 
-  /* --- Elevation --- */
+  /* --- Elevation ---
+     Three stacked stops per level, not one. A single large drop shadow reads as
+     a sticker; a tight contact shadow under a wider ambient one reads as an
+     object resting on the page. Tinted toward the brand hue for the same reason
+     the neutrals are. */
   --elev-0: none;
-  --elev-1: 0 1px 2px rgba(24, 24, 27, 0.05);
-  --elev-2: 0 4px 12px rgba(24, 24, 27, 0.08);
-  --elev-3: 0 12px 32px rgba(24, 24, 27, 0.12);
+  --elev-1: 0 1px 1px oklch(0.235 0.021 264.2 / 0.04), 0 2px 4px oklch(0.235 0.021 264.2 / 0.04);
+  --elev-2: 0 1px 2px oklch(0.235 0.021 264.2 / 0.05), 0 4px 10px oklch(0.235 0.021 264.2 / 0.06), 0
+    10px 24px oklch(0.235 0.021 264.2 / 0.05);
+  --elev-3: 0 2px 4px oklch(0.235 0.021 264.2 / 0.06), 0 12px 24px oklch(0.235 0.021 264.2 / 0.08),
+    0 28px 56px oklch(0.235 0.021 264.2 / 0.09);
 
   /* --- Motion --- */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
@@ -328,23 +364,26 @@
 .dark {
   --background: var(--ink-950);
   --foreground: var(--ink-50);
-  --card: #111114;
+  --card: oklch(0.196 0.022 264.2);
   --card-foreground: var(--ink-50);
-  --popover: #111114;
+  --popover: oklch(0.196 0.022 264.2);
   --popover-foreground: var(--ink-50);
   --primary: var(--brand-400);
-  --primary-foreground: var(--white);
-  --secondary: #1c1c20;
+  /* White on --brand-400 is only 3.5:1. The deep ink reads 5.6:1 on it, so a
+     filled button in dark mode takes dark text. */
+  --primary-foreground: var(--ink-950);
+  --secondary: oklch(0.232 0.021 264.2);
   --secondary-foreground: var(--ink-50);
-  --muted: #1c1c20;
+  --muted: oklch(0.232 0.021 264.2);
   --muted-foreground: var(--ink-400);
-  --accent: #27272a;
+  --accent: oklch(0.279 0.02 264.2);
   --accent-foreground: var(--ink-50);
   --destructive: #f87171;
   --destructive-foreground: var(--white);
-  --border: #2a2a2e;
-  --input: #2a2a2e;
+  --border: oklch(0.292 0.02 264.2);
+  --input: oklch(0.292 0.02 264.2);
   --ring: var(--brand-400);
+  --surface-tint: oklch(0.213 0.048 264.2);
 
   --chart-1: var(--brand-400);
   --chart-2: var(--accent-500);
@@ -355,24 +394,25 @@
   --sidebar: var(--ink-950);
   --sidebar-foreground: var(--ink-50);
   --sidebar-primary: var(--brand-400);
-  --sidebar-primary-foreground: var(--white);
-  --sidebar-accent: #27272a;
+  --sidebar-primary-foreground: var(--ink-950);
+  --sidebar-accent: oklch(0.279 0.02 264.2);
   --sidebar-accent-foreground: var(--ink-50);
-  --sidebar-border: #2a2a2e;
+  --sidebar-border: oklch(0.292 0.02 264.2);
   --sidebar-ring: var(--brand-400);
 
   --color-bg: var(--ink-950);
-  --color-bg-surface: #111114;
-  --color-bg-muted: #1c1c20;
-  --color-bg-hover: #27272a;
-  --color-border: #2a2a2e;
+  --color-bg-surface: oklch(0.196 0.022 264.2);
+  --color-bg-muted: oklch(0.232 0.021 264.2);
+  --color-bg-hover: oklch(0.279 0.02 264.2);
+  --color-border: oklch(0.292 0.02 264.2);
   --color-border-strong: var(--ink-700);
   --color-text: var(--ink-50);
   --color-text-muted: var(--ink-400);
   --color-text-subtle: var(--ink-500);
   --color-accent: var(--brand-400);
-  --color-accent-hover: var(--brand-500);
-  --focus-ring: 0 0 0 2px rgba(45, 212, 191, 0.5);
+  /* Lighter, not darker: on a dark ground a hover reads as "more light". */
+  --color-accent-hover: var(--brand-300);
+  --focus-ring: 0 0 0 2px oklch(0.64 0.17 264.2 / 0.5);
 
   --elev-1: inset 0 0 0 0.5px rgba(255, 255, 255, 0.06);
   --elev-2: inset 0 0 0 0.5px rgba(255, 255, 255, 0.06), 0 4px 12px rgba(0, 0, 0, 0.24);

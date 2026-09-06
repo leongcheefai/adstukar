@@ -1,5 +1,5 @@
+import { Check, Copy } from "@phosphor-icons/react";
 import { Button } from "@repo/ui";
-import { Check, Copy } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -7,10 +7,15 @@ export function CopyButton({
   value,
   label = "Copy",
   size = "sm",
+  variant = "outline",
+  className,
 }: {
   value: string;
   label?: string;
   size?: "sm" | "icon";
+  /** `ghost` draws no box, for an icon that sits inside a field. */
+  variant?: "outline" | "ghost";
+  className?: string;
 }) {
   const [copied, setCopied] = useState(false);
 
@@ -26,7 +31,14 @@ export function CopyButton({
   }
 
   return (
-    <Button type="button" variant="outline" size={size} onClick={copy} aria-label={label}>
+    <Button
+      type="button"
+      variant={variant}
+      size={size}
+      onClick={copy}
+      aria-label={label}
+      className={className}
+    >
       {copied ? <Check size={14} /> : <Copy size={14} />}
       {size === "sm" && (copied ? "Copied" : label)}
     </Button>
