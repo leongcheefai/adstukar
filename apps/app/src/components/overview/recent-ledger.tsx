@@ -90,10 +90,10 @@ export function RecentLedger() {
           <EmptyState
             icon={<Receipt />}
             title="No movements yet"
-            description="CapyPoints land here once your card is live on a page and a visitor sees it."
+            description="CapyPoints land here once a listing plays on a screen."
             action={
               <Button asChild size="sm">
-                <Link to="/dashboard/placements">Get your snippet</Link>
+                <Link to="/dashboard/devices">Register a device</Link>
               </Button>
             }
           />

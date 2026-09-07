@@ -1,4 +1,4 @@
-import { Code, Coins, Package, Gear as Settings, SquaresFour } from "@phosphor-icons/react";
+import { Coins, Megaphone, Monitor, Gear as Settings, SquaresFour } from "@phosphor-icons/react";
 import { project } from "@repo/config/project";
 import { DashboardShell, DashboardTopbar, Logo, type NavItem } from "@repo/ui";
 import { Link, Outlet, useLocation, useNavigate } from "react-router";
@@ -16,16 +16,16 @@ function navItems(pathname: string): NavItem[] {
       icon: <SquaresFour size={16} />,
     },
     {
-      label: "Listing",
-      href: "/dashboard/products",
-      active: pathname === "/dashboard/products",
-      icon: <Package size={16} />,
+      label: "Campaigns",
+      href: "/dashboard/campaigns",
+      active: pathname === "/dashboard/campaigns",
+      icon: <Megaphone size={16} />,
     },
     {
-      label: "Placements",
-      href: "/dashboard/placements",
-      active: pathname === "/dashboard/placements",
-      icon: <Code size={16} />,
+      label: "Devices",
+      href: "/dashboard/devices",
+      active: pathname === "/dashboard/devices",
+      icon: <Monitor size={16} />,
     },
     {
       label: "CapyPoints",

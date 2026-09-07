@@ -1,15 +1,34 @@
 import * as z from "zod/v4";
-import { productContract } from "../entities/product";
+import { campaignContract } from "../entities/campaign";
+import { deviceAdminContract } from "../entities/device";
+import { listingContract } from "../entities/listing";
 
-export const moderationItemContract = z.object({
-  product: productContract,
-  owner: z.object({
-    name: z.string(),
-    email: z.string(),
-  }),
+const owner = z.object({
+  name: z.string(),
+  email: z.string(),
 });
 
-export const moderationQueueOutput = z.array(moderationItemContract);
-export const moderateProductOutput = productContract;
+/** A listing waiting for review, with the campaign that gives it its name. */
+export const listingReviewContract = z.object({
+  listing: listingContract,
+  campaign: campaignContract,
+  owner,
+});
 
-export type ModerationItem = z.output<typeof moderationItemContract>;
+/** A device waiting for review. Approving it also stamps the tier. */
+export const deviceReviewContract = z.object({
+  device: deviceAdminContract,
+  owner,
+});
+
+export const moderationQueueOutput = z.object({
+  listings: z.array(listingReviewContract),
+  devices: z.array(deviceReviewContract),
+});
+
+export const moderateListingOutput = listingContract;
+export const moderateDeviceOutput = deviceAdminContract;
+
+export type ListingReview = z.output<typeof listingReviewContract>;
+export type DeviceReview = z.output<typeof deviceReviewContract>;
+export type ModerationQueue = z.output<typeof moderationQueueOutput>;

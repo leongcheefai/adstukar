@@ -1,5 +1,5 @@
 /**
- * Extracts the registrable host from a product URL: lower-case, no `www.`.
+ * Extracts the registrable host from a campaign URL: lower-case, no `www.`.
  * Returns null for anything that is not an http(s) URL with a hostname.
  */
 export function domainFromUrl(input: string): string | null {

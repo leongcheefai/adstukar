@@ -1,4 +1,4 @@
-import { economy } from "@repo/config/economy";
+import { embedConfig } from "./config";
 import type { AdSize, ServedAd } from "./types";
 
 /**
@@ -36,7 +36,7 @@ function renderLogo(ad: ServedAd, px: number, small: boolean): HTMLElement {
 }
 
 export function renderCard(ad: ServedAd, size: AdSize): HTMLAnchorElement {
-  const { width, height } = economy.cardSizes[size];
+  const { width, height } = embedConfig.cardSizes[size];
   const small = size === "small";
 
   const card = el(

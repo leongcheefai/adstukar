@@ -3,7 +3,7 @@ import { Logo, Footer as UIFooter } from "@repo/ui";
 
 const groups = [
   {
-    title: "Product",
+    title: "CapyAds",
     links: [
       { label: "How it works", href: "/#how-it-works" },
       { label: "Who earns", href: "/#where" },

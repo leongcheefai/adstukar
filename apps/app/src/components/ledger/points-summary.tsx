@@ -78,7 +78,7 @@ export function PointsSummary() {
           <Button variant="outline" size="sm" onClick={() => setCashOutOpen(true)}>
             Cash out CapyPoints
           </Button>
-          <p className="text-xs text-muted-foreground">Trade points for ad credit or payout.</p>
+          <p className="text-xs text-muted-foreground">Turn earned points into money.</p>
         </div>
 
         {/* The one cell that asks for something rather than reporting it, so it
@@ -115,8 +115,9 @@ export function PointsSummary() {
           <DialogHeader>
             <DialogTitle>Cash out is not open yet</DialogTitle>
             <DialogDescription>
-              No money moves on CapyAds today. Points buy impressions, and nothing else. Your
-              balance of {settled.toLocaleString()} keeps until cash out opens.
+              Cash out is not built yet. Earned points wait out their hold first, and only earned
+              points ever leave as money. Your balance of {settled.toLocaleString()}
+              keeps until it opens.
             </DialogDescription>
           </DialogHeader>
           <Button onClick={() => setCashOutOpen(false)}>Got it</Button>

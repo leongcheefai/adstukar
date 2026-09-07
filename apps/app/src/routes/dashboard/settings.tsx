@@ -50,7 +50,7 @@ const ADMIN_SECTIONS: SettingsSection[] = [
     label: "Moderation",
     title: "Moderation",
     description:
-      "Products waiting for review, oldest first. Approval grants the welcome CapyPoints.",
+      "Listings and devices waiting for review, oldest first. A first approved listing grants the welcome CapyPoints.",
     group: "Admin",
   },
   {

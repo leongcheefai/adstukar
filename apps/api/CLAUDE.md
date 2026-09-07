@@ -1,19 +1,25 @@
 # apps/api
 
 ## Purpose
-Hono API server on Node.js. Handles auth (Better Auth), the AdsTukar exchange (products, placements, serve/beacon/click, ledger, stats, moderation, jobs), and the dormant Stripe billing module kept for a later paid tier. Runs on port 3001 in development.
+Hono API server on Node.js. Handles auth (Better Auth), the CapyAds exchange (campaigns, listings, devices, placements, serve/report/scan, ledger, stats, moderation, jobs), and the dormant Stripe billing module kept for a later paid tier. Runs on port 3001 in development.
 
 ## Exchange modules
 | Module | Routes | Auth |
 |---|---|---|
-| `products` | `GET/POST /products`, `PATCH/DELETE /products/:id`, `POST /products/:id/verify` | owner |
-| `placements` | `GET/POST /placements`, `PATCH/DELETE /placements/:id`, `POST /placements/:id/rotate-key`, `PUT /placements/:id/excluded-terms` | owner |
-| `serve` | `GET /serve?key=`, `POST /beacon` (text/plain JSON), `GET /click/:impressionId` | public, rate-limited |
+| `campaigns` | `GET/POST /campaigns`, `PATCH/DELETE /campaigns/:id`, `POST /campaigns/:id/verify` | owner |
+| `listings` | `GET/POST /listings`, `PATCH/DELETE /listings/:id` | owner |
+| `devices` | `GET/POST /devices`, `PATCH/DELETE /devices/:id`, `POST /devices/:id/rotate-key`, `PUT /devices/:id/excluded-terms` | owner |
+| `placements` | `GET/POST /placements`, `PATCH/DELETE /placements/:id` | owner |
+| `serve` | `GET /serve?key=`, `POST /report` (text/plain JSON), `GET /scan/:playId` | public, rate-limited |
 | `stats` | `GET /stats/overview` | member |
-| `ledger` | `GET /ledger?reason&state&cursor&limit` | member |
-| `admin` | `GET /admin/moderation`, `POST /admin/products/:id/approve|reject` | admin |
+| `ledger` | `GET /ledger?reason&state&lot&cursor&limit` | member |
+| `admin` | `GET /admin/moderation`, `POST /admin/listings/:id/approve\|reject`, `POST /admin/devices/:id/approve\|reject` | admin |
 | `jobs` | `startJobs()` from `index.ts`; `pnpm jobs:run` one-shot | — |
 | `uploads` | `POST /uploads/logo/presign` (S3, optional) | member |
+
+A `DELETE` on a campaign, a listing, or a device is an **archive**: the row stays,
+because the ledger reaches it through the plays it earned. Only a placement that
+has never played is really deleted.
 
 `GET /embed/*` serves `apps/embed/dist` when that directory exists (dev convenience).
 
@@ -84,6 +90,8 @@ stripe trigger invoice.payment_failed
 3. `GET /billing/config` exposes those IDs to the dashboard and marketing pricing flows; checkout submits the selected ID to `POST /billing/checkout`
 
 ## Gotchas
+- `POST /report` reads a **text/plain** body (`navigator.sendBeacon` cannot send JSON content types) and parses it by hand — do not add `zValidator("json")` there
+- `/serve`, `/report` and `/scan/*` accept any origin, because CapyTV runs on member devices. Every other route keeps the `APP_URL`/`WEB_URL` allow-list; the check lives in the `cors()` origin function in `src/lib/app.ts`
 - Webhook endpoint at `POST /billing/webhook` must receive the **raw body** for signature verification — do not add JSON body-parsing middleware to this route
 - Stripe API version is pinned in `src/lib/stripe.ts` — update after checking Stripe changelog for breaking changes
 - `subscription_data.metadata.userId` is set on checkout so webhooks can look up the user without a customer lookup

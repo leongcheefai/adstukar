@@ -1,7 +1,7 @@
 /**
- * URL helpers shared by every surface that takes a product link.
+ * URL helpers shared by every surface that takes a campaign link.
  *
- * The API decides what a valid product URL is (`domainFromUrl` in
+ * The API decides what a valid campaign URL is (`domainFromUrl` in
  * `apps/api/src/lib/domain.ts`). These are the browser-side twins, used to
  * enable a button and to label a field before the request goes out.
  */

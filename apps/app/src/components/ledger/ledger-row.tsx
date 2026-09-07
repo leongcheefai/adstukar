@@ -1,13 +1,25 @@
-import type { LedgerEntry, LedgerReason, LedgerState } from "@repo/contracts/types";
-import { Badge, TableCell, TableRow } from "@repo/ui";
+import { economy } from "@repo/config/economy";
+import type { LedgerEntry, LedgerLot, LedgerReason, LedgerState } from "@repo/contracts/types";
+import { Badge, TableCell, TableRow, Tooltip, TooltipContent, TooltipTrigger } from "@repo/ui";
 
 /** Shared by the CapyPoints page and the Overview summary, so the two cannot drift. */
 export const REASON_TEXT: Record<LedgerReason, string> = {
-  earn: "Impression shown on your site",
-  spend: "Your card shown elsewhere",
+  earn: "A listing played on your screen",
+  spend: "Your listing played on a screen",
+  fee: "The CapyAds fee on that play",
   grant: "Grant",
-  expiry: "Expired after 12 months",
+  topup: "Points you bought",
+  payout: "Points you cashed out",
+  refund: "Money returned for bought points",
+  expiry: `Expired after ${economy.expiryMonths} months`,
   void: "Voided by an admin",
+};
+
+/** What the lot lets a point do. The word alone does not say it. */
+export const LOT_TEXT: Record<LedgerLot, string> = {
+  bought: "Bought · refundable, never expires",
+  earned: `Earned · withdrawable after ${economy.payout.holdDays} days`,
+  granted: "Granted · never leaves as cash",
 };
 
 export function stateVariant(state: LedgerState): "success" | "warning" | "neutral" {
@@ -44,14 +56,21 @@ export function LedgerRow({ entry, compact = false }: { entry: LedgerEntry; comp
       <TableCell>
         <Badge variant={stateVariant(entry.state)}>{entry.state}</Badge>
       </TableCell>
+      {/* The compact table on Overview has four columns and no room for this. */}
+      {!compact && (
+        <TableCell>
+          <Tooltip>
+            <TooltipTrigger className="cursor-help capitalize">{entry.lot}</TooltipTrigger>
+            <TooltipContent>{LOT_TEXT[entry.lot]}</TooltipContent>
+          </Tooltip>
+        </TableCell>
+      )}
       <TableCell>
         <LedgerAmount delta={entry.delta} />
       </TableCell>
       {!compact && (
         <TableCell className="font-mono text-xs text-muted-foreground">
-          {entry.impressionId
-            ? entry.impressionId.slice(0, 8)
-            : (entry.relatedEntryId?.slice(0, 8) ?? "—")}
+          {entry.playId ? entry.playId.slice(0, 8) : (entry.relatedEntryId?.slice(0, 8) ?? "—")}
         </TableCell>
       )}
     </TableRow>

@@ -1,53 +1,136 @@
 /**
- * Every economy number lives here. Routes, services, jobs, the embed, and the
- * dashboard read these values; none of them hardcodes a point amount or a cap.
+ * Every economy number lives here. Routes, services, jobs, and the dashboard
+ * read these values; none of them hardcodes a point amount or a cap.
+ *
+ * A point is the only unit inside the system. Money crosses the boundary twice:
+ * a top-up buys points, and a payout sells them back. See docs/adr/0001.
  */
 export const economy = {
-  /** Points a host earns for one verified impression (pending until settled). */
-  earnPerImpression: 1,
-  /** Points an advertiser spends for one verified impression of its card. */
-  spendPerImpression: 2,
+  /** Points in one US dollar. The peg is fixed, so `delta` stays an integer. */
+  pointsPerUsd: 1000,
+
+  /**
+   * What an advertiser pays for one play, by device tier and placement format.
+   * The tier is what an admin stamps at approval; the format is the region.
+   */
+  playRate: {
+    standard: { band: 4, float: 6, ticker: 3 },
+    premium: { band: 8, float: 12, ticker: 6 },
+    flagship: { band: 16, float: 24, ticker: 12 },
+  },
+
+  /** What an advertiser pays on top when a viewer scans the code on a play. */
+  scanRate: {
+    standard: 40,
+    premium: 80,
+    flagship: 160,
+  },
+
+  /**
+   * Percent of every play and every scan that CapyAds keeps. It is posted as an
+   * explicit `fee` entry against the distributor, never as a hidden spread, so
+   * the earn and the spend a member compares are the same published number.
+   */
+  feePercent: 30,
+
+  grants: {
+    /** Granted once, when a member's first listing is approved. */
+    firstListingApproval: 5_000,
+  },
+
+  caps: {
+    /** Plays one device may be paid for in one day. */
+    dailyPlaysPerDevice: 600,
+    /** Points one campaign may spend in one day, unless the advertiser sets less. */
+    defaultDailyBudget: 20_000,
+    /** The least a campaign may set as its daily budget. */
+    minDailyBudget: 1_000,
+  },
+
   /** Hours before a pending earn entry settles. */
   settlementDelayHours: 24,
-  /** Months after settlement when a settled earn entry expires. */
+
+  payout: {
+    /** Days after settlement before earned points may leave as a payout. */
+    holdDays: 30,
+    /** The fewest points one payout may take. */
+    minimumPoints: 20_000,
+  },
+
+  /**
+   * Months after settlement when an earned or granted entry expires. Bought
+   * points never expire: somebody paid money for them.
+   */
   expiryMonths: 12,
-  grants: {
-    /** Granted once when a product is approved. */
-    productApproval: 50,
-    /** Verified impressions a member's placements must show to unlock the milestone. */
-    milestoneImpressions: 100,
-    /** Granted once when the milestone is reached. */
-    milestoneAmount: 150,
+
+  /** What a top-up sells. The price follows the peg; the bonus does not. */
+  topupPacks: [
+    { points: 10_000, usdCents: 1_000 },
+    { points: 50_000, usdCents: 5_000 },
+    { points: 250_000, usdCents: 25_000 },
+  ],
+
+  placement: {
+    /** Seconds one listing stays on a placement. */
+    dwellSeconds: { min: 5, max: 30, default: 12 },
+    /** Seconds of quiet between two plays on a device. */
+    gapSeconds: { min: 30, max: 900, default: 180 },
   },
-  caps: {
-    /** Counted impressions per visitor session per placement per day. */
-    perSessionPerDay: 10,
-    /** Earn entries per host domain per day. */
-    newDomainDailyEarn: 1000,
-  },
-  /** Minutes an impression stays open for its viewability beacon. */
-  impressionTtlMinutes: 10,
-  viewability: {
-    /** Fraction of the card that must be visible. */
-    minRatio: 0.5,
-    /** Milliseconds the card must stay visible. */
-    minMs: 1000,
-  },
+
+  /** Listings one campaign may hold, so an advertiser can compare them. */
+  maxListingsPerCampaign: 4,
+
+  taglineMaxLength: 60,
+
   excludedTerms: {
     max: 20,
     maxLength: 40,
   },
-  taglineMaxLength: 60,
+
+  /** Minutes an open play waits for its report before the job voids it. */
+  playTtlMinutes: 10,
+
   rateLimit: {
     windowMs: 60_000,
     servePerKey: 600,
     servePerIp: 60,
-    beaconPerIp: 60,
-  },
-  cardSizes: {
-    small: { width: 320, height: 64 },
-    medium: { width: 300, height: 120 },
+    reportPerIp: 60,
+    scanPerIp: 30,
   },
 } as const;
 
 export type Economy = typeof economy;
+export type DeviceTierRate = keyof typeof economy.playRate;
+export type PlacementFormatRate = keyof (typeof economy.playRate)["standard"];
+
+/** The advertiser's cost for one play. */
+export function playCost(tier: DeviceTierRate, format: PlacementFormatRate): number {
+  return economy.playRate[tier][format];
+}
+
+/** The advertiser's extra cost when that play is scanned. */
+export function scanCost(tier: DeviceTierRate): number {
+  return economy.scanRate[tier];
+}
+
+/**
+ * The points CapyAds keeps from one movement. Rounded down, so the distributor
+ * never loses a point to rounding and the two sides always add up.
+ */
+export function feeOn(amount: number): number {
+  return Math.floor((amount * economy.feePercent) / 100);
+}
+
+/**
+ * The play rate is tier by format, so no single number describes it. Copy that
+ * quotes a rate quotes this range, and derives it here rather than in each page.
+ */
+export function playRateRange(): { lowest: number; highest: number } {
+  const rates = Object.values(economy.playRate).flatMap((byFormat) => Object.values(byFormat));
+  return { lowest: Math.min(...rates), highest: Math.max(...rates) };
+}
+
+/** The percent of a play or a scan the distributor keeps, after the fee. */
+export function distributorPercent(): number {
+  return 100 - economy.feePercent;
+}

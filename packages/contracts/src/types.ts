@@ -21,24 +21,39 @@ export type { CreateCheckoutInput, CreatePortalInput } from "./inputs/billing";
 export type { CreateFeedbackInput, FeedbackType } from "./inputs/feedback";
 export type { PresignAvatarInput } from "./inputs/uploads";
 
-// ── AdsTukar exchange ────────────────────────────────────────────────────────
-export type { Product, ProductStatus } from "./entities/product";
-export type { Placement, PlacementSize } from "./entities/placement";
-export type { LedgerEntry, LedgerReason, LedgerState } from "./entities/ledger-entry";
-export type { CreateProductInput, UpdateProductInput } from "./inputs/products";
+// ── CapyAds exchange ─────────────────────────────────────────────────────────
+export type { Campaign, CampaignState } from "./entities/campaign";
+export type { Listing, ListingState } from "./entities/listing";
 export type {
-  CreatePlacementInput,
+  Device,
+  DeviceForAdmin,
+  DeviceState,
+  DeviceTier,
+  VenueType,
+} from "./entities/device";
+export type { Placement, PlacementFormat, PlacementSize } from "./entities/placement";
+export type { Play, PlayState } from "./entities/play";
+export type { LedgerEntry, LedgerLot, LedgerReason, LedgerState } from "./entities/ledger-entry";
+export type { CreateCampaignInput, UpdateCampaignInput } from "./inputs/campaigns";
+export type { CreateListingInput, UpdateListingInput } from "./inputs/listings";
+export type {
+  CreateDeviceInput,
   SetExcludedTermsInput,
-  UpdatePlacementInput,
-} from "./inputs/placements";
-export type { BeaconInput } from "./inputs/serve";
+  UpdateDeviceInput,
+} from "./inputs/devices";
+export type { CreatePlacementInput, UpdatePlacementInput } from "./inputs/placements";
+export type { ReportInput } from "./inputs/serve";
 export type { ListLedgerQuery } from "./inputs/ledger";
-export type { RejectProductInput } from "./inputs/admin";
+export type { ApproveDeviceInput, RejectInput } from "./inputs/admin";
 export type { PresignLogoInput } from "./inputs/uploads";
-export type { VerificationMethod, VerifyProductResponse } from "./modules/products";
-export type { PlacementWithTerms } from "./modules/placements";
-export type { BeaconResponse, ServeResponse, ServedAd } from "./modules/serve";
+export type {
+  CampaignWithListings,
+  VerificationMethod,
+  VerifyCampaignResponse,
+} from "./modules/campaigns";
+export type { DeviceWithTerms } from "./modules/devices";
+export type { ReportResponse, ServeResponse, ServedListing } from "./modules/serve";
 export type { StatsDay, StatsOverview } from "./modules/stats";
 export type { ListLedgerResponse } from "./modules/ledger";
-export type { ModerationItem } from "./modules/admin";
+export type { DeviceReview, ListingReview, ModerationQueue } from "./modules/admin";
 export type { PresignLogoResponse } from "./modules/uploads";

@@ -36,7 +36,7 @@ export async function presignAvatarUpload(
   return presignUpload("avatars", userId, input);
 }
 
-/** Product logos share the avatar rules (png/jpeg/webp, 5 MB) under a separate prefix. */
+/** Listing logos share the avatar rules (png/jpeg/webp, 5 MB) under a separate prefix. */
 export async function presignLogoUpload(
   userId: string,
   input: PresignAvatarInput,

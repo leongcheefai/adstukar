@@ -1,17 +1,15 @@
-import type {
-  CreatePlacementInput,
-  PlacementWithTerms,
-  UpdatePlacementInput,
-} from "@repo/contracts/types";
+import type { CreatePlacementInput, Placement, UpdatePlacementInput } from "@repo/contracts/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "./api";
 
+/** The overlay regions on a device. One device holds several; one plays at a time. */
 export const placementsKey = ["placements"] as const;
 
-export function usePlacements() {
+export function usePlacements(deviceId?: string) {
   return useQuery({
-    queryKey: placementsKey,
-    queryFn: () => apiFetch<PlacementWithTerms[]>("/placements"),
+    queryKey: [...placementsKey, deviceId ?? null],
+    queryFn: () =>
+      apiFetch<Placement[]>(deviceId ? `/placements?deviceId=${deviceId}` : "/placements"),
   });
 }
 
@@ -24,7 +22,7 @@ export function useCreatePlacement() {
   const invalidate = useInvalidate();
   return useMutation({
     mutationFn: (input: CreatePlacementInput) =>
-      apiFetch<PlacementWithTerms>("/placements", { method: "POST", body: input }),
+      apiFetch<Placement>("/placements", { method: "POST", body: input }),
     onSuccess: invalidate,
   });
 }
@@ -33,28 +31,7 @@ export function useUpdatePlacement() {
   const invalidate = useInvalidate();
   return useMutation({
     mutationFn: ({ id, input }: { id: string; input: UpdatePlacementInput }) =>
-      apiFetch<PlacementWithTerms>(`/placements/${id}`, { method: "PATCH", body: input }),
-    onSuccess: invalidate,
-  });
-}
-
-export function useRotateKey() {
-  const invalidate = useInvalidate();
-  return useMutation({
-    mutationFn: (id: string) =>
-      apiFetch<PlacementWithTerms>(`/placements/${id}/rotate-key`, { method: "POST" }),
-    onSuccess: invalidate,
-  });
-}
-
-export function useSetExcludedTerms() {
-  const invalidate = useInvalidate();
-  return useMutation({
-    mutationFn: ({ id, phrases }: { id: string; phrases: string[] }) =>
-      apiFetch<PlacementWithTerms>(`/placements/${id}/excluded-terms`, {
-        method: "PUT",
-        body: { phrases },
-      }),
+      apiFetch<Placement>(`/placements/${id}`, { method: "PATCH", body: input }),
     onSuccess: invalidate,
   });
 }

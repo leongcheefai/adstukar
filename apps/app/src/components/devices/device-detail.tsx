@@ -1,0 +1,423 @@
+import { ArrowsClockwise, Plus, Trash, X } from "@phosphor-icons/react";
+import { economy } from "@repo/config/economy";
+import type {
+  DeviceWithTerms,
+  Placement,
+  PlacementFormat,
+  PlacementSize,
+} from "@repo/contracts/types";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+  Badge,
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  Input,
+  Label,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Slider,
+} from "@repo/ui";
+import { useState } from "react";
+import { toast } from "sonner";
+import { useArchiveDevice, useRotateKey, useSetExcludedTerms } from "../../lib/devices";
+import {
+  useCreatePlacement,
+  useDeletePlacement,
+  usePlacements,
+  useUpdatePlacement,
+} from "../../lib/placements";
+import { CopyButton } from "../copy-button";
+import { CapyTvScreen } from "./capytv-screen";
+
+const FORMAT_LABEL: Record<PlacementFormat, string> = {
+  band: "Band · a strip across the foot of the screen",
+  float: "Float · a card in one corner",
+  ticker: "Ticker · one thin line",
+};
+
+const SIZE_LABEL: Record<PlacementSize, string> = {
+  small: "Small",
+  medium: "Medium",
+  large: "Large",
+};
+
+/**
+ * One region on the device. A device may hold several, but only one paid listing
+ * is on screen at a time, so each row sets its own shape and timing and nothing
+ * else.
+ */
+function PlacementRow({ placement }: { placement: Placement }) {
+  const update = useUpdatePlacement();
+  const remove = useDeletePlacement();
+  const [dwell, setDwell] = useState(placement.dwellSeconds);
+  const [gap, setGap] = useState(placement.gapSeconds);
+
+  const onError = (err: Error) => toast.error(err.message);
+
+  return (
+    <div className="space-y-4 rounded-lg border p-4">
+      <div className="flex items-start gap-3">
+        <div className="min-w-0 flex-1 space-y-1.5">
+          <Label>Format</Label>
+          <Select
+            value={placement.format}
+            onValueChange={(v) =>
+              update.mutate(
+                { id: placement.id, input: { format: v as PlacementFormat } },
+                { onError },
+              )
+            }
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {(Object.keys(FORMAT_LABEL) as PlacementFormat[]).map((f) => (
+                <SelectItem key={f} value={f}>
+                  {FORMAT_LABEL[f]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="w-32 space-y-1.5">
+          <Label>Size</Label>
+          <Select
+            value={placement.size}
+            onValueChange={(v) =>
+              update.mutate({ id: placement.id, input: { size: v as PlacementSize } }, { onError })
+            }
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {(Object.keys(SIZE_LABEL) as PlacementSize[]).map((s) => (
+                <SelectItem key={s} value={s}>
+                  {SIZE_LABEL[s]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <Button
+          size="icon"
+          variant="ghost"
+          aria-label="Remove this region"
+          className="mt-6 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+          onClick={() =>
+            remove.mutate(placement.id, {
+              onSuccess: () => toast.success("Region removed"),
+              onError,
+            })
+          }
+        >
+          <Trash size={16} />
+        </Button>
+      </div>
+
+      <div className="grid gap-6 sm:grid-cols-2">
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <Label>Dwell</Label>
+            <span className="font-mono text-xs text-muted-foreground">{dwell}s</span>
+          </div>
+          <Slider
+            value={[dwell]}
+            min={economy.placement.dwellSeconds.min}
+            max={economy.placement.dwellSeconds.max}
+            step={1}
+            onValueChange={([v]) => setDwell(v ?? dwell)}
+            onValueCommit={([v]) =>
+              update.mutate(
+                { id: placement.id, input: { dwellSeconds: v ?? dwell } },
+                { onError, onSuccess: () => toast.success("Dwell saved") },
+              )
+            }
+          />
+          <p className="text-xs text-muted-foreground">
+            How long one listing stays on this region.
+          </p>
+        </div>
+
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <Label>Gap</Label>
+            <span className="font-mono text-xs text-muted-foreground">{gap}s</span>
+          </div>
+          <Slider
+            value={[gap]}
+            min={economy.placement.gapSeconds.min}
+            max={economy.placement.gapSeconds.max}
+            step={30}
+            onValueChange={([v]) => setGap(v ?? gap)}
+            onValueCommit={([v]) =>
+              update.mutate(
+                { id: placement.id, input: { gapSeconds: v ?? gap } },
+                { onError, onSuccess: () => toast.success("Gap saved") },
+              )
+            }
+          />
+          <p className="text-xs text-muted-foreground">
+            The quiet time on the whole screen between two plays.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The expanded view of one device: what CapyTV plays, the credentials that pair
+ * the screen, the regions it draws, and the listings its owner refuses.
+ */
+export function DeviceDetail({
+  item,
+  open,
+  onOpenChange,
+}: {
+  item: DeviceWithTerms;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const { device, excludedTerms } = item;
+  const { data: placements } = usePlacements(device.id);
+  const rotate = useRotateKey();
+  const setTerms = useSetExcludedTerms();
+  const createPlacement = useCreatePlacement();
+  const archive = useArchiveDevice();
+
+  const [term, setTerm] = useState("");
+  const onError = (err: Error) => toast.error(err.message);
+
+  function addTerm() {
+    const phrase = term.trim().toLowerCase();
+    if (!phrase) return;
+    if (excludedTerms.includes(phrase)) {
+      setTerm("");
+      return;
+    }
+    if (excludedTerms.length >= economy.excludedTerms.max) {
+      toast.error(`You can exclude up to ${economy.excludedTerms.max} terms.`);
+      return;
+    }
+    setTerms.mutate(
+      { id: device.id, phrases: [...excludedTerms, phrase] },
+      { onSuccess: () => setTerm(""), onError },
+    );
+  }
+
+  function removeTerm(phrase: string) {
+    setTerms.mutate(
+      { id: device.id, phrases: excludedTerms.filter((t) => t !== phrase) },
+      { onError },
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-xl">
+        <DialogHeader>
+          <DialogTitle>{device.location}</DialogTitle>
+          <DialogDescription>
+            CapyTV plays its own content, and shows listings over it. One paid listing at a time.
+          </DialogDescription>
+        </DialogHeader>
+
+        <CapyTvScreen />
+
+        <div className="space-y-6">
+          <div className="grid gap-6 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label>Pairing code</Label>
+              <div className="flex items-center gap-2">
+                <code className="min-w-0 flex-1 truncate rounded-md border bg-muted px-2 py-1.5 font-mono text-xs">
+                  {device.deviceId}
+                </code>
+                <CopyButton value={device.deviceId} size="icon" label="Copy pairing code" />
+              </div>
+              <p className="text-xs text-muted-foreground">Type this into CapyTV on the screen.</p>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Device key</Label>
+              <div className="flex items-center gap-2">
+                <code className="min-w-0 flex-1 truncate rounded-md border bg-muted px-2 py-1.5 font-mono text-xs">
+                  {device.apiKey}
+                </code>
+                <CopyButton value={device.apiKey} size="icon" label="Copy device key" />
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button size="icon" variant="outline" aria-label="Rotate device key">
+                      <ArrowsClockwise
+                        size={14}
+                        className={rotate.isPending ? "animate-spin" : ""}
+                      />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Rotate the device key?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        The old key stops working at once. The screen must pair again.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() =>
+                          rotate.mutate(device.id, {
+                            onSuccess: () => toast.success("Device key rotated"),
+                            onError,
+                          })
+                        }
+                      >
+                        Rotate
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label>Regions</Label>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={createPlacement.isPending}
+                onClick={() =>
+                  createPlacement.mutate(
+                    {
+                      deviceId: device.id,
+                      format: "band",
+                      size: "medium",
+                      dwellSeconds: economy.placement.dwellSeconds.default,
+                      gapSeconds: economy.placement.gapSeconds.default,
+                    },
+                    { onSuccess: () => toast.success("Region added"), onError },
+                  )
+                }
+              >
+                <Plus size={14} className="mr-1" />
+                Add region
+              </Button>
+            </div>
+            {placements?.length === 0 && (
+              <p className="text-xs text-muted-foreground">
+                No region yet. Add one and the screen starts taking listings.
+              </p>
+            )}
+            {placements?.map((placement) => (
+              <PlacementRow key={placement.id} placement={placement} />
+            ))}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor={`term-${device.id}`}>Excluded terms</Label>
+            <div className="flex gap-2">
+              <Input
+                id={`term-${device.id}`}
+                value={term}
+                onChange={(e) => setTerm(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addTerm();
+                  }
+                }}
+                maxLength={economy.excludedTerms.maxLength}
+                placeholder="e.g. crypto"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={addTerm}
+                disabled={setTerms.isPending}
+              >
+                Add
+              </Button>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {excludedTerms.length === 0 && (
+                <p className="text-xs text-muted-foreground">
+                  A listing whose name or tagline carries a term never plays here. Up to{" "}
+                  {economy.excludedTerms.max}.
+                </p>
+              )}
+              {excludedTerms.map((t) => (
+                <Badge key={t} data-usertext variant="secondary" className="gap-1 pr-1">
+                  {t}
+                  <button
+                    type="button"
+                    onClick={() => removeTerm(t)}
+                    aria-label={`Remove ${t}`}
+                    className="rounded-sm hover:bg-foreground/10"
+                  >
+                    <X size={12} />
+                  </button>
+                </Badge>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Archive sits under a rule at the bottom: it is the one action that is
+            not about setting this device up. */}
+        <div className="flex justify-end border-t pt-4">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button size="sm" variant="ghost" className="text-destructive">
+                <Trash size={14} className="mr-2" />
+                Archive device
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Archive this device?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  The device key stops working immediately and the screen plays nothing. The record
+                  stays, because the plays it earned reference it.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  variant="destructive"
+                  onClick={() =>
+                    archive.mutate(device.id, {
+                      onSuccess: () => {
+                        toast.success("Device archived");
+                        onOpenChange(false);
+                      },
+                      onError,
+                    })
+                  }
+                >
+                  Archive
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}

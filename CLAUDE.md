@@ -3,33 +3,32 @@
 ## Purpose
 CapyAds is an ad network for small screens. An advertiser pays points to have listings played on screens that other members own. The screen owner earns points from each play, and converts the earned points into money. Money enters as a top-up and leaves as a payout; points are the only unit inside the system, pegged at 1000 points to 1 USD. Built on the Vite + Hono + Better Auth boilerplate: pnpm + Turborepo monorepo with four apps (`web` landing, `app` dashboard, `api`, `embed` snippet) and seven shared packages (`ui`, `db`, `auth`, `emails`, `env`, `config`, `contracts`). Vocabulary: `CONTEXT.md`. Decisions: `docs/adr/`. Roadmap: GitHub issue #5.
 
-## Model migration in flight — read this before you touch a table
-The design changed from a barter web exchange into a screens network. The docs describe the target. The code still holds the old names. GitHub #11 (Phase 0) renames them.
+## The model
+The schema, the contracts, the API, and the dashboard all speak the target
+vocabulary: `campaign`, `listing`, `device`, `placement`, `play`. GitHub #11
+(Phase 0) renamed them; nothing called `product` or `impression` survives outside
+`apps/embed`.
 
-| Target term | Name in the code today |
+The old barter economy (+1 earn, -2 spend, no money) is dead. Do not restore it.
+
+| Term | What it is |
 |---|---|
-| `campaign` | `product` |
-| `listing` | the creative half of `product` |
-| `device` | the owner half of `placement` |
-| `placement` (an overlay region) | `placement` (a spot on a website) |
-| `play` | `impression` |
-| lot on a ledger entry | does not exist |
-| `topup`, `payout`, `fee`, `refund` reasons | do not exist |
-
-Rules while the two overlap:
-- Write new code against the target names. Do not add a feature to `product`.
-- Never mix the two vocabularies in one file.
-- The old barter economy (+1 earn, −2 spend, no money) is dead. Do not restore it.
+| `campaign` | one destination site, its verified domain, its state, its daily budget |
+| `listing` | one creative under a campaign, up to four |
+| `device` | one screen running CapyTV; owner, venue, tier, location, daily play cap |
+| `placement` | one overlay region on a device (`band` / `float` / `ticker`) |
+| `play` | one listing shown in one placement for its dwell |
+| lot | the origin of a point on a ledger entry: `bought`, `earned`, `granted` |
 
 ## Exchange rules (where things live)
-- **Economy numbers** — `packages/config/src/economy.ts` only. Play and scan rates, the fee, the peg, grants, the daily play cap, the daily budget default, settlement delay, payout hold and threshold, expiry, top-up packs, rate limits, listings per campaign. Never a literal in a route, a job, a page, or the client.
+- **Economy numbers** — `packages/config/src/economy.ts` only. Play and scan rates, the fee, the peg, grants, the daily play cap, the daily budget default, settlement delay, payout hold and threshold, expiry, top-up packs, rate limits, listings per campaign. Never a literal in a route, a job, a page, or the client. `apps/embed` is the one exception: it is unmaintained, and its dead web-economy numbers sit in `apps/embed/src/config.ts` so they cannot drift back in.
 - **Ledger** — `apps/api/src/modules/ledger/ledger.service.ts` is the only writer of `ledger_entry`. Rows are append-only. `idempotency_key` is unique. Balances are `SUM(delta)`; never store a counter.
 - **Point lots** — every entry carries a lot: `bought`, `earned`, or `granted`. The lot decides the rules. `bought` refunds, never withdraws, never expires. `earned` withdraws after the hold, and expires. `granted` neither refunds nor withdraws, and expires. A spend consumes `granted` first, then `bought`, oldest first. A free point that can be withdrawn is a cash faucet.
-- **Serve path** — `apps/api/src/modules/serve/`: `ranking.ts` is the pure extension point for AI matching; the service writes the play, then writes the earn, spend and fee rows in one transaction.
+- **Serve path** — `apps/api/src/modules/serve/`: `ranking.ts` is the pure extension point for AI matching. `GET /serve` opens the play; `POST /report` counts it and writes the spend, earn and fee rows in one transaction; `GET /scan/:playId` pays the bonus and redirects.
 - **One paid listing at a time** — a device may hold several placements, but only one paid listing is on screen at once. Concurrent regions would charge several advertisers for one pair of eyes.
 - **Moderation** — `apps/api/src/modules/admin/`: a human queue. An admin reviews each listing and each device. Device approval also stamps the tier, which sets the rate. The domain check stays automatic and gates the campaign.
 - **Fraud is bounded by policy, not by hardware** — CapyTV is a PWA, so there is no device attestation. Approval, the daily play cap, the payout hold, and the scan-to-play ratio are the whole defence. See `docs/adr/0003`.
-- **Jobs** — `apps/api/src/modules/jobs/`: settlement (pending → settled) and expiry run in-process (`JOBS_ENABLED=true`) or once via `pnpm --filter @repo/api jobs:run`.
+- **Jobs** — `apps/api/src/modules/jobs/`: settlement (pending → settled), expiry, and voiding open plays whose report never arrived. They run in-process (`JOBS_ENABLED=true`) or once via `pnpm --filter @repo/api jobs:run`.
 - **Embed** — `apps/embed` serves the old web surface. It stays in the repo, unmaintained. Do not add features to it.
 
 ## Conventions
@@ -82,6 +81,7 @@ Single source of truth for every type crossing the API boundary. Hand-copying a 
 - **A delete is an archive.** Once points have moved, the row stays, because the ledger references it. A campaign, a listing, and a device all archive.
 - **A refund posts a `refund` entry.** It never deletes a row and never edits one.
 - **Bought points never expire.** The expiry job must skip the `bought` lot. Expiring points somebody paid for is a consumer-law problem.
+- `pnpm db:generate` and `pnpm db:push` open an interactive prompt whenever a diff could be a rename, and they crash without a TTY. Split the change into a drop-only migration and a create-only one so neither diff is ambiguous — `0004`/`0005` are that pair.
 - `pnpm verify` is the single gate definition — CI (`.github/workflows/ci.yml`), `.githooks/pre-push`, and the Claude Code hook all call it, so they cannot drift apart. Change the gate there, not in three places. `typecheck` is what enforces `expectTypeOf` assertions — vitest does not.
 - The gate must keep passing with **no `.env` present** — that is what CI and a fresh clone get. If a task starts needing a database, add a postgres service to the CI workflow rather than weakening the gate.
 - `.githooks/` installs via the root `prepare` script (`git config core.hooksPath`). A fresh `pnpm install` wires it up; no husky or lefthook dep. Emergency bypass: `git push --no-verify`.

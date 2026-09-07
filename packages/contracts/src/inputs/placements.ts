@@ -1,28 +1,37 @@
 import { economy } from "@repo/config/economy";
-import { PLACEMENT_SIZES } from "@repo/db/enums";
+import { PLACEMENT_FORMATS, PLACEMENT_SIZES } from "@repo/db/enums";
 import * as z from "zod/v4";
 
+const dwellSeconds = z
+  .number()
+  .int()
+  .min(economy.placement.dwellSeconds.min)
+  .max(economy.placement.dwellSeconds.max);
+
+const gapSeconds = z
+  .number()
+  .int()
+  .min(economy.placement.gapSeconds.min)
+  .max(economy.placement.gapSeconds.max);
+
 export const createPlacementInput = z.object({
-  productId: z.string().min(1),
-  size: z.enum(PLACEMENT_SIZES).default("small"),
-  houseAdPct: z.number().int().min(0).max(100).default(0),
+  deviceId: z.string().min(1),
+  format: z.enum(PLACEMENT_FORMATS).default("band"),
+  size: z.enum(PLACEMENT_SIZES).default("medium"),
+  dwellSeconds: dwellSeconds.default(economy.placement.dwellSeconds.default),
+  gapSeconds: gapSeconds.default(economy.placement.gapSeconds.default),
 });
 
 export const updatePlacementInput = z.object({
+  format: z.enum(PLACEMENT_FORMATS).optional(),
   size: z.enum(PLACEMENT_SIZES).optional(),
-  houseAdPct: z.number().int().min(0).max(100).optional(),
-});
-
-export const setExcludedTermsInput = z.object({
-  phrases: z
-    .array(z.string().trim().min(1).max(economy.excludedTerms.maxLength))
-    .max(economy.excludedTerms.max),
+  dwellSeconds: dwellSeconds.optional(),
+  gapSeconds: gapSeconds.optional(),
 });
 
 export const listPlacementsQuery = z.object({
-  productId: z.string().min(1).optional(),
+  deviceId: z.string().min(1).optional(),
 });
 
 export type CreatePlacementInput = z.infer<typeof createPlacementInput>;
 export type UpdatePlacementInput = z.infer<typeof updatePlacementInput>;
-export type SetExcludedTermsInput = z.infer<typeof setExcludedTermsInput>;

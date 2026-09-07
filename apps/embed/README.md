@@ -1,3 +1,12 @@
+> **Unmaintained.** This is the old web surface: a sponsored card on a member's
+> own website. CapyAds is a network of screens now, and the API endpoints this
+> bundle calls (`/serve` with a placement key, `/beacon`, `/click/:id`) were
+> replaced in Phase 0 by the device endpoints (`/serve` with a device key,
+> `/report`, `/scan/:playId`). The code still builds and its tests still run, so
+> the gate keeps passing, but nothing here talks to the live API. Its economy
+> numbers live in `src/config.ts`, not in `@repo/config/economy`. Do not add
+> features to it.
+
 # @repo/embed
 
 The ad snippet that member sites load. Vanilla TypeScript, no dependencies, one request to

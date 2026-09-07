@@ -1,7 +1,8 @@
 import { log } from "../../lib/logger";
-import { runExpiry, runSettlement } from "./jobs.service";
+import { runExpiry, runPlayCleanup, runSettlement } from "./jobs.service";
 
 const SETTLEMENT_EVERY_MS = 5 * 60_000;
+const PLAY_CLEANUP_EVERY_MS = 5 * 60_000;
 const EXPIRY_EVERY_MS = 24 * 3_600_000;
 
 function guarded(name: string, fn: () => Promise<unknown>) {
@@ -12,10 +13,16 @@ function guarded(name: string, fn: () => Promise<unknown>) {
 export function startJobs() {
   const settle = guarded("settlement", runSettlement);
   const expire = guarded("expiry", runExpiry);
-  const timers = [setInterval(settle, SETTLEMENT_EVERY_MS), setInterval(expire, EXPIRY_EVERY_MS)];
+  const cleanup = guarded("play_cleanup", runPlayCleanup);
+  const timers = [
+    setInterval(settle, SETTLEMENT_EVERY_MS),
+    setInterval(expire, EXPIRY_EVERY_MS),
+    setInterval(cleanup, PLAY_CLEANUP_EVERY_MS),
+  ];
   for (const t of timers) t.unref();
   void settle();
   void expire();
+  void cleanup();
   return () => {
     for (const t of timers) clearInterval(t);
   };

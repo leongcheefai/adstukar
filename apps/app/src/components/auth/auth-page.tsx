@@ -118,7 +118,7 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
         </div>
 
         <p className="text-xs text-slab-foreground/60">
-          No card. No cookies. A person reviews every product.
+          No card. No cookies. A person reviews every listing.
         </p>
       </aside>
 

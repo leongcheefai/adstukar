@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { matchesExcludedTerm, rankCandidates, rollHouseAd } from "./ranking";
+import { matchesExcludedTerm, nextPlacement, rankCandidates } from "./ranking";
 
 describe("matchesExcludedTerm", () => {
   it("matches case-insensitively across name and tagline", () => {
@@ -12,29 +12,31 @@ describe("matchesExcludedTerm", () => {
 });
 
 describe("rankCandidates", () => {
-  it("puts never-served first, then oldest served", () => {
+  it("puts never-played first, then oldest played", () => {
     const ranked = rankCandidates([
-      { id: "recent", lastServedAt: new Date("2026-08-31T10:00:00Z") },
-      { id: "never", lastServedAt: null },
-      { id: "old", lastServedAt: new Date("2026-08-01T10:00:00Z") },
+      { id: "recent", lastPlayedAt: new Date("2026-08-31T10:00:00Z") },
+      { id: "never", lastPlayedAt: null },
+      { id: "old", lastPlayedAt: new Date("2026-08-01T10:00:00Z") },
     ]);
     expect(ranked.map((c) => c.id)).toEqual(["never", "old", "recent"]);
   });
   it("does not mutate the input", () => {
-    const input = [{ lastServedAt: new Date() }, { lastServedAt: null }];
+    const input = [{ lastPlayedAt: new Date() }, { lastPlayedAt: null }];
     const copy = [...input];
     rankCandidates(input);
     expect(input).toEqual(copy);
   });
 });
 
-describe("rollHouseAd", () => {
-  it("is deterministic at the extremes", () => {
-    expect(rollHouseAd(0, () => 0)).toBe(false);
-    expect(rollHouseAd(100, () => 0.999)).toBe(true);
+describe("nextPlacement", () => {
+  it("takes the region that has waited longest", () => {
+    const picked = nextPlacement([
+      { id: "band", lastPlayedAt: new Date("2026-08-31T10:00:00Z") },
+      { id: "ticker", lastPlayedAt: new Date("2026-08-01T10:00:00Z") },
+    ]);
+    expect(picked?.id).toBe("ticker");
   });
-  it("compares the roll against the percentage", () => {
-    expect(rollHouseAd(30, () => 0.29)).toBe(true);
-    expect(rollHouseAd(30, () => 0.31)).toBe(false);
+  it("returns null when the device holds no placement", () => {
+    expect(nextPlacement([])).toBeNull();
   });
 });

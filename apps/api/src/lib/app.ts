@@ -10,12 +10,14 @@ import { sessionMiddleware } from "../middleware/auth";
 import { errorHandler } from "../middleware/error";
 import { adminRouter } from "../modules/admin/admin.routes";
 import { billingRouter } from "../modules/billing/billing.routes";
+import { campaignsRouter } from "../modules/campaigns/campaigns.routes";
+import { devicesRouter } from "../modules/devices/devices.routes";
 import { feedbackRouter } from "../modules/feedback/feedback.routes";
 import { healthRouter } from "../modules/health/health.routes";
 import { ledgerRouter } from "../modules/ledger/ledger.routes";
+import { listingsRouter } from "../modules/listings/listings.routes";
 import { meRouter } from "../modules/me/me.routes";
 import { placementsRouter } from "../modules/placements/placements.routes";
-import { productsRouter } from "../modules/products/products.routes";
 import { releasesRouter } from "../modules/releases/releases.routes";
 import { serveRouter } from "../modules/serve/serve.routes";
 import { statsRouter } from "../modules/stats/stats.routes";
@@ -26,9 +28,10 @@ export const app = new Hono<{ Variables: AppVariables }>();
 
 app.use("*", logger());
 
-// The embed runs on member sites: its endpoints accept any origin (they never use the
-// session cookie). Everything else stays locked to the dashboard and marketing origins.
-const PUBLIC_PREFIXES = ["/serve", "/beacon", "/click/"];
+// CapyTV runs on member devices and a scan comes from a stranger's phone, so these
+// three accept any origin (they never use the session cookie). Everything else stays
+// locked to the dashboard and marketing origins.
+const PUBLIC_PREFIXES = ["/serve", "/report", "/scan/"];
 const TRUSTED_ORIGINS = new Set([serverEnv.APP_URL, serverEnv.WEB_URL]);
 app.use(
   "*",
@@ -51,7 +54,9 @@ app.route("/billing", billingRouter);
 app.route("/feedback", feedbackRouter);
 app.route("/uploads", uploadsRouter);
 app.route("/releases", releasesRouter);
-app.route("/products", productsRouter);
+app.route("/campaigns", campaignsRouter);
+app.route("/listings", listingsRouter);
+app.route("/devices", devicesRouter);
 app.route("/placements", placementsRouter);
 app.route("/stats", statsRouter);
 app.route("/ledger", ledgerRouter);

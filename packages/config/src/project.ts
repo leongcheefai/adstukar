@@ -11,7 +11,7 @@ export interface ProjectIdentity {
 }
 
 /**
- * Public product identity. Edit this file once when starting a new project.
+ * Public brand identity. Edit this file once when starting a new project.
  * Environment-specific app and API origins remain in the root `.env`.
  *
  * `slug` stays "adstukar" on purpose. It is not display copy: it names the
@@ -23,9 +23,9 @@ export interface ProjectIdentity {
 export const project = {
   name: "CapyAds",
   slug: "adstukar",
-  tagline: "Show two ads, earn one for yourself.",
+  tagline: "Play ads on your screen and earn money.",
   description:
-    "A cross-promotion ad exchange for indie hackers. Show a small sponsored card in your product and earn points to show yours in theirs. No money moves.",
+    "An ad network for small screens. Put a screen in your venue and earn CapyPoints every time it plays a listing. Advertisers buy points; distributors cash them out.",
   siteUrl: "https://capyads.com",
   email: {
     from: "noreply@capyads.com",

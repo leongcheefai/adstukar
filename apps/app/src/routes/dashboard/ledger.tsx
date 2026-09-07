@@ -1,5 +1,5 @@
 import { Coins } from "@phosphor-icons/react";
-import type { LedgerEntry, LedgerReason, LedgerState } from "@repo/contracts/types";
+import type { LedgerLot, LedgerReason, LedgerState } from "@repo/contracts/types";
 import {
   Badge,
   Button,
@@ -25,9 +25,21 @@ const REASONS: { value: LedgerReason | "all"; label: string }[] = [
   { value: "all", label: "All reasons" },
   { value: "earn", label: "Earn" },
   { value: "spend", label: "Spend" },
+  { value: "fee", label: "Fee" },
   { value: "grant", label: "Grant" },
+  { value: "topup", label: "Top-up" },
+  { value: "payout", label: "Payout" },
+  { value: "refund", label: "Refund" },
   { value: "expiry", label: "Expiry" },
   { value: "void", label: "Void" },
+];
+
+/** The lot decides what a point may do, so it filters beside the reason. */
+const LOTS: { value: LedgerLot | "all"; label: string }[] = [
+  { value: "all", label: "All lots" },
+  { value: "bought", label: "Bought" },
+  { value: "earned", label: "Earned" },
+  { value: "granted", label: "Granted" },
 ];
 
 const STATES: { value: LedgerState | "all"; label: string }[] = [
@@ -40,9 +52,11 @@ const STATES: { value: LedgerState | "all"; label: string }[] = [
 export function LedgerPage() {
   const [reason, setReason] = useState<LedgerReason | "all">("all");
   const [state, setState] = useState<LedgerState | "all">("all");
+  const [lot, setLot] = useState<LedgerLot | "all">("all");
   const query = useLedger({
     reason: reason === "all" ? undefined : reason,
     state: state === "all" ? undefined : state,
+    lot: lot === "all" ? undefined : lot,
   });
   const items = query.data?.pages.flatMap((p) => p.items) ?? [];
 
@@ -83,6 +97,18 @@ export function LedgerPage() {
             ))}
           </SelectContent>
         </Select>
+        <Select value={lot} onValueChange={(v) => setLot(v as LedgerLot | "all")}>
+          <SelectTrigger className="w-40" aria-label="Filter by lot">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {LOTS.map((l) => (
+              <SelectItem key={l.value} value={l.value}>
+                {l.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {query.isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
@@ -91,7 +117,7 @@ export function LedgerPage() {
         <EmptyState
           icon={<Coins />}
           title="No CapyPoints yet"
-          description="CapyPoints appear here once a product is approved or a placement serves."
+          description="CapyPoints appear here once a listing is approved or a device plays."
         />
       )}
 
@@ -103,6 +129,7 @@ export function LedgerPage() {
                 <TableHead>When</TableHead>
                 <TableHead>Reason</TableHead>
                 <TableHead>State</TableHead>
+                <TableHead>Lot</TableHead>
                 <TableHead>CapyPoints</TableHead>
                 <TableHead>Ref</TableHead>
               </TableRow>
