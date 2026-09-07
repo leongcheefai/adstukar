@@ -14,6 +14,7 @@ The old barter economy (+1 earn, -2 spend, no money) is dead. Do not restore it.
 | Term | What it is |
 |---|---|
 | `campaign` | one destination site, its verified domain, its state, its daily budget |
+| pause reason | why the system stopped a campaign: `budget` or `balance`. A person's pause carries none |
 | `listing` | one creative under a campaign, up to four |
 | `device` | one screen running CapyTV; owner, venue, tier, location, daily play cap |
 | `placement` | one overlay region on a device (`band` / `float` / `ticker`) |
@@ -25,10 +26,11 @@ The old barter economy (+1 earn, -2 spend, no money) is dead. Do not restore it.
 - **Ledger** — `apps/api/src/modules/ledger/ledger.service.ts` is the only writer of `ledger_entry`. Rows are append-only. `idempotency_key` is unique. Balances are `SUM(delta)`; never store a counter.
 - **Point lots** — every entry carries a lot: `bought`, `earned`, or `granted`. The lot decides the rules. `bought` refunds, never withdraws, never expires. `earned` withdraws after the hold, and expires. `granted` neither refunds nor withdraws, and expires. A spend consumes `granted` first, then `bought`, oldest first. A free point that can be withdrawn is a cash faucet.
 - **Serve path** — `apps/api/src/modules/serve/`: `ranking.ts` is the pure extension point for AI matching. `GET /serve` opens the play; `POST /report` counts it and writes the spend, earn and fee rows in one transaction; `GET /scan/:playId` pays the bonus and redirects.
+- **Pacing** — `apps/api/src/modules/campaigns/pacing.ts` holds the rules, and they are pure. The listings under a campaign split its daily budget evenly. A campaign stops when the budget is spent, and starts again the next day. A campaign stops when the owner's points run out, and starts again when points come back. A pause by a person carries no reason, and the job never touches it.
 - **One paid listing at a time** — a device may hold several placements, but only one paid listing is on screen at once. Concurrent regions would charge several advertisers for one pair of eyes.
 - **Moderation** — `apps/api/src/modules/admin/`: a human queue. An admin reviews each listing and each device. Device approval also stamps the tier, which sets the rate. The domain check stays automatic and gates the campaign.
 - **Fraud is bounded by policy, not by hardware** — CapyTV is a PWA, so there is no device attestation. Approval, the daily play cap, the payout hold, and the scan-to-play ratio are the whole defence. See `docs/adr/0003`.
-- **Jobs** — `apps/api/src/modules/jobs/`: settlement (pending → settled), expiry, and voiding open plays whose report never arrived. They run in-process (`JOBS_ENABLED=true`) or once via `pnpm --filter @repo/api jobs:run`.
+- **Jobs** — `apps/api/src/modules/jobs/`: settlement (pending → settled), expiry, and the void of an open play whose report never came. A fourth job paces campaigns. It stops a campaign that can no longer pay, and starts one whose reason to stop has gone. The jobs run in-process (`JOBS_ENABLED=true`), or once with `pnpm --filter @repo/api jobs:run`.
 - **Embed** — `apps/embed` serves the old web surface. It stays in the repo, unmaintained. Do not add features to it.
 
 ## Conventions

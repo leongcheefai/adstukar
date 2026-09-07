@@ -92,7 +92,15 @@ _Avoid_: Click, tap, conversion
 The largest number of plays one device may be paid for in one day.
 
 **Daily budget**:
-The largest number of points one campaign may spend in one day.
+The largest number of points one campaign may spend in one day. The listings
+under the campaign split it evenly, so one creative cannot take the whole day.
+
+**Pause reason**:
+Why the system stopped a campaign: `budget` when the daily budget is spent, or
+`balance` when the owner's points ran out. A campaign a person paused carries no
+reason. A budget pause lifts on the next day; a balance pause lifts when the
+points come back.
+_Avoid_: Auto-pause, throttle
 
 ## Money
 

@@ -4,6 +4,15 @@ import { db, schema } from "@repo/db";
 import { serverEnv } from "@repo/env";
 import { and, count, eq, gte, isNotNull, lt, ne, sql } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
+import { shareByListing, startOfUtcDay } from "../campaigns/pacing";
+import { applyPacing, notifyLowBalance } from "../campaigns/pacing.service";
+import {
+  budgetShare,
+  spentToday,
+  spentTodayByCampaign,
+  spentTodayByListing,
+  spentTodayForListing,
+} from "../campaigns/spend";
 import {
   type Tx,
   getBalances,
@@ -38,10 +47,6 @@ function emptyResponse(placement: PlacementRow | null): ServeResponse {
     house: false,
     listing: null,
   };
-}
-
-function startOfUtcDay(now: Date): Date {
-  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 }
 
 async function loadDeviceByKey(key: string) {
@@ -95,40 +100,6 @@ async function paidPlaysToday(tx: Tx, deviceId: string, now: Date): Promise<numb
 }
 
 /**
- * Points spent today, keyed by campaign. `campaignId` narrows it to one campaign
- * for the billing path; without it the serve path gets every campaign in one query
- * rather than one query per candidate.
- */
-async function spentTodayByCampaign(
-  tx: Tx,
-  now: Date,
-  campaignId?: string,
-): Promise<Map<string, number>> {
-  const conditions = [
-    eq(schema.ledgerEntry.reason, "spend"),
-    gte(schema.ledgerEntry.createdAt, startOfUtcDay(now)),
-  ];
-  if (campaignId) conditions.push(eq(schema.listing.campaignId, campaignId));
-
-  const rows = await tx
-    .select({
-      campaignId: schema.listing.campaignId,
-      total: sql<number>`coalesce(-sum(${schema.ledgerEntry.delta}), 0)::int`,
-    })
-    .from(schema.ledgerEntry)
-    .innerJoin(schema.play, eq(schema.play.id, schema.ledgerEntry.playId))
-    .innerJoin(schema.listing, eq(schema.listing.id, schema.play.listingId))
-    .where(and(...conditions))
-    .groupBy(schema.listing.campaignId);
-  return new Map(rows.map((r) => [r.campaignId, r.total]));
-}
-
-/** Points this one campaign has already spent today, as a positive number. */
-async function spentToday(tx: Tx, campaignId: string, now: Date): Promise<number> {
-  return (await spentTodayByCampaign(tx, now, campaignId)).get(campaignId) ?? 0;
-}
-
-/**
  * Listings that may play on this device right now: approved creative, a running
  * campaign on a verified domain, somebody else's account, enough spendable points
  * to cover one play at this device's rate, and budget left for today.
@@ -150,7 +121,7 @@ async function loadCandidates(
     .groupBy(schema.play.listingId)
     .as("last_played");
 
-  const [rows, budgets, purses] = await Promise.all([
+  const [rows, budgets, listingSpend, purses] = await Promise.all([
     db
       .select({
         listingId: schema.listing.id,
@@ -174,12 +145,21 @@ async function loadCandidates(
         ),
       ),
     spentTodayByCampaign(db, now),
+    spentTodayByListing(db, now),
     spendableByUser(),
   ]);
+
+  // Every listing this scan returned is one that may run, so the campaign's
+  // budget splits over exactly this set. A listing that has spent its share sits
+  // out the rest of the day while its siblings carry on.
+  const shares = shareByListing(rows);
 
   return rows
     .filter((row) => (purses.get(row.userId) ?? 0) >= cost)
     .filter((row) => (budgets.get(row.campaignId) ?? 0) + cost <= row.dailyBudget)
+    .filter(
+      (row) => (listingSpend.get(row.listingId) ?? 0) + cost <= (shares.get(row.listingId) ?? 0),
+    )
     .map((row) => ({
       listingId: row.listingId,
       campaignId: row.campaignId,
@@ -331,6 +311,53 @@ async function chargeMovement(
   return true;
 }
 
+interface ChargeInput {
+  campaign: { id: string; userId: string; dailyBudget: number };
+  listingId: string;
+  distributorId: string;
+  playId: string;
+  amount: number;
+  /** `spend` for the play itself, `scan` for the bonus on top of it. */
+  key: "spend" | "scan";
+  now: Date;
+}
+
+/**
+ * The one path both a play and a scan take: check the campaign's budget, check
+ * the listing's share of it, charge, and then stop whatever can no longer run.
+ *
+ * Returns the member to mail when this charge emptied their purse, and null when
+ * it did not or when a cap refused the charge.
+ */
+async function chargeAndPace(tx: Tx, input: ChargeInput): Promise<string | null> {
+  const { campaign, now } = input;
+  const spent = await spentToday(tx, campaign.id, now);
+  if (spent + input.amount > campaign.dailyBudget) return null;
+
+  // One creative running hot must not take the whole day from the three it is
+  // being compared with, so each listing is paced against its own share.
+  const listingSpent = await spentTodayForListing(tx, input.listingId, campaign.id, now);
+  if (listingSpent + input.amount > (await budgetShare(tx, campaign, input.listingId))) return null;
+
+  const charged = await chargeMovement(tx, {
+    advertiserId: campaign.userId,
+    distributorId: input.distributorId,
+    playId: input.playId,
+    amount: input.amount,
+    key: input.key,
+    now,
+  });
+  if (!charged) return null;
+
+  const pacing = await applyPacing(tx, {
+    campaignId: campaign.id,
+    advertiserId: campaign.userId,
+    spentToday: spent + input.amount,
+    now,
+  });
+  return pacing.pausedForBalance ? campaign.userId : null;
+}
+
 /**
  * Holds one advertiser's purse for the rest of the transaction. Two charges
  * against the same account queue instead of racing; charges against different
@@ -380,46 +407,48 @@ export async function recordReport(
   key: string,
   now: Date = new Date(),
 ): Promise<{ counted: boolean }> {
-  return db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     const row = await loadPlayForBilling(tx, playId);
-    if (!row || row.device.apiKey !== key) return { counted: false };
+    if (!row || row.device.apiKey !== key) return { counted: false, lowBalanceFor: null };
 
     const { play, placement, device, listing, campaign } = row;
     const ageMs = now.getTime() - play.createdAt.getTime();
     if (play.state !== "open" || ageMs > economy.playTtlMinutes * 60_000) {
-      return { counted: false };
+      return { counted: false, lowBalanceFor: null };
     }
 
-    // Both caps count what today already paid for, so they are read before this
-    // play joins the count. Reading them after the update below would let the
+    // The device cap counts what today already paid for, so it is read before
+    // this play joins the count. Reading it after the update below would let the
     // play cap itself through and pay for only `dailyPlayCap - 1` plays a day.
     const paidToday = await paidPlaysToday(tx, device.id, now);
-    const spent = campaign ? await spentToday(tx, campaign.id, now) : 0;
 
     await tx
       .update(schema.play)
       .set({ state: "counted", countedAt: now })
       .where(eq(schema.play.id, playId));
 
+    const done = { counted: true, lowBalanceFor: null };
+
     // A house card is a real play on screen and no movement at all.
-    if (play.house || !listing || !campaign) return { counted: true };
+    if (play.house || !listing || !campaign) return done;
+    if (paidToday >= device.dailyPlayCap) return done;
 
-    if (paidToday >= device.dailyPlayCap) return { counted: true };
-
-    const cost = playCost(device.tier, placement.format);
-    if (spent + cost > campaign.dailyBudget) return { counted: true };
-
-    await chargeMovement(tx, {
-      advertiserId: campaign.userId,
+    const lowBalanceFor = await chargeAndPace(tx, {
+      campaign,
+      listingId: listing.id,
       distributorId: device.userId,
       playId,
-      amount: cost,
+      amount: playCost(device.tier, placement.format),
       key: "spend",
       now,
     });
-
-    return { counted: true };
+    return { counted: true, lowBalanceFor };
   });
+
+  // The mail goes out after the charge commits, so a mail server can never roll
+  // back a play.
+  if (result.lowBalanceFor) notifyLowBalance(result.lowBalanceFor);
+  return { counted: result.counted };
 }
 
 /**
@@ -430,14 +459,15 @@ export async function recordReport(
  * listing.
  */
 export async function recordScan(playId: string, now: Date = new Date()): Promise<string | null> {
-  return db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     const row = await loadPlayForBilling(tx, playId);
-    if (!row?.listing || !row.campaign) return null;
-    const { play, device, campaign } = row;
+    if (!row?.listing || !row.campaign) return { url: null, lowBalanceFor: null };
+    const { play, device, listing, campaign } = row;
+    const stop = { url: campaign.url, lowBalanceFor: null };
 
     // Only a counted play may pay a bonus: a scan cannot be worth more than the
     // play it sits on, and an unreported play was never shown as far as we know.
-    if (play.scanned || play.state !== "counted") return campaign.url;
+    if (play.scanned || play.state !== "counted") return stop;
 
     await tx
       .update(schema.play)
@@ -448,24 +478,22 @@ export async function recordScan(playId: string, now: Date = new Date()): Promis
     // paid. A play the device cap or the campaign budget refused pays nothing,
     // and a scan must not be the way around either of them: the cap is what puts
     // a ceiling on what one faked screen can ever be worth (docs/adr/0003).
-    if (!(await wasCharged(tx, playId))) return campaign.url;
+    if (!(await wasCharged(tx, playId))) return stop;
 
-    const bonus = scanCost(device.tier);
-    if ((await spentToday(tx, campaign.id, now)) + bonus > campaign.dailyBudget) {
-      return campaign.url;
-    }
-
-    await chargeMovement(tx, {
-      advertiserId: campaign.userId,
+    const lowBalanceFor = await chargeAndPace(tx, {
+      campaign,
+      listingId: listing.id,
       distributorId: device.userId,
       playId,
-      amount: bonus,
+      amount: scanCost(device.tier),
       key: "scan",
       now,
     });
-
-    return campaign.url;
+    return { url: campaign.url, lowBalanceFor };
   });
+
+  if (result.lowBalanceFor) notifyLowBalance(result.lowBalanceFor);
+  return result.url;
 }
 
 /**

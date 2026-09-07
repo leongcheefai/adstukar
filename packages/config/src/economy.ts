@@ -35,7 +35,7 @@ export const economy = {
 
   grants: {
     /** Granted once, when a member's first listing is approved. */
-    firstListingApproval: 5_000,
+    firstListingApproval: 2_000,
   },
 
   caps: {

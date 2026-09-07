@@ -2,9 +2,10 @@ import { randomBytes } from "node:crypto";
 import { economy } from "@repo/config/economy";
 import type { CreateCampaignInput, UpdateCampaignInput } from "@repo/contracts";
 import { db, schema } from "@repo/db";
-import { and, asc, desc, eq, inArray, ne } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull, ne } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import { domainFromUrl } from "../../lib/domain";
+import { spentTodayByCampaign } from "./spend";
 import { verifyDomain } from "./verification";
 
 type CampaignRow = typeof schema.campaign.$inferSelect;
@@ -30,10 +31,20 @@ async function listingsFor(campaignIds: string[]): Promise<Map<string, ListingRo
   return map;
 }
 
-function withListings(rows: CampaignRow[], listings: Map<string, ListingRow[]>) {
+/**
+ * A campaign travels with its listings and with what it has spent today, because
+ * a budget nobody can see against the spend says nothing about how a campaign is
+ * pacing.
+ */
+function withListings(
+  rows: CampaignRow[],
+  listings: Map<string, ListingRow[]>,
+  spend: Map<string, number>,
+) {
   return rows.map((campaign) => ({
     campaign,
     listings: listings.get(campaign.id) ?? [],
+    spentToday: spend.get(campaign.id) ?? 0,
   }));
 }
 
@@ -43,7 +54,11 @@ export async function listCampaigns(userId: string) {
     .from(schema.campaign)
     .where(and(eq(schema.campaign.userId, userId), LIVE_CAMPAIGN))
     .orderBy(desc(schema.campaign.createdAt));
-  return withListings(rows, await listingsFor(rows.map((c) => c.id)));
+  const [listings, spend] = await Promise.all([
+    listingsFor(rows.map((c) => c.id)),
+    spentTodayByCampaign(db, new Date()),
+  ]);
+  return withListings(rows, listings, spend);
 }
 
 export async function getOwnedCampaign(userId: string, campaignId: string) {
@@ -57,7 +72,12 @@ export async function getOwnedCampaign(userId: string, campaignId: string) {
 }
 
 async function single(campaign: CampaignRow) {
-  const [item] = withListings([campaign], await listingsFor([campaign.id]));
+  const now = new Date();
+  const [listings, spend] = await Promise.all([
+    listingsFor([campaign.id]),
+    spentTodayByCampaign(db, now, campaign.id),
+  ]);
+  const [item] = withListings([campaign], listings, spend);
   if (!item) throw new HTTPException(500, { message: "Campaign vanished" });
   return item;
 }
@@ -68,9 +88,33 @@ function requireDomain(url: string): string {
   return domain;
 }
 
+/**
+ * The moment this member proved they own the domain, on any campaign they still
+ * hold. Proof belongs to the person and the domain, so a second campaign on a
+ * domain they already verified starts running at once. It is never read across
+ * members: one member's proof says nothing about another.
+ */
+async function domainVerifiedAt(userId: string, domain: string): Promise<Date | null> {
+  const [row] = await db
+    .select({ verifiedAt: schema.campaign.verifiedAt })
+    .from(schema.campaign)
+    .where(
+      and(
+        eq(schema.campaign.userId, userId),
+        eq(schema.campaign.domain, domain),
+        isNotNull(schema.campaign.verifiedAt),
+        LIVE_CAMPAIGN,
+      ),
+    )
+    .orderBy(asc(schema.campaign.verifiedAt))
+    .limit(1);
+  return row?.verifiedAt ?? null;
+}
+
 export async function createCampaign(userId: string, input: CreateCampaignInput) {
   const domain = requireDomain(input.url);
   const now = new Date();
+  const verifiedAt = await domainVerifiedAt(userId, domain);
   const [row] = await db
     .insert(schema.campaign)
     .values({
@@ -79,6 +123,9 @@ export async function createCampaign(userId: string, input: CreateCampaignInput)
       name: input.name,
       url: input.url,
       domain,
+      // A verified domain needs no second check, so the campaign starts running.
+      state: verifiedAt ? "active" : "draft",
+      verifiedAt,
       dailyBudget: input.dailyBudget ?? economy.caps.defaultDailyBudget,
       verificationToken: randomBytes(16).toString("hex"),
       createdAt: now,
@@ -107,9 +154,20 @@ export async function updateCampaign(
     patch.url = input.url;
     if (domain !== existing.domain) {
       // A new domain needs new proof of ownership, so the campaign stops running.
+      // A member who already proved the new domain keeps that proof.
+      const verifiedAt = await domainVerifiedAt(userId, domain);
       patch.domain = domain;
-      patch.verifiedAt = null;
-      patch.state = "draft";
+      patch.verifiedAt = verifiedAt;
+      // Proof of the new domain leaves the campaign where it was; a campaign the
+      // advertiser had paused stays paused. No proof sends it back to draft.
+      //
+      // A campaign the system stopped starts again, because the reason it was
+      // stopped goes with the patch below. The pacing sweep stops it once more,
+      // within minutes, if the money is still not there.
+      if (!verifiedAt) patch.state = "draft";
+      else if (existing.state === "draft" || existing.pauseReason !== null) patch.state = "active";
+      patch.pauseReason = null;
+      patch.pausedAt = null;
     }
   }
   if (input.state !== undefined) {
@@ -121,6 +179,10 @@ export async function updateCampaign(
       throw new HTTPException(409, { message: "Verify the domain before you run the campaign" });
     }
     patch.state = input.state;
+    // A person moved this campaign, so the system's reason for stopping it is
+    // gone. The resume job leaves a campaign with no reason alone.
+    patch.pauseReason = null;
+    patch.pausedAt = null;
   }
 
   const [row] = await db

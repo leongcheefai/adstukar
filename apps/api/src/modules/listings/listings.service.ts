@@ -4,6 +4,7 @@ import { db, schema } from "@repo/db";
 import { and, asc, count, eq, ne } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import { getOwnedCampaign } from "../campaigns/campaigns.service";
+import { listingStateChange } from "./lifecycle";
 
 const LIVE_LISTING = ne(schema.listing.state, "archived");
 
@@ -70,14 +71,27 @@ export async function updateListing(userId: string, listingId: string, input: Up
     throw new HTTPException(409, { message: "Listing is archived" });
   }
 
+  const edited = input.tagline !== undefined || input.logoUrl !== undefined;
+  if (edited && input.state !== undefined) {
+    throw new HTTPException(400, {
+      message: "Edit the creative or move the state, not both in one request",
+    });
+  }
+
   const patch: Partial<typeof schema.listing.$inferInsert> = { updatedAt: new Date() };
   if (input.tagline !== undefined) patch.tagline = input.tagline;
   if (input.logoUrl !== undefined) patch.logoUrl = input.logoUrl;
 
   // An edited creative is a new creative, so it goes back to the queue.
-  if (input.tagline !== undefined || input.logoUrl !== undefined) {
+  if (edited) {
     patch.state = "pending";
     patch.rejectionReason = null;
+  }
+
+  if (input.state !== undefined) {
+    const change = listingStateChange(existing.state, input.state);
+    if (!change.ok) throw new HTTPException(409, { message: change.message });
+    patch.state = change.state;
   }
 
   const [row] = await db

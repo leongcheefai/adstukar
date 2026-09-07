@@ -1,4 +1,4 @@
-import { Copy, DotsThreeVertical, PencilSimple, Trash } from "@phosphor-icons/react";
+import { Copy, DotsThreeVertical, Pause, PencilSimple, Play, Trash } from "@phosphor-icons/react";
 import type { Campaign, Listing } from "@repo/contracts/types";
 import {
   AlertDialog,
@@ -21,7 +21,7 @@ import {
 } from "@repo/ui";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useArchiveListing } from "../../lib/campaigns";
+import { useArchiveListing, useUpdateListing } from "../../lib/campaigns";
 import { StatusBadge } from "../status-badge";
 
 /**
@@ -46,6 +46,22 @@ export function ListingTile({
   canDuplicate: boolean;
 }) {
   const archive = useArchiveListing();
+  const update = useUpdateListing();
+
+  // Pausing keeps the approval, so starting the listing again needs no second
+  // review. Only an approved or a paused listing is the advertiser's to move.
+  const paused = listing.state === "paused";
+  const canMove = paused || listing.state === "approved";
+
+  function toggleRunning() {
+    update.mutate(
+      { id: listing.id, input: { state: paused ? "approved" : "paused" } },
+      {
+        onSuccess: () => toast.success(paused ? "Listing running" : "Listing paused"),
+        onError: (err) => toast.error(err.message),
+      },
+    );
+  }
   // The archive dialog is controlled: a DropdownMenuItem unmounts its own subtree on
   // select, which would take an AlertDialogTrigger nested inside it down with it.
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -87,6 +103,10 @@ export function ListingTile({
             <DropdownMenuItem disabled={!canDuplicate} onSelect={() => onDuplicate(listing)}>
               <Copy size={14} className="mr-2" />
               {canDuplicate ? "Duplicate" : "Duplicate (campaign full)"}
+            </DropdownMenuItem>
+            <DropdownMenuItem disabled={!canMove} onSelect={toggleRunning}>
+              {paused ? <Play size={14} className="mr-2" /> : <Pause size={14} className="mr-2" />}
+              {paused ? "Start" : "Pause"}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             {/* variant, not hand-written classes: it is what turns the trash icon

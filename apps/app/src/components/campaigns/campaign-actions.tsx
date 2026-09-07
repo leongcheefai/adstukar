@@ -1,4 +1,4 @@
-import { PencilSimple, Trash } from "@phosphor-icons/react";
+import { Pause, PencilSimple, Play, Trash } from "@phosphor-icons/react";
 import { economy } from "@repo/config/economy";
 import type { CampaignWithListings } from "@repo/contracts/types";
 import {
@@ -52,6 +52,11 @@ export function CampaignActions({ item }: { item: CampaignWithListings }) {
   const update = useUpdateCampaign();
   const archive = useArchiveCampaign();
 
+  // Only a verified campaign may run, so an unverified one offers no start.
+  const running = campaign.state === "active";
+  const canRun = campaign.verifiedAt !== null;
+  const runLabel = running ? "Pause campaign" : "Start campaign";
+
   const count = listings.length;
   const listingWord = count === 1 ? "listing" : "listings";
 
@@ -101,6 +106,18 @@ export function CampaignActions({ item }: { item: CampaignWithListings }) {
     }
   }
 
+  async function toggleRunning() {
+    try {
+      await update.mutateAsync({
+        id: campaign.id,
+        input: { state: running ? "paused" : "active" },
+      });
+      toast.success(running ? `${campaign.name} paused` : `${campaign.name} running`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not move the campaign");
+    }
+  }
+
   async function archiveCampaign() {
     try {
       await archive.mutateAsync(campaign.id);
@@ -112,6 +129,25 @@ export function CampaignActions({ item }: { item: CampaignWithListings }) {
 
   return (
     <div className="ml-auto flex shrink-0 items-center gap-1">
+      <Tooltip>
+        <TooltipTrigger asChild>
+          {/* A span carries the tooltip, because a disabled button fires no
+              pointer event and the reason it is disabled is what a member needs. */}
+          <span>
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={toggleRunning}
+              disabled={!canRun || update.isPending}
+              aria-label={`${runLabel} ${campaign.name}`}
+            >
+              {running ? <Pause size={16} /> : <Play size={16} />}
+            </Button>
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>{canRun ? runLabel : "Verify the domain first"}</TooltipContent>
+      </Tooltip>
+
       <Tooltip>
         <TooltipTrigger asChild>
           <Button

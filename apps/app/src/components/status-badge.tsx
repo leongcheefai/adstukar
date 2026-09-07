@@ -13,6 +13,7 @@ const STATUS: Record<
 > = {
   pending: { label: "Pending", variant: "warning" },
   approved: { label: "Approved", variant: "success" },
+  paused: { label: "Paused", variant: "neutral" },
   rejected: { label: "Rejected", variant: "destructive" },
   archived: { label: "Archived", variant: "neutral" },
 };

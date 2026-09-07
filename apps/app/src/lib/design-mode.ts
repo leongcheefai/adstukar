@@ -116,6 +116,8 @@ function campaignFixture(
   state: Campaign["state"],
   verifiedDaysAgo: number | null,
   createdDaysAgo: number,
+  /** Set on a campaign the system stopped, so the pause note is on screen. */
+  pauseReason: Campaign["pauseReason"] = null,
 ): Campaign {
   return {
     id,
@@ -123,6 +125,8 @@ function campaignFixture(
     url,
     domain: domainOf(url),
     state,
+    pauseReason,
+    pausedAt: pauseReason === null ? null : iso(0),
     dailyBudget: economy.caps.defaultDailyBudget,
     verificationToken: "",
     verifiedAt: verifiedDaysAgo === null ? null : iso(verifiedDaysAgo),
@@ -192,6 +196,7 @@ let campaigns: CampaignWithListings[] = [
         13,
       ),
     ],
+    spentToday: 8_400,
   },
   {
     campaign: campaignFixture(
@@ -211,15 +216,18 @@ let campaigns: CampaignWithListings[] = [
         3,
       ),
     ],
+    spentToday: 0,
   },
   {
+    // Stopped by its own budget, so the pause note is on screen in design mode.
     campaign: campaignFixture(
       "cmp_pixelpush",
       "PixelPush",
       "https://pixelpush.io",
       "paused",
-      null,
       14,
+      14,
+      "budget",
     ),
     listings: [
       listingFixture(
@@ -231,6 +239,7 @@ let campaigns: CampaignWithListings[] = [
         "The landing page did not carry the verification token.",
       ),
     ],
+    spentToday: economy.caps.defaultDailyBudget,
   },
 ];
 
@@ -461,20 +470,29 @@ function ownerOf(listingId: string): CampaignWithListings | undefined {
 function writeCampaigns(seg: string[], method: string, patch: Record<string, unknown>): unknown {
   if (method === "POST" && seg.length === 1) {
     const input = patch as { name: string; url: string; dailyBudget?: number };
+    // Mirror createCampaign in the API: a domain this member already proved
+    // needs no second check, so the campaign starts running at once.
+    const domain = hostOf(input.url);
+    const verifiedAt =
+      campaigns.find((row) => row.campaign.domain === domain && row.campaign.verifiedAt !== null)
+        ?.campaign.verifiedAt ?? null;
     const created: CampaignWithListings = {
       campaign: {
         id: fakeId("cmp"),
         name: input.name,
         url: input.url,
-        domain: hostOf(input.url),
-        state: "draft",
+        domain,
+        state: verifiedAt ? "active" : "draft",
+        pauseReason: null,
+        pausedAt: null,
         dailyBudget: input.dailyBudget ?? economy.caps.defaultDailyBudget,
         verificationToken: "",
-        verifiedAt: null,
+        verifiedAt,
         createdAt: nowIso(),
         updatedAt: nowIso(),
       },
       listings: [],
+      spentToday: 0,
     };
     campaigns = [...campaigns, created];
     return created;
@@ -495,6 +513,11 @@ function writeCampaigns(seg: string[], method: string, patch: Record<string, unk
         next.verifiedAt = null;
         next.state = "draft";
       }
+    }
+    // A person moved this campaign, so the system's reason for stopping it goes.
+    if (input.state !== undefined || next.state !== target.campaign.state) {
+      next.pauseReason = null;
+      next.pausedAt = null;
     }
     return replaceCampaign({ ...target, campaign: next });
   }
@@ -550,11 +573,15 @@ function writeListings(seg: string[], method: string, patch: Record<string, unkn
   if (!owner || !target) return undefined;
 
   if (method === "PATCH" && seg.length === 2) {
+    const input = patch as Partial<Listing>;
+    // Mirror updateListing in the API: a state-only patch pauses or starts the
+    // listing, and an edited creative goes back to the review queue.
+    const moved = input.state !== undefined;
     const next: Listing = {
       ...target,
-      ...(patch as Partial<Listing>),
-      state: "pending",
-      rejectionReason: null,
+      ...input,
+      state: moved ? (input.state ?? target.state) : "pending",
+      rejectionReason: moved ? target.rejectionReason : null,
       updatedAt: nowIso(),
     };
     replaceCampaign({

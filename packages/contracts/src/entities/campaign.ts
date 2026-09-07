@@ -12,6 +12,8 @@ export const campaignContract = toWire(
     url: true,
     domain: true,
     state: true,
+    pauseReason: true,
+    pausedAt: true,
     dailyBudget: true,
     verificationToken: true,
     verifiedAt: true,

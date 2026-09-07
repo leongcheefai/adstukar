@@ -20,8 +20,32 @@ export const SUBSCRIPTION_STATUSES = [
  */
 export const CAMPAIGN_STATES = ["draft", "active", "paused", "archived"] as const;
 
-/** An admin reviews every listing. */
-export const LISTING_STATES = ["pending", "approved", "rejected", "archived"] as const;
+/**
+ * Why the system paused a campaign. A campaign a person paused carries no
+ * reason, and only that person starts it again.
+ *
+ * `budget` lifts on the next UTC day, because the daily budget resets then.
+ * `balance` lifts as soon as the owner's purse covers one play.
+ */
+export const CAMPAIGN_PAUSE_REASONS = ["budget", "balance"] as const;
+
+export type CampaignPauseReason = (typeof CAMPAIGN_PAUSE_REASONS)[number];
+
+/**
+ * An admin reviews every listing. `paused` is the advertiser's own stop: the
+ * creative keeps its approval and simply stops playing, so starting it again
+ * needs no second review.
+ */
+export const LISTING_STATES = ["pending", "approved", "rejected", "paused", "archived"] as const;
+
+/**
+ * The states an advertiser owns. A person reviews the creative, so `pending`,
+ * `rejected` and `archived` are never the advertiser's to set.
+ */
+export const OWNER_LISTING_STATES = ["approved", "paused"] as const;
+
+export type ListingState = (typeof LISTING_STATES)[number];
+export type OwnerListingState = (typeof OWNER_LISTING_STATES)[number];
 
 /** An admin reviews every device, and stamps the tier at approval. */
 export const DEVICE_STATES = ["pending", "approved", "rejected", "archived"] as const;

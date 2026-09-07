@@ -43,6 +43,13 @@
       "when": 1788779921710,
       "tag": "0005_screens_network_model",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1788786922760,
+      "tag": "0006_campaign_pacing",
+      "breakpoints": true
     }
   ]
 }

@@ -38,6 +38,15 @@ const STATE_LABEL: Record<CampaignWithListings["campaign"]["state"], string> = {
   archived: "Archived",
 };
 
+/**
+ * Why the system stopped a campaign, and what starts it again. A campaign the
+ * advertiser paused carries no reason, so it shows the plain badge.
+ */
+const PAUSE_REASON: Record<NonNullable<CampaignWithListings["campaign"]["pauseReason"]>, string> = {
+  budget: "Today's budget is spent. This campaign runs again tomorrow.",
+  balance: "Your CapyPoints ran out. This campaign runs again once you add points.",
+};
+
 export function CampaignSection({
   item,
   onEdit,
@@ -50,7 +59,7 @@ export function CampaignSection({
   /** Starts a new listing on this campaign with an empty tagline. */
   onAddListing: (item: CampaignWithListings) => void;
 }) {
-  const { campaign, listings } = item;
+  const { campaign, listings, spentToday } = item;
   const verified = campaign.verifiedAt !== null;
 
   // One slot per listing the campaign may still hold. A full campaign shows none.
@@ -87,9 +96,28 @@ export function CampaignSection({
           />
         )}
 
-        <Badge variant={campaign.state === "active" ? "success" : "neutral"} dot>
-          {STATE_LABEL[campaign.state]}
-        </Badge>
+        {campaign.pauseReason ? (
+          <Tooltip>
+            <TooltipTrigger className="cursor-help">
+              <Badge variant="warning" dot>
+                {STATE_LABEL[campaign.state]}
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs">
+              {PAUSE_REASON[campaign.pauseReason]}
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          <Badge variant={campaign.state === "active" ? "success" : "neutral"} dot>
+            {STATE_LABEL[campaign.state]}
+          </Badge>
+        )}
+
+        {/* What the campaign has spent against what it may spend. Without it the
+            budget is a number nobody can act on. */}
+        <p className="hidden shrink-0 text-xs tabular-nums text-muted-foreground sm:block">
+          {spentToday.toLocaleString()} / {campaign.dailyBudget.toLocaleString()} today
+        </p>
 
         <CampaignActions item={item} />
       </header>

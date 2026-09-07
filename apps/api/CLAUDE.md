@@ -14,12 +14,18 @@ Hono API server on Node.js. Handles auth (Better Auth), the CapyAds exchange (ca
 | `stats` | `GET /stats/overview` | member |
 | `ledger` | `GET /ledger?reason&state&lot&cursor&limit` | member |
 | `admin` | `GET /admin/moderation`, `POST /admin/listings/:id/approve\|reject`, `POST /admin/devices/:id/approve\|reject` | admin |
-| `jobs` | `startJobs()` from `index.ts`; `pnpm jobs:run` one-shot | — |
+| `jobs` | `startJobs()` from `index.ts`; `pnpm jobs:run` one-shot. Settlement, expiry, stale plays, and campaign pacing | — |
 | `uploads` | `POST /uploads/logo/presign` (S3, optional) | member |
 
 A `DELETE` on a campaign, a listing, or a device is an **archive**: the row stays,
 because the ledger reaches it through the plays it earned. Only a placement that
 has never played is really deleted.
+
+A campaign paces itself. The listings under it split the daily budget evenly. The
+campaign stops when the budget is spent, or when the owner's points run out. The
+pacing job starts it again when the reason has gone. See
+`src/modules/campaigns/pacing.ts` for the rules and `pacing.service.ts` for the
+writes.
 
 `GET /embed/*` serves `apps/embed/dist` when that directory exists (dev convenience).
 
