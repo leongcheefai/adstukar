@@ -25,6 +25,7 @@ import {
   PLACEMENT_FORMATS,
   PLACEMENT_SIZES,
   PLAY_STATES,
+  TOPUP_STATES,
   VENUE_TYPES,
 } from "./enums";
 
@@ -42,6 +43,7 @@ export const ledgerReasonEnum = pgEnum("ledger_reason", LEDGER_REASONS);
 export const ledgerLotEnum = pgEnum("ledger_lot", LEDGER_LOTS);
 export const payoutStateEnum = pgEnum("payout_state", PAYOUT_STATES);
 export const payoutMethodEnum = pgEnum("payout_method", PAYOUT_METHODS);
+export const topupStateEnum = pgEnum("topup_state", TOPUP_STATES);
 
 /**
  * One destination site and every listing that points at it. The advertiser owns
@@ -356,5 +358,62 @@ export const payoutRequest = pgTable(
     uniqueIndex("payout_request_open_key")
       .on(t.userId)
       .where(sql`${t.state} = 'requested'`),
+  ],
+);
+
+/**
+ * One advertiser's purchase of points with money.
+ *
+ * The row opens when the member picks a pack, so a checkout that nobody
+ * finishes is visible rather than lost. `points` and `usdCents` are stamped
+ * here from the pack the server picked, never read back off Stripe: the price
+ * a member paid must not move when the peg or a pack does.
+ *
+ * A refund takes the unspent part back at the peg, less what the processor
+ * kept, and posts a `refund` entry against the `bought` lot. It never edits the
+ * `topup` entry, and it never deletes this row.
+ */
+export const topup = pgTable(
+  "topup",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    /** Points this top-up buys. Always positive. */
+    points: integer("points").notNull(),
+    /** What the member paid, in US cents. */
+    usdCents: integer("usd_cents").notNull(),
+    state: topupStateEnum("state").notNull().default("pending"),
+    /**
+     * The checkout the member was sent to. It is stamped after the row exists,
+     * so the row can never be lost to a Stripe call that half succeeded.
+     */
+    stripeSessionId: text("stripe_session_id").unique(),
+    /**
+     * The payment behind the money. It keys the ledger entry, and it is what a
+     * refund sends the money back to.
+     */
+    stripePaymentIntentId: text("stripe_payment_intent_id").unique(),
+    /** The `topup` entry that put the points in. */
+    ledgerEntryId: text("ledger_entry_id").references(() => ledgerEntry.id, {
+      onDelete: "restrict",
+    }),
+    /** Points the refund took back, and the money it returned after the fee. */
+    refundedPoints: integer("refunded_points"),
+    refundUsdCents: integer("refund_usd_cents"),
+    refundLedgerEntryId: text("refund_ledger_entry_id").references(() => ledgerEntry.id, {
+      onDelete: "restrict",
+    }),
+    stripeRefundId: text("stripe_refund_id"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    /** When the money arrived. The refund window runs from here, not from `createdAt`. */
+    paidAt: timestamp("paid_at"),
+    refundedAt: timestamp("refunded_at"),
+  },
+  (t) => [
+    index("topup_user_created_idx").on(t.userId, t.createdAt),
+    index("topup_user_paid_idx").on(t.userId, t.paidAt),
+    index("topup_state_idx").on(t.state),
   ],
 );

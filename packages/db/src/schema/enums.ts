@@ -119,3 +119,26 @@ export type PayoutBlock = (typeof PAYOUT_BLOCKS)[number];
 export const PAYOUT_METHODS = ["bank", "paypal"] as const;
 
 export type PayoutMethod = (typeof PAYOUT_METHODS)[number];
+
+/**
+ * A top-up opens the moment a member picks a pack, so the row exists before the
+ * money does. `paid` is the only state that ever put points in an account, and
+ * `refunded` is a paid top-up whose unspent points went back as money.
+ * `abandoned` is a checkout nobody finished.
+ */
+export const TOPUP_STATES = ["pending", "paid", "refunded", "abandoned"] as const;
+
+export type TopupState = (typeof TOPUP_STATES)[number];
+
+/**
+ * Why a refund is refused. Like `PAYOUT_BLOCKS`, it is a union the API works out
+ * and the dashboard reads; no column stores it.
+ */
+export const TOPUP_REFUND_BLOCKS = [
+  "not-paid",
+  "window-closed",
+  "nothing-left",
+  "below-fee",
+] as const;
+
+export type TopupRefundBlock = (typeof TOPUP_REFUND_BLOCKS)[number];

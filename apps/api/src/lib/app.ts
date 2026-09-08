@@ -22,6 +22,7 @@ import { placementsRouter } from "../modules/placements/placements.routes";
 import { releasesRouter } from "../modules/releases/releases.routes";
 import { serveRouter } from "../modules/serve/serve.routes";
 import { statsRouter } from "../modules/stats/stats.routes";
+import { topupsRouter } from "../modules/topups/topups.routes";
 import { uploadsRouter } from "../modules/uploads/uploads.routes";
 import type { AppVariables } from "./context";
 
@@ -62,6 +63,7 @@ app.route("/placements", placementsRouter);
 app.route("/stats", statsRouter);
 app.route("/ledger", ledgerRouter);
 app.route("/payouts", payoutsRouter);
+app.route("/topups", topupsRouter);
 app.route("/admin", adminRouter);
 app.route("/", serveRouter);
 

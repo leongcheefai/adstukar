@@ -14,6 +14,7 @@ Hono API server on Node.js. Handles auth (Better Auth), the CapyAds exchange (ca
 | `stats` | `GET /stats/overview` | member |
 | `ledger` | `GET /ledger?reason&state&lot&cursor&limit` | member |
 | `payouts` | `GET /payouts`, `PUT /payouts/account`, `POST /payouts` | member |
+| `topups` | `GET /topups`, `POST /topups/checkout`, `POST /topups/:id/refund` | member |
 | `admin` | `GET /admin/moderation`, `POST /admin/listings/:id/approve\|reject`, `POST /admin/devices/:id/approve\|reject`, `GET /admin/payouts`, `POST /admin/payouts/:id/pay\|reject` | admin |
 | `jobs` | `startJobs()` from `index.ts`; `pnpm jobs:run` one-shot. Settlement, expiry, stale plays, and campaign pacing | — |
 | `uploads` | `POST /uploads/logo/presign`, `POST /uploads/device-photo/presign` (S3, optional) | member |
@@ -66,6 +67,18 @@ network. See
 `docs/adr/0005`, `src/modules/payouts/eligibility.ts` for the rules and
 `review.ts` for the signals.
 
+An advertiser buys points with money. `POST /topups/checkout` opens the row
+first and the Stripe session inside the same transaction, so a session can never
+exist without the row the webhook looks for. The points go in only when
+`checkout.session.completed` arrives, keyed on the payment id, so a webhook
+Stripe sends twice posts them once.
+
+A refund gives the unspent part of one top-up back, for a window after the
+payment, at the peg less what the card processor kept. The debit is posted
+before the Stripe call and inside the same transaction, so a refusal rolls it
+back. Which points are still unspent comes from the bought balance, never from
+the rows: see `src/modules/topups/packs.ts`.
+
 `POST /report` also stamps `device.last_seen_at` and `device.last_network`
 whenever the key matches, whatever becomes of the play. The payout review reads
 both, so a screen that stopped reporting is visible before cash leaves.
@@ -115,7 +128,8 @@ stripe listen --forward-to localhost:3001/billing/webhook
 ### Webhook events handled
 | Event | Action |
 |---|---|
-| `checkout.session.completed` | Upsert subscription row with active status |
+| `checkout.session.completed` | Payment mode: mark the top-up paid and post its `topup` entry. Subscription mode: upsert the subscription row |
+| `checkout.session.expired` | Mark an unpaid top-up abandoned |
 | `customer.subscription.created` | Upsert subscription row (handles non-checkout signups) |
 | `customer.subscription.updated` | Update plan/status/period-end/cancel_at_period_end |
 | `customer.subscription.deleted` | Mark subscription canceled |

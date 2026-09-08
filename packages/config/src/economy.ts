@@ -81,12 +81,28 @@ export const economy = {
    */
   expiryMonths: 12,
 
-  /** What a top-up sells. The price follows the peg; the bonus does not. */
-  topupPacks: [
-    { points: 10_000, usdCents: 1_000 },
-    { points: 50_000, usdCents: 5_000 },
-    { points: 250_000, usdCents: 25_000 },
-  ],
+  topup: {
+    /**
+     * What a top-up sells. Every price follows the peg exactly, and no pack
+     * carries a bonus: a bonus point is not a bought point, so a refund of it
+     * would have no honest rate (docs/adr/0001).
+     */
+    packs: [
+      { points: 10_000, usdCents: 1_000 },
+      { points: 25_000, usdCents: 2_500 },
+      { points: 100_000, usdCents: 10_000 },
+      { points: 250_000, usdCents: 25_000 },
+    ],
+    /** Days after payment in which unspent bought points may go back as money. */
+    refundWindowDays: 30,
+    /**
+     * What the card processor keeps on a sale, in basis points and whole cents.
+     * A refund returns the money less this, because the processor does not give
+     * it back. Basis points rather than a percent, so the number stays an integer.
+     */
+    processorFeeBps: 290,
+    processorFeeFixedCents: 30,
+  },
 
   placement: {
     /** Seconds one listing stays on a placement. */
@@ -153,6 +169,9 @@ export const economy = {
     scanPerIp: 30,
   },
 } as const;
+
+/** Milliseconds in one day. Every window above is counted in days. */
+export const DAY_MS = 86_400_000;
 
 export type Economy = typeof economy;
 export type DeviceTierRate = keyof typeof economy.playRate;

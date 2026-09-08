@@ -1,4 +1,4 @@
-import { economy, pointsToUsdCents, usdCentsToPoints } from "@repo/config/economy";
+import { DAY_MS, economy, pointsToUsdCents, usdCentsToPoints } from "@repo/config/economy";
 import type { PayoutBlock } from "@repo/db/enums";
 
 /**
@@ -8,8 +8,6 @@ import type { PayoutBlock } from "@repo/db/enums";
  * Only the `earned` lot ever withdraws. `bought` refunds and `granted` does
  * neither, so a free point can never become a cash faucet (docs/adr/0001).
  */
-
-export const DAY_MS = 86_400_000;
 
 /**
  * The moment an earn must have settled before, to have served the hold. The hold

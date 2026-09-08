@@ -5,8 +5,10 @@ import { useState } from "react";
 import { useSession } from "../../lib/auth";
 import { usePayouts } from "../../lib/payouts";
 import { useStats } from "../../lib/stats";
+import { useTopups } from "../../lib/topups";
 import { CopyButton } from "../copy-button";
 import { CashOutDialog } from "../payouts/cash-out-dialog";
+import { BuyPointsDialog } from "../topups/buy-points-dialog";
 
 /** Mixed case and digits, the shape a referral link wants. */
 const ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -46,7 +48,9 @@ export function PointsSummary() {
   const { data: stats } = useStats();
   const { data: session } = useSession();
   const { data: payouts } = usePayouts();
+  const { data: topups } = useTopups();
   const [cashOutOpen, setCashOutOpen] = useState(false);
+  const [buyOpen, setBuyOpen] = useState(false);
 
   const settled = stats?.balance.settled ?? 0;
   const withdrawable = payouts?.withdrawable ?? 0;
@@ -65,6 +69,10 @@ export function PointsSummary() {
           <p className="text-3xl font-normal tracking-tight tabular-nums">
             {settled.toLocaleString()}
           </p>
+          {/* The way to grow the number sits under the number it grows. */}
+          <Button size="sm" onClick={() => setBuyOpen(true)} disabled={!topups}>
+            Buy {project.pointsName}
+          </Button>
         </div>
 
         <div className="flex flex-col justify-between gap-3 p-5">
@@ -116,6 +124,8 @@ export function PointsSummary() {
       {payouts && (
         <CashOutDialog overview={payouts} open={cashOutOpen} onOpenChange={setCashOutOpen} />
       )}
+
+      {topups && <BuyPointsDialog overview={topups} open={buyOpen} onOpenChange={setBuyOpen} />}
     </>
   );
 }

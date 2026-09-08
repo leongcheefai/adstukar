@@ -31,6 +31,13 @@ The old barter economy (+1 earn, -2 spend, no money) is dead. Do not restore it.
 - **Nothing is priced when a play is served** — the daily cap, the campaign budget, and the state of the campaign and the listing are all read at report time. Above the cap, or on a creative an admin rejected after the batch was cut, the play still shows and still counts, and simply pays nothing. A scan on a still-open play is recorded free and settled by the report that follows it.
 - **Pacing** — `apps/api/src/modules/campaigns/pacing.ts` holds the rules, and they are pure. The listings under a campaign split its daily budget evenly. A campaign stops when the budget is spent, and starts again the next day. A campaign stops when the owner's points run out, and starts again when points come back. A pause by a person carries no reason, and the job never touches it.
 - **One paid listing at a time** — a device may hold several placements, but only one paid listing is on screen at once. Concurrent regions would charge several advertisers for one pair of eyes.
+- **Top-up** — `apps/api/src/modules/topups/`: `packs.ts` holds the rules, and they
+  are pure. An advertiser buys a pack at the peg, and no pack carries a bonus. The
+  row opens before the Stripe call and the points go in only when the webhook
+  lands, keyed on the payment id. A refund gives the unspent part back inside the
+  window, at the peg less what the card processor kept; which points are unspent
+  comes from the bought balance, never from the rows. The points leave the ledger
+  before the money leaves Stripe, because the reverse order loses both.
 - **Payout** — `apps/api/src/modules/payouts/`: `eligibility.ts` holds the rules
   for what may leave, and `review.ts` the fraud signals; both are pure. Only the
   `earned` lot withdraws, and only after the hold. A request takes the whole

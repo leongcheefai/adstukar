@@ -1,5 +1,7 @@
 export interface ProjectIdentity {
   name: string;
+  /** What members call the internal unit. The code says point; a member reads this. */
+  pointsName: string;
   slug: string;
   tagline: string;
   description: string;
@@ -22,6 +24,7 @@ export interface ProjectIdentity {
  */
 export const project = {
   name: "CapyAds",
+  pointsName: "CapyPoints",
   slug: "adstukar",
   tagline: "Play ads on your screen and earn money.",
   description:

@@ -124,8 +124,13 @@ The origin of a point: `bought`, `earned`, or `granted`. The lot decides whether
 the point may be withdrawn, refunded, or expired.
 
 **Top-up**:
-An advertiser's purchase of points with money.
+An advertiser's purchase of points with money. It opens as a checkout and only
+becomes points when the payment lands.
 _Avoid_: Deposit, recharge, refill
+
+**Pack**:
+One size a top-up sells: an amount of points at the peg. No pack carries a
+bonus, because a bonus point has no honest refund rate.
 
 **Payout**:
 A distributor's conversion of earned points back into money. A member asks, an
@@ -145,7 +150,13 @@ The points CapyAds keeps from each play and each scan.
 _Avoid_: Commission, margin, spread
 
 **Refund**:
-Money returned for bought points that a member did not spend.
+Money returned for bought points that a member did not spend. It runs for a
+window after the payment, pays at the peg less what the card processor kept, and
+posts a `refund` entry against the `bought` lot.
+
+**Refundable**:
+The unspent points of one top-up. A spend takes the oldest bought points, so the
+bought balance says how many are left, never the rows.
 
 **Ledger entry**:
 One immutable point movement. It carries an amount, a reason, a state, and a lot.

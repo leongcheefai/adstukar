@@ -1,4 +1,5 @@
 import { Coins } from "@phosphor-icons/react";
+import { project } from "@repo/config/project";
 import type { LedgerLot, LedgerReason, LedgerState } from "@repo/contracts/types";
 import {
   Badge,
@@ -16,12 +17,16 @@ import {
   TableHeader,
   TableRow,
 } from "@repo/ui";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router";
+import { toast } from "sonner";
 import { LedgerRow } from "../../components/ledger/ledger-row";
 import { PointsSummary } from "../../components/ledger/points-summary";
 import { PayoutRequests } from "../../components/payouts/payout-requests";
+import { TopupHistory } from "../../components/topups/topup-history";
 import { useLedger } from "../../lib/ledger";
 import { usePayouts } from "../../lib/payouts";
+import { useRefreshMoney, useTopups } from "../../lib/topups";
 
 const REASONS: { value: LedgerReason | "all"; label: string }[] = [
   { value: "all", label: "All reasons" },
@@ -51,8 +56,34 @@ const STATES: { value: LedgerState | "all"; label: string }[] = [
   { value: "void", label: "Void" },
 ];
 
+/**
+ * Stripe sends the member back here after a checkout. The points arrive through
+ * the webhook, not through this redirect, so the page says the payment landed
+ * and asks for the balance again rather than claiming a number it cannot know.
+ */
+function useTopupReturn() {
+  const [params, setParams] = useSearchParams();
+  const refresh = useRefreshMoney();
+  const outcome = params.get("topup");
+
+  useEffect(() => {
+    if (!outcome) return;
+    if (outcome === "paid") {
+      toast.success(`Payment received. Your ${project.pointsName} appear in a moment.`);
+      refresh();
+    }
+    if (outcome === "cancelled") toast.info("Top-up cancelled. Nothing was charged.");
+    // The message belongs to the return, not to the page: leaving it in the URL
+    // would repeat it on every reload.
+    params.delete("topup");
+    setParams(params, { replace: true });
+  }, [outcome, params, setParams, refresh]);
+}
+
 export function LedgerPage() {
   const { data: payouts } = usePayouts();
+  const { data: topups } = useTopups();
+  useTopupReturn();
   const [reason, setReason] = useState<LedgerReason | "all">("all");
   const [state, setState] = useState<LedgerState | "all">("all");
   const [lot, setLot] = useState<LedgerLot | "all">("all");
@@ -73,6 +104,8 @@ export function LedgerPage() {
       <PointsSummary />
 
       <PayoutRequests requests={payouts?.requests ?? []} />
+
+      {topups && <TopupHistory items={topups.items} refundWindowDays={topups.refundWindowDays} />}
 
       {/* On the list, not by the title: these change what the table below shows,
           and nothing above it. The visible value names each filter, so neither

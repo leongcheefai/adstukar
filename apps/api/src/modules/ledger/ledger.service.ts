@@ -18,6 +18,15 @@ import { clampExpiry } from "./expiry";
 /** Either the pool or an open transaction — both expose the same query builder. */
 export type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0] | typeof db;
 
+/**
+ * Holds one member's purse for the rest of the transaction, so two movements
+ * against the same account queue instead of racing. Every path that reads a
+ * balance and then writes against it takes this lock first.
+ */
+export async function lockMember(tx: Tx, userId: string): Promise<void> {
+  await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${userId}))`);
+}
+
 export type LedgerReason = (typeof schema.LEDGER_REASONS)[number];
 export type LedgerState = (typeof schema.LEDGER_STATES)[number];
 export type LedgerLot = (typeof schema.LEDGER_LOTS)[number];

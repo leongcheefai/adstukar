@@ -18,6 +18,9 @@ import type {
   PlacementSize,
   Release,
   StatsOverview,
+  Topup,
+  TopupOverview,
+  TopupRefundBlock,
   VenueType,
   VerifyCampaignResponse,
 } from "@repo/contracts/types";
@@ -445,6 +448,66 @@ let payoutRequests: PayoutRequest[] = [
 ];
 
 let withdrawable = 31_400;
+
+let topups: Topup[] = [
+  {
+    id: "top_2",
+    points: 25_000,
+    usdCents: 2_500,
+    state: "paid",
+    ledgerEntryId: "led_0004",
+    refundedPoints: null,
+    refundUsdCents: null,
+    refundLedgerEntryId: null,
+    createdAt: iso(3),
+    paidAt: iso(3),
+    refundedAt: null,
+  },
+  {
+    id: "top_1",
+    points: 10_000,
+    usdCents: 1_000,
+    state: "paid",
+    ledgerEntryId: "led_0003",
+    refundedPoints: null,
+    refundUsdCents: null,
+    refundLedgerEntryId: null,
+    createdAt: iso(90),
+    paidAt: iso(90),
+    refundedAt: null,
+  },
+];
+
+/**
+ * What each top-up may still give back. The API derives these from the bought
+ * balance and the processor fee; design mode names them, the same way
+ * `payoutOverview` names its own block rather than importing the rule. The
+ * fixture shows one top-up inside the window with points left, and one the
+ * window has closed on.
+ */
+const refundable: Record<
+  string,
+  { points: number; netCents: number; block: TopupRefundBlock | null }
+> = {
+  top_2: { points: 18_000, netCents: 1_748, block: null },
+  top_1: { points: 0, netCents: 0, block: "window-closed" },
+};
+
+function topupOverview(): TopupOverview {
+  return {
+    packs: economy.topup.packs.map((pack) => ({ ...pack })),
+    refundWindowDays: economy.topup.refundWindowDays,
+    items: topups.map((topup) => {
+      const money = refundable[topup.id] ?? { points: 0, netCents: 0, block: "nothing-left" };
+      return {
+        topup: { ...topup },
+        refundablePoints: topup.state === "paid" ? money.points : 0,
+        refundNetCents: topup.state === "paid" ? money.netCents : 0,
+        block: topup.state === "paid" ? money.block : "not-paid",
+      };
+    }),
+  };
+}
 
 function payoutOverview(): PayoutOverview {
   const open = payoutRequests.some((row) => row.state === "requested");
@@ -1019,6 +1082,31 @@ function writePayouts(seg: string[], method: string, patch: Record<string, unkno
   return undefined;
 }
 
+/**
+ * Buying and refunding. Design mode cannot open a real checkout, so the buy
+ * request returns no URL and the panel says so rather than navigating away.
+ */
+function writeTopups(seg: string[], method: string): unknown {
+  if (method === "POST" && seg[1] === "checkout") return { url: null };
+
+  if (method === "POST" && seg[2] === "refund") {
+    const target = topups.find((row) => row.id === seg[1]);
+    const money = target ? refundable[target.id] : undefined;
+    if (!target || !money) return undefined;
+    const refunded: Topup = {
+      ...target,
+      state: "refunded",
+      refundedPoints: money.points,
+      refundUsdCents: money.netCents,
+      refundLedgerEntryId: fakeId("led"),
+      refundedAt: nowIso(),
+    };
+    topups = topups.map((row) => (row.id === target.id ? refunded : row));
+    return { ...refunded };
+  }
+  return undefined;
+}
+
 /** The admin side: pay the request, or refuse it and hand the points back. */
 function writePayoutReview(seg: string[], patch: Record<string, unknown>): unknown {
   const queue = payoutReviewQueue();
@@ -1064,6 +1152,7 @@ function designWrite(route: string, method: string, body?: unknown): unknown {
   if (seg[0] === "devices") return writeDevices(seg, method, patch);
   if (seg[0] === "placements") return writePlacements(seg, method, patch);
   if (seg[0] === "payouts") return writePayouts(seg, method, patch);
+  if (seg[0] === "topups") return writeTopups(seg, method);
   if (method === "POST" && seg[0] === "admin" && seg[1] === "payouts") {
     return writePayoutReview(seg, patch);
   }
@@ -1149,6 +1238,8 @@ export function designResponse(path: string, method: string, body?: unknown): un
       }));
     case "/payouts":
       return payoutOverview();
+    case "/topups":
+      return topupOverview();
     case "/admin/payouts": {
       const queue = payoutReviewQueue();
       return { windowDays: queue.windowDays, items: queue.items.map((row) => ({ ...row })) };

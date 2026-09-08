@@ -1,12 +1,12 @@
-import { economy } from "@repo/config/economy";
+import { DAY_MS, economy } from "@repo/config/economy";
 import type { SavePayoutAccountInput } from "@repo/contracts";
 import { db, schema } from "@repo/db";
 import type { PayoutBlock } from "@repo/db/enums";
 import { and, count, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { HTTPException } from "hono/http-exception";
-import { type Tx, postEntry, voidEntry } from "../ledger/ledger.service";
-import { DAY_MS, holdCutoff, payoutAmount, payoutBlock, withdrawable } from "./eligibility";
+import { type Tx, lockMember, postEntry, voidEntry } from "../ledger/ledger.service";
+import { holdCutoff, payoutAmount, payoutBlock, withdrawable } from "./eligibility";
 import {
   type DeviceFlags,
   type DeviceStat,
@@ -30,15 +30,6 @@ const BLOCK_MESSAGE: Record<PayoutBlock, string> = {
   identity: "Add your payout details before you cash out.",
   "below-minimum": `A payout takes at least ${economy.payout.minimumPoints.toLocaleString()} CapyPoints.`,
 };
-
-/**
- * Holds one member's purse for the rest of the transaction, so a payout and a
- * charge against the same account queue instead of racing. It takes the same
- * lock the serve path takes, keyed on the member.
- */
-async function lockMember(tx: Tx, userId: string): Promise<void> {
-  await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${userId}))`);
-}
 
 /**
  * What one member may take out as money: earned credits that have served the

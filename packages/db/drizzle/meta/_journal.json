@@ -64,6 +64,13 @@
       "when": 1788835921486,
       "tag": "0008_payouts",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1788838910387,
+      "tag": "0009_topups",
+      "breakpoints": true
     }
   ]
 }
