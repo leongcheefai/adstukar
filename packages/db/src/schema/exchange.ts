@@ -125,6 +125,12 @@ export const device = pgTable(
     rejectionReason: text("rejection_reason"),
     /** Plays this device may be paid for in one day. */
     dailyPlayCap: integer("daily_play_cap").notNull(),
+    /**
+     * When this screen was first approved. A device sent back for review keeps
+     * it, because it is what tells the next approval that a key has already been
+     * issued and paired. A rejection clears it: a refused screen was never
+     * legitimately approved, so approving it later issues a fresh key.
+     */
     approvedAt: timestamp("approved_at"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),

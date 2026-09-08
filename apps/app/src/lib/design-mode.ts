@@ -658,12 +658,18 @@ function writeDevices(seg: string[], method: string, patch: Record<string, unkno
   if (!target) return undefined;
 
   if (method === "PATCH" && seg.length === 2) {
+    const input = patch as Partial<DeviceWithTerms["device"]>;
+    // Mirror updateDevice in the API: the tier is priced on the room, so only a
+    // moved screen goes back to the review queue. A new name or a new photo does
+    // not, and `approvedAt` records the first approval either way.
+    const rereview = input.location !== undefined || input.venueType !== undefined;
     return replaceDevice({
       ...target,
       device: {
         ...target.device,
-        ...(patch as Partial<DeviceWithTerms["device"]>),
-        state: "pending",
+        ...input,
+        state: rereview ? "pending" : target.device.state,
+        rejectionReason: rereview ? null : target.device.rejectionReason,
         updatedAt: nowIso(),
       },
     });

@@ -136,17 +136,15 @@ export async function updateDevice(userId: string, deviceId: string, input: Upda
   if (input.photoUrl !== undefined) patch.photoUrl = input.photoUrl ?? null;
 
   // The tier is priced on the room, so a moved screen is a new screen to review.
-  // A new photo goes back to review for the same reason: the photo is most of
-  // what an admin has to go on (docs/adr/0003). The name is only a label, so it
-  // changes without a second review.
-  if (
-    input.location !== undefined ||
-    input.venueType !== undefined ||
-    input.photoUrl !== undefined
-  ) {
+  // Nothing else here is: the name is a label, and the photo is evidence about
+  // the room rather than a change to it.
+  //
+  // `approvedAt` stays. It records when this screen was first approved, and that
+  // is what stops a second approval from minting a new key and blacking out a
+  // screen somebody has already paired. `state` is what stops it serving.
+  if (input.location !== undefined || input.venueType !== undefined) {
     patch.state = "pending";
     patch.rejectionReason = null;
-    patch.approvedAt = null;
   }
 
   const [row] = await db

@@ -31,8 +31,14 @@ and a device cannot move its own history.
 
 Approving a device stamps its tier and, the first time, mints the api key CapyTV
 runs on. Registration writes a placeholder into the unique NOT NULL column and
-the dashboard shows nothing until approval. A second approval keeps the existing
-key, so re-approving a moved screen does not black it out.
+the dashboard shows nothing until approval.
+
+Only a moved screen goes back for review: `updateDevice` re-pends on a new
+location or venue type, because the tier is priced on the room. A new name or a
+new photo does not. `device.approved_at` records the **first** approval and
+survives a re-review, which is what stops a second approval from minting a new
+key and blacking out a screen somebody has already paired. A rejection clears it,
+so approving a refused screen later does issue a fresh key.
 
 The daily play cap and the state of the campaign and the listing are read when
 the points move, never when the play was served. Above the cap, or on a listing
