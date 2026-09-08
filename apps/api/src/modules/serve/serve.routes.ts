@@ -90,13 +90,12 @@ serveRouter.post("/report", async (c) => {
   } catch {
     throw new HTTPException(400, { message: "Invalid report" });
   }
-  const result = await recordReport(
-    parsed.playId,
-    parsed.key,
-    new Date(),
-    parsed.playedAt ? new Date(parsed.playedAt) : null,
-    networkOf(ip),
-  );
+  const result = await recordReport({
+    playId: parsed.playId,
+    key: parsed.key,
+    playedAt: parsed.playedAt ? new Date(parsed.playedAt) : null,
+    network: networkOf(ip),
+  });
   return c.json(reportOutput.parse(result satisfies z.input<typeof reportOutput>), 200, NO_STORE);
 });
 

@@ -546,18 +546,30 @@ async function loadPlayForBilling(tx: Tx, playId: string) {
   return row ?? null;
 }
 
+/** One report of one play, as it arrives from a screen. */
+export interface PlayReport {
+  playId: string;
+  /** The device key. A report whose key does not match the screen moves nothing. */
+  key: string;
+  /** When the report reached the server. */
+  now?: Date;
+  /** The moment the device says the play ran. Null when the report is live. */
+  playedAt?: Date | null;
+  /** The network prefix the report came from, or null when it could not be read. */
+  network?: string | null;
+}
+
 /**
  * CapyTV reports that the listing held the placement for its full dwell. The play
  * counts, and the points move in the same transaction. Idempotent: a second
  * report is a no-op.
  */
-export async function recordReport(
-  playId: string,
-  key: string,
-  now: Date = new Date(),
-  playedAt: Date | null = null,
-  network: string | null = null,
-): Promise<{ counted: boolean }> {
+export async function recordReport(report: PlayReport): Promise<{ counted: boolean }> {
+  const { playId, key } = report;
+  const now = report.now ?? new Date();
+  const playedAt = report.playedAt ?? null;
+  const network = report.network ?? null;
+
   const result = await db.transaction(async (tx) => {
     const row = await loadPlayForBilling(tx, playId);
     if (!row || row.device.apiKey !== key) return { counted: false, lowBalanceFor: null };
