@@ -34,6 +34,8 @@ export type {
 export type { Placement, PlacementFormat, PlacementSize } from "./entities/placement";
 export type { Play, PlayState } from "./entities/play";
 export type { LedgerEntry, LedgerLot, LedgerReason, LedgerState } from "./entities/ledger-entry";
+export type { PayoutAccount, PayoutMethod } from "./entities/payout-account";
+export type { PayoutRequest, PayoutState } from "./entities/payout-request";
 export type { CreateCampaignInput, UpdateCampaignInput } from "./inputs/campaigns";
 export type { CreateListingInput, UpdateListingInput } from "./inputs/listings";
 export type {
@@ -47,6 +49,7 @@ export type { CreatePlacementInput, UpdatePlacementInput } from "./inputs/placem
 export type { LoopQuery, ReportInput } from "./inputs/serve";
 export type { ListLedgerQuery } from "./inputs/ledger";
 export type { ApproveDeviceInput, RejectInput } from "./inputs/admin";
+export type { PayPayoutInput, SavePayoutAccountInput } from "./inputs/payouts";
 export type { PresignDevicePhotoInput, PresignLogoInput } from "./inputs/uploads";
 export type {
   CampaignWithListings,
@@ -64,5 +67,13 @@ export type {
 } from "./modules/serve";
 export type { StatsDay, StatsOverview } from "./modules/stats";
 export type { ListLedgerResponse } from "./modules/ledger";
-export type { DeviceReview, ListingReview, ModerationQueue } from "./modules/admin";
+export type {
+  DeviceReview,
+  ListingReview,
+  ModerationQueue,
+  PayoutQueue,
+  PayoutReview,
+  ReviewedDevice,
+} from "./modules/admin";
+export type { PayoutBlock, PayoutOverview } from "./modules/payouts";
 export type { PresignDevicePhotoResponse, PresignLogoResponse } from "./modules/uploads";

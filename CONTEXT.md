@@ -94,6 +94,10 @@ _Avoid_: Impression, view, showing
 A viewer who scans the code on a played listing. A scan pays a bonus.
 _Avoid_: Click, tap, conversion
 
+**Open hours**:
+The hours a distributor states their venue is open, in whole hours and in the
+venue's own time. The payout review counts the plays that fall outside them.
+
 **Daily play cap**:
 The largest number of plays one device may be paid for in one day.
 
@@ -124,8 +128,17 @@ An advertiser's purchase of points with money.
 _Avoid_: Deposit, recharge, refill
 
 **Payout**:
-A distributor's conversion of earned points back into money.
+A distributor's conversion of earned points back into money. A member asks, an
+admin reviews the history, and the money goes out by hand (docs/adr/0005).
 _Avoid_: Withdrawal, cash-out
+
+**Payout account**:
+The name and the destination we pay. It goes on file the day a member cashes
+out, not at signup.
+
+**Withdrawable**:
+The earned points that have served the hold, less what already left. It is what
+one payout may take, and it is never the same number as the balance.
 
 **Fee**:
 The points CapyAds keeps from each play and each scan.
@@ -144,7 +157,8 @@ The sum of a member's settled ledger entries.
 The delay after which an earn entry counts towards the balance.
 
 **Hold**:
-The longer delay after settlement before earned points may leave as a payout.
+The longer delay after settlement before earned points may leave as a payout. It
+is the window in which a dead screen is caught before cash leaves.
 
 **Expiry**:
 The moment granted or earned points lose their value. Bought points never expire.

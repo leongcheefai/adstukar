@@ -55,6 +55,24 @@ export const economy = {
     holdDays: 30,
     /** The fewest points one payout may take. */
     minimumPoints: 20_000,
+    /**
+     * Days of device history the fraud review reads before an admin pays. It
+     * matches the hold, so the window an admin looks at is the window the hold
+     * was meant to protect.
+     */
+    reviewWindowDays: 30,
+    /**
+     * Scans per play under which the review flags a device. An ambient screen
+     * scans at 0.1-1% (docs/adr/0002), so a device far below that end of the
+     * range is a screen that faces nobody. It is a flag, not a refusal: the
+     * admin decides.
+     */
+    lowScanRatio: 0.001,
+    /**
+     * Plays a device must have run in the window before the scan ratio says
+     * anything. Two plays and no scans is not evidence.
+     */
+    scanRatioMinPlays: 200,
   },
 
   /**
@@ -170,4 +188,21 @@ export function playRateRange(): { lowest: number; highest: number } {
 /** The percent of a play or a scan the distributor keeps, after the fee. */
 export function distributorPercent(): number {
   return 100 - economy.feePercent;
+}
+
+/**
+ * The money a number of points is worth, in US cents. It rounds down, so a part
+ * of a cent never becomes money we cannot pay.
+ */
+export function pointsToUsdCents(points: number): number {
+  return Math.floor((points * 100) / economy.pointsPerUsd);
+}
+
+/**
+ * The points a number of US cents is worth. A payout takes this rather than the
+ * whole balance, so the part of a cent that `pointsToUsdCents` rounded away
+ * stays in the member's account and rolls over to the next payout.
+ */
+export function usdCentsToPoints(cents: number): number {
+  return (cents * economy.pointsPerUsd) / 100;
 }

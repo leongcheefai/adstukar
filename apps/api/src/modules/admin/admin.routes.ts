@@ -4,12 +4,16 @@ import {
   moderateDeviceOutput,
   moderateListingOutput,
   moderationQueueOutput,
+  payPayoutInput,
+  payoutQueueOutput,
   rejectInput,
+  reviewPayoutOutput,
 } from "@repo/contracts";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import type * as z from "zod/v4";
 import type { AppVariables } from "../../lib/context";
+import { listPayoutQueue, payPayout, rejectPayout } from "../payouts/payouts.service";
 import {
   approveDevice,
   approveListing,
@@ -50,4 +54,28 @@ adminRouter.post("/devices/:id/approve", zValidator("json", approveDeviceInput),
 adminRouter.post("/devices/:id/reject", zValidator("json", rejectInput), async (c) => {
   const row = await rejectDevice(c.req.param("id"), c.req.valid("json").reason);
   return c.json(moderateDeviceOutput.parse(row satisfies z.input<typeof moderateDeviceOutput>));
+});
+
+/**
+ * The payout batch. An admin reads the history behind each request — the
+ * scan-to-play ratio, the hours each screen played in, and whether devices share
+ * an address or a network — and then pays or refuses.
+ */
+adminRouter.get("/payouts", async (c) => {
+  const queue = await listPayoutQueue();
+  return c.json(payoutQueueOutput.parse(queue satisfies z.input<typeof payoutQueueOutput>));
+});
+
+adminRouter.post("/payouts/:id/pay", zValidator("json", payPayoutInput), async (c) => {
+  const admin = c.get("user");
+  if (!admin) throw new HTTPException(401, { message: "Unauthorized" });
+  const row = await payPayout(c.req.param("id"), admin.id, c.req.valid("json").reference);
+  return c.json(reviewPayoutOutput.parse(row satisfies z.input<typeof reviewPayoutOutput>));
+});
+
+adminRouter.post("/payouts/:id/reject", zValidator("json", rejectInput), async (c) => {
+  const admin = c.get("user");
+  if (!admin) throw new HTTPException(401, { message: "Unauthorized" });
+  const row = await rejectPayout(c.req.param("id"), admin.id, c.req.valid("json").reason);
+  return c.json(reviewPayoutOutput.parse(row satisfies z.input<typeof reviewPayoutOutput>));
 });

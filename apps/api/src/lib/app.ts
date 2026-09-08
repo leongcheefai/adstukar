@@ -17,6 +17,7 @@ import { healthRouter } from "../modules/health/health.routes";
 import { ledgerRouter } from "../modules/ledger/ledger.routes";
 import { listingsRouter } from "../modules/listings/listings.routes";
 import { meRouter } from "../modules/me/me.routes";
+import { payoutsRouter } from "../modules/payouts/payouts.routes";
 import { placementsRouter } from "../modules/placements/placements.routes";
 import { releasesRouter } from "../modules/releases/releases.routes";
 import { serveRouter } from "../modules/serve/serve.routes";
@@ -60,6 +61,7 @@ app.route("/devices", devicesRouter);
 app.route("/placements", placementsRouter);
 app.route("/stats", statsRouter);
 app.route("/ledger", ledgerRouter);
+app.route("/payouts", payoutsRouter);
 app.route("/admin", adminRouter);
 app.route("/", serveRouter);
 

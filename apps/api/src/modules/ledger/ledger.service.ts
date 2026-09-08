@@ -46,7 +46,11 @@ export interface PostEntryInput {
   now?: Date;
 }
 
-export async function postEntry(tx: Tx, input: PostEntryInput): Promise<{ inserted: boolean }> {
+/** The row that went in, or `inserted: false` when the key had already posted it. */
+export async function postEntry(
+  tx: Tx,
+  input: PostEntryInput,
+): Promise<{ inserted: boolean; id: string | null }> {
   const now = input.now ?? new Date();
   const rows = await tx
     .insert(schema.ledgerEntry)
@@ -66,7 +70,7 @@ export async function postEntry(tx: Tx, input: PostEntryInput): Promise<{ insert
     })
     .onConflictDoNothing({ target: schema.ledgerEntry.idempotencyKey })
     .returning({ id: schema.ledgerEntry.id });
-  return { inserted: rows.length > 0 };
+  return { inserted: rows.length > 0, id: rows[0]?.id ?? null };
 }
 
 export function settlesAtFrom(now: Date): Date {
@@ -272,19 +276,39 @@ export async function expireDue(now: Date = new Date()): Promise<number> {
   return count;
 }
 
-/** Admin: void an entry and post the compensating row on the same lot. */
-export async function voidEntry(entryId: string, now: Date = new Date()): Promise<boolean> {
-  return db.transaction(async (tx) => {
+/**
+ * Takes back one entry, on the same lot it moved.
+ *
+ * A pending entry never reached the balance, so it is simply marked void and
+ * nothing is posted. A settled entry did reach the balance, so it stays settled
+ * and a compensating row goes in beside it. Doing both to one entry would count
+ * the reversal twice: the balance sums settled rows only, so dropping the
+ * original out of that sum already gives the points back.
+ *
+ * Idempotent through `void:<id>`, and callers may pass a `tx` so the reversal
+ * commits with whatever else the same act changes.
+ */
+export async function voidEntry(
+  entryId: string,
+  now: Date = new Date(),
+  outerTx?: Tx,
+): Promise<boolean> {
+  const run = async (tx: Tx) => {
     const [entry] = await tx
       .select()
       .from(schema.ledgerEntry)
       .where(and(eq(schema.ledgerEntry.id, entryId), not(eq(schema.ledgerEntry.state, "void"))))
       .limit(1);
     if (!entry) return false;
-    await tx
-      .update(schema.ledgerEntry)
-      .set({ state: "void" })
-      .where(eq(schema.ledgerEntry.id, entryId));
+
+    if (entry.state === "pending") {
+      await tx
+        .update(schema.ledgerEntry)
+        .set({ state: "void" })
+        .where(eq(schema.ledgerEntry.id, entryId));
+      return true;
+    }
+
     await postEntry(tx, {
       userId: entry.userId,
       delta: -entry.delta,
@@ -293,10 +317,12 @@ export async function voidEntry(entryId: string, now: Date = new Date()): Promis
       state: "settled",
       idempotencyKey: `void:${entry.id}`,
       relatedEntryId: entry.id,
+      playId: entry.playId,
       now,
     });
     return true;
-  });
+  };
+  return outerTx ? run(outerTx) : db.transaction(run);
 }
 
 export async function listEntries(userId: string, query: ListLedgerQuery) {

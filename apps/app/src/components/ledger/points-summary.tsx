@@ -1,18 +1,12 @@
 import { Gift } from "@phosphor-icons/react";
 import { project } from "@repo/config/project";
-import {
-  Button,
-  Card,
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@repo/ui";
+import { Button, Card } from "@repo/ui";
 import { useState } from "react";
 import { useSession } from "../../lib/auth";
+import { usePayouts } from "../../lib/payouts";
 import { useStats } from "../../lib/stats";
 import { CopyButton } from "../copy-button";
+import { CashOutDialog } from "../payouts/cash-out-dialog";
 
 /** Mixed case and digits, the shape a referral link wants. */
 const ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -51,9 +45,11 @@ function referralCode(userId: string | undefined): string {
 export function PointsSummary() {
   const { data: stats } = useStats();
   const { data: session } = useSession();
+  const { data: payouts } = usePayouts();
   const [cashOutOpen, setCashOutOpen] = useState(false);
 
   const settled = stats?.balance.settled ?? 0;
+  const withdrawable = payouts?.withdrawable ?? 0;
   // The site URL comes from the project config; never hardcode it in an app.
   const referralUrl = `${project.siteUrl}/referral/${referralCode(session?.user.id)}`;
 
@@ -75,10 +71,19 @@ export function PointsSummary() {
           <p data-slot="label" className="text-muted-foreground">
             Cash out
           </p>
-          <Button variant="outline" size="sm" onClick={() => setCashOutOpen(true)}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCashOutOpen(true)}
+            disabled={!payouts}
+          >
             Cash out CapyPoints
           </Button>
-          <p className="text-xs text-muted-foreground">Turn earned points into money.</p>
+          {/* The number beside the button is the withdrawable balance, not the
+              settled one: only earned points that served the hold ever leave. */}
+          <p className="text-xs text-muted-foreground tabular-nums">
+            {withdrawable.toLocaleString()} ready to cash out.
+          </p>
         </div>
 
         {/* The one cell that asks for something rather than reporting it, so it
@@ -108,21 +113,9 @@ export function PointsSummary() {
         </div>
       </Card>
 
-      {/* A dialog, not a disabled button: a member who taps this deserves to be
-          told why nothing happened, not left guessing. */}
-      <Dialog open={cashOutOpen} onOpenChange={setCashOutOpen}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Cash out is not open yet</DialogTitle>
-            <DialogDescription>
-              Cash out is not built yet. Earned points wait out their hold first, and only earned
-              points ever leave as money. Your balance of {settled.toLocaleString()}
-              keeps until it opens.
-            </DialogDescription>
-          </DialogHeader>
-          <Button onClick={() => setCashOutOpen(false)}>Got it</Button>
-        </DialogContent>
-      </Dialog>
+      {payouts && (
+        <CashOutDialog overview={payouts} open={cashOutOpen} onOpenChange={setCashOutOpen} />
+      )}
     </>
   );
 }

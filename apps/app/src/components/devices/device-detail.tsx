@@ -1,6 +1,7 @@
 import { ArrowsClockwise, Plus, Prohibit, Trash, X } from "@phosphor-icons/react";
 import { economy } from "@repo/config/economy";
 import type {
+  Device,
   DeviceWithTerms,
   Placement,
   PlacementFormat,
@@ -42,6 +43,7 @@ import {
   useSetExcludedTerms,
   useSetPromotion,
   useSetVetoes,
+  useUpdateDevice,
 } from "../../lib/devices";
 import {
   useCreatePlacement,
@@ -51,6 +53,7 @@ import {
 } from "../../lib/placements";
 import { CopyButton } from "../copy-button";
 import { CapyTvScreen } from "./capytv-screen";
+import { OpenHoursFields, statedHoursOf } from "./open-hours";
 
 const FORMAT_LABEL: Record<PlacementFormat, string> = {
   band: "Band · a strip across the foot of the screen",
@@ -374,6 +377,30 @@ export function DeviceDetail({
     );
   }
 
+  /**
+   * The stated hours on a screen that already exists. It saves as soon as a value
+   * changes, like the region rows above it: there is no second field to fill in,
+   * so a Save button would only add a step to forget.
+   */
+  function OpenHoursRow({ device }: { device: Device }) {
+    const update = useUpdateDevice();
+    return (
+      <OpenHoursFields
+        value={statedHoursOf(device)}
+        idPrefix={`hours-${device.id}`}
+        onChange={(next) =>
+          update.mutate(
+            { id: device.id, input: next },
+            {
+              onSuccess: () => toast.success("Open hours saved"),
+              onError: (err) => toast.error(err.message),
+            },
+          )
+        }
+      />
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-xl">
@@ -488,6 +515,8 @@ export function DeviceDetail({
               <PlacementRow key={placement.id} placement={placement} />
             ))}
           </div>
+
+          <OpenHoursRow device={device} />
 
           <div className="space-y-3">
             <Label>Your own promotion</Label>

@@ -96,3 +96,26 @@ export const LEDGER_REASONS = [
  * expires, `granted` neither refunds nor withdraws, and expires.
  */
 export const LEDGER_LOTS = ["bought", "earned", "granted"] as const;
+
+/**
+ * A payout is requested by the distributor, and an admin then pays it or refuses
+ * it. There is no `approved` step: the MVP pays by hand in one admin session, so
+ * approval and payment are the same act (docs/adr/0005).
+ */
+export const PAYOUT_STATES = ["requested", "paid", "rejected"] as const;
+
+export type PayoutState = (typeof PAYOUT_STATES)[number];
+
+/**
+ * Why a payout request is refused. It is a union the API works out and the
+ * dashboard reads; no column stores it, so it lives here beside the rest rather
+ * than being written out again in each package.
+ */
+export const PAYOUT_BLOCKS = ["open-request", "identity", "below-minimum"] as const;
+
+export type PayoutBlock = (typeof PAYOUT_BLOCKS)[number];
+
+/** How a distributor takes money out. The MVP sends both by hand. */
+export const PAYOUT_METHODS = ["bank", "paypal"] as const;
+
+export type PayoutMethod = (typeof PAYOUT_METHODS)[number];

@@ -19,7 +19,9 @@ import {
 import { useState } from "react";
 import { LedgerRow } from "../../components/ledger/ledger-row";
 import { PointsSummary } from "../../components/ledger/points-summary";
+import { PayoutRequests } from "../../components/payouts/payout-requests";
 import { useLedger } from "../../lib/ledger";
+import { usePayouts } from "../../lib/payouts";
 
 const REASONS: { value: LedgerReason | "all"; label: string }[] = [
   { value: "all", label: "All reasons" },
@@ -50,6 +52,7 @@ const STATES: { value: LedgerState | "all"; label: string }[] = [
 ];
 
 export function LedgerPage() {
+  const { data: payouts } = usePayouts();
   const [reason, setReason] = useState<LedgerReason | "all">("all");
   const [state, setState] = useState<LedgerState | "all">("all");
   const [lot, setLot] = useState<LedgerLot | "all">("all");
@@ -68,6 +71,8 @@ export function LedgerPage() {
       </h1>
 
       <PointsSummary />
+
+      <PayoutRequests requests={payouts?.requests ?? []} />
 
       {/* On the list, not by the title: these change what the table below shows,
           and nothing above it. The visible value names each filter, so neither

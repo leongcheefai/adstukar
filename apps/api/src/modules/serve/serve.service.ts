@@ -556,12 +556,22 @@ export async function recordReport(
   key: string,
   now: Date = new Date(),
   playedAt: Date | null = null,
+  network: string | null = null,
 ): Promise<{ counted: boolean }> {
   const result = await db.transaction(async (tx) => {
     const row = await loadPlayForBilling(tx, playId);
     if (!row || row.device.apiKey !== key) return { counted: false, lowBalanceFor: null };
 
     const { play, placement, device, listing, campaign } = row;
+
+    // The key matched, so this screen is alive whatever becomes of the play. The
+    // payout review reads both: the hold exists to catch a dead screen before
+    // cash leaves, and several devices on one network is a fraud signal.
+    await tx
+      .update(schema.device)
+      .set({ lastSeenAt: now, ...(network ? { lastNetwork: network } : {}) })
+      .where(eq(schema.device.id, device.id));
+
     if (play.state !== "open" || now > play.expiresAt) {
       return { counted: false, lowBalanceFor: null };
     }

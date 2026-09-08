@@ -13,6 +13,7 @@ import { type Context, Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import type * as z from "zod/v4";
 import type { AppVariables } from "../../lib/context";
+import { networkOf } from "../../lib/network";
 import { createRateLimiter } from "../../lib/rate-limit";
 import { recordReport, recordScan, serveListing, serveLoop } from "./serve.service";
 
@@ -94,6 +95,7 @@ serveRouter.post("/report", async (c) => {
     parsed.key,
     new Date(),
     parsed.playedAt ? new Date(parsed.playedAt) : null,
+    networkOf(ip),
   );
   return c.json(reportOutput.parse(result satisfies z.input<typeof reportOutput>), 200, NO_STORE);
 });

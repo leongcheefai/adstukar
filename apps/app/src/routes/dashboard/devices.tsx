@@ -24,6 +24,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { DeviceDetail } from "../../components/devices/device-detail";
 import { DeviceTile } from "../../components/devices/device-tile";
+import { OpenHoursFields, type StatedHours } from "../../components/devices/open-hours";
 import { uploadDevicePhoto, useCreateDevice, useDevices } from "../../lib/devices";
 import { usePlacements } from "../../lib/placements";
 
@@ -55,6 +56,11 @@ export function DevicesPage() {
   const [name, setName] = useState("");
   const [location, setLocation] = useState("");
   const [venueType, setVenueType] = useState<VenueType>("cafe");
+  const [hours, setHours] = useState<StatedHours>({
+    openHour: null,
+    closeHour: null,
+    timezone: null,
+  });
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [openItem, setOpenItem] = useState<DeviceWithTerms | null>(null);
@@ -84,13 +90,14 @@ export function DevicesPage() {
     e.preventDefault();
     if (!name.trim() || !location.trim()) return;
     create.mutate(
-      { name: name.trim(), location: location.trim(), venueType, photoUrl },
+      { name: name.trim(), location: location.trim(), venueType, photoUrl, ...hours },
       {
         onSuccess: (created) => {
           setAddOpen(false);
           setName("");
           setLocation("");
           setVenueType("cafe");
+          setHours({ openHour: null, closeHour: null, timezone: null });
           setPhotoUrl(null);
           setOpenItem(created);
           toast.success("Device registered. An admin reviews it next.");
@@ -207,6 +214,7 @@ export function DevicesPage() {
                   </SelectContent>
                 </Select>
               </div>
+              <OpenHoursFields value={hours} onChange={setHours} idPrefix="device-hours" />
               <div className="space-y-2">
                 <Label htmlFor="device-photo">Photo of the screen in place</Label>
                 <Input

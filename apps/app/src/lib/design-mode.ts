@@ -1,4 +1,4 @@
-import { economy } from "@repo/config/economy";
+import { economy, pointsToUsdCents } from "@repo/config/economy";
 import type {
   Campaign,
   CampaignWithListings,
@@ -9,6 +9,10 @@ import type {
   ListLedgerResponse,
   Listing,
   ModerationQueue,
+  PayoutAccount,
+  PayoutOverview,
+  PayoutQueue,
+  PayoutRequest,
   Placement,
   PlacementFormat,
   PlacementSize,
@@ -248,6 +252,9 @@ let devices: DeviceWithTerms[] = [
     device: {
       id: "dev_bangsar",
       name: "Counter screen",
+      openHour: 8,
+      closeHour: 18,
+      timezone: "Asia/Kuala_Lumpur",
       deviceId: "K7QW-3MTP",
       apiKey: "",
       venueType: "cafe",
@@ -272,6 +279,9 @@ let devices: DeviceWithTerms[] = [
     device: {
       id: "dev_ss15",
       name: "Weights floor screen",
+      openHour: null,
+      closeHour: null,
+      timezone: null,
       deviceId: "R4NB-8XJD",
       apiKey: "",
       venueType: "gym",
@@ -406,6 +416,148 @@ function moderationQueue(): ModerationQueue {
   return moderation;
 }
 
+/**
+ * The cash-out panel. One payout already paid, so the history table has a row,
+ * and enough left over the hold that the button is live.
+ */
+let payoutAccount: PayoutAccount | null = {
+  id: "pay_acct_1",
+  legalName: "Nur Aisyah binti Rahman",
+  country: "MY",
+  method: "bank",
+  destination: "1234567890",
+  createdAt: iso(40),
+  updatedAt: iso(40),
+};
+
+let payoutRequests: PayoutRequest[] = [
+  {
+    id: "pay_req_1",
+    points: 24_000,
+    usdCents: 2_400,
+    state: "paid",
+    ledgerEntryId: "led_0001",
+    reference: "MBB-2026-08-01",
+    rejectionReason: null,
+    reviewedAt: iso(35),
+    createdAt: iso(38),
+  },
+];
+
+let withdrawable = 31_400;
+
+function payoutOverview(): PayoutOverview {
+  const open = payoutRequests.some((row) => row.state === "requested");
+  return {
+    account: payoutAccount ? { ...payoutAccount } : null,
+    withdrawable,
+    minimumPoints: economy.payout.minimumPoints,
+    holdDays: economy.payout.holdDays,
+    block: open
+      ? "open-request"
+      : payoutAccount === null
+        ? "identity"
+        : withdrawable < economy.payout.minimumPoints
+          ? "below-minimum"
+          : null,
+    requests: payoutRequests.map((row) => ({ ...row })),
+  };
+}
+
+/** Plays that stop overnight, the shape a room that closes leaves behind. */
+function openHours(peak: number): number[] {
+  return Array.from({ length: 24 }, (_, hour) =>
+    hour >= 8 && hour < 20 ? peak - Math.abs(14 - hour) * 3 : 0,
+  );
+}
+
+/** Plays that never stop, the shape a screen in a drawer leaves behind. */
+function allHours(peak: number): number[] {
+  return Array.from({ length: 24 }, () => peak);
+}
+
+let payoutQueue: PayoutQueue | null = null;
+
+function payoutReviewQueue(): PayoutQueue {
+  payoutQueue ??= {
+    windowDays: economy.payout.reviewWindowDays,
+    items: [
+      {
+        request: {
+          id: "pay_req_2",
+          points: 46_500,
+          usdCents: 4_650,
+          state: "requested",
+          ledgerEntryId: "led_0002",
+          reference: null,
+          rejectionReason: null,
+          reviewedAt: null,
+          createdAt: iso(2),
+        },
+        owner: { name: "Wai Hong", email: "waihong@example.com" },
+        account: {
+          id: "pay_acct_2",
+          legalName: "Lim Wai Hong",
+          country: "MY",
+          method: "paypal",
+          destination: "waihong@example.com",
+          createdAt: iso(6),
+          updatedAt: iso(6),
+        },
+        devices: [
+          {
+            deviceId: "dev_bangsar",
+            name: "Front counter",
+            location: "12 Jalan Telawi, Bangsar",
+            tier: "premium",
+            state: "approved",
+            plays: 6_240,
+            scans: 71,
+            playsByHour: openHours(40),
+            openHour: 8,
+            closeHour: 20,
+            lastSeenAt: iso(0, 3),
+            lastNetwork: "203.0.113.0/24",
+            flags: {
+              scanRatio: 71 / 6_240,
+              lowScanRatio: false,
+              activeHours: 12,
+              outOfHoursPlays: 0,
+              daysSilent: 0,
+              sharedNetwork: false,
+              sharedLocation: false,
+            },
+          },
+          {
+            deviceId: "dev_storeroom",
+            name: "Spare screen",
+            location: "12 Jalan Telawi, Bangsar",
+            tier: "standard",
+            state: "approved",
+            plays: 9_800,
+            scans: 2,
+            playsByHour: allHours(21),
+            openHour: 8,
+            closeHour: 20,
+            lastSeenAt: iso(0, 1),
+            lastNetwork: "203.0.113.0/24",
+            flags: {
+              scanRatio: 2 / 9_800,
+              lowScanRatio: true,
+              activeHours: 24,
+              outOfHoursPlays: 252,
+              daysSilent: 0,
+              sharedNetwork: true,
+              sharedLocation: true,
+            },
+          },
+        ],
+      },
+    ],
+  };
+  return payoutQueue;
+}
+
 const releases: Release[] = [
   {
     id: "rel_002",
@@ -462,6 +614,9 @@ function forAdmin(device: DeviceForAdmin): DeviceForAdmin {
     deviceId: device.deviceId,
     venueType: device.venueType,
     location: device.location,
+    openHour: device.openHour,
+    closeHour: device.closeHour,
+    timezone: device.timezone,
     photoUrl: device.photoUrl,
     promotionName: device.promotionName,
     promotionTagline: device.promotionTagline,
@@ -625,6 +780,9 @@ function writeDevices(seg: string[], method: string, patch: Record<string, unkno
       location: string;
       venueType?: VenueType;
       photoUrl?: string | null;
+      openHour?: number | null;
+      closeHour?: number | null;
+      timezone?: string | null;
     };
     const created: DeviceWithTerms = {
       device: {
@@ -632,6 +790,9 @@ function writeDevices(seg: string[], method: string, patch: Record<string, unkno
         name: input.name,
         deviceId: "XXXX-XXXX",
         apiKey: "",
+        openHour: input.openHour ?? null,
+        closeHour: input.closeHour ?? null,
+        timezone: input.timezone ?? null,
         venueType: input.venueType ?? "other",
         location: input.location,
         photoUrl: input.photoUrl ?? null,
@@ -822,6 +983,70 @@ function writeAdmin(seg: string[], patch: Record<string, unknown>): unknown {
   return undefined;
 }
 
+/** The distributor's own side: save the details, or ask for the money. */
+function writePayouts(seg: string[], method: string, patch: Record<string, unknown>): unknown {
+  if (method === "PUT" && seg[1] === "account") {
+    payoutAccount = {
+      id: payoutAccount?.id ?? fakeId("pay_acct"),
+      legalName: (patch.legalName as string | undefined) ?? "",
+      country: (patch.country as string | undefined) ?? "MY",
+      method: (patch.method as PayoutAccount["method"] | undefined) ?? "bank",
+      destination: (patch.destination as string | undefined) ?? "",
+      createdAt: payoutAccount?.createdAt ?? nowIso(),
+      updatedAt: nowIso(),
+    };
+    return { ...payoutAccount };
+  }
+
+  if (method === "POST" && seg.length === 1) {
+    const opened: PayoutRequest = {
+      id: fakeId("pay_req"),
+      points: withdrawable,
+      usdCents: pointsToUsdCents(withdrawable),
+      state: "requested",
+      ledgerEntryId: fakeId("led"),
+      reference: null,
+      rejectionReason: null,
+      reviewedAt: null,
+      createdAt: nowIso(),
+    };
+    // The points leave the account the moment the request is made, exactly as
+    // the API does it, so the panel below the button reads right afterwards.
+    withdrawable = 0;
+    payoutRequests = [opened, ...payoutRequests];
+    return { ...opened };
+  }
+  return undefined;
+}
+
+/** The admin side: pay the request, or refuse it and hand the points back. */
+function writePayoutReview(seg: string[], patch: Record<string, unknown>): unknown {
+  const queue = payoutReviewQueue();
+  const item = queue.items.find((row) => row.request.id === seg[2]);
+  if (!item) return undefined;
+
+  const decided: PayoutRequest | null =
+    seg[3] === "pay"
+      ? {
+          ...item.request,
+          state: "paid",
+          reference: (patch.reference as string | undefined) ?? "",
+          reviewedAt: nowIso(),
+        }
+      : seg[3] === "reject"
+        ? {
+            ...item.request,
+            state: "rejected",
+            rejectionReason: (patch.reason as string | undefined) ?? "No reason given.",
+            reviewedAt: nowIso(),
+          }
+        : null;
+  if (!decided) return undefined;
+
+  payoutQueue = { ...queue, items: queue.items.filter((row) => row.request.id !== seg[2]) };
+  return decided;
+}
+
 /**
  * Answers a write request by replacing the matching fixture. Every update builds
  * a new object rather than editing one in place: React Query compares the old
@@ -838,6 +1063,10 @@ function designWrite(route: string, method: string, body?: unknown): unknown {
   if (seg[0] === "listings") return writeListings(seg, method, patch);
   if (seg[0] === "devices") return writeDevices(seg, method, patch);
   if (seg[0] === "placements") return writePlacements(seg, method, patch);
+  if (seg[0] === "payouts") return writePayouts(seg, method, patch);
+  if (method === "POST" && seg[0] === "admin" && seg[1] === "payouts") {
+    return writePayoutReview(seg, patch);
+  }
   if (method === "POST" && seg[0] === "admin") return writeAdmin(seg, patch);
 
   // The presigned PUT never leaves the browser in design mode; `uploadLogo`
@@ -918,6 +1147,12 @@ export function designResponse(path: string, method: string, body?: unknown): un
         excludedTerms: [...row.excludedTerms],
         vetoedListingIds: [...row.vetoedListingIds],
       }));
+    case "/payouts":
+      return payoutOverview();
+    case "/admin/payouts": {
+      const queue = payoutReviewQueue();
+      return { windowDays: queue.windowDays, items: queue.items.map((row) => ({ ...row })) };
+    }
     case "/admin/moderation": {
       const queue = moderationQueue();
       return {

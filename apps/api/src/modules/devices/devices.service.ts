@@ -114,6 +114,9 @@ export async function createDevice(userId: string, input: CreateDeviceInput) {
       venueType: input.venueType,
       location: input.location,
       photoUrl: input.photoUrl ?? null,
+      openHour: input.openHour ?? null,
+      closeHour: input.closeHour ?? null,
+      timezone: input.timezone ?? null,
       dailyPlayCap: economy.caps.dailyPlaysPerDevice,
       createdAt: now,
       updatedAt: now,
@@ -134,10 +137,14 @@ export async function updateDevice(userId: string, deviceId: string, input: Upda
   if (input.location !== undefined) patch.location = input.location;
   if (input.venueType !== undefined) patch.venueType = input.venueType;
   if (input.photoUrl !== undefined) patch.photoUrl = input.photoUrl ?? null;
+  if (input.openHour !== undefined) patch.openHour = input.openHour ?? null;
+  if (input.closeHour !== undefined) patch.closeHour = input.closeHour ?? null;
+  if (input.timezone !== undefined) patch.timezone = input.timezone ?? null;
 
   // The tier is priced on the room, so a moved screen is a new screen to review.
-  // Nothing else here is: the name is a label, and the photo is evidence about
-  // the room rather than a change to it.
+  // Nothing else here is: the name is a label, the photo is evidence about the
+  // room rather than a change to it, and the stated hours are what the payout
+  // review measures the screen against rather than what prices it.
   //
   // `approvedAt` stays. It records when this screen was first approved, and that
   // is what stops a second approval from minting a new key and blacking out a

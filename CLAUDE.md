@@ -20,6 +20,7 @@ The old barter economy (+1 earn, -2 spend, no money) is dead. Do not restore it.
 | `placement` | one overlay region on a device (`band` / `float` / `ticker`) |
 | `play` | one listing shown in one placement for its dwell |
 | lot | the origin of a point on a ledger entry: `bought`, `earned`, `granted` |
+| payout | a distributor's request to turn earned points into money. An admin reviews it and pays by hand |
 
 ## Exchange rules (where things live)
 - **Economy numbers** — `packages/config/src/economy.ts` only. Play and scan rates, the fee, the peg, grants, the daily play cap, the daily budget default, settlement delay, payout hold and threshold, expiry, top-up packs, rate limits, listings per campaign. Never a literal in a route, a job, a page, or the client. `apps/embed` is the one exception: it is unmaintained, and its dead web-economy numbers sit in `apps/embed/src/config.ts` so they cannot drift back in.
@@ -30,9 +31,16 @@ The old barter economy (+1 earn, -2 spend, no money) is dead. Do not restore it.
 - **Nothing is priced when a play is served** — the daily cap, the campaign budget, and the state of the campaign and the listing are all read at report time. Above the cap, or on a creative an admin rejected after the batch was cut, the play still shows and still counts, and simply pays nothing. A scan on a still-open play is recorded free and settled by the report that follows it.
 - **Pacing** — `apps/api/src/modules/campaigns/pacing.ts` holds the rules, and they are pure. The listings under a campaign split its daily budget evenly. A campaign stops when the budget is spent, and starts again the next day. A campaign stops when the owner's points run out, and starts again when points come back. A pause by a person carries no reason, and the job never touches it.
 - **One paid listing at a time** — a device may hold several placements, but only one paid listing is on screen at once. Concurrent regions would charge several advertisers for one pair of eyes.
+- **Payout** — `apps/api/src/modules/payouts/`: `eligibility.ts` holds the rules
+  for what may leave, and `review.ts` the fraud signals; both are pure. Only the
+  `earned` lot withdraws, and only after the hold. A request takes the whole
+  withdrawable balance and debits it at once, because a balance left in place
+  would answer a second request. A refusal posts the compensating row and the
+  points come back. Payment is manual: an admin reads the history, sends the
+  money, and records the reference. See `docs/adr/0005`.
 - **Moderation** — `apps/api/src/modules/admin/`: a human queue. An admin reviews each listing and each device, and a device carries a photo of the screen in place. Device approval also stamps the tier, which sets the rate. The domain check stays automatic and gates the campaign.
 - **The distributor's filters** — an excluded term stops anything that reads a certain way; a veto (`vetoed_listing`) stops exactly the creative they looked at. Both live on the device and neither goes through moderation. When nothing paid is eligible, the screen plays the distributor's own promotion (the `promotion*` columns on `device`), or the CapyAds card. Both are free and move no points.
-- **Fraud is bounded by policy, not by hardware** — CapyTV is a PWA, so there is no device attestation. Approval, the daily play cap, the payout hold, and the scan-to-play ratio are the whole defence. See `docs/adr/0003`.
+- **Fraud is bounded by policy, not by hardware** — CapyTV is a PWA, so there is no device attestation. Approval, the daily play cap, the payout hold, and the scan-to-play ratio are the whole defence. See `docs/adr/0003`. The payout review reads three signals per screen: the scan-to-play ratio, the plays that fell outside the venue's stated open hours, and whether devices share an address or a network. `device.last_network` holds a prefix, never an address, and the stated hours are read in `device.timezone`.
 - **Jobs** — `apps/api/src/modules/jobs/`: settlement (pending → settled), expiry, and the void of an open play whose report never came. A fourth job paces campaigns. It stops a campaign that can no longer pay, and starts one whose reason to stop has gone. The jobs run in-process (`JOBS_ENABLED=true`), or once with `pnpm --filter @repo/api jobs:run`.
 - **CapyTV** — `apps/capytv` is the screen app: a PWA in a kiosk browser (`docs/adr/0003`). It shows thin content (clock, weather from Open-Meteo, an RSS feed the venue sets) and plays listings over it. It holds a loop and a report queue in `localStorage`, so a screen that loses its network keeps playing and reports when the network returns. Pure rules live in `src/lib/{queue,schedule,feed,weather}.ts`; the timers live in `src/lib/player.ts`.
 - **Embed** — `apps/embed` serves the old web surface. It stays in the repo, unmaintained. Do not add features to it.
@@ -87,6 +95,7 @@ Single source of truth for every type crossing the API boundary. Hand-copying a 
 - `pgEnum` without `.notNull()` derives as **nullable** (e.g. `subscription.status`). That's correct; handle the null.
 - **A delete is an archive.** Once points have moved, the row stays, because the ledger references it. A campaign, a listing, and a device all archive.
 - **A refund posts a `refund` entry.** It never deletes a row and never edits one.
+- **`voidEntry` treats a pending row and a settled row differently.** A pending row never reached the balance, so it is marked `void` and nothing is posted. A settled row stays settled and takes a compensating row beside it. Doing both would give the points back twice, because balances sum settled rows only.
 - **Bought points never expire.** The expiry job must skip the `bought` lot. Expiring points somebody paid for is a consumer-law problem.
 - `pnpm db:generate` and `pnpm db:push` open an interactive prompt whenever a diff could be a rename, and they crash without a TTY. Split the change into a drop-only migration and a create-only one so neither diff is ambiguous — `0004`/`0005` are that pair.
 - `pnpm verify` is the single gate definition — CI (`.github/workflows/ci.yml`), `.githooks/pre-push`, and the Claude Code hook all call it, so they cannot drift apart. Change the gate there, not in three places. `typecheck` is what enforces `expectTypeOf` assertions — vitest does not.

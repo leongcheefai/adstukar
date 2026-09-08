@@ -13,7 +13,8 @@ Hono API server on Node.js. Handles auth (Better Auth), the CapyAds exchange (ca
 | `serve` | `GET /serve?key=`, `GET /loop?key=&size=`, `POST /report` (text/plain JSON), `GET /scan/:playId` | public, rate-limited |
 | `stats` | `GET /stats/overview` | member |
 | `ledger` | `GET /ledger?reason&state&lot&cursor&limit` | member |
-| `admin` | `GET /admin/moderation`, `POST /admin/listings/:id/approve\|reject`, `POST /admin/devices/:id/approve\|reject` | admin |
+| `payouts` | `GET /payouts`, `PUT /payouts/account`, `POST /payouts` | member |
+| `admin` | `GET /admin/moderation`, `POST /admin/listings/:id/approve\|reject`, `POST /admin/devices/:id/approve\|reject`, `GET /admin/payouts`, `POST /admin/payouts/:id/pay\|reject` | admin |
 | `jobs` | `startJobs()` from `index.ts`; `pnpm jobs:run` one-shot. Settlement, expiry, stale plays, and campaign pacing | — |
 | `uploads` | `POST /uploads/logo/presign`, `POST /uploads/device-photo/presign` (S3, optional) | member |
 
@@ -34,8 +35,9 @@ runs on. Registration writes a placeholder into the unique NOT NULL column and
 the dashboard shows nothing until approval.
 
 Only a moved screen goes back for review: `updateDevice` re-pends on a new
-location or venue type, because the tier is priced on the room. A new name or a
-new photo does not. `device.approved_at` records the **first** approval and
+location or venue type, because the tier is priced on the room. A new name, a new
+photo, or new open hours does not — the stated hours are what the payout review
+measures the screen against, not what prices it. `device.approved_at` records the **first** approval and
 survives a re-review, which is what stops a second approval from minting a new
 key and blacking out a screen somebody has already paired. A rejection clears it,
 so approving a refused screen later does issue a fresh key.
@@ -54,6 +56,19 @@ campaign stops when the budget is spent, or when the owner's points run out. The
 pacing job starts it again when the reason has gone. See
 `src/modules/campaigns/pacing.ts` for the rules and `pacing.service.ts` for the
 writes.
+
+A payout takes earned points that have served the hold, and nothing else. The
+request debits the account at once, so no balance can answer two requests; a
+refusal posts the compensating row and the points come back. Payment is manual
+and an admin reviews the history first — the scan-to-play ratio, the plays that
+fell outside the venue's stated open hours, and devices sharing an address or a
+network. See
+`docs/adr/0005`, `src/modules/payouts/eligibility.ts` for the rules and
+`review.ts` for the signals.
+
+`POST /report` also stamps `device.last_seen_at` and `device.last_network`
+whenever the key matches, whatever becomes of the play. The payout review reads
+both, so a screen that stopped reporting is visible before cash leaves.
 
 `GET /embed/*` serves `apps/embed/dist` when that directory exists (dev convenience).
 

@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   boolean,
   index,
@@ -7,6 +8,7 @@ import {
   text,
   timestamp,
   unique,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { user } from "./auth";
 import {
@@ -18,6 +20,8 @@ import {
   LEDGER_REASONS,
   LEDGER_STATES,
   LISTING_STATES,
+  PAYOUT_METHODS,
+  PAYOUT_STATES,
   PLACEMENT_FORMATS,
   PLACEMENT_SIZES,
   PLAY_STATES,
@@ -36,6 +40,8 @@ export const playStateEnum = pgEnum("play_state", PLAY_STATES);
 export const ledgerStateEnum = pgEnum("ledger_state", LEDGER_STATES);
 export const ledgerReasonEnum = pgEnum("ledger_reason", LEDGER_REASONS);
 export const ledgerLotEnum = pgEnum("ledger_lot", LEDGER_LOTS);
+export const payoutStateEnum = pgEnum("payout_state", PAYOUT_STATES);
+export const payoutMethodEnum = pgEnum("payout_method", PAYOUT_METHODS);
 
 /**
  * One destination site and every listing that points at it. The advertiser owns
@@ -132,10 +138,38 @@ export const device = pgTable(
      * legitimately approved, so approving it later issues a fresh key.
      */
     approvedAt: timestamp("approved_at"),
+    /**
+     * The hours the venue states it is open, in its own time, and the zone that
+     * makes them readable. A window that crosses midnight is one stretch, and a
+     * venue open around the clock states the same hour twice.
+     *
+     * The payout review counts plays that fall outside them: a room that shuts
+     * at six does not play to anybody at three in the morning.
+     */
+    openHour: integer("open_hour"),
+    closeHour: integer("close_hour"),
+    /** IANA zone, e.g. `Asia/Kuala_Lumpur`. The hours above are read in it. */
+    timezone: text("timezone"),
+    /**
+     * The last report this screen sent. The payout hold exists to catch a dead
+     * screen before cash leaves, so the review reads this before it pays.
+     */
+    lastSeenAt: timestamp("last_seen_at"),
+    /**
+     * The network the last report came from, as a prefix rather than an address:
+     * `203.0.113.0/24` for IPv4 and the first four groups for IPv6. Several
+     * devices on one network is a fraud signal, and a prefix answers that
+     * question without keeping an address that identifies a household.
+     */
+    lastNetwork: text("last_network"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
-  (t) => [index("device_user_idx").on(t.userId), index("device_state_idx").on(t.state)],
+  (t) => [
+    index("device_user_idx").on(t.userId),
+    index("device_state_idx").on(t.state),
+    index("device_network_idx").on(t.lastNetwork),
+  ],
 );
 
 /**
@@ -254,5 +288,73 @@ export const ledgerEntry = pgTable(
     index("ledger_entry_user_created_idx").on(t.userId, t.createdAt),
     index("ledger_entry_user_lot_idx").on(t.userId, t.lot, t.state),
     index("ledger_entry_settles_idx").on(t.state, t.settlesAt),
+  ],
+);
+
+/**
+ * Where a distributor's money goes. Identity is on file before the first payout,
+ * not at signup, so this row appears the day a member asks to cash out.
+ *
+ * The destination is what a person reads to send the money by hand: an account
+ * number, an IBAN, or a PayPal address. It is the member's own data and it never
+ * leaves the payout review, so no contract that is not an admin one picks it.
+ */
+export const payoutAccount = pgTable("payout_account", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .unique()
+    .references(() => user.id, { onDelete: "cascade" }),
+  /** The name on the account. It must be the name we pay. */
+  legalName: text("legal_name").notNull(),
+  /** ISO 3166-1 alpha-2. It decides which rails an admin can use. */
+  country: text("country").notNull(),
+  method: payoutMethodEnum("method").notNull(),
+  destination: text("destination").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+/**
+ * One distributor's request to turn earned points into money.
+ *
+ * The points leave the account the moment the request is made, as a `payout`
+ * ledger entry on the `earned` lot. Holding them anywhere else would let one
+ * balance answer two requests. A refusal posts the compensating row and the
+ * points come back; it never edits the debit.
+ *
+ * `usdCents` is stored rather than derived, so a change to the peg never rewrites
+ * what we already paid.
+ */
+export const payoutRequest = pgTable(
+  "payout_request",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    /** Points this request takes. Always positive. */
+    points: integer("points").notNull(),
+    usdCents: integer("usd_cents").notNull(),
+    state: payoutStateEnum("state").notNull().default("requested"),
+    /** The `payout` entry that took the points. It is what a refusal reverses. */
+    ledgerEntryId: text("ledger_entry_id").references(() => ledgerEntry.id, {
+      onDelete: "restrict",
+    }),
+    /** What the admin typed after sending the money: a transfer reference. */
+    reference: text("reference"),
+    rejectionReason: text("rejection_reason"),
+    reviewedBy: text("reviewed_by").references(() => user.id, { onDelete: "set null" }),
+    reviewedAt: timestamp("reviewed_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [
+    index("payout_request_user_created_idx").on(t.userId, t.createdAt),
+    index("payout_request_state_idx").on(t.state, t.createdAt),
+    // One open request per member, enforced by the database rather than by a
+    // read-then-write: two taps on the button would both pass a check in code.
+    uniqueIndex("payout_request_open_key")
+      .on(t.userId)
+      .where(sql`${t.state} = 'requested'`),
   ],
 );
