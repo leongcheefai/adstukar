@@ -2,6 +2,7 @@ import { economy } from "@repo/config/economy";
 import { db, schema } from "@repo/db";
 import { and, asc, count, eq, ne } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
+import { generateApiKey } from "../devices/keys";
 import { postEntry } from "../ledger/ledger.service";
 
 type DeviceTier = (typeof schema.DEVICE_TIERS)[number];
@@ -96,22 +97,41 @@ export async function rejectListing(listingId: string, reason: string, now: Date
   return row;
 }
 
-/** Approval stamps the tier, and the tier sets the rate the device earns. */
+/**
+ * Approval stamps the tier, and the tier sets the rate the device earns. It also
+ * issues the key CapyTV runs on: registration writes a placeholder, and the key
+ * a distributor is ever shown is the one an approval minted.
+ *
+ * A second approval — a moved screen came back for review — keeps the key it
+ * already has, so re-approving a working screen does not black it out until
+ * somebody walks over and pairs it again.
+ */
 export async function approveDevice(deviceId: string, tier: DeviceTier, now: Date = new Date()) {
-  const [row] = await db
-    .update(schema.device)
-    .set({
-      state: "approved",
-      tier,
-      rejectionReason: null,
-      approvedAt: now,
-      updatedAt: now,
-      dailyPlayCap: economy.caps.dailyPlaysPerDevice,
-    })
-    .where(and(eq(schema.device.id, deviceId), ne(schema.device.state, "archived")))
-    .returning();
-  if (!row) throw new HTTPException(404, { message: "Device not found" });
-  return row;
+  return db.transaction(async (tx) => {
+    const [found] = await tx
+      .select({ approvedAt: schema.device.approvedAt })
+      .from(schema.device)
+      .where(and(eq(schema.device.id, deviceId), ne(schema.device.state, "archived")))
+      .limit(1)
+      .for("update");
+    if (!found) throw new HTTPException(404, { message: "Device not found" });
+
+    const [row] = await tx
+      .update(schema.device)
+      .set({
+        state: "approved",
+        tier,
+        rejectionReason: null,
+        approvedAt: now,
+        updatedAt: now,
+        dailyPlayCap: economy.caps.dailyPlaysPerDevice,
+        ...(found.approvedAt === null ? { apiKey: generateApiKey() } : {}),
+      })
+      .where(eq(schema.device.id, deviceId))
+      .returning();
+    if (!row) throw new HTTPException(404, { message: "Device not found" });
+    return row;
+  });
 }
 
 export async function rejectDevice(deviceId: string, reason: string, now: Date = new Date()) {

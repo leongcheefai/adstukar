@@ -40,7 +40,7 @@ export const economy = {
 
   caps: {
     /** Plays one device may be paid for in one day. */
-    dailyPlaysPerDevice: 600,
+    dailyPlaysPerDevice: 500,
     /** Points one campaign may spend in one day, unless the advertiser sets less. */
     defaultDailyBudget: 20_000,
     /** The least a campaign may set as its daily budget. */
@@ -87,8 +87,45 @@ export const economy = {
     maxLength: 40,
   },
 
+  /**
+   * Listings one device may refuse by name. It also bounds the list the
+   * dashboard shows, so the two can never disagree and truncate a veto set.
+   */
+  maxVetoesPerDevice: 500,
+
   /** Minutes an open play waits for its report before the job voids it. */
   playTtlMinutes: 10,
+
+  /**
+   * The batch CapyTV caches so a screen keeps playing when the network drops.
+   * Every play in a batch is opened up front, so the batch holds its plays open
+   * far longer than a live `/serve` does, and the device may report them late.
+   */
+  loop: {
+    /** Plays one `/loop` call opens. About an hour of screen at the default gap. */
+    size: 20,
+    /** Minutes a cached play waits for its report before the job voids it. */
+    playTtlMinutes: 240,
+    /** Plays left in the batch when the screen asks for the next one. */
+    refillAt: 5,
+    /** Seconds between two tries. It is also how fast a screen comes back online. */
+    refillIntervalSeconds: 60,
+    /**
+     * Reports one screen may owe before the oldest fall off the back. A screen
+     * cannot be paid for more than the daily cap, so it can never honestly owe
+     * more reports than that.
+     */
+    maxPendingReports: 500,
+  },
+
+  /**
+   * The distributor's own promotion, played free when nothing paid is eligible.
+   * It moves no points, so it carries no rate — only what fits on the overlay.
+   */
+  promotion: {
+    taglineMaxLength: 60,
+    nameMaxLength: 40,
+  },
 
   rateLimit: {
     windowMs: 60_000,

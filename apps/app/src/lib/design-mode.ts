@@ -247,10 +247,16 @@ let devices: DeviceWithTerms[] = [
   {
     device: {
       id: "dev_bangsar",
+      name: "Counter screen",
       deviceId: "K7QW-3MTP",
       apiKey: "",
       venueType: "cafe",
       location: "Front counter, Jalan Telawi",
+      photoUrl: null,
+      promotionName: "Kedai Kopi",
+      promotionTagline: "Two for one before 11am",
+      promotionUrl: "https://kedaikopi.example",
+      promotionLogoUrl: null,
       tier: "premium",
       state: "approved",
       rejectionReason: null,
@@ -260,14 +266,21 @@ let devices: DeviceWithTerms[] = [
       updatedAt: iso(26),
     },
     excludedTerms: ["casino", "crypto", "forex"],
+    vetoedListingIds: [],
   },
   {
     device: {
       id: "dev_ss15",
+      name: "Weights floor screen",
       deviceId: "R4NB-8XJD",
       apiKey: "",
       venueType: "gym",
       location: "Weights floor, SS15",
+      photoUrl: null,
+      promotionName: null,
+      promotionTagline: null,
+      promotionUrl: null,
+      promotionLogoUrl: null,
       tier: "standard",
       state: "pending",
       rejectionReason: null,
@@ -277,6 +290,7 @@ let devices: DeviceWithTerms[] = [
       updatedAt: iso(2),
     },
     excludedTerms: [],
+    vetoedListingIds: [],
   },
 ];
 
@@ -444,9 +458,15 @@ function replaceCampaign(next: CampaignWithListings): CampaignWithListings {
 function forAdmin(device: DeviceForAdmin): DeviceForAdmin {
   return {
     id: device.id,
+    name: device.name,
     deviceId: device.deviceId,
     venueType: device.venueType,
     location: device.location,
+    photoUrl: device.photoUrl,
+    promotionName: device.promotionName,
+    promotionTagline: device.promotionTagline,
+    promotionUrl: device.promotionUrl,
+    promotionLogoUrl: device.promotionLogoUrl,
     tier: device.tier,
     state: device.state,
     rejectionReason: device.rejectionReason,
@@ -600,14 +620,25 @@ function writeListings(seg: string[], method: string, patch: Record<string, unkn
 
 function writeDevices(seg: string[], method: string, patch: Record<string, unknown>): unknown {
   if (method === "POST" && seg.length === 1) {
-    const input = patch as { location: string; venueType?: VenueType };
+    const input = patch as {
+      name: string;
+      location: string;
+      venueType?: VenueType;
+      photoUrl?: string | null;
+    };
     const created: DeviceWithTerms = {
       device: {
         id: fakeId("dev"),
+        name: input.name,
         deviceId: "XXXX-XXXX",
         apiKey: "",
         venueType: input.venueType ?? "other",
         location: input.location,
+        photoUrl: input.photoUrl ?? null,
+        promotionName: null,
+        promotionTagline: null,
+        promotionUrl: null,
+        promotionLogoUrl: null,
         tier: "standard",
         state: "pending",
         rejectionReason: null,
@@ -617,6 +648,7 @@ function writeDevices(seg: string[], method: string, patch: Record<string, unkno
         updatedAt: nowIso(),
       },
       excludedTerms: [],
+      vetoedListingIds: [],
     };
     devices = [...devices, created];
     return created;
@@ -642,6 +674,32 @@ function writeDevices(seg: string[], method: string, patch: Record<string, unkno
   if (method === "PUT" && seg[2] === "excluded-terms") {
     const phrases = (patch.phrases as string[] | undefined) ?? [];
     return replaceDevice({ ...target, excludedTerms: [...phrases] });
+  }
+  if (method === "PUT" && seg[2] === "vetoes") {
+    const listingIds = (patch.listingIds as string[] | undefined) ?? [];
+    return replaceDevice({ ...target, vetoedListingIds: [...listingIds] });
+  }
+  if (method === "PUT" && seg[2] === "promotion") {
+    const input = patch as {
+      name?: string | null;
+      tagline?: string | null;
+      url?: string | null;
+      logoUrl?: string | null;
+    };
+    // The API keeps the fields together: with no name or no tagline there is no
+    // promotion, and the screen falls back to the CapyAds card.
+    const complete = Boolean(input.name && input.tagline);
+    return replaceDevice({
+      ...target,
+      device: {
+        ...target.device,
+        promotionName: complete ? (input.name ?? null) : null,
+        promotionTagline: complete ? (input.tagline ?? null) : null,
+        promotionUrl: complete ? (input.url ?? null) : null,
+        promotionLogoUrl: complete ? (input.logoUrl ?? null) : null,
+        updatedAt: nowIso(),
+      },
+    });
   }
   if (method === "DELETE" && seg.length === 2) {
     devices = devices.filter((row) => row.device.id !== target.device.id);
@@ -814,6 +872,25 @@ export function designResponse(path: string, method: string, body?: unknown): un
 
   if (method !== "GET") return designWrite(route, method, body);
 
+  // Every approved listing a screen could show, with the ones it refuses marked.
+  // The fixtures hold one member, so nothing filters the owner out here.
+  const eligible = /^\/devices\/([^/]+)\/eligible-listings$/.exec(route);
+  if (eligible) {
+    const target = devices.find((row) => row.device.id === eligible[1]);
+    const vetoed = new Set(target?.vetoedListingIds ?? []);
+    return campaigns.flatMap((row) =>
+      row.listings
+        .filter((listing) => listing.state === "approved")
+        .map((listing) => ({
+          listingId: listing.id,
+          name: row.campaign.name,
+          tagline: listing.tagline,
+          logoUrl: listing.logoUrl,
+          vetoed: vetoed.has(listing.id),
+        })),
+    );
+  }
+
   if (route === "/placements") {
     const deviceId = new URLSearchParams(path.split("?")[1] ?? "").get("deviceId");
     return placements
@@ -833,6 +910,7 @@ export function designResponse(path: string, method: string, body?: unknown): un
       return devices.map((row) => ({
         device: { ...row.device },
         excludedTerms: [...row.excludedTerms],
+        vetoedListingIds: [...row.vetoedListingIds],
       }));
     case "/admin/moderation": {
       const queue = moderationQueue();

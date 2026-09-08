@@ -34,7 +34,7 @@ export function DeviceTile({
       type="button"
       onClick={onOpen}
       className="flex min-h-44 cursor-pointer flex-col gap-4 border-r border-b p-5 text-left transition-colors hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-      aria-label={`Open the device at ${device.location}`}
+      aria-label={`Open ${device.name}`}
     >
       <div className="flex items-center justify-between gap-2">
         <Badge variant="secondary" className="gap-1.5">
@@ -45,8 +45,14 @@ export function DeviceTile({
       </div>
 
       <div className="min-w-0">
-        <p className="flex items-center gap-1.5 truncate text-sm font-medium">
-          <MapPin size={14} className="shrink-0 text-muted-foreground" />
+        <p data-usertext className="truncate text-sm font-medium">
+          {device.name}
+        </p>
+        <p
+          data-usertext
+          className="flex items-center gap-1.5 truncate text-xs text-muted-foreground"
+        >
+          <MapPin size={13} className="shrink-0" />
           {device.location}
         </p>
         <p className="truncate font-mono text-xs text-muted-foreground">{device.deviceId}</p>

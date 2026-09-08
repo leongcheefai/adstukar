@@ -44,8 +44,19 @@ export async function presignLogoUpload(
   return presignUpload("logos", userId, input);
 }
 
+/**
+ * A photo of the screen in place, for the admin who reviews the device. Same
+ * rules as an avatar, under its own prefix.
+ */
+export async function presignDevicePhotoUpload(
+  userId: string,
+  input: PresignAvatarInput,
+): Promise<PresignAvatarResponse> {
+  return presignUpload("device-photos", userId, input);
+}
+
 async function presignUpload(
-  prefix: "avatars" | "logos",
+  prefix: "avatars" | "logos" | "device-photos",
   userId: string,
   input: PresignAvatarInput,
 ): Promise<PresignAvatarResponse> {

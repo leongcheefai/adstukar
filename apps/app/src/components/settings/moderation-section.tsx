@@ -127,17 +127,35 @@ function DeviceRow({
   return (
     <Card>
       <CardContent className="flex flex-col gap-4 pt-6 lg:flex-row lg:items-start lg:justify-between">
-        <div className="min-w-0 space-y-2">
-          <p className="flex items-center gap-1.5 font-medium">
-            <MapPin size={14} className="shrink-0 text-muted-foreground" />
-            {device.location}
-          </p>
-          <p className="text-sm text-muted-foreground capitalize">{device.venueType}</p>
-          <p className="text-xs text-muted-foreground">
-            {owner.name} · <span className="font-mono">{owner.email}</span> · registered{" "}
-            {new Date(device.createdAt).toLocaleDateString()}
-          </p>
-          <p className="font-mono text-xs text-muted-foreground">{device.deviceId}</p>
+        <div className="flex min-w-0 gap-4">
+          {/* There is no device attestation, so the photo of the screen in place
+              is most of what an admin has to go on — see docs/adr/0003. */}
+          {device.photoUrl ? (
+            <img
+              src={device.photoUrl}
+              alt="The screen in place"
+              className="h-28 w-40 shrink-0 rounded-md border object-cover"
+            />
+          ) : (
+            <div className="flex h-28 w-40 shrink-0 items-center justify-center rounded-md border border-dashed text-xs text-muted-foreground">
+              No photo
+            </div>
+          )}
+          <div className="min-w-0 space-y-2">
+            <p data-usertext className="font-medium">
+              {device.name}
+            </p>
+            <p data-usertext className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              <MapPin size={14} className="shrink-0" />
+              {device.location}
+            </p>
+            <p className="text-sm text-muted-foreground capitalize">{device.venueType}</p>
+            <p className="text-xs text-muted-foreground">
+              {owner.name} · <span className="font-mono">{owner.email}</span> · registered{" "}
+              {new Date(device.createdAt).toLocaleDateString()}
+            </p>
+            <p className="font-mono text-xs text-muted-foreground">{device.deviceId}</p>
+          </div>
         </div>
         <div className="flex flex-col gap-3 lg:items-end">
           <div className="space-y-1.5">
@@ -162,7 +180,7 @@ function DeviceRow({
                 approve.mutate(
                   { id: device.id, tier },
                   {
-                    onSuccess: () => toast.success(`${device.location} approved`),
+                    onSuccess: () => toast.success(`${device.name} approved`),
                     onError: (err) => toast.error(err.message),
                   },
                 )
@@ -175,7 +193,7 @@ function DeviceRow({
             <Button
               size="sm"
               variant="outline"
-              onClick={() => onReject({ kind: "device", id: device.id, label: device.location })}
+              onClick={() => onReject({ kind: "device", id: device.id, label: device.name })}
             >
               <X size={14} />
               Reject

@@ -1,4 +1,4 @@
-import { ArrowsClockwise, Plus, Trash, X } from "@phosphor-icons/react";
+import { ArrowsClockwise, Plus, Prohibit, Trash, X } from "@phosphor-icons/react";
 import { economy } from "@repo/config/economy";
 import type {
   DeviceWithTerms,
@@ -31,10 +31,18 @@ import {
   SelectTrigger,
   SelectValue,
   Slider,
+  Switch,
 } from "@repo/ui";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useArchiveDevice, useRotateKey, useSetExcludedTerms } from "../../lib/devices";
+import {
+  useArchiveDevice,
+  useEligibleListings,
+  useRotateKey,
+  useSetExcludedTerms,
+  useSetPromotion,
+  useSetVetoes,
+} from "../../lib/devices";
 import {
   useCreatePlacement,
   useDeletePlacement,
@@ -183,6 +191,142 @@ function PlacementRow({ placement }: { placement: Placement }) {
 }
 
 /**
+ * The listings this screen refuses by name.
+ *
+ * A veto is narrower than an excluded term: the term stops anything that reads a
+ * certain way, the veto stops exactly the creative the distributor looked at and
+ * did not want. Both are the distributor's, and neither goes through moderation.
+ */
+function VetoList({ deviceId }: { deviceId: string }) {
+  const { data: listings, isLoading } = useEligibleListings(deviceId);
+  const setVetoes = useSetVetoes();
+
+  if (isLoading) return <p className="text-xs text-muted-foreground">Loading listings…</p>;
+  if (!listings || listings.length === 0) {
+    return (
+      <p className="text-xs text-muted-foreground">
+        Nothing is eligible for this screen yet. Approved listings show up here as they arrive.
+      </p>
+    );
+  }
+
+  const toggle = (listingId: string, vetoed: boolean) => {
+    const next = vetoed
+      ? [...listings.filter((l) => l.vetoed).map((l) => l.listingId), listingId]
+      : listings.filter((l) => l.vetoed && l.listingId !== listingId).map((l) => l.listingId);
+    setVetoes.mutate(
+      { id: deviceId, listingIds: next },
+      { onError: (err: Error) => toast.error(err.message) },
+    );
+  };
+
+  return (
+    <div className="divide-y rounded-lg border">
+      {listings.map((listing) => (
+        <div key={listing.listingId} className="flex items-center gap-3 p-3">
+          {listing.logoUrl ? (
+            <img src={listing.logoUrl} alt="" className="size-8 shrink-0 rounded object-cover" />
+          ) : (
+            <div className="size-8 shrink-0 rounded bg-muted" />
+          )}
+          <div className="min-w-0 flex-1">
+            <p data-usertext className="truncate text-sm font-medium">
+              {listing.name}
+            </p>
+            <p data-usertext className="truncate text-xs text-muted-foreground">
+              {listing.tagline}
+            </p>
+          </div>
+          <Switch
+            checked={listing.vetoed}
+            onCheckedChange={(on) => toggle(listing.listingId, on)}
+            aria-label={`Refuse ${listing.name}`}
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * The distributor's own promotion. It plays free whenever nothing paid is
+ * eligible, so it moves no points and never goes through moderation. With none
+ * written, the screen plays the CapyAds card instead.
+ */
+function PromotionForm({ item }: { item: DeviceWithTerms }) {
+  const { device } = item;
+  const save = useSetPromotion();
+  const [name, setName] = useState(device.promotionName ?? "");
+  const [tagline, setTagline] = useState(device.promotionTagline ?? "");
+  const [url, setUrl] = useState(device.promotionUrl ?? "");
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    save.mutate(
+      {
+        id: device.id,
+        input: {
+          name: name.trim() || null,
+          tagline: tagline.trim() || null,
+          url: url.trim() || null,
+          logoUrl: device.promotionLogoUrl,
+        },
+      },
+      {
+        onSuccess: () =>
+          toast.success(name.trim() && tagline.trim() ? "Promotion saved" : "Promotion cleared"),
+        onError: (err: Error) => toast.error(err.message),
+      },
+    );
+  };
+
+  return (
+    <form onSubmit={submit} className="space-y-3">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="space-y-1.5">
+          <Label htmlFor={`promo-name-${device.id}`}>Name</Label>
+          <Input
+            id={`promo-name-${device.id}`}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            maxLength={economy.promotion.nameMaxLength}
+            placeholder="Your own shop"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor={`promo-url-${device.id}`}>Address</Label>
+          <Input
+            id={`promo-url-${device.id}`}
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            type="url"
+            placeholder="https://…"
+          />
+        </div>
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor={`promo-tagline-${device.id}`}>Tagline</Label>
+        <Input
+          id={`promo-tagline-${device.id}`}
+          value={tagline}
+          onChange={(e) => setTagline(e.target.value)}
+          maxLength={economy.promotion.taglineMaxLength}
+          placeholder="Two for one before 11am"
+        />
+      </div>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-xs text-muted-foreground">
+          Leave the name or the tagline empty and the screen plays the CapyAds card instead.
+        </p>
+        <Button type="submit" size="sm" variant="outline" disabled={save.isPending}>
+          {save.isPending ? "Saving…" : "Save"}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+/**
  * The expanded view of one device: what CapyTV plays, the credentials that pair
  * the screen, the regions it draws, and the listings its owner refuses.
  */
@@ -196,6 +340,7 @@ export function DeviceDetail({
   onOpenChange: (open: boolean) => void;
 }) {
   const { device, excludedTerms } = item;
+  const approved = device.state === "approved";
   const { data: placements } = usePlacements(device.id);
   const rotate = useRotateKey();
   const setTerms = useSetExcludedTerms();
@@ -233,32 +378,43 @@ export function DeviceDetail({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>{device.location}</DialogTitle>
+          <DialogTitle data-usertext>{device.name}</DialogTitle>
           <DialogDescription>
-            CapyTV plays its own content, and shows listings over it. One paid listing at a time.
+            {device.location} · CapyTV plays its own content, and shows listings over it. One paid
+            listing at a time.
           </DialogDescription>
         </DialogHeader>
 
-        <CapyTvScreen />
+        {device.photoUrl ? (
+          <img
+            src={device.photoUrl}
+            alt="The screen in place"
+            className="h-40 w-full rounded-lg border object-cover"
+          />
+        ) : (
+          <CapyTvScreen />
+        )}
 
         <div className="space-y-6">
           <div className="grid gap-6 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label>Pairing code</Label>
+              <Label>Screen number</Label>
               <div className="flex items-center gap-2">
                 <code className="min-w-0 flex-1 truncate rounded-md border bg-muted px-2 py-1.5 font-mono text-xs">
                   {device.deviceId}
                 </code>
-                <CopyButton value={device.deviceId} size="icon" label="Copy pairing code" />
+                <CopyButton value={device.deviceId} size="icon" label="Copy the screen number" />
               </div>
-              <p className="text-xs text-muted-foreground">Type this into CapyTV on the screen.</p>
+              <p className="text-xs text-muted-foreground">
+                How we name this screen in a support message. CapyTV does not ask for it.
+              </p>
             </div>
 
             <div className="space-y-1.5">
               <Label>Device key</Label>
               <div className="flex items-center gap-2">
                 <code className="min-w-0 flex-1 truncate rounded-md border bg-muted px-2 py-1.5 font-mono text-xs">
-                  {device.apiKey}
+                  {approved ? device.apiKey : "Issued when an admin approves the screen"}
                 </code>
                 <CopyButton value={device.apiKey} size="icon" label="Copy device key" />
                 <AlertDialog>
@@ -293,6 +449,9 @@ export function DeviceDetail({
                   </AlertDialogContent>
                 </AlertDialog>
               </div>
+              <p className="text-xs text-muted-foreground">
+                Paste it into CapyTV on the screen. It is the screen&apos;s whole credential.
+              </p>
             </div>
           </div>
 
@@ -328,6 +487,11 @@ export function DeviceDetail({
             {placements?.map((placement) => (
               <PlacementRow key={placement.id} placement={placement} />
             ))}
+          </div>
+
+          <div className="space-y-3">
+            <Label>Your own promotion</Label>
+            <PromotionForm item={item} />
           </div>
 
           <div className="space-y-1.5">
@@ -376,6 +540,14 @@ export function DeviceDetail({
                 </Badge>
               ))}
             </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Prohibit size={14} className="text-muted-foreground" />
+              <Label>Listings you refuse</Label>
+            </div>
+            <VetoList deviceId={device.id} />
           </div>
         </div>
 

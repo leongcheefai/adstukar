@@ -39,21 +39,30 @@ export type { CreateListingInput, UpdateListingInput } from "./inputs/listings";
 export type {
   CreateDeviceInput,
   SetExcludedTermsInput,
+  SetPromotionInput,
+  SetVetoedListingsInput,
   UpdateDeviceInput,
 } from "./inputs/devices";
 export type { CreatePlacementInput, UpdatePlacementInput } from "./inputs/placements";
-export type { ReportInput } from "./inputs/serve";
+export type { LoopQuery, ReportInput } from "./inputs/serve";
 export type { ListLedgerQuery } from "./inputs/ledger";
 export type { ApproveDeviceInput, RejectInput } from "./inputs/admin";
-export type { PresignLogoInput } from "./inputs/uploads";
+export type { PresignDevicePhotoInput, PresignLogoInput } from "./inputs/uploads";
 export type {
   CampaignWithListings,
   VerificationMethod,
   VerifyCampaignResponse,
 } from "./modules/campaigns";
-export type { DeviceWithTerms } from "./modules/devices";
-export type { ReportResponse, ServeResponse, ServedListing } from "./modules/serve";
+export type { DeviceWithTerms, EligibleListing } from "./modules/devices";
+export type {
+  LoopItem,
+  LoopResponse,
+  Promotion,
+  ReportResponse,
+  ServeResponse,
+  ServedListing,
+} from "./modules/serve";
 export type { StatsDay, StatsOverview } from "./modules/stats";
 export type { ListLedgerResponse } from "./modules/ledger";
 export type { DeviceReview, ListingReview, ModerationQueue } from "./modules/admin";
-export type { PresignLogoResponse } from "./modules/uploads";
+export type { PresignDevicePhotoResponse, PresignLogoResponse } from "./modules/uploads";

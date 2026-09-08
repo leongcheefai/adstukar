@@ -7,9 +7,10 @@ Drizzle ORM schema, the Postgres client singleton, and migration tooling. Every 
 - `drizzle.config.ts` reads `process.env.DATABASE_URL` directly (Drizzle Kit CLI runs outside the app context and cannot use `serverEnv`) — all application code uses `serverEnv` from `@repo/env`
 - `auth.ts` schema table shapes must stay in sync with Better Auth's adapter — do not rename columns without checking Better Auth's adapter requirements
 - No build step — exports point to TypeScript source directly
-- `exchange.ts` holds the CapyAds tables (`campaign`, `listing`, `device`, `placement`, `excluded_term`, `play`, `ledger_entry`); enum tuples for them live in `enums.ts`
+- `exchange.ts` holds the CapyAds tables (`campaign`, `listing`, `device`, `placement`, `excluded_term`, `vetoed_listing`, `play`, `ledger_entry`); enum tuples for them live in `enums.ts`
 - `ledger_entry` is append-only: only `state` (pending → settled → void) and `settled_at` ever change, and only through `apps/api/src/modules/ledger/ledger.service.ts`. Every row carries a `lot` (`bought` / `earned` / `granted`), and the lot decides what the point may do
 - `play.placement_id` is `ON DELETE restrict`, not cascade: a play is where points came from, so dropping a placement must never take the record of its plays with it
+- `play.expires_at` carries the play's own deadline, so the void job never has to know whether a live `/serve` or a cached `/loop` opened it
 
 ## Common tasks
 
@@ -37,4 +38,5 @@ pnpm db:studio
 - `billing.ts` imports `user` from `./auth` for the FK reference — import order matters for Drizzle relation resolution
 - `drizzle-kit generate` and `drizzle-kit push` open an interactive prompt whenever a diff could be a rename (a dropped enum plus a created one), and they crash with "Interactive prompts require a TTY terminal" in a non-TTY shell. Split the change into a drop-only migration and a create-only one so neither diff is ambiguous — `0004_drop_barter_model` and `0005_screens_network_model` are that pair
 - `0005` is hand-edited: the generated `ADD COLUMN "lot" ... NOT NULL` fails on a table that already holds rows, so it adds the column with a `granted` default and drops the default again
+- `0007` is hand-edited for the same reason: `device.name` and `play.expires_at` arrive nullable, take a backfill, and only then become NOT NULL
 - `InferSelectModel` and `InferInsertModel` are re-exported from `src/index.ts` so consumers do not need to depend on `drizzle-orm` directly for type inference

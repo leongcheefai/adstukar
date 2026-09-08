@@ -5,9 +5,15 @@ import { toWire } from "../lib/wire";
 
 const deviceColumns = {
   id: true,
+  name: true,
   deviceId: true,
   venueType: true,
   location: true,
+  photoUrl: true,
+  promotionName: true,
+  promotionTagline: true,
+  promotionUrl: true,
+  promotionLogoUrl: true,
   tier: true,
   state: true,
   rejectionReason: true,

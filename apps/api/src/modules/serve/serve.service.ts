@@ -1,5 +1,5 @@
 import { economy, feeOn, playCost, scanCost } from "@repo/config/economy";
-import type { ServeResponse, ServedListing } from "@repo/contracts";
+import type { LoopResponse, Promotion, ServeResponse, ServedListing } from "@repo/contracts";
 import { db, schema } from "@repo/db";
 import { serverEnv } from "@repo/env";
 import { and, count, eq, gte, isNotNull, lt, ne, sql } from "drizzle-orm";
@@ -23,6 +23,7 @@ import {
   spendable,
   spendableByUser,
 } from "../ledger/ledger.service";
+import { type PlaySource, clampReportedAt, expiresAtFor, planLoop } from "./loop";
 import { type Candidate, matchesExcludedTerm, nextPlacement, rankCandidates } from "./ranking";
 
 type DeviceRow = typeof schema.device.$inferSelect;
@@ -37,6 +38,21 @@ function toServedListing(name: string, tagline: string, logoUrl: string | null, 
   return { name, tagline, logoUrl, scanUrl: scanUrl(playId) } satisfies ServedListing;
 }
 
+/**
+ * The distributor's own promotion, or null when they wrote none. It moves no
+ * points, so it carries no `scanUrl`: the code on a promotion goes straight to
+ * the distributor's address and never through a play.
+ */
+function toPromotion(device: DeviceRow): Promotion | null {
+  if (!device.promotionName || !device.promotionTagline) return null;
+  return {
+    name: device.promotionName,
+    tagline: device.promotionTagline,
+    logoUrl: device.promotionLogoUrl,
+    url: device.promotionUrl,
+  };
+}
+
 function emptyResponse(placement: PlacementRow | null): ServeResponse {
   return {
     playId: null,
@@ -46,6 +62,7 @@ function emptyResponse(placement: PlacementRow | null): ServeResponse {
     gapSeconds: placement?.gapSeconds ?? economy.placement.gapSeconds.default,
     house: false,
     listing: null,
+    promotion: null,
   };
 }
 
@@ -171,6 +188,93 @@ async function loadCandidates(
     }));
 }
 
+/**
+ * Everything the distributor refuses on this device. The terms stop anything
+ * that reads a certain way; the vetoes stop the exact creatives they looked at
+ * and did not want.
+ */
+interface DeviceFilters {
+  phrases: string[];
+  vetoed: Set<string>;
+}
+
+async function loadFilters(deviceId: string): Promise<DeviceFilters> {
+  const [terms, vetoes] = await Promise.all([
+    db
+      .select({ phrase: schema.excludedTerm.phrase })
+      .from(schema.excludedTerm)
+      .where(eq(schema.excludedTerm.deviceId, deviceId)),
+    db
+      .select({ listingId: schema.vetoedListing.listingId })
+      .from(schema.vetoedListing)
+      .where(eq(schema.vetoedListing.deviceId, deviceId)),
+  ]);
+  return {
+    phrases: terms.map((t) => t.phrase),
+    vetoed: new Set(vetoes.map((v) => v.listingId)),
+  };
+}
+
+/** The listings this region may show, after the distributor's filters. */
+async function eligibleFor(
+  device: DeviceRow,
+  placement: PlacementRow,
+  now: Date,
+  filters: DeviceFilters,
+): Promise<Candidate[]> {
+  const candidates = await loadCandidates(device, placement, now);
+  return candidates.filter(
+    (c) =>
+      !filters.vetoed.has(c.listingId) && !matchesExcludedTerm(c.name, c.tagline, filters.phrases),
+  );
+}
+
+/** One play about to be opened, and everything needed to describe it afterwards. */
+interface PendingPlay {
+  playId: string;
+  expiresAt: Date;
+  placement: PlacementRow;
+  winner: Candidate | null;
+}
+
+function planPlay(
+  placement: PlacementRow,
+  winner: Candidate | null,
+  source: PlaySource,
+  now: Date,
+): PendingPlay {
+  return { playId: crypto.randomUUID(), expiresAt: expiresAtFor(source, now), placement, winner };
+}
+
+/** Writes the planned plays. One statement, so a batch is one round trip. */
+async function openPlays(tx: Tx, plays: PendingPlay[], now: Date): Promise<void> {
+  if (plays.length === 0) return;
+  await tx.insert(schema.play).values(
+    plays.map((play) => ({
+      id: play.playId,
+      placementId: play.placement.id,
+      listingId: play.winner?.listingId ?? null,
+      house: play.winner === null,
+      expiresAt: play.expiresAt,
+      createdAt: now,
+    })),
+  );
+}
+
+function toServeShape(device: DeviceRow, play: PendingPlay): ServeResponse {
+  const { placement, winner, playId } = play;
+  return {
+    playId,
+    format: placement.format,
+    size: placement.size,
+    dwellSeconds: placement.dwellSeconds,
+    gapSeconds: placement.gapSeconds,
+    house: winner === null,
+    listing: winner ? toServedListing(winner.name, winner.tagline, winner.logoUrl, playId) : null,
+    promotion: winner === null ? toPromotion(device) : null,
+  };
+}
+
 export interface ServeContext {
   key: string;
   now?: Date;
@@ -198,43 +302,71 @@ export async function serveListing(ctx: ServeContext): Promise<ServeResponse> {
     return emptyResponse(placement);
   }
 
-  const capped = (await paidPlaysToday(db, device.id, now)) >= device.dailyPlayCap;
+  // The cap is not read here. Above it a listing still shows and simply pays
+  // nothing, so the cap belongs at the moment the points move and nowhere else.
+  const candidates = await eligibleFor(device, placement, now, await loadFilters(device.id));
+  const winner = rankCandidates(candidates)[0] ?? null;
 
-  let winner: Candidate | null = null;
-  if (!capped) {
-    const terms = await db
-      .select({ phrase: schema.excludedTerm.phrase })
-      .from(schema.excludedTerm)
-      .where(eq(schema.excludedTerm.deviceId, device.id));
-    const phrases = terms.map((t) => t.phrase);
+  const play = planPlay(placement, winner, "serve", now);
+  await openPlays(db, [play], now);
+  return toServeShape(device, play);
+}
 
-    const candidates = (await loadCandidates(device, placement, now)).filter(
-      (c) => !matchesExcludedTerm(c.name, c.tagline, phrases),
-    );
-    winner = rankCandidates(candidates)[0] ?? null;
-  }
+/**
+ * Hands CapyTV a whole batch at once, so a screen whose network drops keeps
+ * playing and reports the batch when the network returns.
+ *
+ * Nothing is charged here either, and the checks that matter run again at report
+ * time: the daily cap and the campaign's budget are read when the points move,
+ * not when the batch was cut. A batch is therefore an offer of plays, never a
+ * promise that every one of them pays.
+ */
+export async function serveLoop(ctx: ServeContext & { size?: number }): Promise<LoopResponse> {
+  const now = ctx.now ?? new Date();
+  const size = ctx.size ?? economy.loop.size;
+  const device = await loadDeviceByKey(ctx.key);
+  if (!device) throw new HTTPException(404, { message: "Unknown device key" });
+  if (device.state !== "approved") return { items: [] };
 
-  const playId = crypto.randomUUID();
-  await db.insert(schema.play).values({
-    id: playId,
-    placementId: placement.id,
-    listingId: winner?.listingId ?? null,
-    house: winner === null,
-    createdAt: now,
+  const placements = await loadPlacements(device.id);
+  if (placements.length === 0) return { items: [] };
+
+  const filters = await loadFilters(device.id);
+
+  // The cap is not read here either. A batch is an offer of plays, and what a
+  // play is worth is settled when it is reported.
+  const byId = new Map(placements.map((p) => [p.id, p]));
+  const eligible = await Promise.all(
+    placements.map(
+      async (placement) =>
+        [placement.id, await eligibleFor(device, placement, now, filters)] as const,
+    ),
+  );
+  const candidatesByPlacement: Record<string, Candidate[]> = Object.fromEntries(eligible);
+
+  const candidateById = new Map(
+    Object.values(candidatesByPlacement)
+      .flat()
+      .map((c) => [c.listingId, c]),
+  );
+
+  const plays = planLoop({ placements, candidatesByPlacement, size }).flatMap((step) => {
+    const placement = byId.get(step.placementId);
+    if (!placement) return [];
+    const winner = step.listingId ? (candidateById.get(step.listingId) ?? null) : null;
+    return [planPlay(placement, winner, "loop", now)];
   });
 
-  const listing = winner
-    ? toServedListing(winner.name, winner.tagline, winner.logoUrl, playId)
-    : null;
+  // One transaction: a half-written batch would leave open plays the device does
+  // not know about, and the void job would have to clean them up hours later.
+  await db.transaction((tx) => openPlays(tx, plays, now));
 
   return {
-    playId,
-    format: placement.format,
-    size: placement.size,
-    dwellSeconds: placement.dwellSeconds,
-    gapSeconds: placement.gapSeconds,
-    house: winner === null,
-    listing,
+    items: plays.map((play) => ({
+      ...toServeShape(device, play),
+      playId: play.playId,
+      expiresAt: play.expiresAt.toISOString(),
+    })),
   };
 }
 
@@ -367,6 +499,23 @@ async function lockAdvertiser(tx: Tx, advertiserId: string): Promise<void> {
   await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${advertiserId}))`);
 }
 
+/**
+ * True while this listing may still be paid for.
+ *
+ * A batch is cut hours before its last play is reported, so what was eligible
+ * then may not be eligible now: an admin may have rejected the creative, the
+ * advertiser may have paused the campaign, or the domain check may have lapsed.
+ * The play still counts and still showed — it simply pays nothing.
+ */
+function stillBillable(
+  listing: { state: string },
+  campaign: { state: string; verifiedAt: Date | null },
+): boolean {
+  return (
+    listing.state === "approved" && campaign.state === "active" && campaign.verifiedAt !== null
+  );
+}
+
 /** True once a play has actually been charged for. A scan bonus rides on that. */
 async function wasCharged(tx: Tx, playId: string): Promise<boolean> {
   const [row] = await tx
@@ -406,32 +555,40 @@ export async function recordReport(
   playId: string,
   key: string,
   now: Date = new Date(),
+  playedAt: Date | null = null,
 ): Promise<{ counted: boolean }> {
   const result = await db.transaction(async (tx) => {
     const row = await loadPlayForBilling(tx, playId);
     if (!row || row.device.apiKey !== key) return { counted: false, lowBalanceFor: null };
 
     const { play, placement, device, listing, campaign } = row;
-    const ageMs = now.getTime() - play.createdAt.getTime();
-    if (play.state !== "open" || ageMs > economy.playTtlMinutes * 60_000) {
+    if (play.state !== "open" || now > play.expiresAt) {
       return { counted: false, lowBalanceFor: null };
     }
+
+    // A queued report carries the moment it actually played, so a day of offline
+    // plays counts against the day it ran rather than the day the network came
+    // back. The device is the untrusted side, so the moment is clamped to the
+    // life of the play before anything is paced or capped against it.
+    const countedAt = clampReportedAt({ playedAt, openedAt: play.createdAt, now });
 
     // The device cap counts what today already paid for, so it is read before
     // this play joins the count. Reading it after the update below would let the
     // play cap itself through and pay for only `dailyPlayCap - 1` plays a day.
-    const paidToday = await paidPlaysToday(tx, device.id, now);
+    const paidToday = await paidPlaysToday(tx, device.id, countedAt);
 
     await tx
       .update(schema.play)
-      .set({ state: "counted", countedAt: now })
+      .set({ state: "counted", countedAt })
       .where(eq(schema.play.id, playId));
 
     const done = { counted: true, lowBalanceFor: null };
 
     // A house card is a real play on screen and no movement at all.
     if (play.house || !listing || !campaign) return done;
+    // Above the cap the play still showed and still counts; it just pays nothing.
     if (paidToday >= device.dailyPlayCap) return done;
+    if (!stillBillable(listing, campaign)) return done;
 
     const lowBalanceFor = await chargeAndPace(tx, {
       campaign,
@@ -440,8 +597,25 @@ export async function recordReport(
       playId,
       amount: playCost(device.tier, placement.format),
       key: "spend",
-      now,
+      now: countedAt,
     });
+    if (lowBalanceFor !== null) return { counted: true, lowBalanceFor };
+
+    // A viewer who scanned while the screen was off the network could not be paid
+    // then, because the play it rides on had not been reported yet. The report is
+    // where that debt is settled.
+    if (play.scanned) {
+      const scanLowBalanceFor = await chargeAndPace(tx, {
+        campaign,
+        listingId: listing.id,
+        distributorId: device.userId,
+        playId,
+        amount: scanCost(device.tier),
+        key: "scan",
+        now: countedAt,
+      });
+      return { counted: true, lowBalanceFor: scanLowBalanceFor };
+    }
     return { counted: true, lowBalanceFor };
   });
 
@@ -465,14 +639,19 @@ export async function recordScan(playId: string, now: Date = new Date()): Promis
     const { play, device, listing, campaign } = row;
     const stop = { url: campaign.url, lowBalanceFor: null };
 
-    // Only a counted play may pay a bonus: a scan cannot be worth more than the
-    // play it sits on, and an unreported play was never shown as far as we know.
-    if (play.scanned || play.state !== "counted") return stop;
+    // One scan per play, and a play the void job closed is over.
+    if (play.scanned || play.state === "void") return stop;
 
     await tx
       .update(schema.play)
       .set({ scanned: true, scannedAt: now })
       .where(eq(schema.play.id, playId));
+
+    // The viewer's phone has its own network, so a scan can arrive while the
+    // screen itself is still offline and the play is still open. Record it and
+    // pay nothing now: `recordReport` settles the bonus when the screen reports
+    // the play it rides on.
+    if (play.state !== "counted") return stop;
 
     // The bonus rides on the play, so it is paid only when the play itself was
     // paid. A play the device cap or the campaign budget refused pays nothing,
@@ -502,11 +681,12 @@ export async function recordScan(playId: string, now: Date = new Date()): Promis
  * Returns the number of rows touched.
  */
 export async function voidStalePlays(now: Date = new Date()): Promise<number> {
-  const cutoff = new Date(now.getTime() - economy.playTtlMinutes * 60_000);
+  // The deadline rides on the row, so this job never has to know whether a live
+  // serve or a cached loop opened the play.
   const rows = await db
     .update(schema.play)
     .set({ state: "void" })
-    .where(and(eq(schema.play.state, "open"), lt(schema.play.createdAt, cutoff)))
+    .where(and(eq(schema.play.state, "open"), lt(schema.play.expiresAt, now)))
     .returning({ id: schema.play.id });
   return rows.length;
 }

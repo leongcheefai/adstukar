@@ -24,7 +24,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { DeviceDetail } from "../../components/devices/device-detail";
 import { DeviceTile } from "../../components/devices/device-tile";
-import { useCreateDevice, useDevices } from "../../lib/devices";
+import { uploadDevicePhoto, useCreateDevice, useDevices } from "../../lib/devices";
 import { usePlacements } from "../../lib/placements";
 
 /** Every venue the API accepts, named for a member. The record is the list, so a
@@ -42,14 +42,21 @@ const VENUE_LABEL: Record<VenueType, string> = {
 
 const VENUE_TYPES = Object.keys(VENUE_LABEL) as VenueType[];
 
+/** What the presign route and the copy below both accept. */
+const PHOTO_TYPES = "image/png,image/jpeg,image/webp";
+const PHOTO_MAX_BYTES = 5 * 1024 * 1024;
+
 export function DevicesPage() {
   const { data: devices, isLoading } = useDevices();
   const { data: placements } = usePlacements();
   const create = useCreateDevice();
 
   const [addOpen, setAddOpen] = useState(false);
+  const [name, setName] = useState("");
   const [location, setLocation] = useState("");
   const [venueType, setVenueType] = useState<VenueType>("cafe");
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [openItem, setOpenItem] = useState<DeviceWithTerms | null>(null);
 
   const regionCount = new Map<string, number>();
@@ -57,16 +64,34 @@ export function DevicesPage() {
     regionCount.set(placement.deviceId, (regionCount.get(placement.deviceId) ?? 0) + 1);
   }
 
+  async function pickPhoto(file: File | undefined) {
+    if (!file) return;
+    if (file.size > PHOTO_MAX_BYTES) {
+      toast.error("That photo is over 5 MB.");
+      return;
+    }
+    setUploading(true);
+    try {
+      setPhotoUrl(await uploadDevicePhoto(file));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  }
+
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!location.trim()) return;
+    if (!name.trim() || !location.trim()) return;
     create.mutate(
-      { location: location.trim(), venueType },
+      { name: name.trim(), location: location.trim(), venueType, photoUrl },
       {
         onSuccess: (created) => {
           setAddOpen(false);
+          setName("");
           setLocation("");
           setVenueType("cafe");
+          setPhotoUrl(null);
           setOpenItem(created);
           toast.success("Device registered. An admin reviews it next.");
         },
@@ -128,8 +153,9 @@ export function DevicesPage() {
         </div>
       )}
 
-      {/* Where the screen stands and what kind of room it is. An admin prices the
-          tier off exactly these two answers, so nothing else is asked. */}
+      {/* Where the screen stands, what kind of room it is, and a photo of it in
+          place. An admin prices the tier off exactly these answers, and the photo
+          is most of what stands in for device attestation — see docs/adr/0003. */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
         <DialogContent className="sm:max-w-md">
           <form onSubmit={submit}>
@@ -141,6 +167,20 @@ export function DevicesPage() {
             </DialogHeader>
 
             <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="device-name">Name</Label>
+                <Input
+                  id="device-name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  maxLength={80}
+                  required
+                  placeholder="Counter screen"
+                />
+                <p className="text-xs text-muted-foreground">
+                  What you call this screen. Only you ever see it.
+                </p>
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="device-location">Location</Label>
                 <Input
@@ -167,13 +207,37 @@ export function DevicesPage() {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="device-photo">Photo of the screen in place</Label>
+                <Input
+                  id="device-photo"
+                  type="file"
+                  accept={PHOTO_TYPES}
+                  disabled={uploading}
+                  onChange={(e) => void pickPhoto(e.target.files?.[0])}
+                />
+                {photoUrl ? (
+                  <img
+                    src={photoUrl}
+                    alt="The screen in place"
+                    className="h-32 w-full rounded-md border object-cover"
+                  />
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    An admin approves a screen from this photo. PNG, JPEG or WebP, up to 5 MB.
+                  </p>
+                )}
+              </div>
             </div>
 
             <DialogFooter>
               <Button type="button" variant="ghost" onClick={() => setAddOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={create.isPending || !location.trim()}>
+              <Button
+                type="submit"
+                disabled={create.isPending || uploading || !name.trim() || !location.trim()}
+              >
                 {create.isPending ? "Registering…" : "Register device"}
               </Button>
             </DialogFooter>

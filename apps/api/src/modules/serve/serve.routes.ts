@@ -1,13 +1,20 @@
 import { getConnInfo } from "@hono/node-server/conninfo";
 import { zValidator } from "@hono/zod-validator";
 import { economy } from "@repo/config/economy";
-import { reportInput, reportOutput, serveOutput, serveQuery } from "@repo/contracts";
+import {
+  loopOutput,
+  loopQuery,
+  reportInput,
+  reportOutput,
+  serveOutput,
+  serveQuery,
+} from "@repo/contracts";
 import { type Context, Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import type * as z from "zod/v4";
 import type { AppVariables } from "../../lib/context";
 import { createRateLimiter } from "../../lib/rate-limit";
-import { recordReport, recordScan, serveListing } from "./serve.service";
+import { recordReport, recordScan, serveListing, serveLoop } from "./serve.service";
 
 /**
  * Public endpoints called from CapyTV on a member's screen, and from the phone of
@@ -57,6 +64,19 @@ serveRouter.get("/serve", zValidator("query", serveQuery), async (c) => {
   return c.json(serveOutput.parse(result satisfies z.input<typeof serveOutput>), 200, NO_STORE);
 });
 
+// A screen with a shaky network takes a whole batch at once and reports each play
+// as it goes. It costs one serve call for many plays, so it is limited on the same
+// buckets as `/serve` rather than looser ones.
+serveRouter.get("/loop", zValidator("query", loopQuery), async (c) => {
+  const { key, size } = c.req.valid("query");
+  const ip = clientIp(c);
+  if (!serveByKey.hit(key) || !serveByIp.hit(ip)) {
+    throw new HTTPException(429, { message: "Too many requests" });
+  }
+  const result = await serveLoop({ key, size });
+  return c.json(loopOutput.parse(result satisfies z.input<typeof loopOutput>), 200, NO_STORE);
+});
+
 // A kiosk browser losing its page sends this through `navigator.sendBeacon`, which
 // can only send CORS-safelisted content types. The body therefore arrives as
 // text/plain; parse it by hand instead of through the JSON validator.
@@ -69,7 +89,12 @@ serveRouter.post("/report", async (c) => {
   } catch {
     throw new HTTPException(400, { message: "Invalid report" });
   }
-  const result = await recordReport(parsed.playId, parsed.key);
+  const result = await recordReport(
+    parsed.playId,
+    parsed.key,
+    new Date(),
+    parsed.playedAt ? new Date(parsed.playedAt) : null,
+  );
   return c.json(reportOutput.parse(result satisfies z.input<typeof reportOutput>), 200, NO_STORE);
 });
 

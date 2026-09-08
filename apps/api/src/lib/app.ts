@@ -29,9 +29,9 @@ export const app = new Hono<{ Variables: AppVariables }>();
 app.use("*", logger());
 
 // CapyTV runs on member devices and a scan comes from a stranger's phone, so these
-// three accept any origin (they never use the session cookie). Everything else stays
+// four accept any origin (they never use the session cookie). Everything else stays
 // locked to the dashboard and marketing origins.
-const PUBLIC_PREFIXES = ["/serve", "/report", "/scan/"];
+const PUBLIC_PREFIXES = ["/serve", "/loop", "/report", "/scan/"];
 const TRUSTED_ORIGINS = new Set([serverEnv.APP_URL, serverEnv.WEB_URL]);
 app.use(
   "*",

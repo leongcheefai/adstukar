@@ -4,7 +4,10 @@ import {
   createDeviceInput,
   deviceWithTermsOutput,
   listDevicesOutput,
+  listEligibleListingsOutput,
   setExcludedTermsInput,
+  setPromotionInput,
+  setVetoedListingsInput,
   updateDeviceInput,
 } from "@repo/contracts";
 import { Hono } from "hono";
@@ -15,8 +18,11 @@ import {
   archiveDevice,
   createDevice,
   listDevices,
+  listEligibleListings,
   rotateApiKey,
   setExcludedTerms,
+  setPromotion,
+  setVetoedListings,
   updateDevice,
 } from "./devices.service";
 
@@ -57,6 +63,29 @@ devicesRouter.put("/:id/excluded-terms", zValidator("json", setExcludedTermsInpu
   const user = c.get("user");
   if (!user) throw new HTTPException(401, { message: "Unauthorized" });
   const row = await setExcludedTerms(user.id, c.req.param("id"), c.req.valid("json"));
+  return c.json(deviceWithTermsOutput.parse(row satisfies z.input<typeof deviceWithTermsOutput>));
+});
+
+devicesRouter.get("/:id/eligible-listings", async (c) => {
+  const user = c.get("user");
+  if (!user) throw new HTTPException(401, { message: "Unauthorized" });
+  const rows = await listEligibleListings(user.id, c.req.param("id"));
+  return c.json(
+    listEligibleListingsOutput.parse(rows satisfies z.input<typeof listEligibleListingsOutput>),
+  );
+});
+
+devicesRouter.put("/:id/vetoes", zValidator("json", setVetoedListingsInput), async (c) => {
+  const user = c.get("user");
+  if (!user) throw new HTTPException(401, { message: "Unauthorized" });
+  const row = await setVetoedListings(user.id, c.req.param("id"), c.req.valid("json"));
+  return c.json(deviceWithTermsOutput.parse(row satisfies z.input<typeof deviceWithTermsOutput>));
+});
+
+devicesRouter.put("/:id/promotion", zValidator("json", setPromotionInput), async (c) => {
+  const user = c.get("user");
+  if (!user) throw new HTTPException(401, { message: "Unauthorized" });
+  const row = await setPromotion(user.id, c.req.param("id"), c.req.valid("json"));
   return c.json(deviceWithTermsOutput.parse(row satisfies z.input<typeof deviceWithTermsOutput>));
 });
 

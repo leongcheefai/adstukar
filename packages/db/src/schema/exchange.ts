@@ -1,4 +1,13 @@
-import { boolean, index, integer, pgEnum, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  index,
+  integer,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  unique,
+} from "drizzle-orm/pg-core";
 import { user } from "./auth";
 import {
   CAMPAIGN_PAUSE_REASONS,
@@ -91,11 +100,26 @@ export const device = pgTable(
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
+    /** What the distributor calls this screen. It never leaves the owner's account. */
+    name: text("name").notNull(),
     /** The code the screen shows at pairing. The owner reads it off the screen. */
     deviceId: text("device_id").notNull().unique(),
     apiKey: text("api_key").notNull().unique(),
     venueType: venueTypeEnum("venue_type").notNull().default("other"),
     location: text("location").notNull(),
+    /**
+     * A photo of this screen in place. There is no device attestation, so the
+     * photo is part of what an admin reviews before approval (docs/adr/0003).
+     */
+    photoUrl: text("photo_url"),
+    /**
+     * The distributor's own promotion. It plays free whenever nothing paid is
+     * eligible, so it moves no points and carries no rate.
+     */
+    promotionName: text("promotion_name"),
+    promotionTagline: text("promotion_tagline"),
+    promotionUrl: text("promotion_url"),
+    promotionLogoUrl: text("promotion_logo_url"),
     tier: deviceTierEnum("tier").notNull().default("standard"),
     state: deviceStateEnum("state").notNull().default("pending"),
     rejectionReason: text("rejection_reason"),
@@ -143,6 +167,31 @@ export const excludedTerm = pgTable(
   (t) => [index("excluded_term_device_idx").on(t.deviceId)],
 );
 
+/**
+ * One listing this device refuses by name. A veto is narrower than an excluded
+ * term: the term stops anything that reads a certain way, the veto stops exactly
+ * the creative the distributor looked at and did not want.
+ */
+export const vetoedListing = pgTable(
+  "vetoed_listing",
+  {
+    id: text("id").primaryKey(),
+    deviceId: text("device_id")
+      .notNull()
+      .references(() => device.id, { onDelete: "cascade" }),
+    // Cascade, not restrict: a veto holds no points, so it may go with the
+    // listing it refuses.
+    listingId: text("listing_id")
+      .notNull()
+      .references(() => listing.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [
+    index("vetoed_listing_device_idx").on(t.deviceId),
+    unique("vetoed_listing_device_listing_key").on(t.deviceId, t.listingId),
+  ],
+);
+
 /** One listing shown in one placement for its dwell. The event that moves points. */
 export const play = pgTable(
   "play",
@@ -158,6 +207,13 @@ export const play = pgTable(
     house: boolean("house").notNull().default(false),
     state: playStateEnum("state").notNull().default("open"),
     scanned: boolean("scanned").notNull().default(false),
+    /**
+     * The moment this play stops being reportable. A live `/serve` gives minutes;
+     * a cached `/loop` gives hours, because a screen off the network reports its
+     * plays only when the network returns. The row carries the deadline so the
+     * void job never has to know which path opened it.
+     */
+    expiresAt: timestamp("expires_at").notNull(),
     countedAt: timestamp("counted_at"),
     scannedAt: timestamp("scanned_at"),
     createdAt: timestamp("created_at").notNull().defaultNow(),

@@ -66,6 +66,12 @@ The quiet time between two plays on a device.
 The quality class an admin stamps on a device at approval. The tier sets the
 rate the device earns and the advertiser pays.
 
+**Loop**:
+The batch of plays CapyTV takes at once and holds on the device. The screen plays
+the loop one at a time and reports each play, so a screen that loses its network
+keeps running and reports when the network returns.
+_Avoid_: Playlist, queue, rotation
+
 **House card**:
 A free card played when no paid listing is eligible. It is the distributor's own
 promotion, or the CapyAds card. It moves no points.

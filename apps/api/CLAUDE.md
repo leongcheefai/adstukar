@@ -8,18 +8,40 @@ Hono API server on Node.js. Handles auth (Better Auth), the CapyAds exchange (ca
 |---|---|---|
 | `campaigns` | `GET/POST /campaigns`, `PATCH/DELETE /campaigns/:id`, `POST /campaigns/:id/verify` | owner |
 | `listings` | `GET/POST /listings`, `PATCH/DELETE /listings/:id` | owner |
-| `devices` | `GET/POST /devices`, `PATCH/DELETE /devices/:id`, `POST /devices/:id/rotate-key`, `PUT /devices/:id/excluded-terms` | owner |
+| `devices` | `GET/POST /devices`, `PATCH/DELETE /devices/:id`, `POST /devices/:id/rotate-key`, `PUT /devices/:id/excluded-terms`, `GET /devices/:id/eligible-listings`, `PUT /devices/:id/vetoes`, `PUT /devices/:id/promotion` | owner |
 | `placements` | `GET/POST /placements`, `PATCH/DELETE /placements/:id` | owner |
-| `serve` | `GET /serve?key=`, `POST /report` (text/plain JSON), `GET /scan/:playId` | public, rate-limited |
+| `serve` | `GET /serve?key=`, `GET /loop?key=&size=`, `POST /report` (text/plain JSON), `GET /scan/:playId` | public, rate-limited |
 | `stats` | `GET /stats/overview` | member |
 | `ledger` | `GET /ledger?reason&state&lot&cursor&limit` | member |
 | `admin` | `GET /admin/moderation`, `POST /admin/listings/:id/approve\|reject`, `POST /admin/devices/:id/approve\|reject` | admin |
 | `jobs` | `startJobs()` from `index.ts`; `pnpm jobs:run` one-shot. Settlement, expiry, stale plays, and campaign pacing | — |
-| `uploads` | `POST /uploads/logo/presign` (S3, optional) | member |
+| `uploads` | `POST /uploads/logo/presign`, `POST /uploads/device-photo/presign` (S3, optional) | member |
 
 A `DELETE` on a campaign, a listing, or a device is an **archive**: the row stays,
 because the ledger reaches it through the plays it earned. Only a placement that
 has never played is really deleted.
+
+`GET /loop` cuts a whole batch of plays for a screen with a shaky network. Nothing
+is charged when the batch is cut: the daily cap and the campaign budget are read
+again at report time, so a batch is an offer of plays and never a promise that
+every one of them pays. Each play carries its own `expires_at` — minutes from a
+live `/serve`, hours from a `/loop` — and `POST /report` accepts a `playedAt` it
+clamps to the life of the play, so a queued report counts against the day it ran
+and a device cannot move its own history.
+
+Approving a device stamps its tier and, the first time, mints the api key CapyTV
+runs on. Registration writes a placeholder into the unique NOT NULL column and
+the dashboard shows nothing until approval. A second approval keeps the existing
+key, so re-approving a moved screen does not black it out.
+
+The daily play cap and the state of the campaign and the listing are read when
+the points move, never when the play was served. Above the cap, or on a listing
+an admin rejected after the batch was cut, the play still counts and simply pays
+nothing — "plays above the cap still show, and pay nothing" (issue #7).
+
+A scan can reach the API while the screen is still offline, because the viewer's
+phone has its own network. `recordScan` then marks the play scanned and pays
+nothing; `recordReport` settles the bonus when the screen reports the play.
 
 A campaign paces itself. The listings under it split the daily budget evenly. The
 campaign stops when the budget is spent, or when the owner's points run out. The
@@ -97,7 +119,7 @@ stripe trigger invoice.payment_failed
 
 ## Gotchas
 - `POST /report` reads a **text/plain** body (`navigator.sendBeacon` cannot send JSON content types) and parses it by hand — do not add `zValidator("json")` there
-- `/serve`, `/report` and `/scan/*` accept any origin, because CapyTV runs on member devices. Every other route keeps the `APP_URL`/`WEB_URL` allow-list; the check lives in the `cors()` origin function in `src/lib/app.ts`
+- `/serve`, `/loop`, `/report` and `/scan/*` accept any origin, because CapyTV runs on member devices. Every other route keeps the `APP_URL`/`WEB_URL` allow-list; the check lives in `PUBLIC_PREFIXES` and the `cors()` origin function in `src/lib/app.ts`. A new public screen route must be added there too
 - Webhook endpoint at `POST /billing/webhook` must receive the **raw body** for signature verification — do not add JSON body-parsing middleware to this route
 - Stripe API version is pinned in `src/lib/stripe.ts` — update after checking Stripe changelog for breaking changes
 - `subscription_data.metadata.userId` is set on checkout so webhooks can look up the user without a customer lookup

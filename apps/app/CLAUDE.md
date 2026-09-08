@@ -6,7 +6,7 @@ Vite + React 19 SPA. The member dashboard — signup, login, Overview, Campaigns
 ## Pages
 - `routes/dashboard/index.tsx` Overview — balance (settled + pending), today's played/received/scans/scan rate, 30-day charts
 - `routes/dashboard/campaigns.tsx` — one section per campaign, up to four listing tiles each, create/edit/duplicate dialog, verify panel
-- `routes/dashboard/devices.tsx` — register a screen, pairing code, device key + rotate, overlay regions (format, size, dwell, gap), excluded terms
+- `routes/dashboard/devices.tsx` — register a screen (name, location, venue, a photo of the screen in place), pairing code, device key + rotate, overlay regions (format, size, dwell, gap), the distributor's own promotion, excluded terms, and the per-listing veto list
 - `routes/dashboard/ledger.tsx` — filterable by reason, state and lot; cursor-paginated
 - `routes/dashboard/settings.tsx` — two-panel layout; sections live in `src/components/settings/`. Admin-only Moderation and Releases sections appear there for `role === 'admin'`; `/dashboard/admin/*` redirects in
 - `/dashboard/products` and `/dashboard/placements` redirect to the two renamed pages, so links people saved before Phase 0 still work
