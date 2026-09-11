@@ -1,35 +1,58 @@
+import type { PLACEMENT_FORMATS, PLACEMENT_SIZES } from "@repo/db/enums";
 import type * as React from "react";
 import { cn } from "../lib/utils";
 
 /**
- * The fixed sponsored-card template, React edition. `apps/embed/src/card.ts` renders the
- * same layout in vanilla DOM on member sites; keep the two in step when either changes.
- * Understated by design: neutral surface, one label, never louder than the host page.
+ * The fixed listing card, as CapyTV composes it over the screen's own content.
  *
- * The radii are literals, not radius tokens, because card.ts hardcodes 8px and 6px on
- * member sites. A retheme of this app must not silently reshape the card that the
- * landing page presents as a preview of the real thing.
+ * The format is the region it fills, and the size is how much of the screen that
+ * region takes. Understated by design: neutral surface, one label, never louder
+ * than the content behind it.
+ *
+ * The radii are literals, not radius tokens: a retheme of the dashboard must not
+ * silently reshape the card a viewer sees in a room.
  */
-export type AdCardSize = "small" | "medium";
+// Derived from the placement enums, not retyped: a new format has to be named
+// here before this file compiles, so the card can never silently miss one.
+// `@repo/db/enums` is plain tuples with no drizzle import, so nothing server-side
+// reaches the browser through it.
+export type AdCardFormat = (typeof PLACEMENT_FORMATS)[number];
+export type AdCardSize = (typeof PLACEMENT_SIZES)[number];
 
-export const AD_CARD_DIMENSIONS: Record<AdCardSize, { width: number; height: number }> = {
-  small: { width: 320, height: 64 },
-  medium: { width: 300, height: 120 },
+/** The region at its reference size, in the pixels of a 1920×1080 screen. */
+export const AD_CARD_DIMENSIONS: Record<AdCardFormat, { width: number; height: number }> = {
+  band: { width: 960, height: 140 },
+  float: { width: 380, height: 220 },
+  ticker: { width: 960, height: 64 },
 };
 
-export interface AdCardProps extends Omit<React.ComponentProps<"a">, "href"> {
+/** How much of the screen the region takes, against that reference. */
+export const AD_CARD_SCALE: Record<AdCardSize, number> = {
+  small: 0.75,
+  medium: 1,
+  large: 1.35,
+};
+
+export function adCardDimensions(format: AdCardFormat, size: AdCardSize) {
+  const base = AD_CARD_DIMENSIONS[format];
+  const scale = AD_CARD_SCALE[size];
+  return { width: Math.round(base.width * scale), height: Math.round(base.height * scale) };
+}
+
+export interface AdCardProps extends Omit<React.ComponentProps<"div">, "children"> {
   name: string;
   tagline: string;
   logoUrl?: string | null;
-  href?: string;
+  format?: AdCardFormat;
   size?: AdCardSize;
   label?: string;
 }
 
-function Monogram({ name, className }: { name: string; className?: string }) {
+function Monogram({ name, px, className }: { name: string; px: number; className?: string }) {
   return (
     <span
       aria-hidden
+      style={{ width: px, height: px }}
       className={cn(
         "flex shrink-0 items-center justify-center rounded-[6px] bg-muted font-semibold text-muted-foreground",
         className,
@@ -40,59 +63,62 @@ function Monogram({ name, className }: { name: string; className?: string }) {
   );
 }
 
+/**
+ * A ticker has no room for a second line, and a float stacks instead of running
+ * across, so each format gets its own body rather than one body with overrides.
+ */
 export function AdCard({
   name,
   tagline,
   logoUrl,
-  href = "#",
-  size = "small",
+  format = "band",
+  size = "medium",
   label = "Sponsored",
   className,
   ...props
 }: AdCardProps) {
-  const dims = AD_CARD_DIMENSIONS[size];
-  const logoSize = size === "small" ? "size-10" : "size-12";
+  const dims = adCardDimensions(format, size);
+  const logoPx = format === "ticker" ? 32 : format === "float" ? 44 : 52;
   const logo = logoUrl ? (
     <img
       src={logoUrl}
       alt=""
-      width={size === "small" ? 40 : 48}
-      height={size === "small" ? 40 : 48}
-      className={cn("shrink-0 rounded-md object-cover", logoSize)}
+      width={logoPx}
+      height={logoPx}
+      style={{ width: logoPx, height: logoPx }}
+      className="shrink-0 rounded-md object-cover"
     />
   ) : (
-    <Monogram name={name} className={cn(logoSize, size === "small" ? "text-base" : "text-lg")} />
+    <Monogram name={name} px={logoPx} className={format === "ticker" ? "text-sm" : "text-lg"} />
   );
 
   return (
-    <a
-      href={href}
-      rel="sponsored noopener"
-      target="_blank"
+    <div
       data-slot="ad-card"
+      data-format={format}
       style={{ width: dims.width, height: dims.height }}
       className={cn(
-        "relative box-border flex max-w-full items-center gap-3 overflow-hidden rounded-[8px] border border-border bg-card px-3 text-card-foreground no-underline shadow-none transition-colors hover:border-[color:var(--color-border-strong)]",
-        size === "medium" && "items-start pt-3",
+        "relative box-border flex max-w-full items-center gap-4 overflow-hidden rounded-[8px] border border-border bg-card px-4 text-card-foreground shadow-none",
+        format === "float" && "flex-col items-start justify-center gap-3",
         className,
       )}
       {...props}
     >
       {logo}
-      <span className="min-w-0 flex-1 pr-14">
-        <span className="block truncate text-[13px] font-semibold leading-tight">{name}</span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-[15px] font-semibold leading-tight">{name}</span>
         <span
           className={cn(
-            "block text-xs leading-snug text-muted-foreground",
-            size === "small" ? "truncate" : "line-clamp-3 mt-0.5",
+            "block text-sm leading-snug text-muted-foreground",
+            format === "ticker" ? "hidden" : "line-clamp-2 mt-1",
           )}
         >
           {tagline}
         </span>
       </span>
-      <span className="absolute top-2 right-2.5 text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+      <span className="absolute top-2 right-3 text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
         {label}
       </span>
-    </a>
+    </div>
   );
 }

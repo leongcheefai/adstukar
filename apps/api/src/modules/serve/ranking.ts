@@ -3,11 +3,14 @@
  * `rankCandidates` and nothing else in the serve path changes.
  */
 export interface Candidate {
-  productId: string;
+  listingId: string;
+  campaignId: string;
   userId: string;
+  /** The campaign's name. A listing carries no name of its own. */
   name: string;
   tagline: string;
-  lastServedAt: Date | null;
+  logoUrl: string | null;
+  lastPlayedAt: Date | null;
 }
 
 /** True when any excluded phrase appears inside `name + tagline` (case-insensitive). */
@@ -20,19 +23,21 @@ export function matchesExcludedTerm(name: string, tagline: string, phrases: stri
   });
 }
 
-/** Least recently served to this placement first; never-served products lead. */
-export function rankCandidates<T extends { lastServedAt: Date | null }>(candidates: T[]): T[] {
+/** Least recently played on this placement first; never-played listings lead. */
+export function rankCandidates<T extends { lastPlayedAt: Date | null }>(candidates: T[]): T[] {
   return [...candidates].sort((a, b) => {
-    if (a.lastServedAt === null && b.lastServedAt === null) return 0;
-    if (a.lastServedAt === null) return -1;
-    if (b.lastServedAt === null) return 1;
-    return a.lastServedAt.getTime() - b.lastServedAt.getTime();
+    if (a.lastPlayedAt === null && b.lastPlayedAt === null) return 0;
+    if (a.lastPlayedAt === null) return -1;
+    if (b.lastPlayedAt === null) return 1;
+    return a.lastPlayedAt.getTime() - b.lastPlayedAt.getTime();
   });
 }
 
-/** Returns true when the house ad wins the roll for this request. */
-export function rollHouseAd(houseAdPct: number, random: () => number = Math.random): boolean {
-  if (houseAdPct <= 0) return false;
-  if (houseAdPct >= 100) return true;
-  return random() * 100 < houseAdPct;
+/**
+ * The placement a device fills next: the one that has waited longest. A device
+ * holds several regions but shows one paid listing at a time, so the serve call
+ * answers with exactly one of them.
+ */
+export function nextPlacement<T extends { lastPlayedAt: Date | null }>(placements: T[]): T | null {
+  return rankCandidates(placements)[0] ?? null;
 }

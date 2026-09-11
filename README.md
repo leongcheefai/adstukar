@@ -47,12 +47,17 @@ their optional values are added to the root `.env`.
 Open:
 - Dashboard: http://localhost:3000
 - API: http://localhost:3001
+- CapyTV: http://localhost:3002
 - Marketing: http://localhost:4321
 - Embed playground: http://localhost:3001/embed/playground.html?key=<placement api key> (after the embed builds)
 
-First run: `pnpm db:seed` creates the admin who approves products. Register a product in
-the dashboard, verify its domain, approve it under Admin → Moderation, then create a
-placement and paste the snippet.
+First run: `pnpm db:seed` creates the admin who approves listings and devices.
+
+- **To advertise**: create a campaign, verify its domain, add a listing, and
+  approve the listing under Settings → Moderation.
+- **To distribute**: register a device with a photo of the screen, approve it
+  under Settings → Moderation and stamp its tier, add a region to it, then open
+  CapyTV and paste the device key.
 
 ## Commands
 

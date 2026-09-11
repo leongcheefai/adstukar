@@ -2,8 +2,8 @@ import type { StatsOverview } from "@repo/contracts";
 import { db, schema } from "@repo/db";
 import { and, count, eq, gte, inArray, sql } from "drizzle-orm";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
-import { getBalances } from "../ledger/ledger.service";
-import { SERIES_DAYS, dayKey, emptySeries, utcDayStart } from "./series";
+import { getBalances, getLotBalances } from "../ledger/ledger.service";
+import { type DayCounts, SERIES_DAYS, dayKey, emptySeries, utcDayStart } from "./series";
 
 export async function getStatsOverview(
   userId: string,
@@ -13,72 +13,116 @@ export async function getStatsOverview(
   const since = new Date(utcDayStart(now).getTime() - (SERIES_DAYS - 1) * 86_400_000);
   const day = (col: AnyPgColumn) => sql<string>`to_char(${col} at time zone 'UTC', 'YYYY-MM-DD')`;
 
-  const ownProducts = db
-    .select({ id: schema.product.id })
-    .from(schema.product)
-    .where(eq(schema.product.userId, userId));
+  const ownPlacements = db
+    .select({ id: schema.placement.id })
+    .from(schema.placement)
+    .innerJoin(schema.device, eq(schema.device.id, schema.placement.deviceId))
+    .where(eq(schema.device.userId, userId));
 
-  const shownDay = day(schema.impression.viewedAt);
-  const shownRows = await db
-    .select({ day: shownDay, n: count() })
-    .from(schema.impression)
-    .innerJoin(schema.placement, eq(schema.placement.id, schema.impression.placementId))
+  const ownListings = db
+    .select({ id: schema.listing.id })
+    .from(schema.listing)
+    .innerJoin(schema.campaign, eq(schema.campaign.id, schema.listing.campaignId))
+    .where(eq(schema.campaign.userId, userId));
+
+  const countedDay = day(schema.play.countedAt);
+
+  // Plays this member's own devices ran, house cards included: the distributor
+  // wants to know what the screen did, not only what it was paid for.
+  const playedRows = await db
+    .select({ day: countedDay, n: count() })
+    .from(schema.play)
     .where(
       and(
-        inArray(schema.placement.productId, ownProducts),
-        eq(schema.impression.viewable, true),
-        gte(schema.impression.viewedAt, since),
+        inArray(schema.play.placementId, ownPlacements),
+        eq(schema.play.state, "counted"),
+        gte(schema.play.countedAt, since),
       ),
     )
-    .groupBy(shownDay);
+    .groupBy(countedDay);
 
   const receivedRows = await db
-    .select({ day: shownDay, n: count() })
-    .from(schema.impression)
+    .select({ day: countedDay, n: count() })
+    .from(schema.play)
     .where(
       and(
-        inArray(schema.impression.servedProductId, ownProducts),
-        eq(schema.impression.house, false),
-        eq(schema.impression.viewable, true),
-        gte(schema.impression.viewedAt, since),
+        inArray(schema.play.listingId, ownListings),
+        eq(schema.play.house, false),
+        eq(schema.play.state, "counted"),
+        gte(schema.play.countedAt, since),
       ),
     )
-    .groupBy(shownDay);
+    .groupBy(countedDay);
 
-  const clickDay = day(schema.impression.clickedAt);
-  const clickRows = await db
-    .select({ day: clickDay, n: count() })
-    .from(schema.impression)
+  const scannedDay = day(schema.play.scannedAt);
+  const scanRows = await db
+    .select({ day: scannedDay, n: count() })
+    .from(schema.play)
     .where(
       and(
-        inArray(schema.impression.servedProductId, ownProducts),
-        eq(schema.impression.house, false),
-        eq(schema.impression.clicked, true),
-        gte(schema.impression.clickedAt, since),
+        inArray(schema.play.listingId, ownListings),
+        eq(schema.play.house, false),
+        eq(schema.play.scanned, true),
+        gte(schema.play.scannedAt, since),
       ),
     )
-    .groupBy(clickDay);
+    .groupBy(scannedDay);
 
-  for (const r of shownRows) {
-    const s = series.get(r.day);
-    if (s) s.shown = r.n;
+  // The earn and the fee are two rows on one movement, so summing both gives the
+  // number the distributor actually keeps.
+  const earnedDay = day(schema.ledgerEntry.createdAt);
+  const earnedRows = await db
+    .select({
+      day: earnedDay,
+      total: sql<number>`coalesce(sum(${schema.ledgerEntry.delta}), 0)::int`,
+    })
+    .from(schema.ledgerEntry)
+    .where(
+      and(
+        eq(schema.ledgerEntry.userId, userId),
+        inArray(schema.ledgerEntry.reason, ["earn", "fee"]),
+        gte(schema.ledgerEntry.createdAt, since),
+      ),
+    )
+    .groupBy(earnedDay);
+
+  // A row whose day falls outside the window is dropped: the scaffold decides the
+  // span, not the query.
+  function fill(rows: { day: string; value: number }[], field: keyof DayCounts) {
+    for (const row of rows) {
+      const day = series.get(row.day);
+      if (day) day[field] = row.value;
+    }
   }
-  for (const r of receivedRows) {
-    const s = series.get(r.day);
-    if (s) s.received = r.n;
-  }
-  for (const r of clickRows) {
-    const s = series.get(r.day);
-    if (s) s.clicks = r.n;
-  }
+
+  fill(
+    playedRows.map((r) => ({ day: r.day, value: r.n })),
+    "played",
+  );
+  fill(
+    receivedRows.map((r) => ({ day: r.day, value: r.n })),
+    "received",
+  );
+  fill(
+    scanRows.map((r) => ({ day: r.day, value: r.n })),
+    "scans",
+  );
+  fill(
+    earnedRows.map((r) => ({ day: r.day, value: r.total })),
+    "earned",
+  );
 
   const todayKey = dayKey(utcDayStart(now));
-  const today = series.get(todayKey) ?? { shown: 0, received: 0, clicks: 0 };
+  const today = series.get(todayKey) ?? { played: 0, received: 0, scans: 0, earned: 0 };
   const balance = await getBalances(db, userId);
+  const lots = await getLotBalances(db, userId);
 
   return {
-    balance,
-    today: { ...today, ctr: today.received > 0 ? today.clicks / today.received : 0 },
+    balance: { ...balance, ...lots },
+    today: {
+      ...today,
+      scanRate: today.received > 0 ? today.scans / today.received : 0,
+    },
     series: [...series.entries()].map(([d, v]) => ({ day: d, ...v })),
   };
 }

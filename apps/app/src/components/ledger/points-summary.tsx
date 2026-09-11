@@ -1,18 +1,14 @@
 import { Gift } from "@phosphor-icons/react";
 import { project } from "@repo/config/project";
-import {
-  Button,
-  Card,
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@repo/ui";
+import { Button, Card } from "@repo/ui";
 import { useState } from "react";
 import { useSession } from "../../lib/auth";
+import { usePayouts } from "../../lib/payouts";
 import { useStats } from "../../lib/stats";
+import { useTopups } from "../../lib/topups";
 import { CopyButton } from "../copy-button";
+import { CashOutDialog } from "../payouts/cash-out-dialog";
+import { BuyPointsDialog } from "../topups/buy-points-dialog";
 
 /** Mixed case and digits, the shape a referral link wants. */
 const ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -51,9 +47,13 @@ function referralCode(userId: string | undefined): string {
 export function PointsSummary() {
   const { data: stats } = useStats();
   const { data: session } = useSession();
+  const { data: payouts } = usePayouts();
+  const { data: topups } = useTopups();
   const [cashOutOpen, setCashOutOpen] = useState(false);
+  const [buyOpen, setBuyOpen] = useState(false);
 
   const settled = stats?.balance.settled ?? 0;
+  const withdrawable = payouts?.withdrawable ?? 0;
   // The site URL comes from the project config; never hardcode it in an app.
   const referralUrl = `${project.siteUrl}/referral/${referralCode(session?.user.id)}`;
 
@@ -69,16 +69,29 @@ export function PointsSummary() {
           <p className="text-3xl font-normal tracking-tight tabular-nums">
             {settled.toLocaleString()}
           </p>
+          {/* The way to grow the number sits under the number it grows. */}
+          <Button size="sm" onClick={() => setBuyOpen(true)} disabled={!topups}>
+            Buy {project.pointsName}
+          </Button>
         </div>
 
         <div className="flex flex-col justify-between gap-3 p-5">
           <p data-slot="label" className="text-muted-foreground">
             Cash out
           </p>
-          <Button variant="outline" size="sm" onClick={() => setCashOutOpen(true)}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCashOutOpen(true)}
+            disabled={!payouts}
+          >
             Cash out CapyPoints
           </Button>
-          <p className="text-xs text-muted-foreground">Trade points for ad credit or payout.</p>
+          {/* The number beside the button is the withdrawable balance, not the
+              settled one: only earned points that served the hold ever leave. */}
+          <p className="text-xs text-muted-foreground tabular-nums">
+            {withdrawable.toLocaleString()} ready to cash out.
+          </p>
         </div>
 
         {/* The one cell that asks for something rather than reporting it, so it
@@ -108,20 +121,11 @@ export function PointsSummary() {
         </div>
       </Card>
 
-      {/* A dialog, not a disabled button: a member who taps this deserves to be
-          told why nothing happened, not left guessing. */}
-      <Dialog open={cashOutOpen} onOpenChange={setCashOutOpen}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Cash out is not open yet</DialogTitle>
-            <DialogDescription>
-              No money moves on CapyAds today. Points buy impressions, and nothing else. Your
-              balance of {settled.toLocaleString()} keeps until cash out opens.
-            </DialogDescription>
-          </DialogHeader>
-          <Button onClick={() => setCashOutOpen(false)}>Got it</Button>
-        </DialogContent>
-      </Dialog>
+      {payouts && (
+        <CashOutDialog overview={payouts} open={cashOutOpen} onOpenChange={setCashOutOpen} />
+      )}
+
+      {topups && <BuyPointsDialog overview={topups} open={buyOpen} onOpenChange={setBuyOpen} />}
     </>
   );
 }

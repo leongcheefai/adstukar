@@ -4,6 +4,7 @@ import { sendPaymentFailedEmail } from "@repo/emails";
 import { serverEnv } from "@repo/env";
 import { eq } from "drizzle-orm";
 import { stripe } from "../../lib/stripe";
+import { abandonTopup, recordPaidTopup } from "../topups/topups.service";
 
 type SubscriptionStatus = (typeof schema.subscriptionStatusEnum.enumValues)[number];
 
@@ -96,6 +97,20 @@ export async function handleWebhook(body: string, signature: string) {
   switch (event.type) {
     case "checkout.session.completed": {
       const session = event.data.object;
+
+      // A one-off payment is a CapyPoints top-up. The points go in here, keyed on
+      // the payment, so the money and the ledger entry are the same movement.
+      if (session.mode === "payment") {
+        const topupId = session.metadata?.topupId ?? session.client_reference_id;
+        if (!topupId || session.payment_status !== "paid" || !session.payment_intent) break;
+        const paymentIntentId =
+          typeof session.payment_intent === "string"
+            ? session.payment_intent
+            : session.payment_intent.id;
+        await recordPaidTopup({ topupId, paymentIntentId, sessionId: session.id });
+        break;
+      }
+
       if (session.mode !== "subscription") break;
       const userId = session.metadata?.userId;
       if (!userId || !session.customer || !session.subscription) break;
@@ -117,6 +132,15 @@ export async function handleWebhook(body: string, signature: string) {
         cancelAtPeriodEnd: sub.cancel_at_period_end,
         status: sub.status as SubscriptionStatus,
       });
+      break;
+    }
+
+    // The member opened a checkout and never paid. Nothing moved, so this only
+    // closes the row the dashboard would otherwise show as pending for ever.
+    case "checkout.session.expired": {
+      const session = event.data.object;
+      const topupId = session.metadata?.topupId ?? session.client_reference_id;
+      if (session.mode === "payment" && topupId) await abandonTopup(topupId);
       break;
     }
 

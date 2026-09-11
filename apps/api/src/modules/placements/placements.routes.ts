@@ -4,8 +4,7 @@ import {
   deletePlacementOutput,
   listPlacementsOutput,
   listPlacementsQuery,
-  placementWithTermsOutput,
-  setExcludedTermsInput,
+  placementOutput,
   updatePlacementInput,
 } from "@repo/contracts";
 import { Hono } from "hono";
@@ -16,8 +15,6 @@ import {
   createPlacement,
   deletePlacement,
   listPlacements,
-  rotateApiKey,
-  setExcludedTerms,
   updatePlacement,
 } from "./placements.service";
 
@@ -26,7 +23,7 @@ export const placementsRouter = new Hono<{ Variables: AppVariables }>();
 placementsRouter.get("/", zValidator("query", listPlacementsQuery), async (c) => {
   const user = c.get("user");
   if (!user) throw new HTTPException(401, { message: "Unauthorized" });
-  const rows = await listPlacements(user.id, c.req.valid("query").productId);
+  const rows = await listPlacements(user.id, c.req.valid("query").deviceId);
   return c.json(listPlacementsOutput.parse(rows satisfies z.input<typeof listPlacementsOutput>));
 });
 
@@ -34,42 +31,15 @@ placementsRouter.post("/", zValidator("json", createPlacementInput), async (c) =
   const user = c.get("user");
   if (!user) throw new HTTPException(401, { message: "Unauthorized" });
   const row = await createPlacement(user.id, c.req.valid("json"));
-  return c.json(
-    placementWithTermsOutput.parse(row satisfies z.input<typeof placementWithTermsOutput>),
-    201,
-  );
+  return c.json(placementOutput.parse(row satisfies z.input<typeof placementOutput>), 201);
 });
 
 placementsRouter.patch("/:id", zValidator("json", updatePlacementInput), async (c) => {
   const user = c.get("user");
   if (!user) throw new HTTPException(401, { message: "Unauthorized" });
   const row = await updatePlacement(user.id, c.req.param("id"), c.req.valid("json"));
-  return c.json(
-    placementWithTermsOutput.parse(row satisfies z.input<typeof placementWithTermsOutput>),
-  );
+  return c.json(placementOutput.parse(row satisfies z.input<typeof placementOutput>));
 });
-
-placementsRouter.post("/:id/rotate-key", async (c) => {
-  const user = c.get("user");
-  if (!user) throw new HTTPException(401, { message: "Unauthorized" });
-  const row = await rotateApiKey(user.id, c.req.param("id"));
-  return c.json(
-    placementWithTermsOutput.parse(row satisfies z.input<typeof placementWithTermsOutput>),
-  );
-});
-
-placementsRouter.put(
-  "/:id/excluded-terms",
-  zValidator("json", setExcludedTermsInput),
-  async (c) => {
-    const user = c.get("user");
-    if (!user) throw new HTTPException(401, { message: "Unauthorized" });
-    const row = await setExcludedTerms(user.id, c.req.param("id"), c.req.valid("json"));
-    return c.json(
-      placementWithTermsOutput.parse(row satisfies z.input<typeof placementWithTermsOutput>),
-    );
-  },
-);
 
 placementsRouter.delete("/:id", async (c) => {
   const user = c.get("user");

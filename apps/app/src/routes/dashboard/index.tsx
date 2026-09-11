@@ -1,15 +1,12 @@
 import { Coin } from "@phosphor-icons/react";
 import { Button, Card, CardContent } from "@repo/ui";
 import { Link } from "react-router";
-import {
-  ImpressionsCard,
-  ImpressionsCardSkeleton,
-} from "../../components/overview/impressions-card";
 import { PayoutHistory, PayoutHistorySkeleton } from "../../components/overview/payout-history";
+import { PlaysCard, PlaysCardSkeleton } from "../../components/overview/plays-card";
 import { RecentLedger } from "../../components/overview/recent-ledger";
 import { StatCard, StatCardSkeleton } from "../../components/stat-card";
 import { useSession } from "../../lib/auth";
-import { useProducts } from "../../lib/products";
+import { useCampaigns } from "../../lib/campaigns";
 import { useStats } from "../../lib/stats";
 
 /** Local clock, so the greeting matches the room the reader is sitting in. */
@@ -28,19 +25,19 @@ function greeting(now = new Date()): string {
  */
 const STAT_LABELS = {
   points: "CapyPoints",
-  shown: "Shown today",
+  played: "Played today",
   received: "Received today",
-  clicks: "Clicks today",
+  scans: "Scans today",
 } as const;
 
 export function DashboardHome() {
   const { data: session } = useSession();
   const { data: stats, isError, isFetching, refetch } = useStats();
-  const { data: products } = useProducts();
-  const noProducts = products !== undefined && products.length === 0;
+  const { data: campaigns } = useCampaigns();
+  const noCampaigns = campaigns !== undefined && campaigns.length === 0;
 
   // The API divides by received, which is zero on a quiet day.
-  const ctr = stats && Number.isFinite(stats.today.ctr) ? stats.today.ctr : 0;
+  const scanRate = stats && Number.isFinite(stats.today.scanRate) ? stats.today.scanRate : 0;
   const pending = stats?.balance.pending ?? 0;
 
   return (
@@ -54,9 +51,9 @@ export function DashboardHome() {
           {greeting()}
           {session?.user.name ? `, ${session.user.name}` : ""}
         </h1>
-        {noProducts && (
+        {noCampaigns && (
           <Button asChild size="sm">
-            <Link to="/dashboard/products">Register your first product</Link>
+            <Link to="/dashboard/campaigns">Create your first campaign</Link>
           </Button>
         )}
       </div>
@@ -86,15 +83,15 @@ export function DashboardHome() {
                   meta={pending !== 0 ? `${pending > 0 ? "+" : ""}${pending} pending` : undefined}
                   icon={<Coin size={28} weight="fill" className="text-primary" />}
                 />
-                <StatCard label={STAT_LABELS.shown} value={stats.today.shown.toLocaleString()} />
+                <StatCard label={STAT_LABELS.played} value={stats.today.played.toLocaleString()} />
                 <StatCard
                   label={STAT_LABELS.received}
                   value={stats.today.received.toLocaleString()}
                 />
                 <StatCard
-                  label={STAT_LABELS.clicks}
-                  value={stats.today.clicks.toLocaleString()}
-                  meta={`CTR ${(ctr * 100).toFixed(1)}%`}
+                  label={STAT_LABELS.scans}
+                  value={stats.today.scans.toLocaleString()}
+                  meta={`Scan rate ${(scanRate * 100).toFixed(1)}%`}
                 />
               </>
             ) : (
@@ -108,7 +105,7 @@ export function DashboardHome() {
               half too narrow for a thirty-day series, so they stack. */}
           <div className="grid gap-3 xl:grid-cols-2">
             {stats ? <PayoutHistory data={stats.series} /> : <PayoutHistorySkeleton />}
-            {stats ? <ImpressionsCard data={stats.series} /> : <ImpressionsCardSkeleton />}
+            {stats ? <PlaysCard data={stats.series} /> : <PlaysCardSkeleton />}
           </div>
         </>
       )}

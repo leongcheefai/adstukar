@@ -1,10 +1,11 @@
 import { Suspense, lazy } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router";
+import { CampaignsPage } from "./routes/dashboard/campaigns";
+import { DevicesPage } from "./routes/dashboard/devices";
 import { DashboardHome } from "./routes/dashboard/index";
 import { DashboardLayout } from "./routes/dashboard/layout";
 import { LedgerPage } from "./routes/dashboard/ledger";
 import { PlacementsPage } from "./routes/dashboard/placements";
-import { ProductsPage } from "./routes/dashboard/products";
 import { SettingsPage } from "./routes/dashboard/settings";
 import { ForgotPasswordPage } from "./routes/forgot-password";
 import { LoginPage } from "./routes/login";
@@ -23,8 +24,11 @@ export function Router() {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<DashboardHome />} />
-          <Route path="products" element={<ProductsPage />} />
+          <Route path="campaigns" element={<CampaignsPage />} />
+          <Route path="devices" element={<DevicesPage />} />
           <Route path="placements" element={<PlacementsPage />} />
+          {/* Phase 0 renamed products. Keep the links people already saved. */}
+          <Route path="products" element={<Navigate to="/dashboard/campaigns" replace />} />
           <Route path="ledger" element={<LedgerPage />} />
           <Route path="settings" element={<SettingsPage />} />
           {/* Admin lives in Settings now; keep the old links working. */}

@@ -1,14 +1,14 @@
 # apps/web
 
 ## Purpose
-Astro 5 marketing site, statically generated at the canonical URL from `@repo/config/project`. One landing page ("Show two ads, earn one for yourself") plus FAQ, blog, releases, and legal pages. No pricing page — v1 has no money. It also generates OG images at build time with Satori.
+Astro 5 marketing site, statically generated at the canonical URL from `@repo/config/project`. One landing page ("Play ads and earn money") plus FAQ, blog, releases, and legal pages. No pricing page yet — top-up and payout are a later phase. It also generates OG images at build time with Satori.
 
 ## Conventions
 - Pages live in `src/pages/` as `.astro` files — use `BaseLayout` for consistent `<head>` SEO and OG meta
 - Product name, site URL, and public email addresses come from `@repo/config/project` — do not duplicate them here
 - React components in `src/components/*.tsx` render server-side by default — add `client:load`, `client:visible`, or another `client:*` directive only when they need browser-side behavior
 - Landing copy lives in `src/components/LandingContent.tsx`; FAQ items shared by the landing page, the FAQ page, and the JSON-LD live in `src/lib/faq.ts`; page metadata is centralized in `src/lib/pages.ts`; page-specific copy stays with its route or content entry
-- Economy numbers shown on the site come from `@repo/config/economy` — never type a point amount
+- Economy numbers shown on the site come from `@repo/config/economy` — never type a point amount. The play rate is tier by format, so the copy derives a range from `economy.playRate` rather than quoting one number
 - Browser-exposed env goes through `src/lib/env.ts` (validated via `@t3-oss/env-core`) — never read `import.meta.env` directly, and never import `@repo/env`, which is server-only. Add new vars to the schema there and to the root `.env.example`; they must carry the `PUBLIC_` prefix to reach the bundle.
 - Tailwind utility classes from `@repo/ui` patterns are only generated because of the `@source` directive in `src/styles/global.css` — do not remove it
 

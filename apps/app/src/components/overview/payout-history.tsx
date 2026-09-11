@@ -1,4 +1,3 @@
-import { economy } from "@repo/config/economy";
 import type { StatsDay } from "@repo/contracts/types";
 import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@repo/ui";
 import { useId } from "react";
@@ -29,17 +28,18 @@ interface PayoutDay {
 }
 
 /**
- * A day of impressions turned into the points it paid.
+ * A day of plays turned into the points it paid.
  *
- * The rate comes from `@repo/config/economy`, never from a literal here: the
- * exchange keeps every point amount in that one file.
+ * The API already nets the fee off the earn, so this reads one field rather than
+ * multiplying by a rate. A rate would be wrong anyway: it is tier by format now,
+ * and one member may hold devices in several tiers.
  */
 function toPayout(day: StatsDay): PayoutDay {
-  return { label: shortDay(day.day), points: day.shown * economy.earnPerImpression };
+  return { label: shortDay(day.day), points: day.earned };
 }
 
 /**
- * Daily CapyPoints paid for the impressions a member's placements showed.
+ * Daily CapyPoints paid for the plays a member's devices ran.
  *
  * One series, so it takes an area rather than a line: the fill carries the
  * total the header states, and a single line would leave that quantity unread.
@@ -97,7 +97,7 @@ export function PayoutHistory({ data }: { data: StatsDay[] }) {
           />
           <ChartTooltip content={<ChartTooltipContent />} />
           {/* Linear, not monotone: a spline invents points between two days
-              that no impression was counted on. */}
+              that no play was counted on. */}
           <Area
             type="linear"
             dataKey="points"

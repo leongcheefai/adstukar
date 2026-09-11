@@ -2,10 +2,10 @@
   "name": "adstukar",
   "private": true,
   "version": "0.0.0",
-  "packageManager": "pnpm@9.0.0",
+  "packageManager": "pnpm@12.3.4",
   "engines": {
     "node": ">=22",
-    "pnpm": ">=9"
+    "pnpm": ">=11"
   },
   "scripts": {
     "bootstrap": "node scripts/bootstrap.mjs",

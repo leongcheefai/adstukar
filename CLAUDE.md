@@ -1,15 +1,56 @@
 # CapyAds
 
 ## Purpose
-CapyAds is a cross-promotion ad exchange for indie hackers: "Show two ads, earn one for yourself." Members register a product, paste one embed snippet, and trade points (+1 per verified impression shown, −2 per impression received). No money moves in v1. Built on the Vite + Hono + Better Auth boilerplate: pnpm + Turborepo monorepo with four apps (`web` landing, `app` dashboard, `api`, `embed` snippet) and seven shared packages (`ui`, `db`, `auth`, `emails`, `env`, `config`, `contracts`). Design and decisions: `docs/superpowers/specs/2026-08-31-adstukar-mvp-design.md` (local, gitignored) and `CONTEXT.md` (glossary).
+CapyAds is an ad network for small screens. An advertiser pays points to have listings played on screens that other members own. The screen owner earns points from each play, and converts the earned points into money. Money enters as a top-up and leaves as a payout; points are the only unit inside the system, pegged at 1000 points to 1 USD. Built on the Vite + Hono + Better Auth boilerplate: pnpm + Turborepo monorepo with five apps (`web` landing, `app` dashboard, `api`, `capytv` screen, `embed` snippet) and seven shared packages (`ui`, `db`, `auth`, `emails`, `env`, `config`, `contracts`). Vocabulary: `CONTEXT.md`. Decisions: `docs/adr/`. Roadmap: GitHub issue #5.
+
+## The model
+The schema, the contracts, the API, and the dashboard all speak the target
+vocabulary: `campaign`, `listing`, `device`, `placement`, `play`. GitHub #11
+(Phase 0) renamed them; nothing called `product` or `impression` survives outside
+`apps/embed`.
+
+The old barter economy (+1 earn, -2 spend, no money) is dead. Do not restore it.
+
+| Term | What it is |
+|---|---|
+| `campaign` | one destination site, its verified domain, its state, its daily budget |
+| pause reason | why the system stopped a campaign: `budget` or `balance`. A person's pause carries none |
+| `listing` | one creative under a campaign, up to four |
+| `device` | one screen running CapyTV; owner, venue, tier, location, daily play cap |
+| `placement` | one overlay region on a device (`band` / `float` / `ticker`) |
+| `play` | one listing shown in one placement for its dwell |
+| lot | the origin of a point on a ledger entry: `bought`, `earned`, `granted` |
+| payout | a distributor's request to turn earned points into money. An admin reviews it and pays by hand |
 
 ## Exchange rules (where things live)
-- **Economy numbers** — `packages/config/src/economy.ts` only. Earn/spend amounts, grants, caps, settlement delay, expiry, viewability thresholds, rate limits, card sizes. Never a literal in a route, job, page, or the embed.
-- **Ledger** — `apps/api/src/modules/ledger/ledger.service.ts` is the only writer of `ledger_entry`. Append-only rows, `idempotency_key` unique (`earn:<impressionId>`, `spend:<impressionId>`, `grant:approval:<productId>`, `grant:milestone:<userId>`, `expiry:<entryId>`, `void:<entryId>`). Balances are `SUM(delta)`; never store a counter.
-- **Serve path** — `apps/api/src/modules/serve/`: `ranking.ts` is the pure extension point for AI matching; `serve.service.ts` writes the impression on `/serve` and both ledger rows on `/beacon` in one transaction.
-- **Moderation** — `apps/api/src/modules/admin/`: human queue; approval requires a verified domain and posts the welcome grant. AI pre-scoring would add a score column and an ordering here.
-- **Jobs** — `apps/api/src/modules/jobs/`: settlement (pending → settled) and expiry run in-process (`JOBS_ENABLED=true`) or once via `pnpm --filter @repo/api jobs:run`.
-- **Embed** — `apps/embed`: vanilla TS, < 10 kB gzip (build fails above), no cookies/storage/third-party calls. `packages/ui` `AdCard` is the React mirror of the same template — change both together.
+- **Economy numbers** — `packages/config/src/economy.ts` only. Play and scan rates, the fee, the peg, grants, the daily play cap, the daily budget default, settlement delay, payout hold and threshold, expiry, top-up packs, rate limits, listings per campaign. Never a literal in a route, a job, a page, or the client. `apps/embed` is the one exception: it is unmaintained, and its dead web-economy numbers sit in `apps/embed/src/config.ts` so they cannot drift back in.
+- **Ledger** — `apps/api/src/modules/ledger/ledger.service.ts` is the only writer of `ledger_entry`. Rows are append-only. `idempotency_key` is unique. Balances are `SUM(delta)`; never store a counter.
+- **Point lots** — every entry carries a lot: `bought`, `earned`, or `granted`. The lot decides the rules. `bought` refunds, never withdraws, never expires. `earned` withdraws after the hold, and expires. `granted` neither refunds nor withdraws, and expires. A spend consumes `granted` first, then `bought`, oldest first. A free point that can be withdrawn is a cash faucet.
+- **Serve path** — `apps/api/src/modules/serve/`: `ranking.ts` is the pure extension point for AI matching. `GET /serve` opens one play; `GET /loop` opens a whole batch for a screen with a shaky network; `POST /report` counts a play and writes the spend, earn and fee rows in one transaction; `GET /scan/:playId` pays the bonus and redirects. `loop.ts` holds the pure batch rules.
+- **The loop** — a play carries its own `expiresAt`, so the void job never has to know which path opened it. A live serve gives minutes; a cached batch gives hours. A queued report sends `playedAt`, and the server clamps it to the life of the play, so a device cannot move its own history.
+- **Nothing is priced when a play is served** — the daily cap, the campaign budget, and the state of the campaign and the listing are all read at report time. Above the cap, or on a creative an admin rejected after the batch was cut, the play still shows and still counts, and simply pays nothing. A scan on a still-open play is recorded free and settled by the report that follows it.
+- **Pacing** — `apps/api/src/modules/campaigns/pacing.ts` holds the rules, and they are pure. The listings under a campaign split its daily budget evenly. A campaign stops when the budget is spent, and starts again the next day. A campaign stops when the owner's points run out, and starts again when points come back. A pause by a person carries no reason, and the job never touches it.
+- **One paid listing at a time** — a device may hold several placements, but only one paid listing is on screen at once. Concurrent regions would charge several advertisers for one pair of eyes.
+- **Top-up** — `apps/api/src/modules/topups/`: `packs.ts` holds the rules, and they
+  are pure. An advertiser buys a pack at the peg, and no pack carries a bonus. The
+  row opens before the Stripe call and the points go in only when the webhook
+  lands, keyed on the payment id. A refund gives the unspent part back inside the
+  window, at the peg less what the card processor kept; which points are unspent
+  comes from the bought balance, never from the rows. The points leave the ledger
+  before the money leaves Stripe, because the reverse order loses both.
+- **Payout** — `apps/api/src/modules/payouts/`: `eligibility.ts` holds the rules
+  for what may leave, and `review.ts` the fraud signals; both are pure. Only the
+  `earned` lot withdraws, and only after the hold. A request takes the whole
+  withdrawable balance and debits it at once, because a balance left in place
+  would answer a second request. A refusal posts the compensating row and the
+  points come back. Payment is manual: an admin reads the history, sends the
+  money, and records the reference. See `docs/adr/0005`.
+- **Moderation** — `apps/api/src/modules/admin/`: a human queue. An admin reviews each listing and each device, and a device carries a photo of the screen in place. Device approval also stamps the tier, which sets the rate. The domain check stays automatic and gates the campaign.
+- **The distributor's filters** — an excluded term stops anything that reads a certain way; a veto (`vetoed_listing`) stops exactly the creative they looked at. Both live on the device and neither goes through moderation. When nothing paid is eligible, the screen plays the distributor's own promotion (the `promotion*` columns on `device`), or the CapyAds card. Both are free and move no points.
+- **Fraud is bounded by policy, not by hardware** — CapyTV is a PWA, so there is no device attestation. Approval, the daily play cap, the payout hold, and the scan-to-play ratio are the whole defence. See `docs/adr/0003`. The payout review reads three signals per screen: the scan-to-play ratio, the plays that fell outside the venue's stated open hours, and whether devices share an address or a network. `device.last_network` holds a prefix, never an address, and the stated hours are read in `device.timezone`.
+- **Jobs** — `apps/api/src/modules/jobs/`: settlement (pending → settled), expiry, and the void of an open play whose report never came. A fourth job paces campaigns. It stops a campaign that can no longer pay, and starts one whose reason to stop has gone. The jobs run in-process (`JOBS_ENABLED=true`), or once with `pnpm --filter @repo/api jobs:run`.
+- **CapyTV** — `apps/capytv` is the screen app: a PWA in a kiosk browser (`docs/adr/0003`). It shows thin content (clock, weather from Open-Meteo, an RSS feed the venue sets) and plays listings over it. It holds a loop and a report queue in `localStorage`, so a screen that loses its network keeps playing and reports when the network returns. Pure rules live in `src/lib/{queue,schedule,feed,weather}.ts`; the timers live in `src/lib/player.ts`.
+- **Embed** — `apps/embed` serves the old web surface. It stays in the repo, unmaintained. Do not add features to it.
 
 ## Conventions
 - Package scope: `@repo/*`
@@ -42,26 +83,32 @@ Single source of truth for every type crossing the API boundary. Hand-copying a 
 - "Add new package" → create `packages/<name>/`, add `package.json` name `@repo/<name>`, run `pnpm install`
 - "Start local DB" → `pnpm db:up`
 - "Apply schema changes locally" → `pnpm db:push` (dev DBs are created by push, so `db:migrate` fails on them); still run `pnpm db:generate` so a migration file ships for production
-- "Change a point amount or a cap" → edit `packages/config/src/economy.ts`; nothing else
-- "Test the embed by hand" → build it (`pnpm --filter @repo/embed build`), start the API, open `http://localhost:3001/embed/playground.html?key=<placement api key>`
+- "Change a point amount, a rate, or a cap" → edit `packages/config/src/economy.ts`; nothing else
 - "Run the ledger jobs once" → `pnpm --filter @repo/api jobs:run`
 - "Create the first admin" → `pnpm db:seed` (reads `SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD`, or takes `--email` and `--password`). It signs the user up through Better Auth, then sets `role = 'admin'`. It promotes an existing email instead of failing, and it refuses to run when `NODE_ENV=production`.
 - "Run everything locally" → `pnpm bootstrap && pnpm dev`
+- "Try CapyTV by hand" → start the API and the dashboard, register a device, approve it under Settings → Moderation, add a region to it, then open `http://localhost:3002/?key=<device key>`
 - "Set up a worktree" → from inside it, `pnpm worktree:init` (links the main checkout's `.env`, installs deps). Add `--db` to give it its own database instead of sharing
 - "Try a branch a worktree is building" → from the main checkout, `pnpm review <branch>`; `pnpm review --back` returns. Detached checkout, so it works while the worktree holds the branch
 - "Run typecheck" → `pnpm typecheck`
 - "Check launch readiness" → copy `.env.example` to an ignored production env file, then run `pnpm launch:check -- --env <path>`; run `pnpm verify` separately for the code-quality gate
 - "Before commit/push" → `pnpm verify` (lint + typecheck + test + build) must pass — enforced three ways: GitHub Actions on every PR, a native `.githooks/pre-push` hook, and a Claude Code hook
+- "Test the old web embed by hand" → build it (`pnpm --filter @repo/embed build`), start the API, open `http://localhost:3001/embed/playground.html?key=<placement api key>`. The embed is unmaintained.
 
 ## Gotchas
 - **zod dialect split**: `packages/contracts` uses `zod/v4` (`import * as z from "zod/v4"`) because drizzle-zod emits v4 instances. Rest of repo uses v3 (bare `zod`). Both ship inside zod 3.25.76. Bare `zod` in contracts = classes silently don't match. `ZodError` in `apps/api/src/middleware/error.ts` must come from `zod/v4` or the branch never fires. v4 has no `z.AnyZodObject`; `ZodType` is `<Output, Input, Internals>`.
 - `toWire` **throws** on schema types outside its allowlist (`.default()`, unions, records, `.refine()`, tuples). Deliberate — silent passthrough would leak a raw `Date` while the type claims `string`. Don't weaken the schema to dodge it.
-- A renamed/dropped column makes `.pick()` throw `Unrecognized key` **at module load, not compile time** — TS's excess-property check only fires when every mask key is invalid.
+- A renamed/dropped column makes `.pick()` throw `Unrecognized key` **at module load, not compile time** — TS's excess-property check only fires when every mask key is invalid. Phase 0 renames many columns, so expect this one.
 - `pgEnum` without `.notNull()` derives as **nullable** (e.g. `subscription.status`). That's correct; handle the null.
+- **A delete is an archive.** Once points have moved, the row stays, because the ledger references it. A campaign, a listing, and a device all archive.
+- **A refund posts a `refund` entry.** It never deletes a row and never edits one.
+- **`voidEntry` treats a pending row and a settled row differently.** A pending row never reached the balance, so it is marked `void` and nothing is posted. A settled row stays settled and takes a compensating row beside it. Doing both would give the points back twice, because balances sum settled rows only.
+- **Bought points never expire.** The expiry job must skip the `bought` lot. Expiring points somebody paid for is a consumer-law problem.
+- `pnpm db:generate` and `pnpm db:push` open an interactive prompt whenever a diff could be a rename, and they crash without a TTY. Split the change into a drop-only migration and a create-only one so neither diff is ambiguous — `0004`/`0005` are that pair.
 - `pnpm verify` is the single gate definition — CI (`.github/workflows/ci.yml`), `.githooks/pre-push`, and the Claude Code hook all call it, so they cannot drift apart. Change the gate there, not in three places. `typecheck` is what enforces `expectTypeOf` assertions — vitest does not.
 - The gate must keep passing with **no `.env` present** — that is what CI and a fresh clone get. If a task starts needing a database, add a postgres service to the CI workflow rather than weakening the gate.
 - `.githooks/` installs via the root `prepare` script (`git config core.hooksPath`). A fresh `pnpm install` wires it up; no husky or lefthook dep. Emergency bypass: `git push --no-verify`.
-- `/serve`, `/beacon`, `/click/*` accept any origin (the embed runs on member sites); every other route keeps the `APP_URL`/`WEB_URL` allow-list. The check lives in the `cors()` origin function in `apps/api/src/lib/app.ts`.
+- `/serve`, `/loop`, `/report`, `/scan/*` accept any origin, because CapyTV runs on member devices and a scan comes from a stranger's phone; every other route keeps the `APP_URL`/`WEB_URL` allow-list. The check lives in the `cors()` origin function in `apps/api/src/lib/app.ts`. A new public screen route must be added there too.
 - `/beacon` reads a **text/plain** body (`navigator.sendBeacon` cannot send JSON content types) and parses it by hand — do not add `zValidator("json")` there.
 - Rate limiting and the visitor session salt are in-process memory. Fine for one API instance; move both to Redis before scaling out.
 - `pnpm` only — never `npm install` or `yarn`
@@ -83,4 +130,4 @@ Triage uses the default five-label vocabulary. See `docs/agents/triage-labels.md
 
 ### Domain docs
 
-When domain docs are introduced, use the single-context layout in `docs/agents/domain.md`.
+`CONTEXT.md` at the root is the glossary, and the only one. `docs/adr/` holds the decision records. Layout: `docs/agents/domain.md`.

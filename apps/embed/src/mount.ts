@@ -1,6 +1,6 @@
-import { economy } from "@repo/config/economy";
 import { fetchAd, resolveApiBase, sendBeacon } from "./api";
 import { renderCard } from "./card";
+import { embedConfig } from "./config";
 import { watchViewability } from "./viewability";
 
 export interface MountOptions {
@@ -30,7 +30,7 @@ export async function mount(el: HTMLElement, opts: MountOptions): Promise<void> 
 
   const { impressionId } = res;
   if (impressionId === null) return;
-  watchViewability(card, economy.viewability, () => sendBeacon(api, impressionId, opts.key));
+  watchViewability(card, embedConfig.viewability, () => sendBeacon(api, impressionId, opts.key));
 }
 
 /** Mounts every `[data-adstukar-key]` element under `root`. */

@@ -1,15 +1,17 @@
 # apps/app
 
 ## Purpose
-Vite + React 19 SPA. The publisher dashboard — signup, login, Overview, Products, Placements, Ledger, Settings, and the admin Moderation queue. Runs on port 3000 and calls the API origin configured by `VITE_API_URL`. `VITE_EMBED_URL` is the script URL shown in placement snippets (defaults to the API's `/embed/adstukar.js`).
+Vite + React 19 SPA. The member dashboard — signup, login, Overview, Campaigns, Devices, CapyTV, CapyPoints, Settings, and the admin Moderation queue. Runs on port 3000 and calls the API origin configured by `VITE_API_URL`. `VITE_EMBED_URL` still points at the unmaintained web embed bundle the API serves; no dashboard page reads it.
 
 ## Pages
-- `routes/dashboard/index.tsx` Overview — balance (settled + pending with tooltip), today's shown/received/clicks/CTR, 30-day chart
-- `routes/dashboard/products.tsx` — list, create/edit/duplicate dialog with live `AdCard` preview, verify dialog, campaign toggle (`advertise`)
-- `routes/dashboard/placements.tsx` — snippet (HTML + React) with copy buttons, API key + rotate, size, house-ad slider, excluded terms
-- `routes/dashboard/ledger.tsx` — filterable, cursor-paginated table
-- `routes/dashboard/settings.tsx` — two-panel layout; sections live in `src/components/settings/`. Admin-only Moderation and Releases sections appear there for `role === 'admin'`; `/dashboard/admin/*` redirects in
-- Query hooks live in `src/lib/{products,placements,stats,ledger,admin}.ts` on top of `src/lib/api.ts` (`apiFetch`)
+- `routes/dashboard/index.tsx` Overview — balance (settled + pending), today's played/received/scans/scan rate, 30-day charts
+- `routes/dashboard/campaigns.tsx` — one section per campaign, up to four listing tiles each, create/edit/duplicate dialog, verify panel
+- `routes/dashboard/devices.tsx` — register a screen (name, location, venue, open hours, a photo of the screen in place), pairing code, device key + rotate, overlay regions (format, size, dwell, gap), the distributor's own promotion, excluded terms, and the per-listing veto list
+- `routes/dashboard/placements.tsx` CapyTV — an entrance with one button that opens the overlay prototype at `public/capytv/index.html`, outside the SPA
+- `routes/dashboard/ledger.tsx` — filterable by reason, state and lot; cursor-paginated. The panel above it carries the cash-out dialog (identity on file, then the request), and the table under it lists every payout this member asked for
+- `routes/dashboard/settings.tsx` — two-panel layout; sections live in `src/components/settings/`. Admin-only Moderation, Payouts and Releases sections appear there for `role === 'admin'`; `/dashboard/admin/*` redirects in
+- `/dashboard/products` redirects to Campaigns, so links people saved before Phase 0 still work
+- Query hooks live in `src/lib/{campaigns,devices,placements,stats,ledger,admin,payouts}.ts` on top of `src/lib/api.ts` (`apiFetch`). `campaigns.ts` owns listings too, because a listing only ever appears inside its campaign
 
 ## Conventions
 - All env access through `src/lib/env.ts` (validated via `@t3-oss/env-core`) — never `import.meta.env.VITE_*` directly
@@ -49,4 +51,5 @@ Open `http://localhost:3000/dashboard?design=1`. Design mode fakes an admin sess
 - Icons come from `@phosphor-icons/react`, not lucide. Phosphor takes `weight` (`bold`, `fill`, …) instead of `strokeWidth`
 - The `/_dev/components` route only exists in dev; it is absent from production builds
 - Design mode data is fake. The badge in the top-right nav is the only signal, so check it before trusting a number on screen
-- Design mode leaves `verificationToken` and `apiKey` empty on purpose, so no fixture value can look like a leaked secret. The verify panel and the placement snippet show a blank key. Start the API to see a real one
+- Design mode leaves `verificationToken` and `apiKey` empty on purpose, so no fixture value can look like a leaked secret. The verify panel and the device detail show a blank key. Start the API to see a real one
+- `src/lib/design-mode.ts` fixtures use `cmp_`, `lst_`, `dev_` and `plc_` id prefixes; the production-bundle grep in its header comment looks for `cmp_`

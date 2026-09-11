@@ -10,7 +10,8 @@ export const ledgerEntryContract = toWire(
     delta: true,
     state: true,
     reason: true,
-    impressionId: true,
+    lot: true,
+    playId: true,
     relatedEntryId: true,
     createdAt: true,
     settlesAt: true,
@@ -21,3 +22,4 @@ export const ledgerEntryContract = toWire(
 export type LedgerEntry = z.output<typeof ledgerEntryContract>;
 export type LedgerState = LedgerEntry["state"];
 export type LedgerReason = LedgerEntry["reason"];
+export type LedgerLot = LedgerEntry["lot"];

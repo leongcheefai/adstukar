@@ -8,7 +8,7 @@ import { Button } from "@repo/ui";
  * mode, product, size, keys, the embed snippet — is gone, because CapyTV asks
  * for none of it.
  *
- * The Listing page is independent of this one. Nothing here reads a listing,
+ * The Campaigns page is independent of this one. Nothing here reads a listing,
  * and no edit there changes what CapyTV plays.
  */
 export function PlacementsPage() {

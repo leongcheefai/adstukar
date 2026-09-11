@@ -29,6 +29,48 @@
       "when": 1788157250367,
       "tag": "0003_mute_switch",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1788779915429,
+      "tag": "0004_drop_barter_model",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1788779921710,
+      "tag": "0005_screens_network_model",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1788786922760,
+      "tag": "0006_campaign_pacing",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1788828229520,
+      "tag": "0007_capytv_devices",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1788835921486,
+      "tag": "0008_payouts",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1788838910387,
+      "tag": "0009_topups",
+      "breakpoints": true
     }
   ]
 }

@@ -16,9 +16,6 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
-  "dependencies": {
-    "@repo/config": "workspace:*"
-  },
   "peerDependencies": {
     "react": "^19.0.0"
   },
@@ -28,6 +25,7 @@
     }
   },
   "devDependencies": {
+    "@repo/config": "workspace:*",
     "@types/react": "^19.0.0",
     "react": "^19.0.0",
     "typescript": "^5.6.0",

@@ -3,6 +3,7 @@ import { cn } from "@repo/ui";
 import { useSearchParams } from "react-router";
 import { DangerSection } from "../../components/settings/danger-section";
 import { ModerationSection } from "../../components/settings/moderation-section";
+import { PayoutsSection } from "../../components/settings/payouts-section";
 import { ProfileSection } from "../../components/settings/profile-section";
 import { ReleasesSection } from "../../components/settings/releases-section";
 import { SessionsSection } from "../../components/settings/sessions-section";
@@ -50,8 +51,15 @@ const ADMIN_SECTIONS: SettingsSection[] = [
     label: "Moderation",
     title: "Moderation",
     description:
-      "Products waiting for review, oldest first. Approval grants the welcome CapyPoints.",
+      "Listings and devices waiting for review, oldest first. A first approved listing grants the welcome CapyPoints.",
     group: "Admin",
+  },
+  {
+    id: "payouts",
+    label: "Payouts",
+    title: "Payouts",
+    description:
+      "Distributors waiting to cash out, oldest first. Read the history behind each one, send the money by hand, then record the reference.",
   },
   {
     id: "releases",
@@ -65,6 +73,8 @@ function SectionBody({ id }: { id: string }) {
   switch (id) {
     case "moderation":
       return <ModerationSection />;
+    case "payouts":
+      return <PayoutsSection />;
     case "releases":
       return <ReleasesSection />;
     case "sessions":

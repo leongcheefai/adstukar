@@ -4,7 +4,7 @@
 Transactional email sending via Resend. Renders React Email templates to HTML and delivers them. If `RESEND_API_KEY` is not set, sends are skipped with a console warning, so the app still boots without Resend credentials.
 
 ## Conventions
-- The public API is the named sender functions exported from `src/index.ts`, currently covering welcome, verification, password reset, payment failure, email change, and account deletion
+- The public API is the named sender functions exported from `src/index.ts`, currently covering welcome, verification, password reset, payment failure, low balance, email change, and account deletion
 - Templates are React components returning plain HTML — no external CSS, no images; style with inline styles or `@react-email/components` if needed
 - Callers decide sync vs fire-and-forget: `packages/auth` uses `.catch()` for welcome; `apps/api` uses `.catch()` for payment-failed; verify and reset are `await`ed intentionally
 

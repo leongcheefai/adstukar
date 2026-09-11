@@ -1,4 +1,4 @@
-import { economy } from "@repo/config/economy";
+import { distributorPercent, economy, playRateRange } from "@repo/config/economy";
 import { Button, Container, FAQ, Section, SectionHeader } from "@repo/ui";
 import { ArrowRight, Eye, ShieldCheck, SlidersHorizontal, UserCheck } from "lucide-react";
 import type { ComponentType } from "react";
@@ -7,9 +7,8 @@ import { LANDING_FAQ } from "../lib/faq";
 
 const SIGNUP_URL = `${env.PUBLIC_APP_URL}/signup`;
 
-const { small, medium } = economy.cardSizes;
-const viewablePercent = Math.round(economy.viewability.minRatio * 100);
-const viewableSeconds = economy.viewability.minMs / 1000;
+const { lowest: lowestPlayRate, highest: highestPlayRate } = playRateRange();
+const distributorShare = distributorPercent();
 
 /** Shared by both call-to-action buttons. Trailing icon, so the right padding
  *  runs 2px tighter than the left to sit optically centred. */
@@ -30,26 +29,26 @@ const steps: Step[] = [
   },
   {
     number: "2",
-    title: "Show the card",
-    body: "Paste one snippet on your site, or open your display page on any screen.",
+    title: "Open CapyTV on a screen",
+    body: "No app store. Any TV, stick, tablet, or old laptop opens the page and starts playing.",
   },
   {
     number: "3",
-    title: "Earn and cash out",
-    body: `+${economy.earnPerImpression} credit for every verified view. Turn your credits into money.`,
+    title: "Earn CapyPoints",
+    body: `${lowestPlayRate} to ${highestPlayRate} CapyPoints for every play, banked until cash-out opens.`,
   },
 ];
 
 /** Where a distributor can put the card. Mixed on purpose: the point is that a
  *  screen is a screen, whether it is a blog or a tablet on a dashboard. */
 const places: string[] = [
-  "Websites and apps",
-  "Blogs and newsletters",
-  "YouTube and TikTok",
-  "Live streams",
+  "Café counters",
+  "Shop windows",
+  "Gyms and studios",
+  "Salons and barbers",
+  "Clinic waiting rooms",
+  "Office receptions",
   "A tablet in your car",
-  "Café and shop screens",
-  "Community boards",
   "Anywhere people look",
 ];
 
@@ -59,9 +58,15 @@ interface Stat {
 }
 
 const stats: Stat[] = [
-  { value: `+${economy.earnPerImpression}`, label: "credit for every verified view you show" },
-  { value: `−${economy.spendPerImpression}`, label: "credits for every verified view of your ad" },
-  { value: `+${economy.grants.productApproval}`, label: "welcome credits, once you are approved" },
+  {
+    value: `${lowestPlayRate}–${highestPlayRate}`,
+    label: "CapyPoints for every play on your screen",
+  },
+  { value: `${distributorShare}%`, label: "of every play and scan stays with you" },
+  {
+    value: economy.pointsPerUsd.toLocaleString(),
+    label: "CapyPoints are 1 US dollar, at a fixed rate",
+  },
 ];
 
 interface TrustItem {
@@ -74,22 +79,22 @@ const trust: TrustItem[] = [
   {
     icon: UserCheck,
     title: "Human moderation",
-    body: "A person reviews every advertiser and every distributor before an ad runs.",
+    body: "A person reviews every listing and every screen before a listing plays.",
   },
   {
     icon: Eye,
-    title: "You get paid for real views",
-    body: `${viewablePercent}% visible for ${viewableSeconds} second, or the view earns nothing.`,
+    title: "One listing at a time",
+    body: "Your screen holds several regions, but only one paid listing is ever on it.",
   },
   {
     icon: ShieldCheck,
     title: "No tracking",
-    body: "No cookies, no fingerprinting, no third-party calls.",
+    body: "No camera, no microphone, no audience measurement. The screen only reports that it played.",
   },
   {
     icon: SlidersHorizontal,
     title: "Your rules",
-    body: `Block up to ${economy.excludedTerms.max} terms. Decide how often your own ad fills the slot.`,
+    body: `Block up to ${economy.excludedTerms.max} terms. Set the dwell and the quiet time between plays.`,
   },
 ];
 
@@ -126,7 +131,7 @@ export function LandingContent() {
               wraps on a 360px screen, which leaves the illustration sitting
               between a one-line half and a two-line half of its own headline. */}
           <h1 className="text-4xl font-medium leading-[1.02] tracking-[-0.02em] sm:text-6xl lg:text-7xl">
-            <span className="block">Show ads</span>
+            <span className="block">Play ads</span>
             {/* Decorative: alt is empty, so the heading still reads as one
                 sentence. Inert, so it cannot swallow a click meant for a button. */}
             <img
@@ -142,7 +147,7 @@ export function LandingContent() {
           {/* The one line of fine print carries the hero on its own now, so it
               sits directly above the buttons rather than below them. */}
           <p className="mt-8 text-sm text-brand-200">
-            Free to join. Earn credits for real views. Cash out when you want.
+            Free to join. Earn CapyPoints for every play. Cash-out opens soon.
           </p>
 
           <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
@@ -169,8 +174,8 @@ export function LandingContent() {
         <Container>
           <SectionHeader
             eyebrow="How it works"
-            headline="Three steps to your first payout"
-            lede="Sign up in minutes. After the review, the ads run and the credits add up on their own."
+            headline="Three steps to your first CapyPoints"
+            lede="Sign up in minutes. After the review, the listings play and the points add up on their own."
           />
           <ol className="mt-16 grid gap-12 lg:grid-cols-3 lg:gap-8">
             {steps.map((step, i) => (
@@ -187,7 +192,7 @@ export function LandingContent() {
           <SectionHeader
             eyebrow="Who earns"
             headline="If people look at it, you can earn from it"
-            lede="A distributor is anyone with an audience or a screen: a blogger, a YouTuber, a café owner, a driver, a librarian."
+            lede="A distributor is anyone with a screen in a room: a café owner, a gym, a salon, a clinic, a driver."
           />
           <ul className="mt-14 flex flex-wrap justify-center gap-3">
             {places.map((place) => (
@@ -202,13 +207,13 @@ export function LandingContent() {
         </Container>
       </Section>
 
-      {/* Credits */}
-      <Section id="credits" className="bg-surface-tint">
+      {/* CapyPoints */}
+      <Section id="points" className="bg-surface-tint">
         <Container>
           <SectionHeader
-            eyebrow="Credits"
-            headline="Credits are money you have not taken out yet"
-            lede="Advertisers spend credits to run their ads. Distributors earn credits and cash them out."
+            eyebrow="CapyPoints"
+            headline="CapyPoints are money you have not taken out yet"
+            lede="Advertisers buy points and spend them on plays. Distributors earn points, and cash-out opens soon."
           />
           <ul className="mt-14 grid gap-5 sm:grid-cols-3">
             {stats.map((stat) => (
@@ -221,15 +226,19 @@ export function LandingContent() {
             ))}
           </ul>
           <p className="mx-auto mt-8 max-w-2xl text-pretty text-center text-sm text-muted-foreground">
-            Credits settle after{" "}
+            Points settle after{" "}
             <span className="font-mono tabular-nums text-foreground">
               {economy.settlementDelayHours} hours
             </span>
-            . Cash out your settled credits at any time. Unused credits expire after{" "}
+            . Cash-out is not open yet; when it opens, earned points will wait out a{" "}
+            <span className="font-mono tabular-nums text-foreground">
+              {economy.payout.holdDays}-day
+            </span>{" "}
+            hold first. Unused points expire after{" "}
             <span className="font-mono tabular-nums text-foreground">
               {economy.expiryMonths} months
             </span>
-            .
+            . Points you bought never expire.
           </p>
         </Container>
       </Section>
@@ -240,7 +249,7 @@ export function LandingContent() {
           <SectionHeader
             eyebrow="Built for trust"
             headline="Small, honest, and under your control"
-            lede={`The card is ${small.width}×${small.height} or ${medium.width}×${medium.height}, and always labelled.`}
+            lede="The card is a band, a float, or a ticker, and it is always labelled."
           />
           <ul className="mt-16 grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
             {trust.map((item) => {
@@ -268,10 +277,10 @@ export function LandingContent() {
         <Container className="grid items-center gap-10 py-16 sm:py-20 lg:grid-cols-[1.2fr_auto] lg:py-24">
           <div>
             <h2 className="text-4xl font-medium leading-[1.05] tracking-[-0.02em] sm:text-5xl">
-              Get paid for the space you already have.
+              Get paid for the screen you already have.
             </h2>
             <p className="mt-5 max-w-sm text-lg text-brand-200">
-              Sign up free, show one card, and cash out your credits.
+              Sign up free, open CapyTV on a screen, and start banking CapyPoints.
             </p>
             <Button asChild size="lg" className={`mt-8 ${CTA_CLASS}`}>
               <a href={SIGNUP_URL}>

@@ -5,6 +5,7 @@ import type { ReactElement } from "react";
 import { Resend } from "resend";
 import { ChangeEmailEmail } from "./templates/change-email";
 import { DeleteAccountEmail } from "./templates/delete-account";
+import { LowBalanceEmail } from "./templates/low-balance";
 import { PaymentFailedEmail } from "./templates/payment-failed";
 import { ResetPasswordEmail } from "./templates/reset-password";
 import { VerifyEmail } from "./templates/verify-email";
@@ -41,6 +42,10 @@ export async function sendResetPasswordEmail(to: string, url: string) {
 
 export async function sendPaymentFailedEmail(to: string, appUrl: string) {
   await send(to, "Action required: payment failed", PaymentFailedEmail({ appUrl }));
+}
+
+export async function sendLowBalanceEmail(to: string, appUrl: string) {
+  await send(to, "Your campaigns stopped: no points left", LowBalanceEmail({ appUrl }));
 }
 
 export async function sendChangeEmailConfirmationEmail(to: string, url: string, oldEmail: string) {

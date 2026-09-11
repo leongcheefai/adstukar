@@ -2,21 +2,31 @@ import * as z from "zod/v4";
 
 export const statsDayContract = z.object({
   day: z.string(), // YYYY-MM-DD (UTC)
-  shown: z.number().int(),
+  /** Counted plays on this member's own devices. */
+  played: z.number().int(),
+  /** Counted plays of this member's own listings, anywhere. */
   received: z.number().int(),
-  clicks: z.number().int(),
+  /** Scans of this member's own listings. */
+  scans: z.number().int(),
+  /** Points this member's devices earned, net of the fee. */
+  earned: z.number().int(),
 });
 
 export const statsOverviewOutput = z.object({
   balance: z.object({
     settled: z.number().int(),
     pending: z.number().int(),
+    bought: z.number().int(),
+    earned: z.number().int(),
+    granted: z.number().int(),
   }),
   today: z.object({
-    shown: z.number().int(),
+    played: z.number().int(),
     received: z.number().int(),
-    clicks: z.number().int(),
-    ctr: z.number(), // clicks / received, 0..1
+    scans: z.number().int(),
+    earned: z.number().int(),
+    /** scans / received, 0..1 */
+    scanRate: z.number(),
   }),
   series: z.array(statsDayContract),
 });
