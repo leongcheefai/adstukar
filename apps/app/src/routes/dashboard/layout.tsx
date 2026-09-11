@@ -1,4 +1,11 @@
-import { Coins, Megaphone, Monitor, Gear as Settings, SquaresFour } from "@phosphor-icons/react";
+import {
+  Coins,
+  Megaphone,
+  Monitor,
+  Gear as Settings,
+  SquaresFour,
+  Television,
+} from "@phosphor-icons/react";
 import { project } from "@repo/config/project";
 import { DashboardShell, DashboardTopbar, Logo, type NavItem } from "@repo/ui";
 import { Link, Outlet, useLocation, useNavigate } from "react-router";
@@ -26,6 +33,14 @@ function navItems(pathname: string): NavItem[] {
       href: "/dashboard/devices",
       active: pathname === "/dashboard/devices",
       icon: <Monitor size={16} />,
+    },
+    {
+      label: "CapyTV",
+      // The path stays /dashboard/placements. CapyTV is the entrance, and a
+      // rename here would break every link people already saved.
+      href: "/dashboard/placements",
+      active: pathname === "/dashboard/placements",
+      icon: <Television size={16} />,
     },
     {
       label: "CapyPoints",

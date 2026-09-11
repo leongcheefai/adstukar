@@ -5,6 +5,7 @@ import { DevicesPage } from "./routes/dashboard/devices";
 import { DashboardHome } from "./routes/dashboard/index";
 import { DashboardLayout } from "./routes/dashboard/layout";
 import { LedgerPage } from "./routes/dashboard/ledger";
+import { PlacementsPage } from "./routes/dashboard/placements";
 import { SettingsPage } from "./routes/dashboard/settings";
 import { ForgotPasswordPage } from "./routes/forgot-password";
 import { LoginPage } from "./routes/login";
@@ -25,9 +26,9 @@ export function Router() {
           <Route index element={<DashboardHome />} />
           <Route path="campaigns" element={<CampaignsPage />} />
           <Route path="devices" element={<DevicesPage />} />
-          {/* Phase 0 renamed both pages. Keep the links people already saved. */}
+          <Route path="placements" element={<PlacementsPage />} />
+          {/* Phase 0 renamed products. Keep the links people already saved. */}
           <Route path="products" element={<Navigate to="/dashboard/campaigns" replace />} />
-          <Route path="placements" element={<Navigate to="/dashboard/devices" replace />} />
           <Route path="ledger" element={<LedgerPage />} />
           <Route path="settings" element={<SettingsPage />} />
           {/* Admin lives in Settings now; keep the old links working. */}
