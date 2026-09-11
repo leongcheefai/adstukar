@@ -1,4 +1,11 @@
-import { Coins, Megaphone, Monitor, Television, Gear as Settings, SquaresFour } from "@phosphor-icons/react";
+import {
+  Coins,
+  Megaphone,
+  Monitor,
+  Gear as Settings,
+  SquaresFour,
+  Television,
+} from "@phosphor-icons/react";
 import { project } from "@repo/config/project";
 import { DashboardShell, DashboardTopbar, Logo, type NavItem } from "@repo/ui";
 import { Link, Outlet, useLocation, useNavigate } from "react-router";
