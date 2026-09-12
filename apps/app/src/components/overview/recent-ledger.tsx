@@ -93,7 +93,7 @@ export function RecentLedger() {
             description="CapyPoints land here once a listing plays on a screen."
             action={
               <Button asChild size="sm">
-                <Link to="/dashboard/placements">Start CapyTV</Link>
+                <Link to="/">Start CapyTV</Link>
               </Button>
             }
           />

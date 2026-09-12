@@ -116,7 +116,7 @@ export function DashboardShell({
 }: DashboardShellProps) {
   return (
     <TooltipProvider>
-      <div className="flex h-screen overflow-hidden bg-background">
+      <div className="flex h-full overflow-hidden bg-background">
         <aside className="hidden w-60 shrink-0 flex-col overflow-hidden border-r bg-card md:flex">
           {/* No rule under the brand. The topbar drops its own at the same
               height, and the two together drew one line across the whole top. */}

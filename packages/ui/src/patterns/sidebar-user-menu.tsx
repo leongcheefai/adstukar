@@ -62,7 +62,13 @@ export function SidebarUserMenu({
         </button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent side="top" align="start" sideOffset={8} className="w-56">
+      <DropdownMenuContent
+        side="top"
+        align="start"
+        sideOffset={8}
+        className="w-56"
+        portalled={false}
+      >
         {children}
         {children && onSignOut && <DropdownMenuSeparator />}
         {onSignOut && (

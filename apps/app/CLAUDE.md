@@ -1,23 +1,23 @@
 # apps/app
 
 ## Purpose
-Vite + React 19 SPA. The member dashboard — signup, login, Overview, Campaigns, Devices, CapyTV, CapyPoints, Settings, and the admin Moderation queue. Runs on port 3000 and calls the API origin configured by `VITE_API_URL`. `VITE_EMBED_URL` still points at the unmaintained web embed bundle the API serves; no dashboard page reads it.
+Vite + React 19 SPA. CapyTV is the member app: boot mark, then a session check, then source tiles or the login form on the same set. Dashboard (Overview, Campaigns, Devices, CapyPoints, Settings, admin Moderation) opens as a Vaul drawer over CapyTV at `/dashboard`. Runs on port 3000 and calls the API origin configured by `VITE_API_URL`. `VITE_EMBED_URL` still points at the unmaintained web embed bundle the API serves; no dashboard page reads it.
 
 ## Pages
+- `routes/capytv/home.tsx` CapyTV — `/` is the product. Every launch plays the boot mark first. Then a session sees the source tiles, and no session sees the login form on the set. `/login`, `/signup` and `/forgot-password` redirect here. Account menu opens the dashboard as a Vaul drawer over CapyTV, or logs out.
 - `routes/dashboard/index.tsx` Overview — balance (settled + pending), today's played/received/scans/scan rate, 30-day charts
 - `routes/dashboard/campaigns.tsx` — one section per campaign, up to four listing tiles each, create/edit/duplicate dialog, verify panel
 - `routes/dashboard/devices.tsx` — register a screen (name, location, venue, open hours, a photo of the screen in place), pairing code, device key + rotate, overlay regions (format, size, dwell, gap), the distributor's own promotion, excluded terms, and the per-listing veto list
-- `routes/dashboard/placements.tsx` CapyTV — an entrance with one button that opens the overlay prototype at `public/capytv/index.html`, outside the SPA
 - `routes/dashboard/ledger.tsx` — filterable by reason, state and lot; cursor-paginated. The panel above it carries the cash-out dialog (identity on file, then the request), and the table under it lists every payout this member asked for
 - `routes/dashboard/settings.tsx` — two-panel layout; sections live in `src/components/settings/`. Admin-only Moderation, Payouts and Releases sections appear there for `role === 'admin'`; `/dashboard/admin/*` redirects in
-- `/dashboard/products` redirects to Campaigns, so links people saved before Phase 0 still work
+- `/dashboard/products` redirects to Campaigns, and `/dashboard/placements` redirects to `/`, so links people saved before still work
 - Query hooks live in `src/lib/{campaigns,devices,placements,stats,ledger,admin,payouts}.ts` on top of `src/lib/api.ts` (`apiFetch`). `campaigns.ts` owns listings too, because a listing only ever appears inside its campaign
 
 ## Conventions
 - All env access through `src/lib/env.ts` (validated via `@t3-oss/env-core`) — never `import.meta.env.VITE_*` directly
 - Authenticated API calls must include `credentials: 'include'` — session auth is cookie-based
 - Auth state via `useSession()` from `src/lib/auth.ts` — never manage session state manually
-- Dashboard pages must be nested inside the `/dashboard` route in `router.tsx` so `ProtectedRoute` + `DashboardLayout` wrap them automatically
+- Dashboard pages must be nested inside the `/dashboard` route in `router.tsx` so `MemberLayout` (CapyTV) and `DashboardLayout` (Vaul drawer) wrap them. The drawer only mounts when a session exists.
 
 ## Common tasks
 
@@ -36,7 +36,7 @@ Add a button calling `signIn.social({ provider: 'google', callbackURL: '/dashboa
 Navigate to `http://localhost:3000/_dev/components` in dev mode. This route is tree-shaken from production builds.
 
 ### Work on the UI with no API or database
-Open `http://localhost:3000/dashboard?design=1`. Design mode fakes an admin session and answers every read endpoint from fixtures, so every page renders populated. Leave it with `?design=0`, or click the "design mode" badge in the top-right nav.
+Open `http://localhost:3000/?design=1`. Design mode fakes an admin session and answers every read endpoint from fixtures, so CapyTV and the dashboard render populated. Leave it with `?design=0`, or click the "design mode" badge in the dashboard top-right nav.
 
 - `src/lib/design-mode.ts` holds the flag, the fake session, and all fixtures
 - `useSession()` in `src/lib/auth.ts` returns the fake session, so `ProtectedRoute` passes and the admin settings sections appear

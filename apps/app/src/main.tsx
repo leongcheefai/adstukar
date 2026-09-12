@@ -1,6 +1,8 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+
+document.documentElement.classList.remove("dark");
 import "@repo/ui/styles";
 import "@repo/ui/styles/theme-dashboard";
 import { Toaster } from "@repo/ui";
