@@ -14,6 +14,7 @@ export interface ProjectIdentity {
 
 /**
  * Public brand identity. Edit this file once when starting a new project.
+ * Every app depends on this package, so a change here rebuilds every deployment.
  * Environment-specific app and API origins remain in the root `.env`.
  *
  * `slug` stays "adstukar" on purpose. It is not display copy: it names the
