@@ -122,7 +122,7 @@ Single source of truth for every type crossing the API boundary. Hand-copying a 
 
 ### Issue tracker
 
-Issues and PRDs are tracked as GitHub issues using the `gh` CLI. See `docs/agents/issue-tracker.md`.
+Issues and PRDs are tracked in Linear (team `KEV`, project `CapyTV`) through the Linear MCP server. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 

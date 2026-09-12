@@ -1,45 +1,50 @@
-# Issue tracker: GitHub
+# Issue tracker: Linear
 
-Issues and PRDs for this repo live as GitHub issues. Use the `gh` CLI for all operations.
+Issues and PRDs for this repo live in Linear. Use the Linear MCP server (`mcp__linear-server__*` tools) for all operations. Do not use `gh issue`.
+
+## Scope
+
+- **Team**: `KEV` (name `Kevin&cf`, id `960f91c6-cfaf-495a-a490-b3f434ea0dd4`)
+- **Project**: `CapyTV` (id `c3a9bb95-d448-4b45-bfdc-c0c89edb216f`)
+
+Every issue a skill creates goes to this team and this project. When a skill reads or lists issues, filter by this team and this project.
 
 ## Conventions
 
-- **Create an issue**: `gh issue create --title "..." --body "..."`. Use a heredoc for multi-line bodies.
-- **Read an issue**: `gh issue view <number> --comments`, filtering comments by `jq` and also fetching labels.
-- **List issues**: `gh issue list --state open --json number,title,body,labels,comments --jq '[.[] | {number, title, body, labels: [.labels[].name], comments: [.comments[].body]}]'` with appropriate `--label` and `--state` filters.
-- **Comment on an issue**: `gh issue comment <number> --body "..."`
-- **Apply / remove labels**: `gh issue edit <number> --add-label "..."` / `--remove-label "..."`
-- **Close**: `gh issue close <number> --comment "..."`
+- **Create an issue**: `save_issue` with `team`, `project`, `title`, and a Markdown `description`. Put a PRD or a spec in the description, not in a comment.
+- **Read an issue**: `get_issue` by identifier (for example `KEV-42`), then `list_comments` for the thread.
+- **List issues**: `list_issues` filtered by `team` and `project`, with `state` and `label` filters as the skill needs.
+- **Comment on an issue**: `save_comment` with the issue id and a Markdown `body`.
+- **Apply / remove labels**: `save_issue` with the issue `id` and the new `labels` list. Read the current labels first, then send the full list back.
+- **Close**: `save_issue` with the issue `id` and the `state` set to `Done`, or `Canceled` for a `wontfix`. Add a closing comment first.
 
-Infer the repo from `git remote -v` — `gh` does this automatically when run inside a clone.
+If the Linear MCP server is not connected, stop and ask the user to connect it. Do not fall back to another tracker.
 
 ## Pull requests as a triage surface
 
 **PRs as a request surface: no.** _(Set to `yes` if this repo treats external PRs as feature requests; `/triage` reads this flag.)_
 
-When set to `yes`, PRs run through the same labels and states as issues, using the `gh pr` equivalents:
+When set to `yes`, external PRs on GitHub still enter the triage queue, but the record of the decision lives in Linear:
 
 - **Read a PR**: `gh pr view <number> --comments` and `gh pr diff <number>` for the diff.
-- **List external PRs for triage**: `gh pr list --state open --json number,title,body,labels,author,authorAssociation,comments` then keep only `authorAssociation` of `CONTRIBUTOR`, `FIRST_TIME_CONTRIBUTOR`, or `NONE` (drop `OWNER`/`MEMBER`/`COLLABORATOR`).
-- **Comment / label / close**: `gh pr comment`, `gh pr edit --add-label`/`--remove-label`, `gh pr close`.
-
-GitHub shares one number space across issues and PRs, so a bare `#42` may be either — resolve with `gh pr view 42` and fall back to `gh issue view 42`.
+- **List external PRs for triage**: `gh pr list --state open --json number,title,body,labels,author,authorAssociation,comments` then keep only `authorAssociation` of `CONTRIBUTOR`, `FIRST_TIME_CONTRIBUTOR`, or `NONE`.
+- **Record the decision**: create a Linear issue that links the PR URL, then apply the triage label to the Linear issue.
 
 ## When a skill says "publish to the issue tracker"
 
-Create a GitHub issue.
+Create a Linear issue in the team and project above.
 
 ## When a skill says "fetch the relevant ticket"
 
-Run `gh issue view <number> --comments`.
+Call `get_issue` with the identifier, then `list_comments`.
 
 ## Wayfinding operations
 
 Used by `/wayfinder`. The **map** is a single issue with **child** issues as tickets.
 
-- **Map**: a single issue labelled `wayfinder:map`, holding the Notes / Decisions-so-far / Fog body. `gh issue create --label wayfinder:map`.
-- **Child ticket**: an issue linked to the map as a GitHub sub-issue (`gh api` on the sub-issues endpoint). Where sub-issues aren't enabled, add the child to a task list in the map body and put `Part of #<map>` at the top of the child body. Labels: `wayfinder:<type>` (`research`/`prototype`/`grilling`/`task`). Once claimed, the ticket is assigned to the driving dev.
-- **Blocking**: GitHub's **native issue dependencies** — the canonical, UI-visible representation. Add an edge with `gh api --method POST repos/<owner>/<repo>/issues/<child>/dependencies/blocked_by -F issue_id=<blocker-db-id>`, where `<blocker-db-id>` is the blocker's numeric **database id** (`gh api repos/<owner>/<repo>/issues/<n> --jq .id`, _not_ the `#number` or `node_id`). GitHub reports `issue_dependencies_summary.blocked_by` (open blockers only — the live gate). Where dependencies aren't available, fall back to a `Blocked by: #<n>, #<n>` line at the top of the child body. A ticket is unblocked when every blocker is closed.
-- **Frontier query**: list the map's open children (`gh issue list --state open`, scoped to the map's sub-issues / task list), drop any with an open blocker (`issue_dependencies_summary.blocked_by > 0`, or an open issue in the `Blocked by` line) or an assignee; first in map order wins.
-- **Claim**: `gh issue edit <n> --add-assignee @me` — the session's first write.
-- **Resolve**: `gh issue comment <n> --body "<answer>"`, then `gh issue close <n>`, then append a context pointer (gist + link) to the map's Decisions-so-far.
+- **Map**: a single issue labelled `wayfinder:map`, holding the Notes / Decisions-so-far / Fog body.
+- **Child ticket**: a sub-issue of the map (`save_issue` with `parent` set to the map). Labels: `wayfinder:<type>` (`research`/`prototype`/`grilling`/`task`). Once claimed, the ticket is assigned to the driving dev.
+- **Blocking**: Linear's native `blocked by` relation. Add it with the issue relation tool on the child, pointing at the blocker. A ticket is unblocked when every blocker is `Done` or `Canceled`.
+- **Frontier query**: list the map's open sub-issues, drop any with an open blocker or an assignee; first in map order wins.
+- **Claim**: `save_issue` with `assignee` set to `me` — the session's first write.
+- **Resolve**: `save_comment` with the answer, `save_issue` with the state `Done`, then append a context pointer to the map's Decisions-so-far.
