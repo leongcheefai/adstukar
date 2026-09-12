@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Link } from "react-router";
 import { authClient } from "../lib/auth";
 
-export function ForgotPasswordPage() {
+export function ForgotPasswordPage({ embedded = false }: { embedded?: boolean }) {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [sent, setSent] = useState(false);
@@ -30,50 +30,78 @@ export function ForgotPasswordPage() {
     }
   }
 
+  const signInHref = embedded ? "/" : "/login";
+  const errorId = "forgot-error";
+  const invalid = Boolean(error);
+
+  const backLink = (
+    <Button asChild variant={sent ? "outline" : "ghost"} className="w-full">
+      <Link to={signInHref}>Back to sign in</Link>
+    </Button>
+  );
+
+  const body = sent ? (
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">
+        Check your email for a link to reset your password.
+      </p>
+      {backLink}
+    </div>
+  ) : (
+    <form onSubmit={handleSubmit} className={embedded ? "boot-auth-fields" : "space-y-4"}>
+      <div className="space-y-1.5">
+        <Label htmlFor="forgot-email">Email</Label>
+        <Input
+          id="forgot-email"
+          type="email"
+          placeholder="you@example.com"
+          value={email}
+          onChange={(e) => {
+            if (error) setError("");
+            setEmail(e.target.value);
+          }}
+          required
+          autoComplete="email"
+          aria-invalid={invalid || undefined}
+          aria-describedby={invalid ? errorId : undefined}
+          className="h-11 text-base md:text-base"
+        />
+      </div>
+      <p
+        id={errorId}
+        className={embedded ? "boot-auth-error" : "text-sm text-destructive"}
+        role="alert"
+      >
+        {error || (embedded ? "\u00a0" : null)}
+      </p>
+      <Button type="submit" className="w-full" disabled={loading}>
+        {loading ? "Sending…" : "Send reset link"}
+      </Button>
+      {backLink}
+    </form>
+  );
+
+  if (embedded) {
+    return (
+      <main className="boot-auth-card">
+        <header className="boot-auth-intro">
+          <div className="boot-auth-copy">
+            <h1 className="boot-auth-title">Reset password</h1>
+            <p className="boot-auth-lede">We will send a reset link to your email.</p>
+          </div>
+        </header>
+        <div className="boot-auth-panel">{body}</div>
+      </main>
+    );
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-sm">
+    <div className="flex min-h-dvh items-center justify-center bg-[#08080a] p-4">
+      <Card className="w-full max-w-lg shadow-[var(--elev-3)]">
         <CardHeader>
-          <CardTitle className="text-2xl">Reset password</CardTitle>
+          <CardTitle className="text-2xl text-balance">Reset password</CardTitle>
         </CardHeader>
-        <CardContent>
-          {sent ? (
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Check your email for a link to reset your password.
-              </p>
-              <Link to="/login">
-                <Button variant="outline" className="w-full">
-                  Back to sign in
-                </Button>
-              </Link>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  autoComplete="email"
-                />
-              </div>
-              {error && <p className="text-sm text-destructive">{error}</p>}
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Sending…" : "Send reset link"}
-              </Button>
-              <Link to="/login">
-                <Button variant="ghost" className="w-full">
-                  Back to sign in
-                </Button>
-              </Link>
-            </form>
-          )}
-        </CardContent>
+        <CardContent>{body}</CardContent>
       </Card>
     </div>
   );

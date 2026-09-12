@@ -13,6 +13,16 @@ export const authClient = createAuthClient({
 
 export const { signIn, signOut, signUp } = authClient;
 
+/** Leave the session in the UI first. The API call can fail if the server is down. */
+export async function signOutThen(after: () => void): Promise<void> {
+  after();
+  try {
+    await signOut();
+  } catch {
+    // Already on login. A dead API must not keep the member in the app.
+  }
+}
+
 type SessionResult = ReturnType<typeof authClient.useSession>;
 
 /**

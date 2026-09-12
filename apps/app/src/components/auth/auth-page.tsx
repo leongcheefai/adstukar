@@ -1,8 +1,9 @@
-import { project } from "@repo/config/project";
 import { Button, Input, Label, Separator } from "@repo/ui";
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { signIn, signUp } from "../../lib/auth";
+import "../../styles/capytv.css";
+import { CapyLockup } from "../capytv/lockup";
 
 /** The four-colour Google mark. Inline, so the button needs no network request. */
 function GoogleIcon() {
@@ -38,31 +39,34 @@ export type AuthMode = "login" | "signup";
 const COPY = {
   login: {
     title: "Sign in",
-    subtitle: "Welcome back. Sign in to your dashboard.",
+    subtitle: "Sign in to start CapyTV.",
     google: "Sign in with Google",
     submit: "Sign in",
     submitting: "Signing in…",
     failed: "Sign in failed",
-    footer: "Don't have an account?",
+    footer: "Don’t have an account?",
     footerLink: "Create one",
-    footerHref: "/signup",
-    panel: "Sign in to check your balance, your placements, and your payouts.",
   },
   signup: {
-    title: "Create your account",
-    subtitle: "Free to join. Show ads, earn credits, cash out.",
+    title: "Create account",
+    subtitle: "Free to join. Pick a source and start CapyTV.",
     google: "Sign up with Google",
     submit: "Create account",
     submitting: "Creating account…",
     failed: "Sign up failed",
     footer: "Already have an account?",
     footerLink: "Sign in",
-    footerHref: "/login",
-    panel: "Register once, paste one snippet, and earn credits from your first verified view.",
   },
 } as const;
 
-export function AuthPage({ mode }: { mode: AuthMode }) {
+export function AuthPage({
+  mode,
+  embedded = false,
+}: {
+  mode: AuthMode;
+  /** Form only. The CapyTV boot mark already holds the brand. */
+  embedded?: boolean;
+}) {
   const navigate = useNavigate();
   const { search } = useLocation();
   const [name, setName] = useState("");
@@ -73,6 +77,35 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
 
   const isSignup = mode === "signup";
   const copy = COPY[mode];
+  const signupHref = embedded ? "/?auth=signup" : "/signup";
+  const loginHref = embedded ? "/" : "/login";
+  const forgotHref = embedded ? "/?auth=forgot" : "/forgot-password";
+  const errorId = "auth-error";
+  const invalid = Boolean(error);
+
+  function clearError() {
+    if (error) setError("");
+  }
+
+  function redirectAfterAuth() {
+    const params = new URLSearchParams(search);
+    const redirectTo = params.get("redirect");
+    const safe = redirectTo?.startsWith("/") && !redirectTo.startsWith("//") ? redirectTo : "/";
+    navigate(safe, { replace: true });
+  }
+
+  async function handleGoogle() {
+    setError("");
+    setLoading(true);
+    try {
+      const result = await signIn.social({ provider: "google", callbackURL: "/" });
+      if (result.error) setError(result.error.message ?? copy.failed);
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -86,12 +119,7 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
         setError(result.error.message ?? copy.failed);
         return;
       }
-      // Only sign-in honours ?redirect. A new account has nothing to return to.
-      const params = new URLSearchParams(search);
-      const redirectTo = isSignup ? null : params.get("redirect");
-      const safe =
-        redirectTo?.startsWith("/") && !redirectTo.startsWith("//") ? redirectTo : "/dashboard";
-      navigate(safe, { replace: true });
+      redirectAfterAuth();
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
@@ -99,122 +127,175 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
     }
   }
 
-  return (
-    <div className="flex min-h-screen">
-      {/* Brand panel. Hidden below lg: on a phone it would push the form off the
-          first screen, and the form is the only thing anyone came here for. */}
-      <aside className="hidden w-1/2 flex-col justify-between bg-slab p-12 text-slab-foreground lg:flex">
-        <span className="text-lg font-semibold tracking-tight">{project.name}</span>
+  const footer = (
+    <p className={embedded ? "boot-auth-footer" : "mt-6 text-center text-sm text-muted-foreground"}>
+      {copy.footer}{" "}
+      <Link
+        to={isSignup ? loginHref : signupHref}
+        className={
+          embedded ? "boot-auth-switch" : "text-foreground underline-offset-4 hover:underline"
+        }
+      >
+        {copy.footerLink}
+      </Link>
+    </p>
+  );
 
-        <div className="max-w-sm">
-          <p className="text-4xl font-medium leading-[1.1] tracking-[-0.02em]">
-            Show ads.
-            <br />
-            Earn credits.
-            <br />
-            Cash out.
-          </p>
-          <p className="mt-6 text-sm leading-relaxed text-slab-foreground/70">{copy.panel}</p>
-        </div>
+  const fields = (
+    <>
+      <Button
+        type="button"
+        variant="outline"
+        className="w-full gap-2.5"
+        onClick={() => void handleGoogle()}
+        disabled={loading}
+      >
+        <GoogleIcon />
+        {copy.google}
+      </Button>
 
-        <p className="text-xs text-slab-foreground/60">
-          No card. No cookies. A person reviews every listing.
-        </p>
-      </aside>
+      <div className={embedded ? "boot-auth-rule" : "my-6 flex items-center gap-4"}>
+        <Separator className="flex-1" />
+        <span className="text-xs text-muted-foreground">or</span>
+        <Separator className="flex-1" />
+      </div>
 
-      <main className="flex w-full items-center justify-center p-6 lg:w-1/2">
-        <div className="w-full max-w-sm">
-          {/* The brand only shows here while the blue panel is hidden. */}
-          <span className="mb-8 block text-lg font-semibold tracking-tight lg:hidden">
-            {project.name}
-          </span>
-
-          <h1 className="text-2xl font-semibold tracking-tight">{copy.title}</h1>
-          <p className="mt-1.5 text-sm text-muted-foreground">{copy.subtitle}</p>
-
-          {/* Design only: no handler yet, so the button does nothing. To make it
-              work, call signIn.social({ provider: "google", callbackURL: "/dashboard" }). */}
-          <Button type="button" variant="outline" className="mt-8 w-full gap-2.5">
-            <GoogleIcon />
-            {copy.google}
-          </Button>
-
-          <div className="my-6 flex items-center gap-4">
-            <Separator className="flex-1" />
-            <span className="text-xs text-muted-foreground">or</span>
-            <Separator className="flex-1" />
+      <form onSubmit={handleSubmit} className={embedded ? "boot-auth-fields" : "space-y-4"}>
+        {(isSignup || embedded) && (
+          <div
+            className={embedded && !isSignup ? "space-y-1.5 boot-auth-hold" : "space-y-1.5"}
+            data-auth-slot="name"
+            inert={embedded && !isSignup ? true : undefined}
+            aria-hidden={embedded && !isSignup ? true : undefined}
+          >
+            <Label htmlFor="name">Name</Label>
+            <Input
+              id="name"
+              type="text"
+              placeholder="Your name"
+              value={name}
+              onChange={(e) => {
+                clearError();
+                setName(e.target.value);
+              }}
+              required={isSignup}
+              tabIndex={embedded && !isSignup ? -1 : undefined}
+              autoComplete="name"
+              spellCheck={false}
+              aria-invalid={isSignup && invalid ? true : undefined}
+              aria-describedby={isSignup && invalid ? errorId : undefined}
+              className="h-11 text-base md:text-base"
+            />
           </div>
+        )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {isSignup && (
-              <div className="space-y-1.5">
-                <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="Your name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                  autoComplete="name"
-                />
-              </div>
-            )}
-
-            <div className="space-y-1.5">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoComplete="email"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
-                {!isSignup && (
-                  <Link
-                    to="/forgot-password"
-                    className="text-xs text-muted-foreground hover:text-foreground"
-                  >
-                    Forgot password?
-                  </Link>
-                )}
-              </div>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                autoComplete={isSignup ? "new-password" : "current-password"}
-                minLength={isSignup ? 8 : undefined}
-              />
-              {isSignup && <p className="text-xs text-muted-foreground">At least 8 characters.</p>}
-            </div>
-
-            {error && <p className="text-sm text-destructive">{error}</p>}
-
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? copy.submitting : copy.submit}
-            </Button>
-          </form>
-
-          <p className="mt-6 text-center text-sm text-muted-foreground">
-            {copy.footer}{" "}
-            <Link
-              to={copy.footerHref}
-              className="text-foreground underline-offset-4 hover:underline"
-            >
-              {copy.footerLink}
-            </Link>
-          </p>
+        <div className="space-y-1.5">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => {
+              clearError();
+              setEmail(e.target.value);
+            }}
+            required
+            autoComplete="email"
+            aria-invalid={invalid || undefined}
+            aria-describedby={invalid ? errorId : undefined}
+            className="h-11 text-base md:text-base"
+          />
         </div>
+
+        <div className="space-y-1.5">
+          <div
+            className={embedded ? "boot-auth-password-row" : "flex items-center justify-between"}
+          >
+            <Label htmlFor="password">Password</Label>
+            <Link
+              to={forgotHref}
+              tabIndex={isSignup ? -1 : undefined}
+              aria-hidden={isSignup || undefined}
+              className={
+                embedded
+                  ? isSignup
+                    ? "boot-auth-forgot boot-auth-hold"
+                    : "boot-auth-forgot"
+                  : isSignup
+                    ? "hidden"
+                    : "text-xs text-muted-foreground hover:text-foreground"
+              }
+            >
+              Forgot password?
+            </Link>
+          </div>
+          <Input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(e) => {
+              clearError();
+              setPassword(e.target.value);
+            }}
+            required
+            autoComplete={isSignup ? "new-password" : "current-password"}
+            minLength={isSignup ? 8 : undefined}
+            aria-invalid={invalid || undefined}
+            aria-describedby={invalid ? errorId : undefined}
+            className="h-11 text-base md:text-base"
+          />
+          {(isSignup || embedded) && (
+            <p
+              className={
+                embedded && !isSignup
+                  ? "text-xs text-muted-foreground boot-auth-hold"
+                  : "text-xs text-muted-foreground"
+              }
+            >
+              At least 8 characters.
+            </p>
+          )}
+        </div>
+
+        <p
+          id={errorId}
+          className={embedded ? "boot-auth-error" : "text-sm text-destructive"}
+          role="alert"
+        >
+          {error || (embedded ? "\u00a0" : null)}
+        </p>
+
+        <Button type="submit" className="w-full" disabled={loading}>
+          {loading ? copy.submitting : copy.submit}
+        </Button>
+      </form>
+    </>
+  );
+
+  if (embedded) {
+    return (
+      <main className="boot-auth-card" data-mode={mode}>
+        <header className="boot-auth-intro">
+          <div className="boot-auth-copy">
+            <h1 className="boot-auth-title">{copy.title}</h1>
+            <p className="boot-auth-lede">{copy.subtitle}</p>
+          </div>
+          {footer}
+        </header>
+        <div className="boot-auth-panel">{fields}</div>
+      </main>
+    );
+  }
+
+  return (
+    <div className="flex min-h-dvh flex-col items-center justify-center gap-8 bg-[#08080a] p-6">
+      <CapyLockup className="h-10 w-auto" />
+      <main className="w-full max-w-lg rounded-2xl bg-card p-8 text-card-foreground shadow-[var(--elev-3)]">
+        <h1 className="text-2xl font-semibold tracking-tight text-balance">{copy.title}</h1>
+        <p className="mt-1.5 text-sm text-muted-foreground">{copy.subtitle}</p>
+        <div className="mt-8">{fields}</div>
+        {footer}
       </main>
     </div>
   );

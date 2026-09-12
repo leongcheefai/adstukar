@@ -47,6 +47,19 @@ export {
   SheetTitle,
   SheetTrigger,
 } from "./primitives/sheet";
+export {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHandle,
+  DrawerHeader,
+  DrawerOverlay,
+  DrawerPortal,
+  DrawerTitle,
+  DrawerTrigger,
+} from "./primitives/drawer";
 
 export {
   DropdownMenu,

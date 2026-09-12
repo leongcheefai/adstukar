@@ -1,17 +1,19 @@
+import { Coins, Megaphone, Monitor, Gear as Settings, SquaresFour } from "@phosphor-icons/react";
 import {
-  Coins,
-  Megaphone,
-  Monitor,
-  Gear as Settings,
-  SquaresFour,
-  Television,
-} from "@phosphor-icons/react";
-import { project } from "@repo/config/project";
-import { DashboardShell, DashboardTopbar, Logo, type NavItem } from "@repo/ui";
+  DashboardShell,
+  DashboardTopbar,
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerTitle,
+  type NavItem,
+} from "@repo/ui";
+import { useEffect, useRef, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router";
+import { CapyLockup } from "../../components/capytv/lockup";
+import { clearResume } from "../../components/capytv/resume";
 import { DashboardSidebarFooter } from "../../components/dashboard-sidebar-footer";
-import { ProtectedRoute } from "../../components/protected-route";
-import { signOut, useSession } from "../../lib/auth";
+import { signOutThen, useSession } from "../../lib/auth";
 import { designMode } from "../../lib/design-mode";
 
 function navItems(pathname: string): NavItem[] {
@@ -35,14 +37,6 @@ function navItems(pathname: string): NavItem[] {
       icon: <Monitor size={16} />,
     },
     {
-      label: "CapyTV",
-      // The path stays /dashboard/placements. CapyTV is the entrance, and a
-      // rename here would break every link people already saved.
-      href: "/dashboard/placements",
-      active: pathname === "/dashboard/placements",
-      icon: <Television size={16} />,
-    },
-    {
       label: "CapyPoints",
       // The path stays /ledger. It is the append-only record either way, and a
       // rename here would break every link people already saved.
@@ -59,14 +53,14 @@ function navItems(pathname: string): NavItem[] {
   ];
 }
 
-function DashboardContent() {
+function DashboardContent({ onClose }: { onClose: () => void }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { data: session } = useSession();
 
   async function handleSignOut() {
-    await signOut();
-    navigate("/login");
+    clearResume();
+    await signOutThen(() => navigate("/", { replace: true }));
   }
 
   const items = navItems(pathname);
@@ -80,14 +74,19 @@ function DashboardContent() {
     );
   }
 
-  /* The same mark the browser tab carries. Logo draws in currentColor and
-     knocks the capybara out of the square, so the sidebar shows through it and
-     it needs no second colour in dark mode. */
   const brand = (
-    <span className="inline-flex items-center gap-2">
-      <Logo variant="mark" size={22} className="text-primary" />
-      {project.name}
-    </span>
+    <Link
+      to="/"
+      className="inline-flex items-center"
+      aria-label="CapyTV"
+      onClick={(event) => {
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        event.preventDefault();
+        onClose();
+      }}
+    >
+      <CapyLockup inverted={false} className="h-12 w-auto" />
+    </Link>
   );
 
   const sidebarFooter = (
@@ -135,9 +134,50 @@ function DesignModeBadge() {
 }
 
 export function DashboardLayout() {
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const closing = useRef(false);
+  const [reduceMotion] = useState(
+    () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+  );
+
+  useEffect(() => {
+    setOpen(true);
+  }, []);
+
+  function closeDrawer() {
+    closing.current = true;
+    setOpen(false);
+  }
+
   return (
-    <ProtectedRoute>
-      <DashboardContent />
-    </ProtectedRoute>
+    <Drawer
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (!next) closing.current = true;
+      }}
+      onAnimationEnd={(isOpen) => {
+        if (!isOpen && closing.current && window.location.pathname.startsWith("/dashboard")) {
+          navigate("/");
+        }
+      }}
+      handleOnly
+      shouldScaleBackground={!reduceMotion}
+      setBackgroundColorOnScale={!reduceMotion}
+    >
+      <DrawerContent
+        overlayClassName="z-[250]"
+        className="z-[250] overflow-hidden p-0 data-[vaul-drawer-direction=bottom]:mt-0 data-[vaul-drawer-direction=bottom]:h-[calc(100dvh-12px)] data-[vaul-drawer-direction=bottom]:max-h-[calc(100dvh-12px)] data-[vaul-drawer-direction=bottom]:rounded-t-2xl"
+      >
+        <DrawerTitle className="sr-only">Dashboard</DrawerTitle>
+        <DrawerDescription className="sr-only">
+          Campaigns, devices, points, and settings.
+        </DrawerDescription>
+        <div className="flex min-h-0 flex-1 flex-col">
+          <DashboardContent onClose={closeDrawer} />
+        </div>
+      </DrawerContent>
+    </Drawer>
   );
 }
