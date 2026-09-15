@@ -1226,16 +1226,23 @@ export function designResponse(path: string, method: string, body?: unknown): un
     case "/stats/overview":
       return stats;
     case "/campaigns":
-      return campaigns.map((row) => ({
-        campaign: { ...row.campaign },
-        listings: row.listings.map((l) => ({ ...l })),
-      }));
+      // The return type is the contract, so a field the contract gains and this
+      // copy forgets fails typecheck instead of crashing the page in design mode.
+      return campaigns.map(
+        (row): CampaignWithListings => ({
+          campaign: { ...row.campaign },
+          listings: row.listings.map((l) => ({ ...l })),
+          spentToday: row.spentToday,
+        }),
+      );
     case "/devices":
-      return devices.map((row) => ({
-        device: { ...row.device },
-        excludedTerms: [...row.excludedTerms],
-        vetoedListingIds: [...row.vetoedListingIds],
-      }));
+      return devices.map(
+        (row): DeviceWithTerms => ({
+          device: { ...row.device },
+          excludedTerms: [...row.excludedTerms],
+          vetoedListingIds: [...row.vetoedListingIds],
+        }),
+      );
     case "/payouts":
       return payoutOverview();
     case "/topups":
