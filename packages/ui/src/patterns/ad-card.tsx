@@ -75,6 +75,7 @@ export function AdCard({
   size = "medium",
   label = "Sponsored",
   className,
+  style,
   ...props
 }: AdCardProps) {
   const dims = adCardDimensions(format, size);
@@ -96,7 +97,9 @@ export function AdCard({
     <div
       data-slot="ad-card"
       data-format={format}
-      style={{ width: dims.width, height: dims.height }}
+      // The caller's style adds to the dimensions rather than replacing them, so
+      // a transform on a preview does not silently drop the width.
+      style={{ width: dims.width, height: dims.height, ...style }}
       className={cn(
         "relative box-border flex max-w-full items-center gap-4 overflow-hidden rounded-[8px] border border-border bg-card px-4 text-card-foreground shadow-none",
         format === "float" && "flex-col items-start justify-center gap-3",
