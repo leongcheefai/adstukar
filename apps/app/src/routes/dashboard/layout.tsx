@@ -133,10 +133,13 @@ function DesignModeBadge() {
   );
 }
 
+/** vaul's own exit time (`TRANSITIONS.DURATION`). It is not exported, so it lives here. */
+const DRAWER_EXIT_MS = 500;
+
 export function DashboardLayout() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-  const closing = useRef(false);
+  const wasOpen = useRef(false);
   const [reduceMotion] = useState(
     () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
   );
@@ -145,23 +148,27 @@ export function DashboardLayout() {
     setOpen(true);
   }, []);
 
-  function closeDrawer() {
-    closing.current = true;
-    setOpen(false);
-  }
+  // The route leaves once the sheet has slid out, whatever closed it: the
+  // handle, Escape, or the brand link. vaul reports only its own closes through
+  // `onAnimationEnd`; a close set from here as `open={false}` never reaches it,
+  // so the brand link left the route on /dashboard, the stage paused, and the
+  // screen held on a grey boot frame. One timer here covers every path.
+  useEffect(() => {
+    if (open) {
+      wasOpen.current = true;
+      return;
+    }
+    if (!wasOpen.current) return;
+    const id = window.setTimeout(() => {
+      if (window.location.pathname.startsWith("/dashboard")) navigate("/");
+    }, DRAWER_EXIT_MS);
+    return () => window.clearTimeout(id);
+  }, [open, navigate]);
 
   return (
     <Drawer
       open={open}
-      onOpenChange={(next) => {
-        setOpen(next);
-        if (!next) closing.current = true;
-      }}
-      onAnimationEnd={(isOpen) => {
-        if (!isOpen && closing.current && window.location.pathname.startsWith("/dashboard")) {
-          navigate("/");
-        }
-      }}
+      onOpenChange={setOpen}
       handleOnly
       shouldScaleBackground={!reduceMotion}
       setBackgroundColorOnScale={!reduceMotion}
@@ -179,7 +186,7 @@ export function DashboardLayout() {
           Campaigns, devices, points, and settings.
         </DrawerDescription>
         <div className="flex min-h-0 flex-1 flex-col">
-          <DashboardContent onClose={closeDrawer} />
+          <DashboardContent onClose={() => setOpen(false)} />
         </div>
       </DrawerContent>
     </Drawer>
