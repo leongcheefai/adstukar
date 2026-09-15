@@ -166,10 +166,14 @@ export function DashboardLayout() {
       shouldScaleBackground={!reduceMotion}
       setBackgroundColorOnScale={!reduceMotion}
     >
-      <DrawerContent
-        overlayClassName="z-[250]"
-        className="z-[250] overflow-hidden p-0 data-[vaul-drawer-direction=bottom]:mt-0 data-[vaul-drawer-direction=bottom]:h-[calc(100dvh-12px)] data-[vaul-drawer-direction=bottom]:max-h-[calc(100dvh-12px)] data-[vaul-drawer-direction=bottom]:rounded-t-2xl"
-      >
+      {/* The drawer keeps the primitives' shared z-50. Every dialog, menu,
+          select and tooltip the dashboard opens portals to <body> at z-50 too,
+          and lands after the drawer in the DOM, so it wins on order. A higher
+          z-index here puts the drawer over all of them, and a listing dialog
+          opens behind the sheet where nobody can see it. The CapyTV stage
+          underneath is `isolation: isolate`, so its own z scale (up to 200)
+          never competes with anything on <body>. */}
+      <DrawerContent className="overflow-hidden p-0 data-[vaul-drawer-direction=bottom]:mt-0 data-[vaul-drawer-direction=bottom]:h-[calc(100dvh-12px)] data-[vaul-drawer-direction=bottom]:max-h-[calc(100dvh-12px)] data-[vaul-drawer-direction=bottom]:rounded-t-2xl">
         <DrawerTitle className="sr-only">Dashboard</DrawerTitle>
         <DrawerDescription className="sr-only">
           Campaigns, devices, points, and settings.
