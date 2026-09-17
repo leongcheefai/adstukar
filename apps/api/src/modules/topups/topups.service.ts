@@ -3,7 +3,7 @@ import { project } from "@repo/config/project";
 import type { CreateTopupInput } from "@repo/contracts";
 import { db, schema } from "@repo/db";
 import type { TopupRefundBlock } from "@repo/db/enums";
-import { and, desc, eq, isNotNull } from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import { stripe } from "../../lib/stripe";
 import { type Tx, getLotBalances, lockMember, postEntry } from "../ledger/ledger.service";
@@ -238,7 +238,42 @@ export async function getTopupOverview(userId: string, now: Date = new Date()) {
 }
 
 /**
- * Gives the unspent part of one top-up back as money.
+ * Every top-up that took money, newest first, with what each may still give
+ * back. This is the admin's refund desk: a member never refunds their own
+ * purchase, so the owner rides along to say whose money it is.
+ */
+export async function listTopupQueue(now: Date = new Date()) {
+  const rows = await db
+    .select({
+      topup: schema.topup,
+      owner: { id: schema.user.id, name: schema.user.name, email: schema.user.email },
+    })
+    .from(schema.topup)
+    .innerJoin(schema.user, eq(schema.user.id, schema.topup.userId))
+    .where(inArray(schema.topup.state, ["paid", "refunded"]))
+    .orderBy(desc(schema.topup.createdAt))
+    .limit(100);
+
+  // The unspent part is allocated per member across their whole history, so it
+  // is read once per owner rather than once per row.
+  const owners = [...new Set(rows.map((row) => row.owner.id))];
+  const unspent = new Map<string, number>();
+  for (const perOwner of await Promise.all(owners.map((id) => unspentByTopupId(db, id)))) {
+    for (const [id, points] of perOwner) unspent.set(id, points);
+  }
+
+  return {
+    refundWindowDays: economy.topup.refundWindowDays,
+    items: rows.map((row) => ({
+      ...toHistoryItem(row.topup, unspent.get(row.topup.id) ?? 0, now),
+      owner: { name: row.owner.name, email: row.owner.email },
+    })),
+  };
+}
+
+/**
+ * Gives the unspent part of one top-up back as money. An admin's act: the member
+ * asks, and the route that calls this sits behind the admin guard.
  *
  * It runs in two steps, and the order is the whole point. The transaction takes
  * the points and records the refund, and only then does the money go out. The
@@ -256,8 +291,8 @@ export async function getTopupOverview(userId: string, now: Date = new Date()) {
  * it, because the ledger is append-only and a member must be able to read where
  * the money went.
  */
-export async function refundTopup(userId: string, topupId: string, now: Date = new Date()) {
-  return sendRefund(await openRefund(userId, topupId, now));
+export async function refundTopup(topupId: string, now: Date = new Date()) {
+  return sendRefund(await openRefund(topupId, now));
 }
 
 /**
@@ -265,14 +300,23 @@ export async function refundTopup(userId: string, topupId: string, now: Date = n
  * call happens here: the lock is the one every movement on this purse queues
  * behind, and holding it across a call to Stripe would stall a screen's report.
  */
-async function openRefund(userId: string, topupId: string, now: Date) {
+async function openRefund(topupId: string, now: Date) {
   return db.transaction(async (tx) => {
+    // The lock is per member, and the row names the member. Read the owner
+    // first, take the lock, and only then take the row itself.
+    const [found] = await tx
+      .select({ userId: schema.topup.userId })
+      .from(schema.topup)
+      .where(eq(schema.topup.id, topupId))
+      .limit(1);
+    if (!found) throw new HTTPException(404, { message: "Top-up not found" });
+    const userId = found.userId;
     await lockMember(tx, userId);
 
     const [row] = await tx
       .select()
       .from(schema.topup)
-      .where(and(eq(schema.topup.id, topupId), eq(schema.topup.userId, userId)))
+      .where(eq(schema.topup.id, topupId))
       .limit(1)
       .for("update");
     if (!row) throw new HTTPException(404, { message: "Top-up not found" });

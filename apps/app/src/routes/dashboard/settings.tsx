@@ -7,6 +7,7 @@ import { PayoutsSection } from "../../components/settings/payouts-section";
 import { ProfileSection } from "../../components/settings/profile-section";
 import { ReleasesSection } from "../../components/settings/releases-section";
 import { SessionsSection } from "../../components/settings/sessions-section";
+import { TopupsSection } from "../../components/settings/topups-section";
 import { useSession } from "../../lib/auth";
 
 interface SettingsSection {
@@ -62,6 +63,13 @@ const ADMIN_SECTIONS: SettingsSection[] = [
       "Distributors waiting to cash out, oldest first. Read the history behind each one, send the money by hand, then record the reference.",
   },
   {
+    id: "topups",
+    label: "Top-ups",
+    title: "Top-ups",
+    description:
+      "Every pack a member paid for, newest first. A member asks for a refund; you give the unspent part back from here.",
+  },
+  {
     id: "releases",
     label: "Releases",
     title: "Releases",
@@ -75,6 +83,8 @@ function SectionBody({ id }: { id: string }) {
       return <ModerationSection />;
     case "payouts":
       return <PayoutsSection />;
+    case "topups":
+      return <TopupsSection />;
     case "releases":
       return <ReleasesSection />;
     case "sessions":

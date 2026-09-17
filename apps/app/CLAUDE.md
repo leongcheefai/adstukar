@@ -9,7 +9,7 @@ Vite + React 19 SPA. CapyTV is the member app: boot mark, then a session check, 
 - `routes/dashboard/campaigns.tsx` — one section per campaign, up to four listing tiles each, create/edit/duplicate dialog, verify panel
 - `routes/dashboard/devices.tsx` — register a screen (name, location, venue, open hours, a photo of the screen in place), pairing code, device key + rotate, overlay regions (format, size, dwell, gap), the distributor's own promotion, excluded terms, and the per-listing veto list
 - `routes/dashboard/ledger.tsx` — filterable by reason, state and lot; cursor-paginated. The panel above it carries the cash-out dialog (identity on file, then the request), and the table under it lists every payout this member asked for
-- `routes/dashboard/settings.tsx` — two-panel layout; sections live in `src/components/settings/`. Admin-only Moderation, Payouts and Releases sections appear there for `role === 'admin'`; `/dashboard/admin/*` redirects in
+- `routes/dashboard/settings.tsx` — two-panel layout; sections live in `src/components/settings/`. Admin-only Moderation, Payouts, Top-ups (the refund desk) and Releases sections appear there for `role === 'admin'`; `/dashboard/admin/*` redirects in
 - `/dashboard/products` redirects to Campaigns, and `/dashboard/placements` redirects to `/`, so links people saved before still work
 - Query hooks live in `src/lib/{campaigns,devices,placements,stats,ledger,admin,payouts}.ts` on top of `src/lib/api.ts` (`apiFetch`). `campaigns.ts` owns listings too, because a listing only ever appears inside its campaign
 

@@ -30,8 +30,6 @@ export const topupOverviewOutput = z.object({
 // Stripe's checkout session.url is string | null.
 export const topupCheckoutOutput = z.object({ url: z.string().nullable() });
 
-export const topupRefundOutput = topupContract;
-
 export type TopupPack = z.output<typeof topupPackContract>;
 export type TopupHistoryItem = z.output<typeof topupHistoryItemContract>;
 export type TopupOverview = z.output<typeof topupOverviewOutput>;

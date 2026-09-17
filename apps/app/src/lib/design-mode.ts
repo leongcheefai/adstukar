@@ -20,6 +20,7 @@ import type {
   StatsOverview,
   Topup,
   TopupOverview,
+  TopupQueue,
   TopupRefundBlock,
   VenueType,
   VerifyCampaignResponse,
@@ -506,6 +507,18 @@ function topupOverview(): TopupOverview {
         block: topup.state === "paid" ? money.block : "not-paid",
       };
     }),
+  };
+}
+
+/** The refund desk: the same rows, with the member they belong to. */
+function topupQueue(): TopupQueue {
+  const overview = topupOverview();
+  return {
+    refundWindowDays: overview.refundWindowDays,
+    items: overview.items.map((item) => ({
+      ...item,
+      owner: { name: designSession.user.name, email: designSession.user.email },
+    })),
   };
 }
 
@@ -1083,28 +1096,30 @@ function writePayouts(seg: string[], method: string, patch: Record<string, unkno
 }
 
 /**
- * Buying and refunding. Design mode cannot open a real checkout, so the buy
- * request returns no URL and the panel says so rather than navigating away.
+ * Buying. Design mode cannot open a real checkout, so the buy request returns
+ * no URL and the panel says so rather than navigating away.
  */
 function writeTopups(seg: string[], method: string): unknown {
   if (method === "POST" && seg[1] === "checkout") return { url: null };
-
-  if (method === "POST" && seg[2] === "refund") {
-    const target = topups.find((row) => row.id === seg[1]);
-    const money = target ? refundable[target.id] : undefined;
-    if (!target || !money) return undefined;
-    const refunded: Topup = {
-      ...target,
-      state: "refunded",
-      refundedPoints: money.points,
-      refundUsdCents: money.netCents,
-      refundLedgerEntryId: fakeId("led"),
-      refundedAt: nowIso(),
-    };
-    topups = topups.map((row) => (row.id === target.id ? refunded : row));
-    return { ...refunded };
-  }
   return undefined;
+}
+
+/** The admin side of a top-up: give the unspent part back. */
+function writeTopupRefund(seg: string[]): unknown {
+  if (seg[3] !== "refund") return undefined;
+  const target = topups.find((row) => row.id === seg[2]);
+  const money = target ? refundable[target.id] : undefined;
+  if (!target || !money) return undefined;
+  const refunded: Topup = {
+    ...target,
+    state: "refunded",
+    refundedPoints: money.points,
+    refundUsdCents: money.netCents,
+    refundLedgerEntryId: fakeId("led"),
+    refundedAt: nowIso(),
+  };
+  topups = topups.map((row) => (row.id === target.id ? refunded : row));
+  return { ...refunded };
 }
 
 /** The admin side: pay the request, or refuse it and hand the points back. */
@@ -1155,6 +1170,9 @@ function designWrite(route: string, method: string, body?: unknown): unknown {
   if (seg[0] === "topups") return writeTopups(seg, method);
   if (method === "POST" && seg[0] === "admin" && seg[1] === "payouts") {
     return writePayoutReview(seg, patch);
+  }
+  if (method === "POST" && seg[0] === "admin" && seg[1] === "topups") {
+    return writeTopupRefund(seg);
   }
   if (method === "POST" && seg[0] === "admin") return writeAdmin(seg, patch);
 
@@ -1247,6 +1265,8 @@ export function designResponse(path: string, method: string, body?: unknown): un
       return payoutOverview();
     case "/topups":
       return topupOverview();
+    case "/admin/topups":
+      return topupQueue();
     case "/admin/payouts": {
       const queue = payoutReviewQueue();
       return { windowDays: queue.windowDays, items: queue.items.map((row) => ({ ...row })) };

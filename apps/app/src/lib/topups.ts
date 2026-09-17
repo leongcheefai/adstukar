@@ -1,4 +1,4 @@
-import type { Topup, TopupCheckoutResponse, TopupOverview } from "@repo/contracts/types";
+import type { TopupCheckoutResponse, TopupOverview } from "@repo/contracts/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "./api";
 
@@ -38,13 +38,5 @@ export function useBuyPoints() {
           cancelUrl: `${window.location.origin}/dashboard/ledger?topup=cancelled`,
         },
       }),
-  });
-}
-
-export function useRefundTopup() {
-  const refresh = useRefreshMoney();
-  return useMutation({
-    mutationFn: (id: string) => apiFetch<Topup>(`/topups/${id}/refund`, { method: "POST" }),
-    onSuccess: refresh,
   });
 }
