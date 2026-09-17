@@ -1,9 +1,7 @@
 import { type DeviceTierRate, economy, feeOn, playRateRange } from "@repo/config/economy";
 import { project } from "@repo/config/project";
-import { Button, Container, Logo, Section, SectionHeader } from "@repo/ui";
-import { ArrowRight } from "lucide-react";
+import { Container, Logo, Section, SectionHeader } from "@repo/ui";
 import type { CSSProperties, ReactNode } from "react";
-import { env } from "../../lib/env";
 import { landingFaq } from "../../lib/faq";
 import type { LandingConfig } from "../../lib/landing/config";
 import { type LandingSample, sampleLanding, seriesPath } from "../../lib/landing/sample";
@@ -23,21 +21,12 @@ export interface LandingProps {
   ticker?: ReactNode;
 }
 
-const SIGNUP_URL = `${env.PUBLIC_APP_URL}/signup`;
 const POINTS = project.pointsName;
 const { lowest: LOWEST_RATE, highest: HIGHEST_RATE } = playRateRange();
 const PEG = economy.pointsPerUsd.toLocaleString("en-US");
 
 type Tone = "slab" | "light" | "dark";
 
-/** Trailing icon, so the right padding runs 2px tighter to sit optically centred. */
-const CTA_BASE =
-  "rounded-full pl-7 pr-6 text-base font-medium transition-[background-color,transform] duration-150 ease-out active:scale-[0.96]";
-const CTA_PRIMARY: Record<Tone, string> = {
-  slab: `${CTA_BASE} bg-white text-brand-500 hover:bg-brand-100 focus-visible:ring-white/60`,
-  dark: `${CTA_BASE} bg-white text-ink-950 hover:bg-ink-100 focus-visible:ring-white/60`,
-  light: `${CTA_BASE} bg-primary text-primary-foreground hover:bg-[color:var(--color-accent-hover)]`,
-};
 /**
  * The lockup is the headline. The words stay for a reader who cannot see it,
  * and the ON AIR word keeps breathing from the shared logo. `tone` picks the
