@@ -123,8 +123,12 @@ subscription, no invoice, and no portal (docs/adr/0001). The webhook in
 stripe login
 
 # Forward webhooks to the local API. The CLI prints a signing secret: put it in
-# .env as STRIPE_WEBHOOK_SECRET.
-stripe listen --forward-to localhost:3001/billing/webhook
+# .env as STRIPE_WEBHOOK_SECRET, then restart the API (it reads .env at boot).
+#
+# STRIPE_API_KEY pins the listener to the same account as STRIPE_SECRET_KEY.
+# Without it the CLI listens to whatever account `stripe login` chose, the
+# secret still verifies, and no event ever arrives.
+STRIPE_API_KEY=sk_test_... stripe listen --forward-to localhost:3001/billing/webhook
 ```
 
 ### Webhook events handled
