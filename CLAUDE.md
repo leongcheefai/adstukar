@@ -73,7 +73,7 @@ Single source of truth for every type crossing the API boundary. Hand-copying a 
 - **API parses every response**: `c.json(contract.output.parse(result satisfies z.input<typeof contract.output>))`. The `satisfies` makes service/contract drift a typecheck failure instead of a 500.
 - **`apps/app` + `apps/web` import ONLY `@repo/contracts/types`** — never the root specifier. Root exports values that pull `drizzle-orm/pg-core` into the browser bundle. Biome `noRestrictedImports` enforces this.
 - **Enum unions live in `packages/db/src/schema/enums.ts`** as plain `as const` tuples. `pgEnum` and `z.enum` both build from them.
-- Hand-author a contract only where no table owns the data (`metrics`, Stripe `invoices`, `billing/config`, `health`, `me`).
+- Hand-author a contract only where no table owns the data (`metrics`, `health`, `me`).
 
 ## Common tasks
 - "Set up a fresh clone" → `node scripts/bootstrap.mjs`; it installs dependencies, creates the root `.env`, starts Postgres, and pushes the schema
@@ -99,7 +99,7 @@ Single source of truth for every type crossing the API boundary. Hand-copying a 
 - **zod dialect split**: `packages/contracts` uses `zod/v4` (`import * as z from "zod/v4"`) because drizzle-zod emits v4 instances. Rest of repo uses v3 (bare `zod`). Both ship inside zod 3.25.76. Bare `zod` in contracts = classes silently don't match. `ZodError` in `apps/api/src/middleware/error.ts` must come from `zod/v4` or the branch never fires. v4 has no `z.AnyZodObject`; `ZodType` is `<Output, Input, Internals>`.
 - `toWire` **throws** on schema types outside its allowlist (`.default()`, unions, records, `.refine()`, tuples). Deliberate — silent passthrough would leak a raw `Date` while the type claims `string`. Don't weaken the schema to dodge it.
 - A renamed/dropped column makes `.pick()` throw `Unrecognized key` **at module load, not compile time** — TS's excess-property check only fires when every mask key is invalid. Phase 0 renames many columns, so expect this one.
-- `pgEnum` without `.notNull()` derives as **nullable** (e.g. `subscription.status`). That's correct; handle the null.
+- `pgEnum` without `.notNull()` derives as **nullable** (e.g. `campaign.pauseReason`). That's correct; handle the null.
 - **A delete is an archive.** Once points have moved, the row stays, because the ledger references it. A campaign, a listing, and a device all archive.
 - **A refund posts a `refund` entry.** It never deletes a row and never edits one.
 - **`voidEntry` treats a pending row and a settled row differently.** A pending row never reached the balance, so it is marked `void` and nothing is posted. A settled row stays settled and takes a compensating row beside it. Doing both would give the points back twice, because balances sum settled rows only.

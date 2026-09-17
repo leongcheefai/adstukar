@@ -3,17 +3,6 @@
 
 export const FEEDBACK_TYPES = ["bug", "feature", "other"] as const;
 
-export const SUBSCRIPTION_STATUSES = [
-  "active",
-  "trialing",
-  "past_due",
-  "canceled",
-  "incomplete",
-  "incomplete_expired",
-  "unpaid",
-  "paused",
-] as const;
-
 /**
  * A campaign runs or it does not. An admin never moves a campaign; the domain
  * check gates it, and moderation acts on the listings under it.
