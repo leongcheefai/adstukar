@@ -105,7 +105,7 @@ export function LedgerPage() {
 
       <PayoutRequests requests={payouts?.requests ?? []} />
 
-      {topups && <TopupHistory items={topups.items} refundWindowDays={topups.refundWindowDays} />}
+      {topups && <TopupHistory items={topups.items} />}
 
       {/* On the list, not by the title: these change what the table below shows,
           and nothing above it. The visible value names each filter, so neither

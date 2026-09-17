@@ -36,7 +36,8 @@ The old barter economy (+1 earn, -2 spend, no money) is dead. Do not restore it.
   row opens before the Stripe call and the points go in only when the webhook
   lands, keyed on the payment id. A refund gives the unspent part back inside the
   window, at the peg less what the card processor kept; which points are unspent
-  comes from the bought balance, never from the rows. The points leave the ledger
+  comes from the bought balance, never from the rows. Only an admin refunds, from
+  `GET/POST /admin/topups`; a member asks and never presses it (`docs/adr/0006`). The points leave the ledger
   before the money leaves Stripe, because the reverse order loses both.
 - **Payout** — `apps/api/src/modules/payouts/`: `eligibility.ts` holds the rules
   for what may leave, and `review.ts` the fraud signals; both are pure. Only the

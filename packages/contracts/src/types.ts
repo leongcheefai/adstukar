@@ -66,6 +66,8 @@ export type {
   PayoutQueue,
   PayoutReview,
   ReviewedDevice,
+  TopupQueue,
+  TopupReview,
 } from "./modules/admin";
 export type { PayoutBlock, PayoutOverview } from "./modules/payouts";
 export type {

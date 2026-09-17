@@ -1,21 +1,7 @@
 import { project } from "@repo/config/project";
-import type { TopupHistoryItem, TopupRefundBlock, TopupState } from "@repo/contracts/types";
-import {
-  Badge,
-  Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@repo/ui";
-import { toast } from "sonner";
+import type { TopupHistoryItem, TopupState } from "@repo/contracts/types";
+import { Badge, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@repo/ui";
 import { usd } from "../../lib/money";
-import { useRefundTopup } from "../../lib/topups";
 
 const STATE_LABEL: Record<TopupState, string> = {
   pending: "Waiting for payment",
@@ -32,32 +18,11 @@ const STATE_VARIANT: Record<TopupState, "warning" | "success" | "danger" | "neut
   abandoned: "neutral",
 };
 
-/** Why the refund button is not there. Each one says what happened, not only that it failed. */
-function blockMessage(block: TopupRefundBlock, refundWindowDays: number): string {
-  switch (block) {
-    case "not-paid":
-      return "This top-up has no money to give back.";
-    case "window-closed":
-      return `A refund runs for ${refundWindowDays} days after the payment.`;
-    case "nothing-left":
-      return `Those ${project.pointsName} are spent. Only unspent ${project.pointsName} refund.`;
-    case "below-fee":
-      return "The card fee is more than this refund is worth.";
-  }
-}
-
 /**
- * Every top-up this member made, and what each may still give back. A refund
- * returns the unspent part at the same rate it was bought at, less what the card
- * processor kept, so the row states the money before the member asks.
+ * Every top-up this member made. A refund is an admin's act, so the table only
+ * reports one that happened: the member asks for it, and never presses it here.
  */
-export function TopupHistory({
-  items,
-  refundWindowDays,
-}: {
-  items: TopupHistoryItem[];
-  refundWindowDays: number;
-}) {
+export function TopupHistory({ items }: { items: TopupHistoryItem[] }) {
   if (items.length === 0) return null;
 
   return (
@@ -75,64 +40,24 @@ export function TopupHistory({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {items.map((item) => (
-              <TopupRow key={item.topup.id} item={item} refundWindowDays={refundWindowDays} />
+            {items.map(({ topup }) => (
+              <TableRow key={topup.id}>
+                <TableCell className="whitespace-nowrap">
+                  {new Date(topup.createdAt).toLocaleDateString()}
+                </TableCell>
+                <TableCell className="tabular-nums">{topup.points.toLocaleString()}</TableCell>
+                <TableCell className="tabular-nums">{usd(topup.usdCents)}</TableCell>
+                <TableCell>
+                  <Badge variant={STATE_VARIANT[topup.state]}>{STATE_LABEL[topup.state]}</Badge>
+                </TableCell>
+                <TableCell className="text-muted-foreground tabular-nums">
+                  {topup.state === "refunded" ? `${usd(topup.refundUsdCents ?? 0)} back` : "—"}
+                </TableCell>
+              </TableRow>
             ))}
           </TableBody>
         </Table>
       </div>
     </section>
-  );
-}
-
-function TopupRow({
-  item,
-  refundWindowDays,
-}: {
-  item: TopupHistoryItem;
-  refundWindowDays: number;
-}) {
-  const { topup, block } = item;
-  const refund = useRefundTopup();
-
-  function submit() {
-    refund.mutate(topup.id, {
-      onSuccess: (row) =>
-        toast.success(`Refunded ${usd(row.refundUsdCents ?? 0)} for ${row.refundedPoints ?? 0}`),
-      onError: (err) => toast.error(err.message),
-    });
-  }
-
-  return (
-    <TableRow>
-      <TableCell className="whitespace-nowrap">
-        {new Date(topup.createdAt).toLocaleDateString()}
-      </TableCell>
-      <TableCell className="tabular-nums">{topup.points.toLocaleString()}</TableCell>
-      <TableCell className="tabular-nums">{usd(topup.usdCents)}</TableCell>
-      <TableCell>
-        <Badge variant={STATE_VARIANT[topup.state]}>{STATE_LABEL[topup.state]}</Badge>
-      </TableCell>
-      <TableCell>
-        {topup.state === "refunded" && (
-          <span className="text-muted-foreground tabular-nums">
-            {usd(topup.refundUsdCents ?? 0)} back
-          </span>
-        )}
-        {topup.state !== "refunded" && block === null && (
-          <Button variant="outline" size="sm" onClick={submit} disabled={refund.isPending}>
-            {refund.isPending
-              ? "Refunding…"
-              : `Refund ${item.refundablePoints.toLocaleString()} · ${usd(item.refundNetCents)}`}
-          </Button>
-        )}
-        {topup.state !== "refunded" && block !== null && (
-          <Tooltip>
-            <TooltipTrigger className="cursor-help text-muted-foreground">—</TooltipTrigger>
-            <TooltipContent>{blockMessage(block, refundWindowDays)}</TooltipContent>
-          </Tooltip>
-        )}
-      </TableCell>
-    </TableRow>
   );
 }

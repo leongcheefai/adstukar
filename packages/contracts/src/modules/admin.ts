@@ -5,7 +5,9 @@ import { deviceAdminContract } from "../entities/device";
 import { listingContract } from "../entities/listing";
 import { payoutAccountContract } from "../entities/payout-account";
 import { payoutRequestContract } from "../entities/payout-request";
+import { topupContract } from "../entities/topup";
 import { toWire } from "../lib/wire";
+import { topupHistoryItemContract } from "./topups";
 
 const owner = z.object({
   name: z.string(),
@@ -93,3 +95,20 @@ export const reviewPayoutOutput = payoutRequestContract;
 export type ReviewedDevice = z.output<typeof reviewedDeviceContract>;
 export type PayoutReview = z.output<typeof payoutReviewContract>;
 export type PayoutQueue = z.output<typeof payoutQueueOutput>;
+
+/**
+ * One top-up as the refund desk reads it. A member never refunds their own
+ * purchase: they ask, and an admin gives the unspent part back from here. The
+ * money and the block are worked out the same way the member's own table did.
+ */
+export const topupReviewContract = topupHistoryItemContract.extend({ owner });
+
+export const topupQueueOutput = z.object({
+  refundWindowDays: z.number().int(),
+  items: z.array(topupReviewContract),
+});
+
+export const refundTopupOutput = topupContract;
+
+export type TopupReview = z.output<typeof topupReviewContract>;
+export type TopupQueue = z.output<typeof topupQueueOutput>;

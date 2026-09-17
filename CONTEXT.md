@@ -152,7 +152,8 @@ _Avoid_: Commission, margin, spread
 **Refund**:
 Money returned for bought points that a member did not spend. It runs for a
 window after the payment, pays at the peg less what the card processor kept, and
-posts a `refund` entry against the `bought` lot.
+posts a `refund` entry against the `bought` lot. Only an admin gives one: the
+member asks, and the act lives under Settings → Top-ups (docs/adr/0006).
 
 **Refundable**:
 The unspent points of one top-up. A spend takes the oldest bought points, so the
