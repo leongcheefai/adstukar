@@ -1,0 +1,21 @@
+---
+import { Content } from "../content/legal/ads-policy.md";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { requirePage } from "../lib/pages";
+
+/* The text is the draft in src/content/legal, pasted as written. It carries
+   its own title, date, and draft notice, so the page adds none of its own. */
+const page = requirePage("ads-policy");
+---
+
+<BaseLayout
+  title={page.title}
+  description={page.description}
+  ogSlug={page.slug}
+>
+  <article class="mx-auto max-w-3xl px-6 py-24 sm:py-32">
+    <div class="prose prose-legal">
+      <Content />
+    </div>
+  </article>
+</BaseLayout>

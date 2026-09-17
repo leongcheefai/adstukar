@@ -125,7 +125,9 @@ export function ProfileSection() {
         >
           <Avatar className="size-24">
             <AvatarImage src={user?.image ?? ""} alt="" />
-            <AvatarFallback className="text-xl">{initials || "?"}</AvatarFallback>
+            <AvatarFallback className="bg-on-air text-xl text-on-air-foreground">
+              {initials || "?"}
+            </AvatarFallback>
           </Avatar>
           {/* The scrim only appears on hover, so the picture is a picture first
               and a control second. */}

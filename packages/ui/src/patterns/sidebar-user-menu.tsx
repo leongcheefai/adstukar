@@ -37,7 +37,7 @@ export function SidebarUserMenu({
   const avatar = (
     <Avatar className="shrink-0">
       {userImage && <AvatarImage src={userImage} alt={label} />}
-      <AvatarFallback className="bg-primary text-xs font-semibold text-primary-foreground">
+      <AvatarFallback className="bg-on-air text-xs font-semibold text-on-air-foreground">
         {initial(userName, userEmail)}
       </AvatarFallback>
     </Avatar>

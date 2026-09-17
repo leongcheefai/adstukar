@@ -16,6 +16,8 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-on-air: var(--on-air);
+  --color-on-air-foreground: var(--on-air-foreground);
   --color-secondary: var(--secondary);
   --color-slab: var(--slab);
   --color-slab-foreground: var(--slab-foreground);
@@ -199,5 +201,31 @@
     font-size: var(--fs-mono-sm);
     line-height: var(--lh-mono);
     font-weight: var(--fw-regular);
+  }
+}
+
+/* =============================================================================
+   Logo — the word ON AIR breathes
+   The class sits on the word inside the pill (`primitives/logo.tsx`), never on
+   the pill, so the lockup keeps its outline while the word comes and goes. A
+   broadcast sign, not a blink: it eases both ways and never fully leaves.
+   Reduced motion gets the word held steady, because the global rule above
+   would run an infinite loop at 0.01ms and that reads as flicker.
+   ============================================================================= */
+@keyframes capy-on-air {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.22;
+  }
+}
+.capy-logo-on-air {
+  animation: capy-on-air 1.8s var(--ease-in-out, ease-in-out) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .capy-logo-on-air {
+    animation: none;
   }
 }

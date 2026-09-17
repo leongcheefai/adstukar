@@ -3,6 +3,9 @@ import "../styles/global.css";
 import { project } from "@repo/config/project";
 import Footer from "../components/Footer";
 import Nav from "../components/Nav.astro";
+import { LiveTicker } from "../components/landing/LiveTicker";
+import landingConfig from "../lib/landing.config.json";
+import { parseLandingConfig } from "../lib/landing/config";
 
 interface Props {
   title: string;
@@ -10,13 +13,29 @@ interface Props {
   ogSlug?: string;
   ogType?: "website" | "article";
   jsonLd?: Record<string, unknown> | Record<string, unknown>[];
+  /** The fixed ticker at the foot. Follows the landing config unless a page turns it off. */
+  crawl?: boolean;
+  /** The first section runs under the floating header, so its ground shows behind the card. */
+  bleed?: boolean;
 }
 
-const { title, description, ogSlug = "home", ogType = "website", jsonLd } = Astro.props;
+const {
+  title,
+  description,
+  ogSlug = "home",
+  ogType = "website",
+  jsonLd,
+  crawl = true,
+  bleed = false,
+} = Astro.props;
 const site = Astro.site ?? new URL(project.siteUrl);
 const canonicalURL = new URL(Astro.url.pathname, site);
 const ogImage = new URL(`/og/${ogSlug}.png`, site);
 const jsonLdArray = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
+
+// The ticker is the same on every page: the welcome, and the live total.
+const landing = parseLandingConfig(landingConfig);
+const showCrawl = crawl && landing.footCrawl;
 ---
 
 <!doctype html>
@@ -50,11 +69,14 @@ const jsonLdArray = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
       <script is:inline type="application/ld+json" set:html={JSON.stringify(payload)} />
     ))}
   </head>
-  <body>
+  <body data-crawl={showCrawl ? "" : undefined} data-bleed={bleed ? "" : undefined}>
     <Nav />
     <main id="main">
       <slot />
     </main>
-    <Footer client:visible />
+    <Footer />
+    {/* client:load, not visible: the strip is fixed in view from the first
+        paint, and the figure it carries has to be fetched. */}
+    {showCrawl && <LiveTicker variant="foot" client:load />}
   </body>
 </html>

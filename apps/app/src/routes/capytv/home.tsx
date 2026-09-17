@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { AccountMenu } from "../../components/capytv/account-menu";
 import { Boot, type BootPhase } from "../../components/capytv/boot";
 import { BootAuth } from "../../components/capytv/boot-auth";
 import { SourcePicker } from "../../components/capytv/source-picker";
@@ -7,6 +8,7 @@ import { SourceLayer } from "../../components/capytv/sources/layer";
 import { Ticker } from "../../components/capytv/ticker";
 import { TvBar } from "../../components/capytv/tv-bar";
 import { useSession } from "../../lib/auth";
+import { useCoach } from "../../lib/coach";
 import "../../styles/capytv.css";
 
 const BAR_IDLE_MS = 3500;
@@ -18,6 +20,7 @@ function brandHoldMs(): number {
 
 export function CapyTvScreen({ dashboardOpen = false }: { dashboardOpen?: boolean }) {
   const { data: session, isPending } = useSession();
+  const { source: sourceHint, opened, dismiss } = useCoach();
   const signedIn = Boolean(session);
 
   const [phase, setPhase] = useState<BootPhase>("brand");
@@ -29,10 +32,16 @@ export function CapyTvScreen({ dashboardOpen = false }: { dashboardOpen?: boolea
   const [menuOpen, setMenuOpen] = useState(false);
   const [idle, setIdle] = useState(false);
   const [paused, setPaused] = useState(false);
+  const [hintReady, setHintReady] = useState(false);
   const picked = useRef(false);
   const hadSession = useRef(false);
 
   const playing = source !== null && bootDone;
+  const onChooser = signedIn && phase === "pick" && !playing && !dashboardOpen;
+  const showHint = sourceHint && hintReady && !dashboardOpen;
+  // A red dot on the account until the dashboard has been opened once. Not
+  // while the tip is up: the tip already points at the same control.
+  const showDot = !opened && !showHint && !dashboardOpen;
 
   useEffect(() => {
     if (phase !== "brand") return;
@@ -81,7 +90,24 @@ export function CapyTvScreen({ dashboardOpen = false }: { dashboardOpen?: boolea
   }, [dashboardOpen]);
 
   useEffect(() => {
-    if (!playing || menuOpen || dashboardOpen) {
+    if (dashboardOpen) {
+      dismiss("source");
+      dismiss("opened");
+    }
+  }, [dashboardOpen, dismiss]);
+
+  useEffect(() => {
+    if (!signedIn || !sourceHint || dashboardOpen || (phase !== "pick" && !playing)) {
+      setHintReady(false);
+      return;
+    }
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const id = window.setTimeout(() => setHintReady(true), reduce || again ? 200 : 700);
+    return () => window.clearTimeout(id);
+  }, [signedIn, sourceHint, dashboardOpen, phase, playing, again]);
+
+  useEffect(() => {
+    if (!playing || menuOpen || dashboardOpen || showHint) {
       setIdle(false);
       return;
     }
@@ -101,12 +127,11 @@ export function CapyTvScreen({ dashboardOpen = false }: { dashboardOpen?: boolea
         document.removeEventListener(type, wake);
       }
     };
-  }, [playing, menuOpen, dashboardOpen]);
+  }, [playing, menuOpen, dashboardOpen, showHint]);
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
       if (dashboardOpen) return;
-      if (!playing) return;
       if (event.metaKey || event.ctrlKey || event.altKey) return;
       if (event.key !== "Escape") return;
       const target = event.target;
@@ -116,12 +141,21 @@ export function CapyTvScreen({ dashboardOpen = false }: { dashboardOpen?: boolea
       ) {
         return;
       }
-      if (menuOpen) setMenuOpen(false);
-      else back();
+      if (menuOpen) {
+        setMenuOpen(false);
+        return;
+      }
+      if (!playing) return;
+      back();
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [playing, menuOpen, dashboardOpen]);
+
+  function setAccountMenu(open: boolean) {
+    setMenuOpen(open);
+    if (open) dismiss("source");
+  }
 
   function pick(id: SourceId) {
     if (!signedIn || picked.current) return;
@@ -152,23 +186,51 @@ export function CapyTvScreen({ dashboardOpen = false }: { dashboardOpen?: boolea
       >
         <SourceLayer source={source} />
         {playing ? <Ticker /> : null}
-        <TvBar menuOpen={menuOpen} onMenuOpenChange={setMenuOpen} onBack={back} />
+        <TvBar
+          menuOpen={menuOpen}
+          onMenuOpenChange={setAccountMenu}
+          onBack={back}
+          hint={playing && showHint}
+          dot={playing && showDot}
+        />
         <button
           type="button"
           className="tv-scrim"
-          hidden={!menuOpen}
+          hidden={!menuOpen || onChooser}
           aria-label="Close menu"
           onClick={() => setMenuOpen(false)}
         />
-        <Boot
-          phase={phase}
-          again={again}
-          done={bootDone}
-          hidden={bootHidden}
-          tray={signedIn ? "pick" : "auth"}
-        >
-          {signedIn ? <SourcePicker onPick={pick} /> : <BootAuth />}
-        </Boot>
+        {onChooser ? (
+          <div className="tv-pick-chrome">
+            <button
+              type="button"
+              className="tv-scrim"
+              hidden={!menuOpen}
+              aria-label="Close menu"
+              onClick={() => setMenuOpen(false)}
+            />
+            <div className="tv-pick-account">
+              <AccountMenu
+                open={menuOpen}
+                onOpenChange={setAccountMenu}
+                hint={showHint}
+                dot={showDot}
+                onHintClose={() => dismiss("source")}
+              />
+            </div>
+          </div>
+        ) : null}
+        <div inert={menuOpen && onChooser ? true : undefined}>
+          <Boot
+            phase={phase}
+            again={again}
+            done={bootDone}
+            hidden={bootHidden}
+            tray={signedIn ? "pick" : "auth"}
+          >
+            {signedIn ? <SourcePicker onPick={pick} /> : <BootAuth />}
+          </Boot>
+        </div>
       </div>
     </div>
   );

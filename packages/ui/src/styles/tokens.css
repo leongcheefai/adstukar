@@ -206,6 +206,10 @@
   --popover-foreground: var(--ink-900);
   --primary: var(--brand-500);
   --primary-foreground: var(--white);
+  /* The ON AIR orange from the lockup. Brand artwork, so the same value on
+     every ground: the default avatar wears it with white initials. */
+  --on-air: #ff5100;
+  --on-air-foreground: var(--white);
   --secondary: var(--ink-100);
   --secondary-foreground: var(--ink-700);
   --muted: var(--ink-100);

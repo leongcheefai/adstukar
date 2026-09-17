@@ -91,8 +91,9 @@ export function Ticker() {
   return (
     <div className="capytv-ad-layer">
       <div className="v-ticker" style={{ ["--copies" as string]: String(copies) }}>
+        {/* No pill on the bar: the crawl itself says the channel is live. */}
         <span className="ad-chip">
-          <CapyLockup />
+          <CapyLockup variant="off-air" />
         </span>
         <div className="ticker-window" ref={windowRef} onFocusCapture={onFocusIn}>
           <div className="ticker-track" ref={trackRef}>

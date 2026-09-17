@@ -1,0 +1,153 @@
+/* -----------------------------------------------------------------------------
+   The landing lab, /lab/landing. Dev only: the route builds nothing in
+   production. The stage on the left renders the real page; the panel on the
+   right holds every knob.
+   -------------------------------------------------------------------------- */
+
+.lab {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 21rem;
+  height: 100dvh;
+  background: var(--ink-100);
+}
+.lab-stage {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 1.5rem;
+  overflow: auto;
+}
+.lab-frame {
+  position: relative;
+  width: var(--lab-w, 100%);
+  max-width: 100%;
+  border-radius: var(--radius-lg);
+  background: var(--background);
+  box-shadow: var(--elev-3);
+}
+/* The foot ticker stays inside the frame rather than the window. */
+.lab-frame .ticker[data-variant="foot"] {
+  position: sticky;
+  z-index: 1;
+}
+.lab-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  padding: 1.1rem 1.25rem 2.5rem;
+  overflow: auto;
+  border-left: 1px solid var(--border);
+  background: var(--card);
+  font-size: 0.875rem;
+}
+.lab-panel h1 {
+  font-size: 1rem;
+  font-weight: var(--fw-medium);
+  letter-spacing: -0.01em;
+}
+.lab-hint {
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--muted-foreground);
+}
+.lab-section {
+  display: grid;
+  gap: 0.9rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+.lab-section > h2 {
+  font-size: 0.6875rem;
+  font-weight: var(--fw-medium);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+.lab-row {
+  display: grid;
+  gap: 0.45rem;
+}
+.lab-row-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.lab-row-head span:first-child {
+  font-weight: var(--fw-medium);
+}
+.lab-row-head output {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted-foreground);
+}
+.lab-switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.lab-seed {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.4rem 0.4rem 0.4rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+.lab-status {
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--muted-foreground);
+  overflow-wrap: anywhere;
+}
+.lab-rail {
+  display: grid;
+  gap: 0.4rem;
+}
+.lab-rail-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.lab-rail-item > button:first-child {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 2.5rem;
+  padding: 0.4rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  text-align: left;
+  font-size: 0.75rem;
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+.lab-rail-item > button:first-child:hover {
+  border-color: var(--color-border-strong);
+}
+.lab-rail-item[data-active] > button:first-child {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary);
+}
+.lab-rail-item code {
+  font-family: var(--font-mono);
+  color: var(--muted-foreground);
+}
+@media (max-width: 900px) {
+  .lab {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+  .lab-panel {
+    max-height: 45dvh;
+    border-top: 1px solid var(--border);
+    border-left: 0;
+  }
+}

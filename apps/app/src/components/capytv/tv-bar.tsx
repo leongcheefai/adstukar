@@ -7,10 +7,15 @@ export function TvBar({
   menuOpen,
   onMenuOpenChange,
   onBack,
+  hint = false,
+  dot = false,
 }: {
   menuOpen: boolean;
   onMenuOpenChange: (open: boolean) => void;
   onBack: () => void;
+  hint?: boolean;
+  /** Red dot on the account: the dashboard has never been opened. */
+  dot?: boolean;
 }) {
   const [online, setOnline] = useState(1284);
 
@@ -35,7 +40,7 @@ export function TvBar({
           <i className="tv-live-dot" aria-hidden />
           <b>{online.toLocaleString("en-US")}</b> online
         </p>
-        <AccountMenu open={menuOpen} onOpenChange={onMenuOpenChange} />
+        <AccountMenu open={menuOpen} onOpenChange={onMenuOpenChange} hint={hint} dot={dot} />
       </div>
     </div>
   );

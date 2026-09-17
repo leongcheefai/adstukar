@@ -1,90 +1,110 @@
 import type * as React from "react";
-import { useId } from "react";
 import { cn } from "../lib/utils";
 
 /**
- * CapyAds logo. Both parts draw in `currentColor`, so the same component works
- * on a white section and on a blue slab without a colour prop.
+ * CapyChannel logo. One artwork file, four crops.
  *
- * The mark knocks the capybara out of a filled square with a mask instead of
- * painting it in a second colour. That keeps it to one ink and lets the eyes
- * and muzzle pick up whatever sits behind the logo, including in dark mode.
- * It assumes a flat background, which is where a logo belongs anyway.
+ * `full` is the lockup: the ON AIR pill top left, the capybara top right, and
+ * CAPY CHANNEL on two lines under them. `off-air` is the same lockup without
+ * the pill, cropped to the top of the capybara. `wordmark` is the two lines
+ * alone and `mark` is the capybara alone. Every crop is a viewBox on the same
+ * paths, so the parts can never drift apart.
  *
- * WORDMARK_PATH is traced from the brand deck, not set in a typeface, so the
+ * The wordmark and the capybara draw in `currentColor`, so the same component
+ * works on white, on the brand blue and on a black bar without a colour prop.
+ * The ON AIR pill is brand artwork rather than a theme colour: it stays orange
+ * on every ground, and the word inside it is always white.
+ *
+ * The paths are traced from the brand file, not set in a typeface, so the
  * letterforms cannot drift when the font stack changes.
  */
+
+/** Crops, in the coordinate space of the brand file (890 x 464). */
+const CROPS = {
+  full: { x: 0, y: 0, w: 890, h: 464 },
+  /* The brand file without the pill (capychannel_logo_noonair.svg, 890 x 423):
+     the same paths, starting where the head starts. */
+  "off-air": { x: 0, y: 41.48, w: 890, h: 423 },
+  wordmark: { x: 0, y: 98, w: 866, h: 332 },
+  /* The brand file's own crop of the head (mono.svg, 394 x 232), placed
+     where the head sits in the lockup. */
+  mark: { x: 496, y: 41.48, w: 394, h: 232 },
+} as const;
+
+/** The pill behind ON AIR. */
+const ON_AIR_FILL = "#FF5100";
+
+/** CAPY over CHANNEL. */
 const WORDMARK_PATH =
-  "M79.4 153.2C35 153.2 7.2 123.8 7.2 77C7.2 30.8 36.6 0.4 80.8 0.4C117.8 0.4 144.4 21.6 149 54.8L114.8 54.8C110.4 40 97.8 31.6 80 31.6C56 31.6 41.4 48.6 41.4 76.8C41.4 104.6 56.2 122 80 122C98.2 122 111.6 113 115.6 98.4L149.2 98.4C144 131.4 116.4 153.2 79.4 153.2Z M148.44 150.8Z M184.04 150.8L150.24 150.8L203.04 2.8L234.64 2.8L287.24 150.8L252.84 150.8L242.44 119.6L194.64 119.6L184.04 150.8Z M214.64 60.8L204.04 92.4L233.24 92.4L222.64 60.8C221.04 55.8 219.24 50 218.64 46.4C218.04 49.8 216.44 55.4 214.64 60.8Z M289.06 150.8Z M364.46 101.6L336.86 101.6L336.86 150.8L304.46 150.8L304.46 2.8L364.46 2.8C394.66 2.8 414.86 22.6 414.86 52.2C414.86 81.8 394.66 101.6 364.46 101.6Z M357.26 31.6L336.86 31.6L336.86 72.8L357.26 72.8C372.86 72.8 380.66 66 380.66 52.2C380.66 38.4 372.86 31.6 357.26 31.6Z M419.92 150.8Z M471.92 94.6L421.92 2.8L458.12 2.8L482.92 50.8C485.32 55.4 486.92 59 488.52 62.8C490.32 59.2 491.92 55.4 494.32 50.6L519.12 2.8L554.32 2.8L504.32 94.6L504.32 150.8L471.92 150.8L471.92 94.6Z M540.23 150.8Z M575.83 150.8L542.03 150.8L594.83 2.8L626.43 2.8L679.03 150.8L644.63 150.8L634.23 119.6L586.43 119.6L575.83 150.8Z M606.43 60.8L595.83 92.4L625.03 92.4L614.43 60.8C612.83 55.8 611.03 50 610.43 46.4C609.83 49.8 608.23 55.4 606.43 60.8Z M680.86 150.8Z M754.26 150.8L696.26 150.8L696.26 2.8L752.26 2.8C795.66 2.8 825.86 33.2 825.86 77.2C825.86 120.4 796.46 150.8 754.26 150.8Z M749.06 32.8L728.66 32.8L728.66 120.8L751.06 120.8C776.66 120.8 791.66 104.6 791.66 77.2C791.66 49.2 775.86 32.8 749.06 32.8Z M833.01 150.8Z M840.21 45.8C840.21 19 862.81 0 894.61 0C926.41 0 946.41 17.6 946.41 45.6L914.21 45.6C914.21 35.2 906.41 28.8 894.21 28.8C881.01 28.8 872.61 34.8 872.61 44.6C872.61 53.6 877.21 58 887.61 60.2L909.81 64.8C936.21 70.2 948.81 82.8 948.81 106.2C948.81 134.8 926.41 153.4 892.41 153.4C859.41 153.4 838.01 135.6 838.01 107.8L870.21 107.8C870.21 118.6 878.21 124.6 892.61 124.6C907.21 124.6 916.41 118.8 916.41 109.4C916.41 101.2 912.61 97 902.81 95L880.21 90.4C853.81 85 840.21 70 840.21 45.8Z";
+  "M123.2 181V230.8C114.6 240.2 92.4 245.6 68 245.6C18.6 245.6 4 223.4 4.2 192L4.4 154.8C4.6 123.4 19.6 102 69.6 102C92.2 102 113.2 106.4 122.2 113.4L122.4 167.2H49V181H123.2ZM204.172 162.6H177.172V177.4H204.172V162.6ZM250.172 156V244H204.172V229.4H177.172V244H131.172V156C131.172 117.4 147.972 102 190.572 102C233.372 102 250.172 117.6 250.172 156ZM307.078 152.8V164.4H330.878V152.8H307.078ZM307.078 244H261.078V104H318.478C363.678 104 376.878 113.4 376.878 145.8V168.4C376.878 196.4 360.678 209.2 318.278 209.2H307.078V244ZM431.414 128H437.814L444.614 104H494.014L456.814 208.4V244H410.814V208.4L375.414 104H424.614L431.414 128ZM123.2 361V410.8C114.6 420.2 92.4 425.6 68 425.6C18.6 425.6 4 403.4 4.2 372L4.4 334.8C4.6 303.4 19.6 282 69.6 282C92.2 282 113.2 286.4 122.2 293.4L122.4 347.2H49V361H123.2ZM206.172 424V389.6H178.172V424H132.172V284H178.172V321.8H206.172V284H252.172V424H206.172ZM336.203 342.6H309.203V357.4H336.203V342.6ZM382.203 336V424H336.203V409.4H309.203V424H263.203V336C263.203 297.4 280.003 282 322.603 282C365.403 282 382.203 297.6 382.203 336ZM393.109 424V284H426.509L463.909 316.8V284H509.909V424H476.509L439.109 389.2V424H393.109ZM521.82 424V284H555.22L592.62 316.8V284H638.62V424H605.22L567.82 389.2V424H521.82ZM650.531 424V284H757.931V327.2H695.531V335.2H755.531V372.2H695.531V380.8H757.531V424H650.531ZM768.891 424V284H814.891V358H861.291V424H768.891Z";
 
-/** Source viewBox of the traced wordmark. */
-const WORDMARK_W = 948.81;
-const WORDMARK_H = 153.4;
+/** The word "on air", drawn as outlines so the pill needs no font. */
+const ON_AIR_TEXT_PATH =
+  "M45.9219 52.5625C43.4219 52.5625 41.2266 52.0234 39.3359 50.9453C37.4609 49.8672 35.9922 48.3672 34.9297 46.4453C33.8828 44.5078 33.3594 42.2422 33.3594 39.6484C33.3594 37.0547 33.8828 34.7891 34.9297 32.8516C35.9922 30.9141 37.4609 29.4062 39.3359 28.3281C41.2266 27.2344 43.4219 26.6875 45.9219 26.6875C48.4375 26.6875 50.6328 27.2344 52.5078 28.3281C54.3984 29.4062 55.8672 30.9141 56.9141 32.8516C57.9766 34.7891 58.5078 37.0547 58.5078 39.6484C58.5078 42.2266 57.9766 44.4844 56.9141 46.4219C55.8672 48.3594 54.3984 49.8672 52.5078 50.9453C50.6328 52.0234 48.4375 52.5625 45.9219 52.5625ZM45.9219 46.9609C47.6094 46.9609 48.9688 46.3203 50 45.0391C51.0312 43.7422 51.5469 41.9453 51.5469 39.6484C51.5469 37.3359 51.0312 35.5312 50 34.2344C48.9688 32.9375 47.6094 32.2891 45.9219 32.2891C44.25 32.2891 42.8984 32.9375 41.8672 34.2344C40.8359 35.5312 40.3203 37.3359 40.3203 39.6484C40.3203 41.9453 40.8359 43.7422 41.8672 45.0391C42.8984 46.3203 44.25 46.9609 45.9219 46.9609ZM69.2422 38.2422V52H62.3281V27.25H69.125V31.1406C69.9688 29.7344 71.0234 28.6484 72.2891 27.8828C73.5547 27.1172 75.0781 26.7344 76.8594 26.7344C79.4844 26.7344 81.5859 27.5859 83.1641 29.2891C84.7422 30.9766 85.5312 33.3828 85.5312 36.5078V52H78.6406V37.7734C78.6406 36.1172 78.2422 34.8594 77.4453 34C76.6484 33.125 75.5312 32.6875 74.0938 32.6875C72.6719 32.6875 71.5078 33.1328 70.6016 34.0234C69.6953 34.9141 69.2422 36.3203 69.2422 38.2422ZM108.336 52.4219C105.867 52.4219 103.828 51.8047 102.219 50.5703C100.625 49.3359 99.8281 47.4844 99.8281 45.0156C99.8281 43.1562 100.273 41.7031 101.164 40.6562C102.055 39.5938 103.234 38.8203 104.703 38.3359C106.172 37.8516 107.766 37.5312 109.484 37.375C111.75 37.1406 113.336 36.9062 114.242 36.6719C115.148 36.4375 115.602 35.9219 115.602 35.125V34.9609C115.602 34.0547 115.242 33.3125 114.523 32.7344C113.805 32.1562 112.812 31.8672 111.547 31.8672C110.266 31.8672 109.227 32.1641 108.43 32.7578C107.633 33.3516 107.195 34.125 107.117 35.0781H100.625C100.781 32.5312 101.828 30.5078 103.766 29.0078C105.703 27.4922 108.367 26.7344 111.758 26.7344C115.148 26.7344 117.773 27.4922 119.633 29.0078C121.492 30.5078 122.422 32.5781 122.422 35.2188V52H115.672V48.5078H115.578C114.922 49.7109 114.023 50.6641 112.883 51.3672C111.742 52.0703 110.227 52.4219 108.336 52.4219ZM110.258 47.6172C111.914 47.6172 113.227 47.1797 114.195 46.3047C115.164 45.4141 115.648 44.2969 115.648 42.9531V40.4688C115.258 40.6875 114.609 40.8906 113.703 41.0781C112.797 41.25 111.789 41.4219 110.68 41.5938C109.492 41.7812 108.484 42.125 107.656 42.625C106.844 43.1094 106.438 43.8438 106.438 44.8281C106.438 45.7031 106.781 46.3906 107.469 46.8906C108.172 47.375 109.102 47.6172 110.258 47.6172ZM127.297 52V27.25H134.211V52H127.297ZM130.742 24.1328C129.602 24.1328 128.656 23.7891 127.906 23.1016C127.156 22.3984 126.781 21.5156 126.781 20.4531C126.781 19.3906 127.156 18.5156 127.906 17.8281C128.656 17.125 129.602 16.7734 130.742 16.7734C131.867 16.7734 132.805 17.125 133.555 17.8281C134.305 18.5156 134.68 19.3906 134.68 20.4531C134.68 21.5156 134.305 22.3984 133.555 23.1016C132.805 23.7891 131.867 24.1328 130.742 24.1328ZM139.109 52V27.25H145.766V31.4688H145.836C146.289 29.9844 147 28.8828 147.969 28.1641C148.938 27.4453 150.242 27.0859 151.883 27.0859C152.289 27.0859 152.656 27.0938 152.984 27.1094C153.328 27.125 153.641 27.1328 153.922 27.1328V33.0156C153.672 33 153.258 32.9766 152.68 32.9453C152.102 32.9141 151.523 32.8984 150.945 32.8984C149.523 32.8984 148.344 33.3828 147.406 34.3516C146.484 35.3203 146.023 36.7344 146.023 38.5938V52H139.109Z";
 
-interface LogoProps extends React.ComponentProps<"span"> {
-  variant?: "mark" | "wordmark" | "full";
-  /** Rendered height in px. The wordmark scales from it. */
+/** The capybara's nose, the one filled shape on the head. */
+const HEAD_NOSE_PATH =
+  "M542.116 182.986H519.552C517.271 182.986 515.44 184.865 516.139 187.036C517.483 191.209 520.907 196.196 527.944 196.196C539.1 196.196 543.939 191.696 545.565 187.039C546.317 184.886 544.397 182.986 542.116 182.986Z";
+
+/** The capybara, as line art. */
+const HEAD_LINE_PATHS = [
+  "M531.146 193.16C528.371 216.282 531.146 227.38 534.587 233.077",
+  "M678.449 241.849C689.69 240.702 712.172 242.262 712.172 257.678C712.172 259.208 710.965 260.548 708.731 261.715M626.832 158.573C629.355 154.444 632.888 144.396 626.832 137.238C625.274 135.398 623.63 134.315 621.946 133.797M567.024 145.149C578.258 142.139 589.077 140.101 597.275 139.553C601.62 139.263 605.258 140.452 608.789 137.902C612.874 134.952 617.545 132.443 621.946 133.797M621.946 133.797C650.186 83.0975 734.029 0.783974 808.524 83.5563C838.837 117.238 837.708 189.275 826.708 220.342C825.541 223.635 827.924 227.402 831.416 227.514C867.57 228.67 872.059 238.267 865.259 252.157C862.184 258.438 855.309 261.696 848.315 261.631C818.734 261.359 742.95 260.581 708.731 261.715M708.731 261.715C688.456 272.311 583.587 268.761 528.415 265.249C515.109 261.349 489.132 230.837 508.456 177.155C515.146 158.573 541.477 151.995 567.024 145.149M567.024 145.149C567.713 139.155 571.98 126.89 583.542 125.788C595.104 124.687 597.515 134.506 597.275 139.553M587.603 173.714C590.126 176.926 597.513 181.422 606.873 173.714",
+  "M830.345 206.108C838.823 202.409 872.89 203.796 875.664 214.432C878.757 226.288 871.965 232.3 864.103 234.78",
+] as const;
+
+interface LogoProps extends Omit<React.ComponentProps<"svg">, "children"> {
+  variant?: "mark" | "wordmark" | "full" | "off-air";
+  /**
+   * Rendered height in px; the width follows the crop. Leave it out to size
+   * the logo from CSS (`height` plus `width: auto`).
+   */
   size?: number;
+  /**
+   * The word ON AIR breathes in opacity. Only the word moves; the pill holds
+   * still, so the lockup keeps its shape. Off for a static print.
+   */
+  live?: boolean;
 }
 
-function Mark({ size }: { size: number }) {
-  const id = useId();
+function Logo({ variant = "full", size, live = true, className, ...props }: LogoProps) {
+  const crop = CROPS[variant];
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width={size}
+      viewBox={`${crop.x} ${crop.y} ${crop.w} ${crop.h}`}
+      width={size === undefined ? undefined : Math.round((crop.w / crop.h) * size)}
       height={size}
-      viewBox="0 0 48 48"
       role="img"
-      aria-label="CapyAds"
-    >
-      <mask id={id}>
-        {/* White keeps, black knocks out. */}
-        <rect width="48" height="48" rx="13" fill="#fff" />
-        <g fill="#000">
-          <circle cx="12.6" cy="15.4" r="4.4" />
-          <circle cx="35.4" cy="15.4" r="4.4" />
-          <rect x="7.5" y="13" width="33" height="27" rx="10.5" />
-        </g>
-        <g fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round">
-          <path d="M14.6 23.6q3 3 6 0" />
-          <path d="M27.4 23.6q3 3 6 0" />
-        </g>
-        <rect x="17.4" y="30" width="13.2" height="6.4" rx="3.2" fill="#fff" />
-      </mask>
-      <rect width="48" height="48" rx="13" fill="currentColor" mask={`url(#${id})`} />
-    </svg>
-  );
-}
-
-function Wordmark({ size }: { size: number }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={Math.round((WORDMARK_W / WORDMARK_H) * size)}
-      height={size}
-      viewBox={`0 0 ${WORDMARK_W} ${WORDMARK_H}`}
-      role="img"
-      aria-label="CapyAds"
-      fill="currentColor"
-    >
-      <path d={WORDMARK_PATH} />
-    </svg>
-  );
-}
-
-function Logo({ variant = "full", size = 24, className, ...props }: LogoProps) {
-  return (
-    <span
+      aria-label="CapyChannel"
+      fill="none"
       data-slot="logo"
-      className={cn("inline-flex shrink-0 items-center gap-2.5", className)}
+      data-variant={variant}
+      className={cn("shrink-0", className)}
       {...props}
     >
-      {variant !== "wordmark" && <Mark size={size} />}
-      {/* The wordmark is set in caps, so it reads optically taller than the
-          square mark at the same height. 0.62 evens them out. */}
-      {variant !== "mark" && <Wordmark size={Math.round(size * 0.62)} />}
-    </span>
+      {variant !== "mark" && <path d={WORDMARK_PATH} fill="currentColor" />}
+      {variant === "full" && (
+        <g data-part="on-air">
+          <rect width="187" height="70" rx="35" fill={ON_AIR_FILL} />
+          <path
+            d={ON_AIR_TEXT_PATH}
+            fill="#fff"
+            className={live ? "capy-logo-on-air" : undefined}
+          />
+        </g>
+      )}
+      {variant !== "wordmark" && (
+        <g data-part="mark">
+          <path d={HEAD_NOSE_PATH} fill="currentColor" />
+          <g stroke="currentColor" strokeWidth="8" strokeLinecap="round">
+            {HEAD_LINE_PATHS.map((d) => (
+              <path key={d.slice(0, 24)} d={d} />
+            ))}
+          </g>
+        </g>
+      )}
+    </svg>
   );
 }
 

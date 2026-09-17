@@ -1,0 +1,92 @@
+/* The sheet behind an open tip. Above the drawer (250) and under the tip
+   (260), so the page dims and the tip and the control it points at do not.
+   The hole is cut with clip-path from the component, because it follows the
+   control's rectangle. */
+.dash-coach-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 259;
+  padding: 0;
+  border: 0;
+  pointer-events: auto;
+  background: rgb(0 0 0 / 0.45);
+  cursor: default;
+}
+
+/* First-run tips on the dashboard. The same card as the tip on the source
+   chooser (.tv-coach in capytv.css): white, 16px on every side, a blue title
+   with the X on its line, 12px copy in Inter. Change both together. */
+.dash-coach-tip {
+  position: relative;
+  /* The drawer is a modal dialog, so the body under it takes pointer-events:
+     none, and the tip is portalled to the body. Opt back in, or no click on
+     the tip ever lands. */
+  pointer-events: auto;
+  width: max-content;
+  max-width: min(360px, calc(100vw - 32px));
+  padding: 16px;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.18), 0 0 0 1px rgb(0 0 0 / 0.06);
+  color: #000;
+  font-family: Inter, system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+.dash-coach-tip p {
+  margin: 0;
+}
+.dash-coach-arrow {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  transform: rotate(45deg);
+}
+.dash-coach-arrow-left {
+  top: 50%;
+  left: -6px;
+  margin-top: -6px;
+}
+.dash-coach-arrow-top {
+  top: -6px;
+  left: 24px;
+}
+/* Scoped under the card so it outranks the paragraph reset above. */
+.dash-coach-tip .dash-coach-title {
+  margin-bottom: 4px;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 22px;
+  color: var(--primary);
+}
+.dash-coach-foot {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+.dash-coach-ok {
+  /* A text button. The padding is hit area only: negative margin pulls the
+     box back so the word still sits on the card's padding line. */
+  margin: -6px -8px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--primary);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  cursor: pointer;
+  text-underline-offset: 2px;
+}
+.dash-coach-ok:hover {
+  text-decoration: underline;
+}
+.dash-coach-ok:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}

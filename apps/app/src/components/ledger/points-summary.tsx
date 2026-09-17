@@ -1,7 +1,8 @@
 import { Gift } from "@phosphor-icons/react";
 import { project } from "@repo/config/project";
 import { Button, Card } from "@repo/ui";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router";
 import { useSession } from "../../lib/auth";
 import { usePayouts } from "../../lib/payouts";
 import { useStats } from "../../lib/stats";
@@ -51,6 +52,23 @@ export function PointsSummary() {
   const { data: topups } = useTopups();
   const [cashOutOpen, setCashOutOpen] = useState(false);
   const [buyOpen, setBuyOpen] = useState(false);
+  const [params, setParams] = useSearchParams();
+  const wantsBuy = params.get("buy") === "1";
+
+  // The Stripe onboarding tip lands here with ?buy=1, so the buy panel opens
+  // by itself once the packs are known. The flag leaves the URL at once: a
+  // reload, or a saved link, must not reopen a payment panel.
+  useEffect(() => {
+    if (!wantsBuy || !topups) return;
+    setBuyOpen(true);
+    setParams(
+      (prev) => {
+        prev.delete("buy");
+        return prev;
+      },
+      { replace: true },
+    );
+  }, [wantsBuy, topups, setParams]);
 
   const settled = stats?.balance.settled ?? 0;
   const withdrawable = payouts?.withdrawable ?? 0;

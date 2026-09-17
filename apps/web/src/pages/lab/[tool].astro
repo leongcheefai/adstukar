@@ -1,0 +1,31 @@
+---
+import "../../styles/global.css";
+import { LandingLab } from "../../components/landing/LandingLab";
+import landingConfig from "../../lib/landing.config.json";
+import { parseLandingConfig } from "../../lib/landing/config";
+
+/**
+ * The generator behind the landing page. Dev only: in a production build
+ * this returns no path, so no page is written and nothing links here.
+ */
+export function getStaticPaths() {
+  return import.meta.env.DEV ? [{ params: { tool: "landing" } }] : [];
+}
+
+const initial = parseLandingConfig(landingConfig);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="color-scheme" content="light" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>Landing lab</title>
+  </head>
+  <body>
+    <LandingLab client:only="react" initial={initial} />
+  </body>
+</html>

@@ -1,17 +1,20 @@
 ---
 import { project } from "@repo/config/project";
-import { LandingContent } from "../components/LandingContent";
+import { Landing } from "../components/landing/Landing";
+import { LiveTicker } from "../components/landing/LiveTicker";
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { LANDING_FAQ } from "../lib/faq";
+import { landingFaq } from "../lib/faq";
+import landingConfig from "../lib/landing.config.json";
+import { parseLandingConfig } from "../lib/landing/config";
 import { requirePage } from "../lib/pages";
 import { faqSchema, orgSchema, websiteSchema } from "../lib/structured-data";
 
 const page = requirePage("home");
 const site = Astro.site ?? new URL(project.siteUrl);
 
-// The same questions the landing page renders, so the JSON-LD cannot drift from the copy.
-const faqItems = LANDING_FAQ;
-
+// The page is a pure function of the saved config. Change it in /lab/landing.
+const config = parseLandingConfig(landingConfig);
+const faqItems = landingFaq(config.faqPerGroup).flatMap((group) => group.items);
 const jsonLd = [orgSchema(site), websiteSchema(site), faqSchema(faqItems)];
 ---
 
@@ -19,6 +22,9 @@ const jsonLd = [orgSchema(site), websiteSchema(site), faqSchema(faqItems)];
   title={page.title}
   description={page.description}
   jsonLd={jsonLd}
+  bleed
 >
-  <LandingContent />
+  <Landing config={config}>
+    <LiveTicker slot="ticker" variant="hero" client:visible />
+  </Landing>
 </BaseLayout>

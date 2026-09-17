@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "mode": "float",
+  "seed": 260915,
+  "footCrawl": true,
+  "crawlSeconds": 42,
+  "adCount": 5,
+  "heroScale": 1,
+  "capyWidth": 448,
+  "radius": 1,
+  "density": "default",
+  "tint": true,
+  "ctaSlab": true,
+  "faqPerGroup": 3,
+  "chartTrend": 0.35,
+  "chartNoise": 0.45
+}
