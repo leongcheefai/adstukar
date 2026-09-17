@@ -6,6 +6,7 @@ import { CampaignFormDialog } from "../../components/campaigns/campaign-form-dia
 import { CampaignSection } from "../../components/campaigns/campaign-section";
 import { CampaignSummary } from "../../components/campaigns/campaign-summary";
 import { ListingFormDialog } from "../../components/campaigns/listing-form-dialog";
+import { RateTable } from "../../components/rate-table";
 import { ScribbleArrow } from "../../components/scribble-arrow";
 import { useCampaigns } from "../../lib/campaigns";
 
@@ -35,6 +36,11 @@ export function CampaignsPage() {
       <h1 className="text-2xl font-semibold tracking-tight">Campaigns</h1>
 
       <CampaignSummary />
+
+      {/* What a play will cost, before the first campaign exists. The same rows
+          stand on the Devices page as what a play pays, so a member who does
+          both reads one table twice. */}
+      <RateTable side="advertiser" />
 
       {/* The add control sits under the last card, on the grid's right edge.
           One action, so it opens the campaign dialog on the press. A new listing

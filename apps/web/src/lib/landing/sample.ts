@@ -1,4 +1,4 @@
-import { type DeviceTierRate, economy, feeOn } from "@repo/config/economy";
+import { type DeviceTierRate, distributorKeeps, economy } from "@repo/config/economy";
 import { project } from "@repo/config/project";
 import type { LandingConfig } from "./config";
 import { rng } from "./prng";
@@ -115,7 +115,7 @@ export function sampleLanding(config: LandingConfig): LandingSample {
   const playRate = economy.playRate[tier].ticker;
   const scanRate = economy.scanRate[tier];
   const spent = plays * playRate + scans * scanRate;
-  const earned = plays * (playRate - feeOn(playRate)) + scans * (scanRate - feeOn(scanRate));
+  const earned = plays * distributorKeeps(playRate) + scans * distributorKeeps(scanRate);
 
   return { ads, venue, nowPlaying, online, tier, series, scanSeries, plays, scans, spent, earned };
 }

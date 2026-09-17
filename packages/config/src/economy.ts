@@ -210,6 +210,54 @@ export function distributorPercent(): number {
 }
 
 /**
+ * The points the distributor keeps from one movement: the amount less the fee.
+ * The fee rounds down, so this rounds up, and the two always add to the amount.
+ */
+export function distributorKeeps(amount: number): number {
+  return amount - feeOn(amount);
+}
+
+/** A range of points, lowest to highest. */
+export interface PointRange {
+  lowest: number;
+  highest: number;
+}
+
+/**
+ * One row of the published rate table: what an advertiser pays on a screen of
+ * this tier, and what the screen keeps. The play is a range, because the rate
+ * depends on the region format too; a scan is one number per tier.
+ */
+export interface RateRow {
+  tier: DeviceTierRate;
+  play: PointRange;
+  playKeeps: PointRange;
+  scan: number;
+  scanKeeps: number;
+}
+
+/**
+ * The rate table every page shows. The landing page and both sides of the
+ * dashboard read this one derivation, so the number an advertiser sees is the
+ * number a distributor sees, and neither page carries its own arithmetic.
+ */
+export function rateTable(): RateRow[] {
+  return (Object.keys(economy.playRate) as DeviceTierRate[]).map((tier) => {
+    const rates = Object.values(economy.playRate[tier]);
+    const lowest = Math.min(...rates);
+    const highest = Math.max(...rates);
+    const scan = economy.scanRate[tier];
+    return {
+      tier,
+      play: { lowest, highest },
+      playKeeps: { lowest: distributorKeeps(lowest), highest: distributorKeeps(highest) },
+      scan,
+      scanKeeps: distributorKeeps(scan),
+    };
+  });
+}
+
+/**
  * The money a number of points is worth, in US cents. It rounds down, so a part
  * of a cent never becomes money we cannot pay.
  */

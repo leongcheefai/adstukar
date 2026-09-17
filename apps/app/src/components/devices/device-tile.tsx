@@ -1,13 +1,8 @@
 import { MapPin, Monitor } from "@phosphor-icons/react";
 import type { DeviceWithTerms } from "@repo/contracts/types";
 import { Badge } from "@repo/ui";
+import { TIER_LABEL } from "../rate-table";
 import { StatusBadge } from "../status-badge";
-
-const TIER_LABEL: Record<DeviceWithTerms["device"]["tier"], string> = {
-  standard: "Standard",
-  premium: "Premium",
-  flagship: "Flagship",
-};
 
 /**
  * One device as a grid cell, drawn like a listing tile: the cell owns its right
