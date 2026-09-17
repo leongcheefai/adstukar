@@ -1,3 +1,5 @@
+import { project } from "@repo/config/project";
+import { useId } from "react";
 import { useNavigate } from "react-router";
 import { signOutThen, useSession } from "../../lib/auth";
 import { clearResume } from "./resume";
@@ -14,13 +16,25 @@ function initials(name: string): string {
 export function AccountMenu({
   open,
   onOpenChange,
+  hint = false,
+  dot = false,
+  onHintClose,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** First-run tip pointing at this control. Hidden while the menu is open. */
+  hint?: boolean;
+  /** Red dot on the picture and on the Dashboard entry: never opened yet. */
+  dot?: boolean;
+  /** The close button on the tip. */
+  onHintClose?: () => void;
 }) {
   const navigate = useNavigate();
   const { data: session } = useSession();
   const name = session?.user.name ?? "Account";
+  const image = session?.user.image;
+  const tipId = useId();
+  const showHint = hint && !open;
 
   async function logout() {
     onOpenChange(false);
@@ -29,13 +43,14 @@ export function AccountMenu({
   }
 
   return (
-    <div className="tv-account" data-signed-in="">
+    <div className="tv-account" data-signed-in="" data-coach={showHint ? "" : undefined}>
       <button
         className="tv-account-btn"
         type="button"
         aria-expanded={open}
         aria-haspopup="true"
         aria-label="Your account"
+        aria-describedby={showHint ? tipId : undefined}
         onClick={(event) => {
           event.stopPropagation();
           onOpenChange(!open);
@@ -43,8 +58,38 @@ export function AccountMenu({
       >
         <span className="tv-avatar" aria-hidden>
           {initials(name)}
+          {image ? <img src={image} alt="" /> : null}
         </span>
+        {dot ? (
+          <span className="tv-dot tv-dot-avatar">
+            <span className="sr-only">Dashboard not yet opened</span>
+          </span>
+        ) : null}
       </button>
+      {showHint ? (
+        <div className="tv-coach" id={tipId} aria-live="polite">
+          <div className="tv-coach-head">
+            <p className="tv-coach-title">Welcome to {project.name}</p>
+            <button
+              type="button"
+              className="tv-coach-close"
+              aria-label="Close tip"
+              onClick={(event) => {
+                event.stopPropagation();
+                onHintClose?.();
+              }}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 6l12 12M18 6 6 18" />
+              </svg>
+            </button>
+          </div>
+          <p>
+            Your dashboard is located here. Start Listing or Connect your Stripe to earn{" "}
+            {project.pointsName}
+          </p>
+        </div>
+      ) : null}
       <div className="tv-account-menu" hidden={!open}>
         <button
           type="button"
@@ -55,6 +100,7 @@ export function AccountMenu({
           }}
         >
           Dashboard
+          {dot ? <span className="tv-dot" aria-hidden /> : null}
         </button>
         <button
           type="button"

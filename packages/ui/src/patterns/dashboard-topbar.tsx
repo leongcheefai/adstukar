@@ -13,6 +13,8 @@ export interface DashboardTopbarProps {
   sidebarFooter?: React.ReactNode;
   /** App-supplied controls, placed at the right end before the bell. */
   actions?: React.ReactNode;
+  /** The last control on the bar, after the bell: a close button when the shell is a drawer. */
+  trailing?: React.ReactNode;
 }
 
 export function DashboardTopbar({
@@ -21,6 +23,7 @@ export function DashboardTopbar({
   renderNavLink,
   sidebarFooter,
   actions,
+  trailing,
 }: DashboardTopbarProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -52,6 +55,8 @@ export function DashboardTopbar({
           >
             <Bell size={16} />
           </button>
+
+          {trailing}
         </div>
       </header>
 

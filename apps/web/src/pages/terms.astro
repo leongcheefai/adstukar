@@ -1,8 +1,10 @@
 ---
-import { project } from "@repo/config/project";
+import { Content } from "../content/legal/terms.md";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { requirePage } from "../lib/pages";
 
+/* The text is the draft in src/content/legal, pasted as written. It carries
+   its own title, date, and draft notice, so the page adds none of its own. */
 const page = requirePage("terms");
 ---
 
@@ -11,47 +13,9 @@ const page = requirePage("terms");
   description={page.description}
   ogSlug={page.slug}
 >
-  <div class="mx-auto max-w-3xl px-6 py-24 sm:py-32">
-    <h1 class="text-4xl font-medium tracking-tight">Terms of Service</h1>
-    <p class="mt-2 text-sm text-muted-foreground">
-      Last updated: TODO: Date
-    </p>
-
-    <div class="prose mt-10">
-      <p>
-        TODO: Replace this placeholder with your actual Terms of Service. Consider consulting a
-        lawyer to ensure your terms are appropriate for your jurisdiction and product.
-      </p>
-
-      <h2>1. Acceptance of Terms</h2>
-      <p>TODO: Explain when and how users accept your terms.</p>
-
-      <h2>2. Use of Service</h2>
-      <p>TODO: Describe permitted and prohibited uses of your service.</p>
-
-      <h2>3. Accounts</h2>
-      <p>TODO: Describe account creation, responsibilities, and termination.</p>
-
-      <h2>4. Payment and Billing</h2>
-      <p>TODO: Describe your payment terms, refund policy, and billing practices.</p>
-
-      <h2>5. Intellectual Property</h2>
-      <p>TODO: Clarify ownership of content and your service.</p>
-
-      <h2>6. Privacy</h2>
-      <p>
-        Your use of {project.name} is also governed by our{' '}
-        <a href="/privacy">Privacy Policy</a>.
-      </p>
-
-      <h2>7. Limitation of Liability</h2>
-      <p>TODO: Include your limitation of liability clause.</p>
-
-      <h2>8. Changes to Terms</h2>
-      <p>TODO: Explain how and when you may update these terms.</p>
-
-      <h2>9. Contact</h2>
-      <p>TODO: Provide contact information for legal questions.</p>
+  <article class="mx-auto max-w-3xl px-6 py-24 sm:py-32">
+    <div class="prose prose-legal">
+      <Content />
     </div>
-  </div>
+  </article>
 </BaseLayout>

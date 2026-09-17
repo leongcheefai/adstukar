@@ -24,15 +24,15 @@ export interface ProjectIdentity {
  * site depends on those three strings, so the rename stopped at the name.
  */
 export const project = {
-  name: "CapyAds",
+  name: "CapyChannel",
   pointsName: "CapyPoints",
   slug: "adstukar",
   tagline: "Play ads on your screen and earn money.",
   description:
     "An ad network for small screens. Put a screen in your venue and earn CapyPoints every time it plays a listing. Advertisers buy points; distributors cash them out.",
-  siteUrl: "https://capyads.com",
+  siteUrl: "https://capychannel.site",
   email: {
-    from: "noreply@capyads.com",
-    support: "support@capyads.com",
+    from: "noreply@capychannel.site",
+    support: "support@capychannel.site",
   },
 } as const satisfies ProjectIdentity;

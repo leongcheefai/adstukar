@@ -1,12 +1,10 @@
 import { Coin } from "@phosphor-icons/react";
 import { Button, Card, CardContent } from "@repo/ui";
-import { Link } from "react-router";
 import { PayoutHistory, PayoutHistorySkeleton } from "../../components/overview/payout-history";
 import { PlaysCard, PlaysCardSkeleton } from "../../components/overview/plays-card";
 import { RecentLedger } from "../../components/overview/recent-ledger";
 import { StatCard, StatCardSkeleton } from "../../components/stat-card";
 import { useSession } from "../../lib/auth";
-import { useCampaigns } from "../../lib/campaigns";
 import { useStats } from "../../lib/stats";
 
 /** Local clock, so the greeting matches the room the reader is sitting in. */
@@ -33,8 +31,6 @@ const STAT_LABELS = {
 export function DashboardHome() {
   const { data: session } = useSession();
   const { data: stats, isError, isFetching, refetch } = useStats();
-  const { data: campaigns } = useCampaigns();
-  const noCampaigns = campaigns !== undefined && campaigns.length === 0;
 
   // The API divides by received, which is zero on a quiet day.
   const scanRate = stats && Number.isFinite(stats.today.scanRate) ? stats.today.scanRate : 0;
@@ -51,11 +47,6 @@ export function DashboardHome() {
           {greeting()}
           {session?.user.name ? `, ${session.user.name}` : ""}
         </h1>
-        {noCampaigns && (
-          <Button asChild size="sm">
-            <Link to="/dashboard/campaigns">Create your first campaign</Link>
-          </Button>
-        )}
       </div>
 
       {isError && !stats ? (

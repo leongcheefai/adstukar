@@ -57,7 +57,7 @@ export type {
   ServeResponse,
   ServedListing,
 } from "./modules/serve";
-export type { StatsDay, StatsOverview } from "./modules/stats";
+export type { NetworkStats, StatsDay, StatsOverview } from "./modules/stats";
 export type { ListLedgerResponse } from "./modules/ledger";
 export type {
   DeviceReview,

@@ -49,6 +49,7 @@
   --z-scrim: 149;
   --z-nav: 150;
   --z-boot: 200;
+  --z-chrome: 210;
 
   /* The bar's own height. Nothing is reserved for it: the bar covers the
      bottom of the picture and the source keeps its whole frame behind it. */
@@ -512,17 +513,15 @@
   user-select: none;
 }
 
-/* The brand lockup, one file for every place it appears. It is drawn in the
-   brand blue and every ground it lands on here is dark, so it is reversed:
-   brightness(0) takes the artwork to black, invert(1) takes it to white, and
-   neither touches the alpha. The knockouts in the file — the eyes, the
-   counters in the letters — are transparent, so the ground behind the logo
-   shows through them exactly as the white did on the blue original. */
+/* The brand lockup, one component for every place it appears. It is inline
+   SVG drawn in currentColor, so the component sets the ink and this rule only
+   sizes it: a height from the place it lands on, and the width from the
+   artwork. The ON AIR pill carries its own orange and no filter may touch it,
+   because a reversal would take the pill to white and lose the word inside. */
 .capy-logo {
   display: block;
   flex: none;
   width: auto;
-  filter: brightness(0) invert(1);
 }
 
 .ad-chip {
@@ -735,9 +734,11 @@
    The way back to the chooser on the left, the account on the right, both
    inside the TV safe area and both clear of the ad on the bottom edge.
 
-   It exists only while a source plays. While the chooser is up there is
-   nowhere to go back to, and no ad on screen to earn from. It then fades out
-   of the picture, and any movement, key or touch brings it back.
+   It exists only while a source plays. The chooser has its own account
+   control (`.tv-pick-chrome`), because the bar sits under the boot layer
+   and a first-run member has to see a way into the dashboard before they
+   pick a source. It then fades out of the picture, and any movement, key
+   or touch brings it back.
    -------------------------------------------------------------------------- */
 .tv-bar {
   position: absolute;
@@ -760,6 +761,11 @@
   opacity: 1;
   pointer-events: auto;
   transition-duration: 140ms;
+}
+/* Hidden from the tab order while the chooser is up. Opacity alone would
+   leave the bar's buttons in the tree, behind a layer that paints over them. */
+.capytv-stage:not([data-booted]) .tv-bar {
+  visibility: hidden;
 }
 
 /* Out of the way. A set shows its controls when somebody reaches for them and
@@ -883,6 +889,7 @@
    a circle only ever draws a second circle around it. Everything the pill
    carried — the height, the press, the focus ring — the button still has. */
 .tv-account[data-signed-in] .tv-account-btn {
+  position: relative;
   padding: 0;
   background: none;
   box-shadow: none;
@@ -899,31 +906,63 @@
   display: none;
 }
 
-/* The brand blue and the member's initials — the one blue object on the top
-   edge, the way the chip is the one blue object on the bottom one. White on
-   this blue is 9.7:1, so the letters hold at any size the row takes.
+/* The default avatar: the member's initials in white on the ON AIR orange,
+   the same orange the pill in the lockup carries. On the blue set it is the
+   one warm object on the top edge, so the eye finds the account at once.
 
    aria-hidden, because the initials are a picture of a name and not the name:
    the button carries the account's own label for anyone who cannot see it. */
 .tv-avatar {
+  position: relative;
   flex: none;
   display: grid;
   place-items: center;
+  overflow: hidden;
   width: calc(7 * var(--u));
   height: calc(7 * var(--u));
   border-radius: 50%;
-  background: var(--capy-blue);
-  color: #fff;
+  background: var(--on-air);
+  color: var(--on-air-foreground);
   font-size: var(--t-sm);
   font-weight: 600;
   letter-spacing: .02em;
   transition: filter 140ms ease-out;
+}
+.tv-avatar img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 /* With no pill around it the circle takes the whole row height itself. */
 .tv-account[data-signed-in] .tv-avatar {
   width: calc(8.8 * var(--u));
   height: calc(8.8 * var(--u));
   font-size: var(--t-md);
+}
+
+/* Red dot: the dashboard has never been opened on this browser. On the
+   picture's corner, and beside the Dashboard entry once the menu is open. */
+.tv-dot {
+  display: inline-block;
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-left: 8px;
+  border-radius: 50%;
+  background: var(--destructive);
+  vertical-align: middle;
+}
+.tv-dot-avatar {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 1;
+  margin: 0;
+  width: 10px;
+  height: 10px;
+  box-shadow: 0 0 0 2px var(--capy-blue);
 }
 
 /* Opens downward, off the right edge: the bar is on the top edge and the
@@ -943,18 +982,22 @@
   min-width: calc(22 * var(--u));
   padding: calc(0.6 * var(--u));
   border-radius: calc(1.2 * var(--u));
-  background: var(--ad-surface);
-  box-shadow: var(--ad-ring), 0 calc(1 * var(--u)) calc(3 * var(--u)) rgb(0 0 0 / 0.45);
+  /* The dashboard's own ground, so the menu reads as a piece of the
+     dashboard it opens, not as a piece of the set. */
+  background: var(--card);
+  box-shadow: 0 0 0 1px var(--border), 0 calc(1 * var(--u)) calc(3 * var(--u)) rgb(0 0 0 / 0.35);
 }
 .tv-account-menu[hidden] {
   display: none;
 }
 .tv-account-menu button {
+  display: flex;
+  align-items: center;
   padding: calc(1.2 * var(--u)) calc(1.5 * var(--u));
   border: 0;
   border-radius: calc(0.9 * var(--u));
   background: transparent;
-  color: #fff;
+  color: var(--card-foreground);
   font: inherit;
   font-size: var(--t-sm);
   text-align: left;
@@ -962,10 +1005,11 @@
   cursor: pointer;
 }
 .tv-account-menu button:hover {
-  background: rgb(255 255 255 / 0.12);
+  background: var(--accent);
+  color: var(--accent-foreground);
 }
 .tv-account-menu button:focus-visible {
-  outline: calc(0.25 * var(--u)) solid #fff;
+  outline: calc(0.25 * var(--u)) solid var(--ring);
   outline-offset: calc(-0.25 * var(--u));
 }
 
@@ -984,6 +1028,151 @@
 }
 .tv-scrim[hidden] {
   display: none;
+}
+
+/* Profile control on the chooser. The boot layer paints over `.tv-bar`, so
+   a signed-in member needs this copy of the account to reach the dashboard
+   without first picking a source. pointer-events none on the chrome, so the
+   tiles stay hittable; the account and the scrim opt back in. */
+.tv-pick-chrome {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-chrome);
+  pointer-events: none;
+}
+.tv-pick-chrome .tv-scrim,
+.tv-pick-chrome .tv-pick-account {
+  pointer-events: auto;
+}
+.tv-pick-account {
+  position: absolute;
+  top: var(--safe-y);
+  right: var(--safe-x);
+  /* Above the scrim, the way the bar is above the outer one. The menu's own
+     z-index only counts inside this block, so without this the scrim took
+     every click meant for a menu entry. */
+  z-index: var(--z-nav);
+}
+
+/* First-run ring. Scale + fade, not box-shadow: it has to stay on the
+   compositor, and reduced-motion below kills the loop. */
+.tv-account[data-coach] .tv-account-btn::after {
+  content: "";
+  position: absolute;
+  inset: -22%;
+  border-radius: 50%;
+  border: calc(0.22 * var(--u)) solid rgb(255 255 255 / 0.85);
+  pointer-events: none;
+  animation: tv-coach-ring 1.8s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+.tv-coach {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 1.4 * var(--u));
+  z-index: 2;
+  width: max-content;
+  max-width: min(calc(46 * var(--u)), calc(100cqw - 2 * var(--safe-x)));
+  margin: 0;
+  /* A white card on the dark set. The same 16px on every side. */
+  padding: 16px;
+  border-radius: calc(0.8 * var(--u));
+  background: #fff;
+  box-shadow: 0 calc(1 * var(--u)) calc(3 * var(--u)) rgb(0 0 0 / 0.35);
+  color: #000;
+  font-family: Inter, system-ui, -apple-system, sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+  /* Not balanced: balance wraps the lines short and leaves a gap on the
+     right, so the card looks wider than its words. */
+  text-wrap: pretty;
+  /* The card is inert, so a stray click reaches the set behind it. The
+     close button turns them back on for itself. */
+  pointer-events: none;
+  transform-origin: top right;
+  animation: tv-coach-in 220ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+.tv-coach p {
+  margin: 0;
+}
+/* The title and the close button share one row, so the icon sits on the
+   title's centre line and its right edge lands on the padding, not past it. */
+.tv-coach-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+.tv-coach-title {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 20px;
+  color: var(--capy-blue);
+}
+.tv-coach-close {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  /* The hit area grows past the box without moving the icon. */
+  margin: -4px;
+  padding: 4px;
+  box-sizing: content-box;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: rgb(0 0 0 / 0.55);
+  cursor: pointer;
+  pointer-events: auto;
+  transition: background 140ms ease-out, color 140ms ease-out;
+}
+.tv-coach-close:hover {
+  background: rgb(0 0 0 / 0.06);
+  color: #000;
+}
+.tv-coach-close:focus-visible {
+  outline: 2px solid var(--capy-blue);
+  outline-offset: 1px;
+}
+.tv-coach-close svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.tv-coach::before {
+  content: "";
+  position: absolute;
+  right: calc(3.2 * var(--u));
+  top: calc(-0.65 * var(--u));
+  width: calc(1.3 * var(--u));
+  height: calc(1.3 * var(--u));
+  background: #fff;
+  transform: rotate(45deg);
+}
+@keyframes tv-coach-in {
+  from {
+    opacity: 0;
+    transform: translateY(calc(-0.8 * var(--u))) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes tv-coach-ring {
+  0% {
+    transform: scale(0.92);
+    opacity: 0.85;
+  }
+  100% {
+    transform: scale(1.35);
+    opacity: 0;
+  }
 }
 
 /* --------------------------------------------------------------------------
@@ -1347,11 +1536,12 @@
      half seconds, so it is sized for that moment rather than for the one after
      it, where it sits above the tiles. */
   height: calc(30 * var(--u));
-  /* Phosphor bloom, and the colour fringe of a badly converged tube. Chained
-     on to the reversal, because a picture takes no text-shadow. The fringe is
-     lighter than it was on black: red beside white on blue reads as a printing
-     fault long before it reads as a tube. */
-  filter: brightness(0) invert(1) drop-shadow(calc(-0.22 * var(--u)) 0 rgb(255 40 90 / 0.28))
+  /* Phosphor bloom, and the colour fringe of a badly converged tube. A filter,
+     because a picture takes no text-shadow. The fringe is lighter than it was
+     on black: red beside white on blue reads as a printing fault long before
+     it reads as a tube. The pill keeps its orange under it: a drop-shadow
+     paints beside the artwork and never recolours it. */
+  filter: drop-shadow(calc(-0.22 * var(--u)) 0 rgb(255 40 90 / 0.28))
     drop-shadow(calc(0.22 * var(--u)) 0 rgb(0 220 255 / 0.28))
     drop-shadow(0 0 calc(3 * var(--u)) rgb(255 255 255 / 0.38));
 }

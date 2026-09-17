@@ -2,14 +2,22 @@
 import { project } from "@repo/config/project";
 import { Logo } from "@repo/ui";
 import { env } from "../lib/env";
-import { MobileNav } from "./MobileNav";
 
 const APP_URL = env.PUBLIC_APP_URL;
-const navLinks = [
+
+/* Anchors on the landing page, plus the one page that answers the rest. On a
+   phone the row folds to the logo and the one button: every link here is also
+   in the footer, and a drawer is more nav than a four-section site needs. The
+   rates sit under "How it works" on the page, and the footer links them. */
+const links = [
   { label: "How it works", href: "/#how-it-works" },
+  { label: "Advertisers", href: "/#advertisers" },
   { label: "FAQ", href: "/faq" },
-  { label: "Blog", href: "/blog" },
-];
+] as const;
+
+/* Text links bleed vertically only, so neighbours in the row cannot overlap. */
+const TEXT_LINK =
+  "relative text-sm text-muted-foreground transition-colors duration-150 ease-out before:absolute before:inset-x-0 before:-inset-y-3 hover:text-foreground";
 ---
 
 <a
@@ -19,47 +27,42 @@ const navLinks = [
   Skip to content
 </a>
 
-<header
-  class="sticky top-0 z-(--z-header) border-b border-border/60 bg-background/80 backdrop-blur-sm"
->
-  <div class="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
+<!-- A card that floats over the page rather than a bar across it. The wrapper
+     is clear, so on the home page the blue hero runs behind the card; the
+     card's own ground and shadow keep it legible on a white page too. Its
+     height is --header-h, which the page reads for anchors and the bleed. -->
+<header class="sticky top-0 z-(--z-header) px-4 pt-4 sm:px-6 sm:pt-6">
+  <div
+    class="mx-auto flex h-16 max-w-6xl items-center justify-between gap-6 rounded-[8px] border border-border/60 bg-card pl-5 pr-3 shadow-elev-2 sm:pl-6"
+  >
     <a
       href="/"
-      class="relative inline-flex text-primary transition-opacity duration-150 ease-out before:absolute before:inset-x-0 before:-inset-y-2 hover:opacity-80"
+      class="relative inline-flex text-primary transition-opacity duration-150 ease-out before:absolute before:inset-x-0 before:-inset-y-3 hover:opacity-80"
       aria-label={project.name}
     >
-      <Logo size={26} />
+      <Logo variant="mark" size={32} aria-hidden="true" />
     </a>
 
-    <nav class="hidden items-center gap-6 md:flex" aria-label="Main navigation">
-      {navLinks.map((link) => (
-        <!-- The bleed grows vertically only, so neighbouring targets in the
-             row can never overlap each other. -->
-        <a
-          href={link.href}
-          class="relative text-sm text-muted-foreground transition-colors duration-150 ease-out before:absolute before:inset-x-0 before:-inset-y-3 hover:text-foreground"
-        >
-          {link.label}
-        </a>
-      ))}
-    </nav>
+    <!-- The links sit with the button on the right, so the row reads logo,
+         then everything a visitor can do. -->
+    <div class="flex items-center gap-6">
+      <nav class="hidden items-center gap-6 md:flex" aria-label="Main">
+        {links.map((link) => (
+          <a href={link.href} class={TEXT_LINK}>
+            {link.label}
+          </a>
+        ))}
+      </nav>
 
-    <div class="flex items-center gap-2">
-      <div class="hidden items-center gap-3 md:flex">
-        <a
-          href={`${APP_URL}/login`}
-          class="relative text-sm text-muted-foreground transition-colors duration-150 ease-out before:absolute before:inset-x-0 before:-inset-y-3 hover:text-foreground"
-        >
-          Sign in
-        </a>
-        <a
-          href={`${APP_URL}/signup`}
-          class="relative inline-flex h-9 items-center justify-center rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground transition-[background-color,transform] duration-150 ease-out before:absolute before:inset-x-0 before:-inset-y-0.5 hover:bg-[color:var(--color-accent-hover)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-        >
-          Get started
-        </a>
-      </div>
-      <MobileNav client:load navItems={navLinks} appUrl={APP_URL} brand={project.name} />
+      <!-- One button. The app's front door is the set itself: it boots, then
+           asks for a session or shows the sources, so sign-in and sign-up both
+           live behind the same switch. -->
+      <a
+        href={APP_URL}
+        class="relative inline-flex h-11 items-center justify-center rounded-[8px] bg-primary px-6 text-base font-medium text-primary-foreground transition-[background-color,transform] duration-150 ease-out before:absolute before:inset-x-0 before:-inset-y-0.5 hover:bg-[color:var(--color-accent-hover)] active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+      >
+        Turn on TV
+      </a>
     </div>
   </div>
 </header>

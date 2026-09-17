@@ -126,3 +126,26 @@ export async function getStatsOverview(
     series: [...series.entries()].map(([d, v]) => ({ day: d, ...v })),
   };
 }
+
+const NETWORK_PLAYS_TTL_MS = 30_000;
+let networkPlaysCache: { plays: number; at: number } | null = null;
+
+/**
+ * Counted paid plays on the whole network. House cards do not count: they
+ * move no points, and the number on the marketing site is for advertisers.
+ */
+export async function getNetworkPlays(): Promise<number> {
+  const now = Date.now();
+  if (networkPlaysCache && now - networkPlaysCache.at < NETWORK_PLAYS_TTL_MS) {
+    return networkPlaysCache.plays;
+  }
+
+  const [row] = await db
+    .select({ n: count() })
+    .from(schema.play)
+    .where(and(eq(schema.play.state, "counted"), eq(schema.play.house, false)));
+
+  const plays = Number(row?.n ?? 0);
+  networkPlaysCache = { plays, at: now };
+  return plays;
+}

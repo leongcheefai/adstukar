@@ -1,0 +1,696 @@
+/* -----------------------------------------------------------------------------
+   Landing page. The knobs arrive as custom properties on `.landing`:
+   --k-hero (display scale), --k-capy (illustration width), --k-radius (scale).
+   Everything else here is a rule of the page, not a taste decision.
+   -------------------------------------------------------------------------- */
+
+.landing {
+  --radius-sm: calc(6px * var(--k-radius, 1));
+  --radius-md: calc(10px * var(--k-radius, 1));
+  --radius-lg: calc(14px * var(--k-radius, 1));
+  --radius-xl: calc(24px * var(--k-radius, 1));
+}
+
+/* --- Hero lockup ---------------------------------------------------------- */
+
+/* The lockup stands where the headline stood, and takes the same two knobs:
+   the illustration width sets its width and the headline scale scales it.
+   Scaled down on a phone so the whole of it stays in view. */
+.hero-lockup {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+}
+.hero-logo {
+  width: 100%;
+  max-width: min(calc(var(--k-capy, 448px) * 0.85 * var(--k-hero, 1)), 100%);
+  height: auto;
+}
+@media (min-width: 640px) {
+  .hero-logo {
+    max-width: min(calc(var(--k-capy, 448px) * 1 * var(--k-hero, 1)), 100%);
+  }
+}
+@media (min-width: 1024px) {
+  .hero-logo {
+    max-width: min(calc(var(--k-capy, 448px) * 1.1 * var(--k-hero, 1)), 100%);
+  }
+  /* Beside the set the lockup has half the width. */
+  .hero-set .hero-lockup {
+    justify-content: flex-start;
+  }
+  .hero-set .hero-logo {
+    max-width: min(calc(var(--k-capy, 448px) * 1.15 * var(--k-hero, 1)), 100%);
+  }
+}
+
+/* --- Float: the blue slab fills the first screen ------------------------- */
+
+/* The slab is the whole first screen. With the fixed foot ticker on, the
+   screen ends where the ticker begins, so the slab stops there too. */
+.hero-float {
+  min-height: 100svh;
+}
+body[data-crawl] .hero-float {
+  min-height: calc(100svh - var(--crawl-h));
+}
+/* The header floats over the top of the slab, so the lockup is centred in
+   the room below it, not behind it. */
+body[data-bleed] .hero-float {
+  padding-top: var(--header-h);
+}
+.hero-float .hero-lockup {
+  padding-block: 3rem;
+}
+
+.set-section {
+  margin: 3.5rem auto 0;
+  max-width: 56rem;
+}
+
+/* --- Set: the light hero ------------------------------------------------- */
+
+.hero-set > * {
+  padding-top: 3.5rem;
+  padding-bottom: 4rem;
+}
+@media (min-width: 640px) {
+  .hero-set > * {
+    padding-top: 5rem;
+    padding-bottom: 5rem;
+  }
+}
+@media (min-width: 1024px) {
+  .hero-set > * {
+    padding-top: 6rem;
+    padding-bottom: 6rem;
+  }
+}
+.set-hero {
+  margin-inline: auto;
+  max-width: 44rem;
+}
+@media (min-width: 1024px) {
+  .set-hero {
+    max-width: none;
+  }
+}
+
+/* --- On air: the hero is the screen -------------------------------------- */
+
+.hero-strap-body {
+  padding-top: 2rem;
+  padding-bottom: 3.5rem;
+}
+@media (min-width: 640px) {
+  .hero-strap-body {
+    padding-top: 2.5rem;
+    padding-bottom: 5rem;
+  }
+}
+.hero-strap-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 3rem;
+  font-size: 0.9375rem;
+}
+@media (min-width: 640px) {
+  .hero-strap-bar {
+    margin-bottom: 4rem;
+  }
+}
+
+/* --- The set: a CapyTV screen, drawn ------------------------------------- */
+
+.set {
+  container-type: inline-size;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: var(--radius-xl);
+  background: #000;
+  color: #fff;
+  box-shadow: var(--elev-3), 0 0 0 1px oklch(0.235 0.021 264.2 / 0.12);
+  /* The strap's height. The app runs 9% of the picture; a touch more here,
+     because this one is read from a chair, not across a room. */
+  --strip: 7cqw;
+}
+
+.set-picture {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #0a0b10;
+}
+
+/* The content the venue plays. Drawn, not photographed: a soft field of light
+   in a hue that follows the source, under a title. It is a stand-in for a
+   picture, and it should read as one from across the page. */
+.set-glow {
+  position: absolute;
+  inset: -20%;
+  --h: 264;
+  background: radial-gradient(55% 50% at 50% 42%, oklch(0.48 0.16 var(--h) / 0.95), transparent 72%),
+    radial-gradient(
+      38% 40% at 18% 84%,
+      oklch(0.42 0.12 calc(var(--h) - 60) / 0.55),
+      transparent 70%
+    ),
+    radial-gradient(30% 34% at 84% 24%, oklch(0.4 0.1 calc(var(--h) + 50) / 0.45), transparent 70%);
+  filter: blur(2cqw);
+  animation: set-glow 16s var(--ease-in-out) infinite alternate;
+}
+.set-picture[data-source="Podcast"] .set-glow {
+  --h: 60;
+}
+.set-picture[data-source="Music"] .set-glow {
+  --h: 330;
+}
+.set-picture[data-source="Live clip"] .set-glow {
+  --h: 200;
+}
+.set-picture[data-source="Photo Video"] .set-glow {
+  --h: 140;
+}
+.set-picture[data-source="Firepit"] .set-glow {
+  --h: 40;
+}
+@keyframes set-glow {
+  from {
+    transform: translate3d(-2%, -1%, 0) scale(1);
+  }
+  to {
+    transform: translate3d(2%, 1.5%, 0) scale(1.06);
+  }
+}
+
+/* The bar the app draws along the top: the lockup left, the live count right.
+   The lockup and the live pill are sized in em, so the "On air" hero can reuse
+   them at page scale. */
+.set-bar {
+  position: absolute;
+  top: 4cqw;
+  right: 3.6cqw;
+  left: 3.6cqw;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 2.3cqw;
+}
+/* The lockup on the set's bar, in white. It is sized from the bar's type so
+   the drawn set and the hero strap each get a lockup in step with their own
+   scale, and the width follows the artwork. */
+.set-lockup {
+  display: inline-flex;
+  align-items: center;
+  color: #fff;
+}
+.set-lockup svg {
+  height: 2.4em;
+  width: auto;
+}
+.set-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  white-space: nowrap;
+  color: rgb(255 255 255 / 0.72);
+}
+.set-live b {
+  font-weight: var(--fw-semibold);
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+}
+.set-live i {
+  flex: none;
+  width: 0.5em;
+  height: 0.5em;
+  border-radius: 50%;
+  background: oklch(0.63 0.25 25);
+  box-shadow: 0 0 0 0.2em oklch(0.63 0.25 25 / 0.25);
+  animation: set-live 2s ease-in-out infinite;
+}
+@keyframes set-live {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+/* Now playing, above the strap, inside the safe area. */
+.set-now {
+  position: absolute;
+  right: 3.6cqw;
+  bottom: calc(var(--strip) + 4cqw);
+  left: 3.6cqw;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5cqw;
+}
+.set-source {
+  font-size: 1.7cqw;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 0.6);
+}
+.set-title {
+  font-size: 4.2cqw;
+  font-weight: var(--fw-medium);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+.set-by {
+  font-size: 2.1cqw;
+  color: rgb(255 255 255 / 0.72);
+}
+.set-eq {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5cqw;
+  height: 2.6cqw;
+  margin-top: 0.8cqw;
+}
+.set-eq i {
+  width: 0.8cqw;
+  height: 100%;
+  border-radius: 0.3cqw;
+  background: #fff;
+  transform: scaleY(0.4);
+  transform-origin: bottom;
+  animation: set-eq 1.1s ease-in-out calc(var(--i, 0) * -0.19s) infinite alternate;
+}
+@keyframes set-eq {
+  from {
+    transform: scaleY(0.2);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+/* --- The crawl ------------------------------------------------------------ */
+
+/* One line of listings on a black strap, inside the drawn set. Every size is
+   in em off a container-unit font-size, so the strap scales with the set. */
+.crawl {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: stretch;
+  height: var(--strip);
+  overflow: hidden;
+  background: #000;
+  color: #fff;
+  font-size: 2cqw;
+  user-select: none;
+}
+
+.crawl-window {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  overflow: hidden;
+}
+.crawl-track {
+  display: flex;
+  width: max-content;
+  animation: crawl-lap var(--crawl-s, 42s) linear infinite;
+  will-change: transform;
+}
+/* One lap is one run's travel, whatever number of copies the run was printed. */
+@keyframes crawl-lap {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(calc(-100% / var(--copies, 2)));
+  }
+}
+.crawl:hover .crawl-track {
+  animation-play-state: paused;
+}
+
+/* One listing: the mark, then the name over the tagline. margin-right rather
+   than a flex gap, because the run is printed more than once and a gap is
+   dropped at the seam, which makes the loop jump on every lap. */
+.crawl-item {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 0.7em;
+  margin-right: 2.4em;
+  padding: 0.35em 0.7em;
+  white-space: nowrap;
+}
+.crawl-mark {
+  display: grid;
+  flex: none;
+  width: 2.75em;
+  height: 2.75em;
+  place-items: center;
+  border-radius: 50%;
+  background: radial-gradient(
+    78% 78% at 32% 26%,
+    color-mix(in oklab, var(--brand) 82%, #fff),
+    var(--brand)
+  );
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.18);
+  font-size: 0.8em;
+  font-weight: var(--fw-medium);
+  color: #0b0c10;
+}
+.crawl-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05em;
+  min-width: 0;
+}
+.crawl-title {
+  font-size: 1em;
+  line-height: 1.16;
+  letter-spacing: -0.01em;
+}
+.crawl-tagline {
+  font-size: 0.78em;
+  line-height: 1.3;
+  color: rgb(255 255 255 / 0.72);
+}
+
+/* --- The ticker ----------------------------------------------------------- */
+
+/* The site's own strap: the welcome and the live total, in the brand blue on
+   white. The rule on top is what separates it from a white page; on the black
+   "On air" hero the white itself is the edge. The foot variant is fixed to the
+   viewport, the hero variant is the foot of that hero, in flow.
+
+   Ortland in caps, the same face as the section titles: a strap is a
+   headline that moves. Ortland ships one weight, so none is set. */
+.ticker {
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+  border-top: 1px solid var(--border);
+  background: #fff;
+  color: var(--brand-500);
+  font-family: "Ortland", var(--font-sans);
+  font-size: 1.375rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  user-select: none;
+}
+@media (min-width: 640px) {
+  .ticker {
+    font-size: 1.625rem;
+  }
+}
+.ticker[data-variant="foot"] {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: var(--z-ticker);
+  height: calc(var(--crawl-h) + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.ticker[data-variant="hero"] {
+  position: relative;
+  height: var(--crawl-h);
+}
+.ticker-window {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  overflow: hidden;
+}
+.ticker-track {
+  display: flex;
+  width: max-content;
+  animation: crawl-lap var(--ticker-s, 20s) linear infinite;
+  will-change: transform;
+}
+.ticker:hover .ticker-track {
+  animation-play-state: paused;
+}
+/* One printed run. padding-right rather than a flex gap for the seam,
+   because the run is printed more than once and a gap is dropped at the
+   seam, which makes the loop jump on every lap. */
+.ticker-item {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 1.1em;
+  padding-right: 1.1em;
+  white-space: nowrap;
+}
+.ticker-item > span {
+  flex: none;
+}
+.ticker-total b {
+  display: inline-block;
+  font-weight: inherit;
+  color: #ff5100;
+}
+/* The blank holds the figure's width until the figure lands, so the lap does
+   not jump. */
+.ticker-total b[data-loading] {
+  min-width: 5ch;
+}
+/* --- Rates ---------------------------------------------------------------- */
+
+.rates-table {
+  width: 100%;
+  min-width: 36rem;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+.rates-table th,
+.rates-table td {
+  padding: 0.9rem 1.25rem;
+  text-align: left;
+  vertical-align: bottom;
+}
+.rates-table thead th {
+  padding-top: 1.25rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.75rem;
+  font-weight: var(--fw-medium);
+  color: var(--foreground);
+}
+.rates-table thead th span {
+  display: block;
+  margin-top: 0.15rem;
+  font-weight: var(--fw-regular);
+  color: var(--muted-foreground);
+}
+.rates-table tbody th {
+  font-weight: var(--fw-medium);
+}
+.rates-table tbody tr + tr {
+  border-top: 1px solid var(--border);
+}
+.rates-table tbody tr:last-child td,
+.rates-table tbody tr:last-child th {
+  padding-bottom: 1.25rem;
+}
+.rates-num {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.rates-table thead .rates-num {
+  font-family: var(--font-sans);
+}
+.rates-keep {
+  font-weight: var(--fw-medium);
+  color: var(--primary);
+}
+
+/* --- The sample card ------------------------------------------------------ */
+
+/* The clicks plot, in the ON AIR orange from the lockup. Impressions take the
+   brand blue, so the two plots read as two things at a glance. */
+.sample-clicks {
+  color: #ff5100;
+}
+
+/* --- FAQ ------------------------------------------------------------------ */
+
+/* Ortland, for the one-line section titles on the landing page. A display
+   face on a few words in caps: the rest of the site stays in Poppins. */
+@font-face {
+  font-family: "Ortland";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../assets/fonts/Ortland.otf") format("opentype");
+}
+
+/* A section title that is the whole header: no eyebrow, no lede. */
+.landing-title {
+  margin-bottom: 2rem;
+  font-family: "Ortland", var(--font-sans);
+  font-size: 3.5rem;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+@media (min-width: 640px) {
+  .landing-title {
+    margin-bottom: 2.5rem;
+    font-size: 4.5rem;
+  }
+}
+/* Beside a card the title has half the page, so it takes a smaller step. */
+.landing-title-compact {
+  font-size: 2.75rem;
+}
+@media (min-width: 640px) {
+  .landing-title-compact {
+    font-size: 3.5rem;
+  }
+}
+
+/* The close: the same display face, in the ink of the ground it sits on. */
+.cta-title {
+  font-family: "Ortland", var(--font-sans);
+  font-size: 4rem;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+@media (min-width: 640px) {
+  .cta-title {
+    font-size: 5.5rem;
+  }
+}
+@media (min-width: 1024px) {
+  .cta-title {
+    font-size: 6.5rem;
+  }
+}
+
+.faq-groups {
+  display: grid;
+  gap: 4rem;
+  margin-top: 4rem;
+}
+.faq-group {
+  display: grid;
+  gap: 1.25rem;
+}
+@media (min-width: 1024px) {
+  .faq-group {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    gap: 3rem;
+  }
+}
+.faq-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2.75rem;
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: var(--fw-medium);
+  color: var(--primary);
+  text-underline-offset: 4px;
+}
+.faq-more:hover {
+  text-decoration: underline;
+}
+.faq-list {
+  display: flex;
+  flex-direction: column;
+}
+.faq-item {
+  border-top: 1px solid var(--border);
+}
+.faq-item:last-child {
+  border-bottom: 1px solid var(--border);
+}
+.faq-q {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 3.5rem;
+  padding: 1rem 0;
+  cursor: pointer;
+  list-style: none;
+  font-size: 1rem;
+  font-weight: var(--fw-medium);
+  letter-spacing: -0.005em;
+}
+.faq-q::-webkit-details-marker {
+  display: none;
+}
+.faq-q:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+.faq-plus {
+  flex: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  color: var(--muted-foreground);
+  transition: transform var(--dur-base) var(--ease-out);
+}
+.faq-item[open] .faq-plus {
+  transform: rotate(45deg);
+}
+.faq-a {
+  max-width: 62ch;
+  padding: 0 0 1.25rem;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--muted-foreground);
+}
+
+/* The FAQ page's group chips. */
+.faq-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 2rem;
+}
+.faq-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.5rem;
+  padding: 0 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: var(--card);
+  font-size: 0.875rem;
+  font-weight: var(--fw-medium);
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+.faq-nav a:hover {
+  border-color: var(--color-border-strong);
+}
+
+/* --- Reduced motion ------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .crawl-track,
+  .ticker-track,
+  .set-glow,
+  .set-eq i,
+  .set-live i {
+    animation: none !important;
+  }
+  .set-eq i {
+    transform: scaleY(0.5);
+  }
+}

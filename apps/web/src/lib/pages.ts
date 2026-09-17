@@ -16,7 +16,7 @@ export const MARKETING_PAGES: MarketingPage[] = [
     path: "/",
     title: `${project.name} — ${project.tagline}`,
     description:
-      "Show one small sponsored card where your audience already looks — a site, a blog, a stream, or a screen in your shop — and earn credits you can cash out.",
+      "Play ads on a screen while you listen or watch, and earn CapyPoints. Advertisers see every play.",
   },
   {
     slug: "blog",
@@ -28,7 +28,7 @@ export const MARKETING_PAGES: MarketingPage[] = [
     slug: "faq",
     path: "/faq",
     title: `FAQ — ${project.name}`,
-    description: `How ${project.name} credits, verified views, cash out, moderation, and the embed snippet work.`,
+    description: `How earning with a screen, advertising, and ${project.pointsName} work on ${project.name}.`,
   },
   {
     slug: "terms",
@@ -41,6 +41,12 @@ export const MARKETING_PAGES: MarketingPage[] = [
     path: "/privacy",
     title: `Privacy Policy — ${project.name}`,
     description: `Privacy Policy for ${project.name}.`,
+  },
+  {
+    slug: "ads-policy",
+    path: "/ads-policy",
+    title: `Ads Policy — ${project.name}`,
+    description: `Creative and campaign rules for listings on ${project.name}.`,
   },
   {
     slug: "cookies",

@@ -1,5 +1,6 @@
-import { Coins, Megaphone, Monitor, Gear as Settings, SquaresFour } from "@phosphor-icons/react";
+import { Coins, Megaphone, Monitor, Gear as Settings, SquaresFour, X } from "@phosphor-icons/react";
 import {
+  Button,
   DashboardShell,
   DashboardTopbar,
   Drawer,
@@ -13,7 +14,10 @@ import { Link, Outlet, useLocation, useNavigate } from "react-router";
 import { CapyLockup } from "../../components/capytv/lockup";
 import { clearResume } from "../../components/capytv/resume";
 import { DashboardSidebarFooter } from "../../components/dashboard-sidebar-footer";
+import { SetupCoach } from "../../components/setup-coach";
+import { StripeCoach } from "../../components/stripe-coach";
 import { signOutThen, useSession } from "../../lib/auth";
+import { useCoach } from "../../lib/coach";
 import { designMode } from "../../lib/design-mode";
 
 function navItems(pathname: string): NavItem[] {
@@ -57,6 +61,28 @@ function DashboardContent({ onClose }: { onClose: () => void }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { data: session } = useSession();
+  const { dashboard: dashHint, stripe: stripeHint, dismiss, ignore } = useCoach();
+  const [coachReady, setCoachReady] = useState(false);
+
+  useEffect(() => {
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const id = window.setTimeout(() => setCoachReady(true), reduce ? 0 : 420);
+    return () => window.clearTimeout(id);
+  }, []);
+
+  useEffect(() => {
+    if (pathname === "/dashboard/campaigns" || pathname === "/dashboard/ledger") {
+      dismiss("dashboard");
+    }
+    // The ledger page holds the buy panel, so reaching it is taking the step.
+    if (pathname === "/dashboard/ledger") dismiss("stripe");
+  }, [pathname, dismiss]);
+
+  // Three tips for a newcomer, one after the other: the account on the
+  // chooser, then these two in the drawer. Each shows once on this browser.
+  // The campaign tip goes first, so the two never sit on screen together.
+  const showCoach = dashHint && coachReady;
+  const showStripeCoach = stripeHint === "pending" && coachReady && !showCoach;
 
   async function handleSignOut() {
     clearResume();
@@ -66,8 +92,17 @@ function DashboardContent({ onClose }: { onClose: () => void }) {
   const items = navItems(pathname);
 
   function renderNavLink({ href, className, label, icon }: NavItem & { className: string }) {
+    const ledger = href === "/dashboard/ledger";
+    const setup = href === "/dashboard/campaigns" || ledger;
     return (
-      <Link to={href ?? "#"} className={className}>
+      <Link
+        to={href ?? "#"}
+        className={className}
+        onClick={() => {
+          if (setup) dismiss("dashboard");
+          if (ledger) dismiss("stripe");
+        }}
+      >
         {icon && <span className="size-4 shrink-0">{icon}</span>}
         {label}
       </Link>
@@ -85,7 +120,7 @@ function DashboardContent({ onClose }: { onClose: () => void }) {
         onClose();
       }}
     >
-      <CapyLockup inverted={false} className="h-12 w-auto" />
+      <CapyLockup variant="off-air" inverted={false} className="h-12 w-auto" />
     </Link>
   );
 
@@ -111,10 +146,23 @@ function DashboardContent({ onClose }: { onClose: () => void }) {
           renderNavLink={renderNavLink}
           sidebarFooter={sidebarFooter}
           actions={<DesignModeBadge />}
+          trailing={
+            <Button
+              variant="outline"
+              size="icon"
+              className="size-10 rounded-full text-muted-foreground hover:text-foreground"
+              aria-label="Close dashboard"
+              onClick={onClose}
+            >
+              <X size={20} />
+            </Button>
+          }
         />
       }
     >
       <Outlet />
+      <SetupCoach open={showCoach} onDismiss={() => dismiss("dashboard")} />
+      <StripeCoach open={showStripeCoach} onIgnore={() => ignore("stripe")} />
     </DashboardShell>
   );
 }
