@@ -19,7 +19,6 @@ Ask the user for the email name, recipient context, and what data it needs (e.g.
 
 3. Call the sender from the appropriate trigger point:
    - Auth events → `packages/auth/src/index.ts` (`databaseHooks` or `emailAndPassword` callbacks)
-   - Billing events → `apps/api/src/modules/billing/billing.service.ts` webhook handler
    - Use fire-and-forget (`.catch()`) for non-critical emails; `await` for transactional flows where failure should surface to the user
 
 4. Run `pnpm verify`.

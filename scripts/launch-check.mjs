@@ -200,12 +200,7 @@ function checkEnvironment(root, envFile, project) {
     ...checkMatchingUrls(env, "BETTER_AUTH_URL", ["VITE_API_URL", "PUBLIC_API_URL"]),
     ...checkMatchingUrls(env, "APP_URL", ["PUBLIC_APP_URL"]),
     ...checkCompleteGroup(env, "Google OAuth", ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"]),
-    ...checkCompleteGroup(env, "Stripe", [
-      "STRIPE_SECRET_KEY",
-      "STRIPE_WEBHOOK_SECRET",
-      "STRIPE_PRO_PRICE_ID_MONTHLY",
-      "STRIPE_PRO_PRICE_ID_YEARLY",
-    ]),
+    ...checkCompleteGroup(env, "Stripe", ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET"]),
     ...checkCompleteGroup(env, "S3/R2", [
       "S3_BUCKET",
       "S3_ACCESS_KEY_ID",

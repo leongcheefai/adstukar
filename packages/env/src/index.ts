@@ -21,8 +21,6 @@ export const serverEnv = createEnv({
     GOOGLE_CLIENT_SECRET: z.string().optional(),
     STRIPE_SECRET_KEY: z.string().min(1).optional(),
     STRIPE_WEBHOOK_SECRET: z.string().min(1).optional(),
-    STRIPE_PRO_PRICE_ID_MONTHLY: z.string().optional(),
-    STRIPE_PRO_PRICE_ID_YEARLY: z.string().optional(),
     RESEND_API_KEY: z.string().optional(),
     S3_REGION: z.string().default("auto"), // 'auto' for R2; set to 'us-east-1' etc for AWS S3
     S3_BUCKET: z.string().min(1).optional(),
