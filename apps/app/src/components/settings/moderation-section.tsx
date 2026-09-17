@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
   Textarea,
+  adCardDimensions,
 } from "@repo/ui";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -38,6 +39,38 @@ const TIER_LABEL: Record<DeviceTier, string> = {
 };
 
 const TIERS = Object.keys(TIER_LABEL) as DeviceTier[];
+
+/** The band at its smallest, then halved: the review is about the words, and a
+    full-size band would not fit beside them. */
+const PREVIEW_FORMAT = "band";
+const PREVIEW_SIZE = "small";
+const PREVIEW_SCALE = 0.5;
+
+/**
+ * A transform draws the card smaller but leaves its layout box at full size,
+ * which squeezed the words into one column and pushed the buttons off the card.
+ * The wrapper owns the layout at the drawn size, so the row measures what it sees.
+ */
+function ListingPreview({ item }: { item: ListingReview }) {
+  const { listing, campaign } = item;
+  const dims = adCardDimensions(PREVIEW_FORMAT, PREVIEW_SIZE);
+  return (
+    <div
+      className="max-w-full shrink-0 overflow-hidden"
+      style={{ width: dims.width * PREVIEW_SCALE, height: dims.height * PREVIEW_SCALE }}
+    >
+      <AdCard
+        name={campaign.name}
+        tagline={listing.tagline}
+        logoUrl={listing.logoUrl}
+        format={PREVIEW_FORMAT}
+        size={PREVIEW_SIZE}
+        className="max-w-none origin-top-left"
+        style={{ transform: `scale(${PREVIEW_SCALE})` }}
+      />
+    </div>
+  );
+}
 
 /** What the reject dialog is acting on. One dialog serves both queues. */
 type RejectTarget =
@@ -76,17 +109,8 @@ function ListingRow({
             Open landing page <ArrowSquareOut size={11} />
           </a>
         </div>
-        <div className="flex flex-col gap-3 lg:items-end">
-          {/* The band at its smallest: the review is about the words, and a
-              full-size band would not fit beside them. */}
-          <AdCard
-            name={campaign.name}
-            tagline={listing.tagline}
-            logoUrl={listing.logoUrl}
-            format="band"
-            size="small"
-            className="origin-top-right scale-50 lg:origin-top-right"
-          />
+        <div className="flex shrink-0 flex-col gap-3 lg:items-end">
+          <ListingPreview item={item} />
           <div className="flex gap-2">
             <Button
               size="sm"
