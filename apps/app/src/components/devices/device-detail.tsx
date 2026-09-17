@@ -1,5 +1,11 @@
 import { ArrowsClockwise, Plus, Prohibit, Trash, X } from "@phosphor-icons/react";
-import { economy } from "@repo/config/economy";
+import {
+  type DeviceTierRate,
+  distributorKeeps,
+  economy,
+  playCost,
+  scanCost,
+} from "@repo/config/economy";
 import type {
   Device,
   DeviceWithTerms,
@@ -52,6 +58,7 @@ import {
   useUpdatePlacement,
 } from "../../lib/placements";
 import { CopyButton } from "../copy-button";
+import { TIER_LABEL } from "../rate-table";
 import { CapyTvScreen } from "./capytv-screen";
 import { OpenHoursFields, statedHoursOf } from "./open-hours";
 
@@ -72,7 +79,14 @@ const SIZE_LABEL: Record<PlacementSize, string> = {
  * is on screen at a time, so each row sets its own shape and timing and nothing
  * else.
  */
-function PlacementRow({ placement }: { placement: Placement }) {
+function PlacementRow({
+  placement,
+  tier,
+}: {
+  placement: Placement;
+  /** The stamped tier, or null while an admin still reviews the screen. */
+  tier: DeviceTierRate | null;
+}) {
   const update = useUpdatePlacement();
   const remove = useDeletePlacement();
   const [dwell, setDwell] = useState(placement.dwellSeconds);
@@ -84,7 +98,16 @@ function PlacementRow({ placement }: { placement: Placement }) {
     <div className="space-y-4 rounded-lg border p-4">
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1 space-y-1.5">
-          <Label>Format</Label>
+          <div className="flex items-baseline justify-between gap-2">
+            <Label>Format</Label>
+            {/* The tier and the format together fix the rate, so this is the
+                exact number a play here pays, not a range. */}
+            {tier && (
+              <span className="text-xs text-muted-foreground tabular-nums">
+                Keeps {distributorKeeps(playCost(tier, placement.format))} a play
+              </span>
+            )}
+          </div>
           <Select
             value={placement.format}
             onValueChange={(v) =>
@@ -409,6 +432,8 @@ export function DeviceDetail({
           <DialogDescription>
             {device.location} · CapyTV plays its own content, and shows listings over it. One paid
             listing at a time.
+            {approved &&
+              ` A ${TIER_LABEL[device.tier]} screen keeps ${distributorKeeps(scanCost(device.tier))} a scan, and is paid for up to ${device.dailyPlayCap.toLocaleString()} plays a day.`}
           </DialogDescription>
         </DialogHeader>
 
@@ -512,7 +537,11 @@ export function DeviceDetail({
               </p>
             )}
             {placements?.map((placement) => (
-              <PlacementRow key={placement.id} placement={placement} />
+              <PlacementRow
+                key={placement.id}
+                placement={placement}
+                tier={approved ? device.tier : null}
+              />
             ))}
           </div>
 

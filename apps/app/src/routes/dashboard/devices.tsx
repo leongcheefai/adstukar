@@ -25,6 +25,7 @@ import { toast } from "sonner";
 import { DeviceDetail } from "../../components/devices/device-detail";
 import { DeviceTile } from "../../components/devices/device-tile";
 import { OpenHoursFields, type StatedHours } from "../../components/devices/open-hours";
+import { RateTable } from "../../components/rate-table";
 import { uploadDevicePhoto, useCreateDevice, useDevices } from "../../lib/devices";
 import { usePlacements } from "../../lib/placements";
 
@@ -131,6 +132,10 @@ export function DevicesPage() {
           <TooltipContent>New device</TooltipContent>
         </Tooltip>
       </div>
+
+      {/* A pending screen has no tier yet, so the table is the only rate it can
+          show. An approved screen also shows its exact number in its detail. */}
+      <RateTable side="distributor" />
 
       {isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
 

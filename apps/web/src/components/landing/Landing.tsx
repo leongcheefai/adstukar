@@ -1,4 +1,4 @@
-import { type DeviceTierRate, economy, feeOn, playRateRange } from "@repo/config/economy";
+import { type DeviceTierRate, economy, playRateRange, rateTable } from "@repo/config/economy";
 import { project } from "@repo/config/project";
 import { Container, Logo, Section, SectionHeader } from "@repo/ui";
 import type { CSSProperties, ReactNode } from "react";
@@ -173,27 +173,18 @@ const TIER_LABEL: Record<DeviceTierRate, string> = {
   flagship: "Flagship",
 };
 
-function keeps(n: number): number {
-  return n - feeOn(n);
-}
-
-function tierRow(tier: DeviceTierRate) {
-  const rates = Object.values(economy.playRate[tier]);
-  const lo = Math.min(...rates);
-  const hi = Math.max(...rates);
-  const scan = economy.scanRate[tier];
-  return {
-    tier,
-    label: TIER_LABEL[tier],
-    play: `${lo}–${hi}`,
-    playKeeps: `${keeps(lo)}–${keeps(hi)}`,
-    scan: scan.toLocaleString("en-US"),
-    scanKeeps: keeps(scan).toLocaleString("en-US"),
-  };
-}
+/** The table is derived once, in the config, so the dashboard shows the same rows. */
+const RATE_ROWS = rateTable().map((row) => ({
+  tier: row.tier,
+  label: TIER_LABEL[row.tier],
+  play: `${row.play.lowest}–${row.play.highest}`,
+  playKeeps: `${row.playKeeps.lowest}–${row.playKeeps.highest}`,
+  scan: row.scan.toLocaleString("en-US"),
+  scanKeeps: row.scanKeeps.toLocaleString("en-US"),
+}));
 
 function Rates({ spacing, className }: { spacing: LandingConfig["density"]; className?: string }) {
-  const rows = (Object.keys(economy.playRate) as DeviceTierRate[]).map(tierRow);
+  const rows = RATE_ROWS;
   const share = 100 - economy.feePercent;
   return (
     <Section id="rates" spacing={spacing} className={className}>
