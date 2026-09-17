@@ -1,7 +1,7 @@
 # apps/api
 
 ## Purpose
-Hono API server on Node.js. Handles auth (Better Auth), the CapyAds exchange (campaigns, listings, devices, placements, serve/report/scan, ledger, stats, moderation, jobs), and the dormant Stripe billing module kept for a later paid tier. Runs on port 3001 in development.
+Hono API server on Node.js. Handles auth (Better Auth), the CapyAds exchange (campaigns, listings, devices, placements, serve/report/scan, ledger, stats, moderation, jobs), and the Stripe webhook that lands a CapyPoints top-up. Runs on port 3001 in development.
 
 ## Exchange modules
 | Module | Routes | Auth |
@@ -111,50 +111,38 @@ curl http://localhost:3001/health
 curl http://localhost:3001/me -H "Cookie: <session-cookie>"
 ```
 
-## Stripe + Billing
+## Stripe
+
+Stripe sells one thing: a CapyPoints top-up (`src/modules/topups/`). There is no
+subscription, no invoice, and no portal (docs/adr/0001). The webhook in
+`src/modules/billing/` is the only route Stripe calls.
 
 ### Local webhook testing with Stripe CLI
 ```bash
 # Install Stripe CLI: https://stripe.com/docs/stripe-cli
-# Login
 stripe login
 
-# Forward webhooks to local server
+# Forward webhooks to the local API. The CLI prints a signing secret: put it in
+# .env as STRIPE_WEBHOOK_SECRET.
 stripe listen --forward-to localhost:3001/billing/webhook
-
-# The CLI prints a webhook signing secret — add to .env as STRIPE_WEBHOOK_SECRET
 ```
 
 ### Webhook events handled
 | Event | Action |
 |---|---|
-| `checkout.session.completed` | Payment mode: mark the top-up paid and post its `topup` entry. Subscription mode: upsert the subscription row |
+| `checkout.session.completed` | Payment mode: mark the top-up paid and post its `topup` entry, once per payment |
 | `checkout.session.expired` | Mark an unpaid top-up abandoned |
-| `customer.subscription.created` | Upsert subscription row (handles non-checkout signups) |
-| `customer.subscription.updated` | Update plan/status/period-end/cancel_at_period_end |
-| `customer.subscription.deleted` | Mark subscription canceled |
-| `invoice.paid` | Re-sync subscription status on successful payment |
-| `invoice.payment_failed` | Mark subscription past_due, send payment-failed email |
 
-Note: all webhook events are deduplicated via the `webhook_event` table (Stripe event ID as PK).
+Every event is recorded in `webhook_event` by its Stripe id before it acts, so a
+retry changes nothing.
 
-### Trigger test events
-```bash
-# Simulate a completed checkout
-stripe trigger checkout.session.completed
-
-# Simulate payment failure
-stripe trigger invoice.payment_failed
-```
-
-### Adding a new Stripe product
-1. Create product + price in Stripe Dashboard (test mode)
-2. Put the monthly/yearly `price_...` IDs in the root `.env` as `STRIPE_PRO_PRICE_ID_MONTHLY` and `STRIPE_PRO_PRICE_ID_YEARLY`
-3. `GET /billing/config` exposes those IDs to the dashboard and marketing pricing flows; checkout submits the selected ID to `POST /billing/checkout`
+### Walk a top-up by hand
+Open the dashboard, buy the smallest pack with a Stripe test card, and watch the
+CLI forward `checkout.session.completed`. The ledger then shows one `topup` row
+against the `bought` lot.
 
 ## Gotchas
 - `POST /report` reads a **text/plain** body (`navigator.sendBeacon` cannot send JSON content types) and parses it by hand — do not add `zValidator("json")` there
 - `/serve`, `/loop`, `/report` and `/scan/*` accept any origin, because CapyTV runs on member devices. Every other route keeps the `APP_URL`/`WEB_URL` allow-list; the check lives in `PUBLIC_PREFIXES` and the `cors()` origin function in `src/lib/app.ts`. A new public screen route must be added there too
 - Webhook endpoint at `POST /billing/webhook` must receive the **raw body** for signature verification — do not add JSON body-parsing middleware to this route
 - Stripe API version is pinned in `src/lib/stripe.ts` — update after checking Stripe changelog for breaking changes
-- `subscription_data.metadata.userId` is set on checkout so webhooks can look up the user without a customer lookup
