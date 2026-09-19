@@ -58,7 +58,13 @@ export const economy = {
     /** Days after settlement before earned money may leave as a payout. */
     holdDays: 30,
     /** The least one payout may take, as an amount. */
-    minimum: 20_000,
+    minimum: 10_000,
+    /**
+     * Where a connected Stripe account may live, ISO 3166-1 alpha-2. A Malaysia
+     * platform pays cross-border to a fixed list, so the select offers only
+     * these. Correct the list against the Stripe dashboard before launch.
+     */
+    countries: ["MY", "SG", "US", "GB", "AU"],
     /**
      * Days of device history the fraud review reads before an admin pays. It
      * matches the hold, so the window an admin looks at is the window the hold
@@ -180,6 +186,7 @@ export const DAY_MS = 86_400_000;
 export type Economy = typeof economy;
 export type DeviceTierRate = keyof typeof economy.playRate;
 export type PlacementFormatRate = keyof (typeof economy.playRate)["standard"];
+export type PayoutCountry = (typeof economy.payout.countries)[number];
 
 /** The advertiser's cost for one play. */
 export function playCost(tier: DeviceTierRate, format: PlacementFormatRate): number {

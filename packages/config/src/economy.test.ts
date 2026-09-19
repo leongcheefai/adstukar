@@ -75,3 +75,14 @@ describe("centsToAmount", () => {
     expect(centsToAmount(1_000)).toBe(10_000);
   });
 });
+
+describe("payout", () => {
+  it("takes at least ten dollars", () => {
+    expect(economy.payout.minimum).toBe(10_000);
+  });
+
+  it("names every country a connected account may live in, upper case", () => {
+    expect(economy.payout.countries.length).toBeGreaterThan(0);
+    for (const country of economy.payout.countries) expect(country).toMatch(/^[A-Z]{2}$/);
+  });
+});
