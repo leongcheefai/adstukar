@@ -7,7 +7,8 @@
     "./project": "./src/project.ts",
     "./tsconfig": "./tsconfig.base.json",
     "./biome": "./biome.json",
-    "./economy": "./src/economy.ts"
+    "./economy": "./src/economy.ts",
+    "./money": "./src/money.ts"
   },
   "scripts": {
     "lint": "biome check src",

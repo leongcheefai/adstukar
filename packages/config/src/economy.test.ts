@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { distributorKeeps, economy, rateTable } from "./economy";
+import { amountToCents, centsToAmount, distributorKeeps, economy, rateTable } from "./economy";
 
 describe("distributorKeeps", () => {
   it("is the amount less the fee, so the two sides of a play add up", () => {
@@ -10,7 +10,7 @@ describe("distributorKeeps", () => {
     }
   });
 
-  it("never rounds a point away from the distributor", () => {
+  it("never rounds a unit away from the distributor", () => {
     // 30% of 3 is 0.9, and the fee rounds down, so the screen keeps all 3.
     expect(distributorKeeps(3)).toBe(3);
   });
@@ -45,5 +45,34 @@ describe("rateTable", () => {
         scanKeeps: 112,
       },
     ]);
+  });
+});
+
+describe("unit", () => {
+  it("is one thousandth of a US dollar", () => {
+    expect(economy.unit.perUsd).toBe(1000);
+  });
+
+  it("names the payout floor as an amount", () => {
+    expect(economy.payout.minimum).toBe(20_000);
+  });
+
+  it("sells every pack at the peg", () => {
+    for (const pack of economy.topup.packs) {
+      expect(pack.amount).toBe(centsToAmount(pack.usdCents));
+    }
+  });
+});
+
+describe("amountToCents", () => {
+  it("rounds down, so a part of a cent never becomes money", () => {
+    expect(amountToCents(12_345)).toBe(1_234);
+    expect(amountToCents(5)).toBe(0);
+  });
+});
+
+describe("centsToAmount", () => {
+  it("is exact at the peg", () => {
+    expect(centsToAmount(1_000)).toBe(10_000);
   });
 });
