@@ -23,7 +23,7 @@ The old barter economy (+1 earn, -2 spend, no money) is dead. Do not restore it.
 | payout | a distributor's request to turn earned money into a payment. An admin reviews it and pays by hand |
 
 ## Exchange rules (where things live)
-- **Economy numbers** — `packages/config/src/economy.ts` only. Play and scan rates, the fee, the peg, grants, the daily play cap, the daily budget default, settlement delay, payout hold and threshold, expiry, top-up packs, rate limits, listings per campaign. Never a literal in a route, a job, a page, or the client. `apps/embed` is the one exception: it is unmaintained, and its dead web-economy numbers sit in `apps/embed/src/config.ts` so they cannot drift back in.
+- **Economy numbers** — `packages/config/src/economy.ts` only. Play and scan rates, the fee, the peg, grants, the daily play cap, the daily budget default, settlement delay, payout hold and threshold, expiry, top-up bounds, rate limits, listings per campaign. Never a literal in a route, a job, a page, or the client. `apps/embed` is the one exception: it is unmaintained, and its dead web-economy numbers sit in `apps/embed/src/config.ts` so they cannot drift back in.
 - **Ledger** — `apps/api/src/modules/ledger/ledger.service.ts` is the only writer of `ledger_entry`. Rows are append-only. `idempotency_key` is unique. Balances are `SUM(delta)`; never store a counter.
 - **Lots** — every entry carries a lot: `bought`, `earned`, or `granted`. The lot decides the rules. `bought` refunds, never withdraws, never expires. `earned` withdraws after the hold, and expires. `granted` neither refunds nor withdraws, and expires. A spend consumes `granted` first, then `bought`, oldest first. Free money that can be withdrawn is a cash faucet.
 - **Serve path** — `apps/api/src/modules/serve/`: `ranking.ts` is the pure extension point for AI matching. `GET /serve` opens one play; `GET /loop` opens a whole batch for a screen with a shaky network; `POST /report` counts a play and writes the spend, earn and fee rows in one transaction; `GET /scan/:playId` pays the bonus and redirects. `loop.ts` holds the pure batch rules.
@@ -31,8 +31,8 @@ The old barter economy (+1 earn, -2 spend, no money) is dead. Do not restore it.
 - **Nothing is priced when a play is served** — the daily cap, the campaign budget, and the state of the campaign and the listing are all read at report time. Above the cap, or on a creative an admin rejected after the batch was cut, the play still shows and still counts, and simply pays nothing. A scan on a still-open play is recorded free and settled by the report that follows it.
 - **Pacing** — `apps/api/src/modules/campaigns/pacing.ts` holds the rules, and they are pure. The listings under a campaign split its daily budget evenly. A campaign stops when the budget is spent, and starts again the next day. A campaign stops when the owner's balance runs out, and starts again when it comes back. A pause by a person carries no reason, and the job never touches it.
 - **One paid listing at a time** — a device may hold several placements, but only one paid listing is on screen at once. Concurrent regions would charge several advertisers for one pair of eyes.
-- **Top-up** — `apps/api/src/modules/topups/`: `packs.ts` holds the rules, and they
-  are pure. An advertiser buys a pack at the peg, and no pack carries a bonus. The
+- **Top-up** — `apps/api/src/modules/topups/`: `amounts.ts` holds the rules, and they
+  are pure. An advertiser names any amount inside the bounds, and no amount carries a bonus. The
   row opens before the Stripe call and the amount goes in only when the webhook
   lands, keyed on the payment id. A refund gives the unspent part back inside the
   window, at the peg less what the card processor kept; which part is unspent

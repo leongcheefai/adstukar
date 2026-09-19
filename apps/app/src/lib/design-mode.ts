@@ -496,7 +496,7 @@ const refundable: Record<
 
 function topupOverview(): TopupOverview {
   return {
-    packs: economy.topup.packs.map((pack) => ({ ...pack })),
+    amount: { ...economy.topup.amount, presetsCents: [...economy.topup.amount.presetsCents] },
     refundWindowDays: economy.topup.refundWindowDays,
     items: topups.map((topup) => {
       const money = refundable[topup.id] ?? { amount: 0, netCents: 0, block: "nothing-left" };

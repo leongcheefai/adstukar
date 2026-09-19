@@ -74,7 +74,7 @@ export const FAQ_GROUPS: FaqGroup[] = [
     items: [
       {
         question: "What does it cost?",
-        answer: `You top up in US dollars, from ${usdCents(economy.topup.packs[0]?.usdCents ?? 0)}. No pack carries a bonus. Each play of your listing costs ${perThousandPlaysRange(lowestPlayRate, highestPlayRate)}, by the tier of the screen, and a scan costs a bonus on top. There is no monthly fee.`,
+        answer: `You top up in US dollars, any amount from ${usdCents(economy.topup.amount.minCents)} to ${usdCents(economy.topup.amount.maxCents)}. No amount carries a bonus. Each play of your listing costs ${perThousandPlaysRange(lowestPlayRate, highestPlayRate)}, by the tier of the screen, and a scan costs a bonus on top. There is no monthly fee.`,
       },
       {
         question: "What does a listing look like on screen?",

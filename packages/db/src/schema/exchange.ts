@@ -364,10 +364,10 @@ export const payoutRequest = pgTable(
 /**
  * One advertiser's top-up.
  *
- * The row opens when the member picks a pack, so a checkout that nobody
+ * The row opens when the member names an amount, so a checkout that nobody
  * finishes is visible rather than lost. `amount` and `usdCents` are stamped
- * here from the pack the server picked, never read back off Stripe: the price
- * a member paid must not move when the peg or a pack does.
+ * here from what the server checked, never read back off Stripe: the price
+ * a member paid must not move when the peg or the bounds do.
  *
  * A refund takes the unspent part back at the peg, less what the processor
  * kept, and posts a `refund` entry against the `bought` lot. It never edits the

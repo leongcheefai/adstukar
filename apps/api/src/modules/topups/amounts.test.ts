@@ -1,25 +1,32 @@
 import { DAY_MS, economy } from "@repo/config/economy";
 import { describe, expect, it } from "vitest";
-import { findPack, refundAmount, refundBlock, refundDeadline, unspentByTopup } from "./packs";
+import {
+  refundAmount,
+  refundBlock,
+  refundDeadline,
+  topupAmountBlock,
+  unspentByTopup,
+} from "./amounts";
 
-const PACK = { amount: 10_000, usdCents: 1_000 };
+const TOPUP = { amount: 10_000, usdCents: 1_000 };
 const NOW = new Date("2026-06-01T00:00:00Z");
 
-describe("findPack", () => {
-  it("returns the pack an advertiser asked for", () => {
-    expect(findPack(10_000)).toEqual({ amount: 10_000, usdCents: 1_000 });
-    expect(findPack(250_000)).toEqual({ amount: 250_000, usdCents: 25_000 });
+describe("topupAmountBlock", () => {
+  const { minCents, maxCents } = economy.topup.amount;
+
+  it("lets an amount inside the bounds through", () => {
+    expect(topupAmountBlock(minCents)).toBeNull();
+    expect(topupAmountBlock(maxCents)).toBeNull();
+    expect(topupAmountBlock(1_234)).toBeNull();
   });
 
-  it("refuses an amount we do not sell", () => {
-    expect(findPack(12_345)).toBeNull();
-    expect(findPack(0)).toBeNull();
+  it("refuses below the floor", () => {
+    expect(topupAmountBlock(minCents - 1)).toBe("below-minimum");
+    expect(topupAmountBlock(0)).toBe("below-minimum");
   });
 
-  it("prices every pack at the peg, with no bonus", () => {
-    for (const pack of economy.topup.packs) {
-      expect(pack.amount).toBe((pack.usdCents * economy.unit.perUsd) / 100);
-    }
+  it("refuses above the ceiling", () => {
+    expect(topupAmountBlock(maxCents + 1)).toBe("above-maximum");
   });
 });
 
@@ -34,7 +41,7 @@ describe("unspentByTopup", () => {
   const fresh = (amount: number, refunded = 0) => ({ amount, refunded });
 
   it("takes the spend off the oldest top-up first", () => {
-    // Two packs of 10,000 and 12,000 units left: 8,000 were spent, and a spend
+    // Two top-ups of 10,000 and 12,000 units left: 8,000 were spent, and a spend
     // takes the oldest bought money. The list arrives oldest first.
     expect(unspentByTopup([fresh(10_000), fresh(10_000)], 12_000)).toEqual([2_000, 10_000]);
   });
@@ -44,8 +51,8 @@ describe("unspentByTopup", () => {
   });
 
   it("counts a refund against the top-up that gave it back, not against the oldest", () => {
-    // The newer pack already refunded 6,000. Of the 4,000 units that went, the
-    // spend came out of the older pack.
+    // The newer top-up already refunded 6,000. Of the 4,000 units that went, the
+    // spend came out of the older one.
     expect(unspentByTopup([fresh(10_000), fresh(10_000, 6_000)], 10_000)).toEqual([6_000, 4_000]);
   });
 
@@ -63,9 +70,9 @@ describe("unspentByTopup", () => {
 });
 
 describe("refundAmount", () => {
-  it("returns the whole pack less the processor fee", () => {
+  it("returns the whole top-up less the processor fee", () => {
     // $10 back: 290 basis points is 29 cents, plus the 30-cent fixed fee.
-    expect(refundAmount(10_000, PACK)).toEqual({
+    expect(refundAmount(10_000, TOPUP)).toEqual({
       amount: 10_000,
       grossCents: 1_000,
       feeCents: 59,
@@ -74,8 +81,8 @@ describe("refundAmount", () => {
   });
 
   it("charges the fixed fee only for the share it refunds", () => {
-    // Half the pack: 15 cents of the fixed fee, and 15 cents of the percentage.
-    expect(refundAmount(5_000, PACK)).toEqual({
+    // Half the top-up: 15 cents of the fixed fee, and 15 cents of the percentage.
+    expect(refundAmount(5_000, TOPUP)).toEqual({
       amount: 5_000,
       grossCents: 500,
       feeCents: 30,
@@ -84,13 +91,13 @@ describe("refundAmount", () => {
   });
 
   it("rounds the amount down to a whole cent and leaves the rest in the account", () => {
-    const result = refundAmount(1_005, PACK);
+    const result = refundAmount(1_005, TOPUP);
     expect(result.grossCents).toBe(100);
     expect(result.amount).toBe(1_000);
   });
 
   it("never returns more money than it took", () => {
-    const result = refundAmount(10, PACK);
+    const result = refundAmount(10, TOPUP);
     expect(result.netCents).toBe(0);
     expect(result.feeCents).toBeLessThanOrEqual(result.grossCents);
   });

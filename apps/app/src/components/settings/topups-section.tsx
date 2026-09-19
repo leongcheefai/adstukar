@@ -131,7 +131,7 @@ export function TopupsSection() {
         <EmptyState
           icon={<Receipt />}
           title="No top-ups yet"
-          description="A purchase appears here once a member pays for a pack."
+          description="A top-up appears here once a member pays."
         />
       )}
 

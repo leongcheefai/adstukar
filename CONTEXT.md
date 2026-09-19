@@ -134,9 +134,9 @@ An advertiser's payment into the wallet. It opens as a checkout and only
 becomes balance when the payment lands.
 _Avoid_: Deposit, recharge, refill
 
-**Pack**:
-One size a top-up sells. No pack carries a bonus, because a bonus has no
-honest refund rate.
+**Top-up bounds**:
+The least and the most one top-up may be, in US dollars, plus the presets the
+panel offers. Every amount is at the same rate and none carries a bonus.
 
 **Payout**:
 A distributor's request to turn earned money into a payment. A member asks, an

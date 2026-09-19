@@ -77,7 +77,7 @@ A refund gives the unspent part of one top-up back, for a window after the
 payment, at the peg less what the card processor kept. The debit is posted
 before the Stripe call and inside the same transaction, so a refusal rolls it
 back. Which part is still unspent comes from the bought balance, never from
-the rows: see `src/modules/topups/packs.ts`.
+the rows: see `src/modules/topups/amounts.ts`.
 
 `POST /report` also stamps `device.last_seen_at` and `device.last_network`
 whenever the key matches, whatever becomes of the play. The payout review reads
@@ -141,7 +141,7 @@ Every event is recorded in `webhook_event` by its Stripe id before it acts, so a
 retry changes nothing.
 
 ### Walk a top-up by hand
-Open the dashboard, buy the smallest pack with a Stripe test card, and watch the
+Open the dashboard, top up the smallest amount with a Stripe test card, and watch the
 CLI forward `checkout.session.completed`. The ledger then shows one `topup` row
 against the `bought` lot.
 
