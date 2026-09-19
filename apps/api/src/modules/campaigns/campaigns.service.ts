@@ -195,7 +195,7 @@ export async function updateCampaign(
 }
 
 /**
- * A delete is an archive. Points have moved against the listings under this
+ * A delete is an archive. Money has moved against the listings under this
  * campaign, and the ledger still references the plays that carried them.
  */
 export async function archiveCampaign(userId: string, campaignId: string) {

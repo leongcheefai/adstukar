@@ -133,8 +133,8 @@ export const TOPUP_REFUND_BLOCKS = [
 export type TopupRefundBlock = (typeof TOPUP_REFUND_BLOCKS)[number];
 
 /**
- * Why a top-up amount is refused. Like the other blocks, the API works it out
- * and the dashboard reads it; no column stores it.
+ * Why a top-up amount is refused. The API works it out and answers with the
+ * reason; no column stores it. The dashboard reads the bounds themselves.
  */
 export const TOPUP_AMOUNT_BLOCKS = ["below-minimum", "above-maximum"] as const;
 

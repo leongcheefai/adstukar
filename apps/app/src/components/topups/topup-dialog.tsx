@@ -66,8 +66,8 @@ export function TopUpDialog({
         <DialogHeader>
           <DialogTitle>Top up</DialogTitle>
           <DialogDescription>
-            Any amount from {usdCents(rule.minCents)} to {usdCents(rule.maxCents)}. An unspent
-            top-up refunds for {overview.refundWindowDays} days.
+            Every amount is at the same rate. An unspent top-up refunds for{" "}
+            {overview.refundWindowDays} days.
           </DialogDescription>
         </DialogHeader>
 
@@ -93,12 +93,13 @@ export function TopUpDialog({
             inputMode="decimal"
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder={centsToText(rule.presetsCents[1] ?? rule.minCents)}
+            placeholder={centsToText(rule.minCents)}
             className="font-mono tabular-nums"
             aria-invalid={problem !== null}
           />
           <p className={cn("text-xs", problem ? "text-destructive" : "text-muted-foreground")}>
-            {problem ?? "Whole cents only. Every amount is at the same rate."}
+            {problem ??
+              `Any whole-cent amount from ${usdCents(rule.minCents)} to ${usdCents(rule.maxCents)}.`}
           </p>
         </div>
 

@@ -8,7 +8,7 @@ import { listingContract } from "../entities/listing";
 export const campaignWithListingsOutput = z.object({
   campaign: campaignContract,
   listings: z.array(listingContract),
-  /** Points this campaign has spent since the start of the UTC day. */
+  /** The amount this campaign has spent since the start of the UTC day. */
   spentToday: z.number().int(),
 });
 
