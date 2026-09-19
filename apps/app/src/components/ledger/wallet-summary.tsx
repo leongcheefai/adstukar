@@ -25,7 +25,7 @@ export function WalletSummary() {
   const wantsBuy = params.get("buy") === "1";
 
   // The Stripe onboarding tip lands here with ?buy=1, so the buy panel opens
-  // by itself once the packs are known. The flag leaves the URL at once: a
+  // by itself once the bounds are known. The flag leaves the URL at once: a
   // reload, or a saved link, must not reopen a payment panel.
   useEffect(() => {
     if (!wantsBuy || !topups) return;

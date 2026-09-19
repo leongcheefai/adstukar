@@ -26,14 +26,14 @@ export function useRefreshMoney() {
   };
 }
 
-/** Opens the Stripe checkout for one pack. The money arrives through the webhook. */
+/** Opens the Stripe checkout for one amount, in cents. The money arrives through the webhook. */
 export function useTopUp() {
   return useMutation({
-    mutationFn: (amount: number) =>
+    mutationFn: (usdCents: number) =>
       apiFetch<TopupCheckoutResponse>("/topups/checkout", {
         method: "POST",
         body: {
-          amount,
+          usdCents,
           successUrl: `${window.location.origin}/dashboard/ledger?topup=paid`,
           cancelUrl: `${window.location.origin}/dashboard/ledger?topup=cancelled`,
         },

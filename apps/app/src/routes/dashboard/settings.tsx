@@ -67,7 +67,7 @@ const ADMIN_SECTIONS: SettingsSection[] = [
     label: "Top-ups",
     title: "Top-ups",
     description:
-      "Every pack a member paid for, newest first. A member asks for a refund; you give the unspent part back from here.",
+      "Every top-up a member paid for, newest first. A member asks for a refund; you give the unspent part back from here.",
   },
   {
     id: "releases",

@@ -1,5 +1,6 @@
-import { usdCents } from "@repo/config/money";
-import type { TopupOverview, TopupPack } from "@repo/contracts/types";
+import { amountToCents, centsToAmount } from "@repo/config/economy";
+import { parseUsd, usdCents, usdInput } from "@repo/config/money";
+import type { TopupOverview } from "@repo/contracts/types";
 import {
   Button,
   Dialog,
@@ -8,6 +9,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  Input,
+  Label,
   cn,
 } from "@repo/ui";
 import { useState } from "react";
@@ -15,9 +18,9 @@ import { toast } from "sonner";
 import { useTopUp } from "../../lib/topups";
 
 /**
- * The buy panel. Every pack sits at the same peg and none of them carries a
- * bonus, so the only thing that changes down the list is the size — which is why
- * each card names the price and nothing else tries to sell it.
+ * The top-up panel. One figure, in dollars. The presets fill the same input,
+ * so a member who wants a round number and a member who wants an exact one
+ * use the same control, and the bounds under it say what the wallet takes.
  */
 export function TopUpDialog({
   overview,
@@ -28,12 +31,24 @@ export function TopUpDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const packs = overview.packs;
-  const [amount, setAmount] = useState<number>(packs[0]?.amount ?? 0);
+  const rule = overview.amount;
+  const [text, setText] = useState<string>(centsToText(rule.presetsCents[0] ?? rule.minCents));
   const buy = useTopUp();
 
+  const parsed = parseUsd(text);
+  const cents = parsed === null ? null : amountToCents(parsed);
+  const problem =
+    cents === null
+      ? "Enter a dollar figure, with at most two decimals."
+      : cents < rule.minCents
+        ? `At least ${usdCents(rule.minCents)}.`
+        : cents > rule.maxCents
+          ? `At most ${usdCents(rule.maxCents)}.`
+          : null;
+
   function submit() {
-    buy.mutate(amount, {
+    if (cents === null || problem) return;
+    buy.mutate(cents, {
       onSuccess: (result) => {
         if (!result.url) {
           toast.error("Stripe did not return a checkout page. Try again.");
@@ -51,24 +66,44 @@ export function TopUpDialog({
         <DialogHeader>
           <DialogTitle>Top up</DialogTitle>
           <DialogDescription>
-            Every amount is at the same rate, and no pack carries a bonus. An unspent top-up refunds
-            for {overview.refundWindowDays} days.
+            Any amount from {usdCents(rule.minCents)} to {usdCents(rule.maxCents)}. An unspent
+            top-up refunds for {overview.refundWindowDays} days.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-2 gap-2">
-          {packs.map((pack) => (
-            <PackButton
-              key={pack.amount}
-              pack={pack}
-              selected={pack.amount === amount}
-              onSelect={() => setAmount(pack.amount)}
-            />
+        <div className="grid grid-cols-4 gap-2">
+          {rule.presetsCents.map((preset) => (
+            <Button
+              key={preset}
+              type="button"
+              variant={cents === preset ? "default" : "outline"}
+              size="sm"
+              onClick={() => setText(centsToText(preset))}
+            >
+              {usdCents(preset)}
+            </Button>
           ))}
         </div>
 
+        <div className="space-y-2">
+          <Label htmlFor="topup-amount">Amount in US dollars</Label>
+          <Input
+            id="topup-amount"
+            type="text"
+            inputMode="decimal"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder={centsToText(rule.presetsCents[1] ?? rule.minCents)}
+            className="font-mono tabular-nums"
+            aria-invalid={problem !== null}
+          />
+          <p className={cn("text-xs", problem ? "text-destructive" : "text-muted-foreground")}>
+            {problem ?? "Whole cents only. Every amount is at the same rate."}
+          </p>
+        </div>
+
         <DialogFooter>
-          <Button type="button" onClick={submit} disabled={buy.isPending || amount === 0}>
+          <Button type="button" onClick={submit} disabled={buy.isPending || problem !== null}>
             {buy.isPending ? "Opening…" : "Continue to payment"}
           </Button>
         </DialogFooter>
@@ -77,30 +112,7 @@ export function TopUpDialog({
   );
 }
 
-/**
- * One pack. The price is the only figure, because the amount is the price.
- */
-function PackButton({
-  pack,
-  selected,
-  onSelect,
-}: {
-  pack: TopupPack;
-  selected: boolean;
-  onSelect: () => void;
-}) {
-  return (
-    <Button
-      type="button"
-      variant="outline"
-      onClick={onSelect}
-      aria-pressed={selected}
-      className={cn(
-        "h-auto flex-col items-start gap-1 p-4 text-left",
-        selected && "border-primary bg-primary/5",
-      )}
-    >
-      <span className="text-lg tabular-nums">{usdCents(pack.usdCents)}</span>
-    </Button>
-  );
+/** Cents as the text a member edits: "25.00", not "$25.00". */
+function centsToText(cents: number): string {
+  return usdInput(centsToAmount(cents));
 }
