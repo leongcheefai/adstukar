@@ -17,7 +17,7 @@ They ask, and an admin gives the refund from Settings → Top-ups.
 ## What stays the same
 
 The rules that decide what may go back are unchanged and pure
-(`apps/api/src/modules/topups/packs.ts`): the window, the unspent balance, and
+(`apps/api/src/modules/topups/amounts.ts`): the window, the unspent balance, and
 the fee floor. The admin sees the same block reasons the member's table used to
 show. The ledger side is unchanged too: a refund posts a compensating `refund`
 entry against the `bought` lot and never edits a row.
