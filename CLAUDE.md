@@ -20,7 +20,7 @@ The old barter economy (+1 earn, -2 spend, no money) is dead. Do not restore it.
 | `placement` | one overlay region on a device (`band` / `float` / `ticker`) |
 | `play` | one listing shown in one placement for its dwell |
 | lot | the origin of money on a ledger entry: `bought`, `earned`, `granted` |
-| payout | a distributor's request to turn earned money into a payment. An admin reviews it and pays by hand |
+| payout | a distributor's request to turn earned money into a payment. An admin reviews it and approves; Stripe sends the money to the member's connected account |
 
 ## Exchange rules (where things live)
 - **Economy numbers** — `packages/config/src/economy.ts` only. Play and scan rates, the fee, the peg, grants, the daily play cap, the daily budget default, settlement delay, payout hold and threshold, expiry, top-up bounds, rate limits, listings per campaign. Never a literal in a route, a job, a page, or the client. `apps/embed` is the one exception: it is unmaintained, and its dead web-economy numbers sit in `apps/embed/src/config.ts` so they cannot drift back in.
@@ -40,12 +40,11 @@ The old barter economy (+1 earn, -2 spend, no money) is dead. Do not restore it.
   `GET/POST /admin/topups`; a member asks and never presses it (`docs/adr/0006`). The amount leaves the ledger
   before the money leaves Stripe, because the reverse order loses both.
 - **Payout** — `apps/api/src/modules/payouts/`: `eligibility.ts` holds the rules
-  for what may leave, and `review.ts` the fraud signals; both are pure. Only the
+  for what may leave, `connect.ts` the pure side of Stripe Connect, and `review.ts` the fraud signals; all three are pure. Only the
   `earned` lot withdraws, and only after the hold. A request takes the whole
   withdrawable balance and debits it at once, because a balance left in place
   would answer a second request. A refusal posts the compensating row and the
-  amount comes back. Payment is manual: an admin reads the history, sends the
-  money, and records the reference. See `docs/adr/0005`.
+  amount comes back. A distributor connects a Stripe account through Stripe's hosted onboarding; `stripe_account.payouts_enabled` is the only flag that gates a request. Approval sends a Stripe Transfer keyed on the request id, inside the transaction that marks the row paid. See `docs/adr/0005` and `docs/adr/0008`.
 - **Moderation** — `apps/api/src/modules/admin/`: a human queue. An admin reviews each listing and each device, and a device carries a photo of the screen in place. Device approval also stamps the tier, which sets the rate. The domain check stays automatic and gates the campaign.
 - **The distributor's filters** — an excluded term stops anything that reads a certain way; a veto (`vetoed_listing`) stops exactly the creative they looked at. Both live on the device and neither goes through moderation. When nothing paid is eligible, the screen plays the distributor's own promotion (the `promotion*` columns on `device`), or the CapyAds card. Both are free and move no money.
 - **Fraud is bounded by policy, not by hardware** — CapyTV is a PWA, so there is no device attestation. Approval, the daily play cap, the payout hold, and the scan-to-play ratio are the whole defence. See `docs/adr/0003`. The payout review reads three signals per screen: the scan-to-play ratio, the plays that fell outside the venue's stated open hours, and whether devices share an address or a network. `device.last_network` holds a prefix, never an address, and the stated hours are read in `device.timezone`.
@@ -111,6 +110,7 @@ Single source of truth for every type crossing the API boundary. Hand-copying a 
 - The gate must keep passing with **no `.env` present** — that is what CI and a fresh clone get. If a task starts needing a database, add a postgres service to the CI workflow rather than weakening the gate.
 - `.githooks/` installs via the root `prepare` script (`git config core.hooksPath`). A fresh `pnpm install` wires it up; no husky or lefthook dep. Emergency bypass: `git push --no-verify`.
 - `/serve`, `/loop`, `/report`, `/scan/*` accept any origin, because CapyTV runs on member devices and a scan comes from a stranger's phone; every other route keeps the `APP_URL`/`WEB_URL` allow-list. The check lives in the `cors()` origin function in `apps/api/src/lib/app.ts`. A new public screen route must be added there too.
+- `/billing/webhook` and `/billing/connect-webhook` are two endpoints with two secrets. Stripe signs events from connected accounts with a Connect endpoint's own secret, so an `account.updated` sent to the top-up route fails its signature check.
 - `/beacon` reads a **text/plain** body (`navigator.sendBeacon` cannot send JSON content types) and parses it by hand — do not add `zValidator("json")` there.
 - Rate limiting and the visitor session salt are in-process memory. Fine for one API instance; move both to Redis before scaling out.
 - `pnpm` only — never `npm install` or `yarn`

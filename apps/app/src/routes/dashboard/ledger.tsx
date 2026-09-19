@@ -24,7 +24,7 @@ import { WalletSummary } from "../../components/ledger/wallet-summary";
 import { PayoutRequests } from "../../components/payouts/payout-requests";
 import { TopupHistory } from "../../components/topups/topup-history";
 import { useLedger } from "../../lib/ledger";
-import { usePayouts } from "../../lib/payouts";
+import { usePayouts, useRefreshStripeAccount } from "../../lib/payouts";
 import { useRefreshMoney, useTopups } from "../../lib/topups";
 
 const REASONS: { value: LedgerReason | "all"; label: string }[] = [
@@ -79,10 +79,47 @@ function useTopupReturn() {
   }, [outcome, params, setParams, refresh]);
 }
 
+/**
+ * Stripe sends the member back here after onboarding. `return` means the form
+ * is done, and `refresh` means the link expired. Either way the panel reopens,
+ * with `?cashout=1`, and the flags come from Stripe rather than from the
+ * webhook, which may not have landed yet.
+ */
+function useStripeReturn() {
+  const [params, setParams] = useSearchParams();
+  const refresh = useRefreshStripeAccount();
+  const outcome = params.get("stripe");
+
+  // `refresh` is a fresh mutation object each render; naming it would loop.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: refresh.mutate is stable across renders
+  useEffect(() => {
+    if (!outcome) return;
+    if (outcome === "return") {
+      refresh.mutate(undefined, {
+        onSuccess: (account) =>
+          toast.success(
+            account.payoutsEnabled
+              ? "Stripe account ready. You may ask for a payout."
+              : "Stripe is checking your details. It usually takes a few minutes.",
+          ),
+        onError: (err) => toast.error(err.message),
+      });
+    }
+    if (outcome === "refresh") toast.info("The Stripe link expired. Try again.");
+    // The message belongs to the return, not to the page: leaving it in the URL
+    // would repeat it on every reload. The panel opens itself off the flag it
+    // leaves behind.
+    params.delete("stripe");
+    params.set("cashout", "1");
+    setParams(params, { replace: true });
+  }, [outcome, params, setParams]);
+}
+
 export function LedgerPage() {
   const { data: payouts } = usePayouts();
   const { data: topups } = useTopups();
   useTopupReturn();
+  useStripeReturn();
   const [reason, setReason] = useState<LedgerReason | "all">("all");
   const [state, setState] = useState<LedgerState | "all">("all");
   const [lot, setLot] = useState<LedgerLot | "all">("all");

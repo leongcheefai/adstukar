@@ -1,26 +1,35 @@
 import { db, schema } from "@repo/db";
 import { serverEnv } from "@repo/env";
 import { stripe } from "../../lib/stripe";
+import { applyConnectEvent } from "../payouts/payouts.service";
 import { abandonTopup, recordPaidTopup } from "../topups/topups.service";
 
 /**
- * Stripe's side of a top-up. Every event is verified against the webhook
- * secret and recorded once by id, so a retry from Stripe changes nothing.
+ * Stripe's side of a top-up, and of a connected account. Every event is
+ * verified against its endpoint's secret and recorded once by id, so a retry
+ * from Stripe changes nothing.
  *
- * Only the two checkout events matter. A one-off payment is a
- * top-up, and CapyAds sells nothing else through Stripe: no subscription, no
- * invoice, no portal (docs/adr/0001).
+ * Two endpoints, because Stripe signs events from connected accounts with a
+ * Connect endpoint's own secret. `handleWebhook` takes the platform's events:
+ * the two checkout events, and nothing else, because CapyAds sells nothing
+ * else through Stripe (docs/adr/0001). `handleConnectWebhook` takes the events
+ * a connected account sends (docs/adr/0008).
  */
-export async function handleWebhook(body: string, signature: string) {
-  if (!serverEnv.STRIPE_WEBHOOK_SECRET) throw new Error("STRIPE_WEBHOOK_SECRET not set");
-  const event = stripe.webhooks.constructEvent(body, signature, serverEnv.STRIPE_WEBHOOK_SECRET);
 
+/** Records the event id. False when this id was already seen. */
+async function firstSight(event: { id: string; type: string }): Promise<boolean> {
   const deduped = await db
     .insert(schema.webhookEvent)
     .values({ id: event.id, type: event.type })
     .onConflictDoNothing({ target: schema.webhookEvent.id })
     .returning({ id: schema.webhookEvent.id });
-  if (deduped.length === 0) return;
+  return deduped.length > 0;
+}
+
+export async function handleWebhook(body: string, signature: string) {
+  if (!serverEnv.STRIPE_WEBHOOK_SECRET) throw new Error("STRIPE_WEBHOOK_SECRET not set");
+  const event = stripe.webhooks.constructEvent(body, signature, serverEnv.STRIPE_WEBHOOK_SECRET);
+  if (!(await firstSight(event))) return;
 
   switch (event.type) {
     // The money goes in here, keyed on the payment, so the money and the ledger
@@ -47,4 +56,18 @@ export async function handleWebhook(body: string, signature: string) {
       break;
     }
   }
+}
+
+/** Events from connected accounts. Only `account.updated` changes a row. */
+export async function handleConnectWebhook(body: string, signature: string) {
+  if (!serverEnv.STRIPE_CONNECT_WEBHOOK_SECRET) {
+    throw new Error("STRIPE_CONNECT_WEBHOOK_SECRET not set");
+  }
+  const event = stripe.webhooks.constructEvent(
+    body,
+    signature,
+    serverEnv.STRIPE_CONNECT_WEBHOOK_SECRET,
+  );
+  if (!(await firstSight(event))) return;
+  await applyConnectEvent(event);
 }

@@ -99,15 +99,13 @@ export type PayoutState = (typeof PAYOUT_STATES)[number];
  * Why a payout request is refused. It is a union the API works out and the
  * dashboard reads; no column stores it, so it lives here beside the rest rather
  * than being written out again in each package.
+ *
+ * `stripe` is no connected account. `stripe-pending` is an account Stripe has
+ * not yet cleared to receive money.
  */
-export const PAYOUT_BLOCKS = ["open-request", "identity", "below-minimum"] as const;
+export const PAYOUT_BLOCKS = ["open-request", "stripe", "stripe-pending", "below-minimum"] as const;
 
 export type PayoutBlock = (typeof PAYOUT_BLOCKS)[number];
-
-/** How a distributor takes money out. The MVP sends both by hand. */
-export const PAYOUT_METHODS = ["bank", "paypal"] as const;
-
-export type PayoutMethod = (typeof PAYOUT_METHODS)[number];
 
 /**
  * A top-up opens the moment a member names an amount, so the row exists before the

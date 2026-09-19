@@ -1,14 +1,14 @@
 import { PAYOUT_BLOCKS } from "@repo/db/enums";
 import * as z from "zod/v4";
-import { payoutAccountContract } from "../entities/payout-account";
 import { payoutRequestContract } from "../entities/payout-request";
+import { stripeAccountContract } from "../entities/stripe-account";
 
 /**
  * The cash-out panel. `block` is the one reason a request would be refused, so
  * the dashboard states it rather than guessing from the numbers.
  */
 export const payoutOverviewOutput = z.object({
-  account: payoutAccountContract.nullable(),
+  stripeAccount: stripeAccountContract.nullable(),
   /** Earned money that has served the hold, less what already left. */
   withdrawable: z.number().int(),
   minimum: z.number().int(),
@@ -17,8 +17,14 @@ export const payoutOverviewOutput = z.object({
   requests: z.array(payoutRequestContract),
 });
 
-export const savePayoutAccountOutput = payoutAccountContract;
+/** Where the browser goes next: a Stripe-hosted onboarding page. */
+export const connectStripeOutput = z.object({
+  url: z.string().url(),
+});
+
+export const stripeAccountOutput = stripeAccountContract;
 export const payoutRequestOutput = payoutRequestContract;
 
 export type PayoutOverview = z.output<typeof payoutOverviewOutput>;
 export type PayoutBlock = NonNullable<PayoutOverview["block"]>;
+export type ConnectStripeResponse = z.output<typeof connectStripeOutput>;
