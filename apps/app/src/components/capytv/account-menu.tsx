@@ -85,8 +85,7 @@ export function AccountMenu({
             </button>
           </div>
           <p>
-            Your dashboard is located here. Start Listing or Connect your Stripe to earn{" "}
-            {project.pointsName}
+            Your dashboard is located here. Start a listing, or connect your Stripe to earn money.
           </p>
         </div>
       ) : null}

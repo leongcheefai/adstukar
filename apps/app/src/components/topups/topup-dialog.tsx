@@ -1,4 +1,4 @@
-import { project } from "@repo/config/project";
+import { usdCents } from "@repo/config/money";
 import type { TopupOverview, TopupPack } from "@repo/contracts/types";
 import {
   Button,
@@ -12,15 +12,14 @@ import {
 } from "@repo/ui";
 import { useState } from "react";
 import { toast } from "sonner";
-import { usd } from "../../lib/money";
-import { useBuyPoints } from "../../lib/topups";
+import { useTopUp } from "../../lib/topups";
 
 /**
  * The buy panel. Every pack sits at the same peg and none of them carries a
  * bonus, so the only thing that changes down the list is the size — which is why
  * each card names the price and nothing else tries to sell it.
  */
-export function BuyPointsDialog({
+export function TopUpDialog({
   overview,
   open,
   onOpenChange,
@@ -30,11 +29,11 @@ export function BuyPointsDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const packs = overview.packs;
-  const [points, setPoints] = useState<number>(packs[0]?.points ?? 0);
-  const buy = useBuyPoints();
+  const [amount, setAmount] = useState<number>(packs[0]?.amount ?? 0);
+  const buy = useTopUp();
 
   function submit() {
-    buy.mutate(points, {
+    buy.mutate(amount, {
       onSuccess: (result) => {
         if (!result.url) {
           toast.error("Stripe did not return a checkout page. Try again.");
@@ -50,26 +49,26 @@ export function BuyPointsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Buy {project.pointsName}</DialogTitle>
+          <DialogTitle>Top up</DialogTitle>
           <DialogDescription>
-            Every pack is at the same rate, and no pack carries a bonus. Unspent{" "}
-            {project.pointsName} refund for {overview.refundWindowDays} days.
+            Every amount is at the same rate, and no pack carries a bonus. An unspent top-up refunds
+            for {overview.refundWindowDays} days.
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid grid-cols-2 gap-2">
           {packs.map((pack) => (
             <PackButton
-              key={pack.points}
+              key={pack.amount}
               pack={pack}
-              selected={pack.points === points}
-              onSelect={() => setPoints(pack.points)}
+              selected={pack.amount === amount}
+              onSelect={() => setAmount(pack.amount)}
             />
           ))}
         </div>
 
         <DialogFooter>
-          <Button type="button" onClick={submit} disabled={buy.isPending || points === 0}>
+          <Button type="button" onClick={submit} disabled={buy.isPending || amount === 0}>
             {buy.isPending ? "Opening…" : "Continue to payment"}
           </Button>
         </DialogFooter>
@@ -79,8 +78,7 @@ export function BuyPointsDialog({
 }
 
 /**
- * One pack. The points are the figure a member compares, so they lead; the price
- * follows them at the same rate every time.
+ * One pack. The price is the only figure, because the amount is the price.
  */
 function PackButton({
   pack,
@@ -102,10 +100,7 @@ function PackButton({
         selected && "border-primary bg-primary/5",
       )}
     >
-      <span className="text-lg tabular-nums">{pack.points.toLocaleString()}</span>
-      <span className="text-xs font-normal text-muted-foreground tabular-nums">
-        {usd(pack.usdCents)}
-      </span>
+      <span className="text-lg tabular-nums">{usdCents(pack.usdCents)}</span>
     </Button>
   );
 }

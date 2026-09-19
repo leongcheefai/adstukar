@@ -20,7 +20,7 @@ export function usePayouts() {
 }
 
 /**
- * A payout moves points and a play pays them, so both the cash-out panel and the
+ * A payout moves money and a play pays it, so both the cash-out panel and the
  * balance above it go stale together. Refresh the ledger and the stats with it.
  */
 function useRefreshMoney() {

@@ -1,7 +1,7 @@
 # apps/app
 
 ## Purpose
-Vite + React 19 SPA. CapyTV is the member app: boot mark, then a session check, then source tiles or the login form on the same set. Dashboard (Overview, Campaigns, Devices, CapyPoints, Settings, admin Moderation) opens as a Vaul drawer over CapyTV at `/dashboard`. Runs on port 3000 and calls the API origin configured by `VITE_API_URL`. `VITE_EMBED_URL` still points at the unmaintained web embed bundle the API serves; no dashboard page reads it.
+Vite + React 19 SPA. CapyTV is the member app: boot mark, then a session check, then source tiles or the login form on the same set. Dashboard (Overview, Campaigns, Devices, Wallet, Settings, admin Moderation) opens as a Vaul drawer over CapyTV at `/dashboard`. Runs on port 3000 and calls the API origin configured by `VITE_API_URL`. `VITE_EMBED_URL` still points at the unmaintained web embed bundle the API serves; no dashboard page reads it.
 
 ## Pages
 - `routes/capytv/home.tsx` CapyTV — `/` is the product. Every launch plays the boot mark first. Then a session sees the source tiles, and no session sees the login form on the set. `/login`, `/signup` and `/forgot-password` redirect here. Account menu opens the dashboard as a Vaul drawer over CapyTV, or logs out.

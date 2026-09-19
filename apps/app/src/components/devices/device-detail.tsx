@@ -6,6 +6,7 @@ import {
   playCost,
   scanCost,
 } from "@repo/config/economy";
+import { usd } from "@repo/config/money";
 import type {
   Device,
   DeviceWithTerms,
@@ -276,7 +277,7 @@ function VetoList({ deviceId }: { deviceId: string }) {
 
 /**
  * The distributor's own promotion. It plays free whenever nothing paid is
- * eligible, so it moves no points and never goes through moderation. With none
+ * eligible, so it moves no money and never goes through moderation. With none
  * written, the screen plays the CapyAds card instead.
  */
 function PromotionForm({ item }: { item: DeviceWithTerms }) {
@@ -433,7 +434,7 @@ export function DeviceDetail({
             {device.location} · CapyTV plays its own content, and shows listings over it. One paid
             listing at a time.
             {approved &&
-              ` A ${TIER_LABEL[device.tier]} screen keeps ${distributorKeeps(scanCost(device.tier))} a scan, and is paid for up to ${device.dailyPlayCap.toLocaleString()} plays a day.`}
+              ` A ${TIER_LABEL[device.tier]} screen keeps ${usd(distributorKeeps(scanCost(device.tier)))} a scan, and is paid for up to ${device.dailyPlayCap.toLocaleString()} plays a day.`}
           </DialogDescription>
         </DialogHeader>
 

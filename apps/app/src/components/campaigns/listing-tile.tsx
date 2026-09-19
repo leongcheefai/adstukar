@@ -149,7 +149,7 @@ export function ListingTile({
             <AlertDialogTitle>Archive this listing?</AlertDialogTitle>
             <AlertDialogDescription>
               It stops playing at once. The record stays, because the plays it earned reference it.
-              Your CapyPoints stay.
+              Your balance stays.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

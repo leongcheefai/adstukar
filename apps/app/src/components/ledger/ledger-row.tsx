@@ -1,25 +1,26 @@
 import { economy } from "@repo/config/economy";
+import { usd } from "@repo/config/money";
 import type { LedgerEntry, LedgerLot, LedgerReason, LedgerState } from "@repo/contracts/types";
 import { Badge, TableCell, TableRow, Tooltip, TooltipContent, TooltipTrigger } from "@repo/ui";
 
-/** Shared by the CapyPoints page and the Overview summary, so the two cannot drift. */
+/** Shared by the Wallet page and the Overview summary, so the two cannot drift. */
 export const REASON_TEXT: Record<LedgerReason, string> = {
   earn: "A listing played on your screen",
   spend: "Your listing played on a screen",
   fee: "The CapyAds fee on that play",
-  grant: "Grant",
-  topup: "Points you bought",
-  payout: "Points you cashed out",
-  refund: "Money returned for bought points",
+  grant: "Trial credit",
+  topup: "Money you added",
+  payout: "Money you cashed out",
+  refund: "Money returned from an unspent top-up",
   expiry: `Expired after ${economy.expiryMonths} months`,
   void: "Voided by an admin",
 };
 
-/** What the lot lets a point do. The word alone does not say it. */
+/** What the lot lets the money do. The word alone does not say it. */
 export const LOT_TEXT: Record<LedgerLot, string> = {
   bought: "Bought · refundable, never expires",
   earned: `Earned · withdrawable after ${economy.payout.holdDays} days`,
-  granted: "Granted · never leaves as cash",
+  granted: "Trial credit · never leaves as cash",
 };
 
 export function stateVariant(state: LedgerState): "success" | "warning" | "neutral" {
@@ -28,14 +29,13 @@ export function stateVariant(state: LedgerState): "success" | "warning" | "neutr
   return "neutral";
 }
 
-/** No coin here. The column header names the unit once; a coin on every row
-    repeats it a hundred times and turns the column into texture. */
+/** The column header names the unit once; a sign on every row is enough. */
 export function LedgerAmount({ delta }: { delta: number }) {
   return (
     <span
       className={`font-mono tabular-nums ${delta > 0 ? "text-[color:var(--success-500)]" : ""}`}
     >
-      {delta > 0 ? `+${delta}` : delta}
+      {delta > 0 ? `+${usd(delta)}` : usd(delta)}
     </span>
   );
 }

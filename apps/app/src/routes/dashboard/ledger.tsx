@@ -1,5 +1,4 @@
 import { Coins } from "@phosphor-icons/react";
-import { project } from "@repo/config/project";
 import type { LedgerLot, LedgerReason, LedgerState } from "@repo/contracts/types";
 import {
   Badge,
@@ -21,7 +20,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { LedgerRow } from "../../components/ledger/ledger-row";
-import { PointsSummary } from "../../components/ledger/points-summary";
+import { WalletSummary } from "../../components/ledger/wallet-summary";
 import { PayoutRequests } from "../../components/payouts/payout-requests";
 import { TopupHistory } from "../../components/topups/topup-history";
 import { useLedger } from "../../lib/ledger";
@@ -41,7 +40,7 @@ const REASONS: { value: LedgerReason | "all"; label: string }[] = [
   { value: "void", label: "Void" },
 ];
 
-/** The lot decides what a point may do, so it filters beside the reason. */
+/** The lot decides what the money may do, so it filters beside the reason. */
 const LOTS: { value: LedgerLot | "all"; label: string }[] = [
   { value: "all", label: "All lots" },
   { value: "bought", label: "Bought" },
@@ -57,7 +56,7 @@ const STATES: { value: LedgerState | "all"; label: string }[] = [
 ];
 
 /**
- * Stripe sends the member back here after a checkout. The points arrive through
+ * Stripe sends the member back here after a checkout. The money arrives through
  * the webhook, not through this redirect, so the page says the payment landed
  * and asks for the balance again rather than claiming a number it cannot know.
  */
@@ -69,7 +68,7 @@ function useTopupReturn() {
   useEffect(() => {
     if (!outcome) return;
     if (outcome === "paid") {
-      toast.success(`Payment received. Your ${project.pointsName} appear in a moment.`);
+      toast.success("Payment received. Your balance updates in a moment.");
       refresh();
     }
     if (outcome === "cancelled") toast.info("Top-up cancelled. Nothing was charged.");
@@ -97,11 +96,11 @@ export function LedgerPage() {
   return (
     <div className="space-y-4">
       <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
-        CapyPoints
+        Wallet
         <Coins size={24} weight="fill" aria-hidden="true" className="text-primary" />
       </h1>
 
-      <PointsSummary />
+      <WalletSummary />
 
       <PayoutRequests requests={payouts?.requests ?? []} />
 
@@ -154,8 +153,8 @@ export function LedgerPage() {
       {!query.isLoading && items.length === 0 && (
         <EmptyState
           icon={<Coins />}
-          title="No CapyPoints yet"
-          description="CapyPoints appear here once a listing is approved or a device plays."
+          title="No movements yet"
+          description="Movements appear here once a listing is approved or a device plays."
         />
       )}
 
@@ -168,7 +167,7 @@ export function LedgerPage() {
                 <TableHead>Reason</TableHead>
                 <TableHead>State</TableHead>
                 <TableHead>Lot</TableHead>
-                <TableHead>CapyPoints</TableHead>
+                <TableHead>Amount</TableHead>
                 <TableHead>Ref</TableHead>
               </TableRow>
             </TableHeader>

@@ -1,4 +1,4 @@
-import { project } from "@repo/config/project";
+import { usd } from "@repo/config/money";
 import { Button, Card } from "@repo/ui";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
@@ -6,7 +6,7 @@ import { usePayouts } from "../../lib/payouts";
 import { useStats } from "../../lib/stats";
 import { useTopups } from "../../lib/topups";
 import { CashOutDialog } from "../payouts/cash-out-dialog";
-import { BuyPointsDialog } from "../topups/buy-points-dialog";
+import { TopUpDialog } from "../topups/topup-dialog";
 
 /**
  * The two things a member wants from this page before the list itself: what
@@ -15,7 +15,7 @@ import { BuyPointsDialog } from "../topups/buy-points-dialog";
  * There is no referral cell. Referral is deferred past the MVP (GitHub #9), and
  * a link the API does not honour is a promise the page cannot keep.
  */
-export function PointsSummary() {
+export function WalletSummary() {
   const { data: stats } = useStats();
   const { data: payouts } = usePayouts();
   const { data: topups } = useTopups();
@@ -49,14 +49,12 @@ export function PointsSummary() {
       <Card className="grid gap-0 divide-y py-0 sm:grid-cols-2 sm:divide-x sm:divide-y-0">
         <div className="flex flex-col justify-between gap-3 p-5">
           <p data-slot="label" className="text-muted-foreground">
-            Total CapyPoints
+            Balance
           </p>
-          <p className="text-3xl font-normal tracking-tight tabular-nums">
-            {settled.toLocaleString()}
-          </p>
+          <p className="text-3xl font-normal tracking-tight tabular-nums">{usd(settled)}</p>
           {/* The way to grow the number sits under the number it grows. */}
           <Button size="sm" onClick={() => setBuyOpen(true)} disabled={!topups}>
-            Buy {project.pointsName}
+            Top up
           </Button>
         </div>
 
@@ -70,12 +68,12 @@ export function PointsSummary() {
             onClick={() => setCashOutOpen(true)}
             disabled={!payouts}
           >
-            Cash out CapyPoints
+            Cash out
           </Button>
           {/* The number beside the button is the withdrawable balance, not the
-              settled one: only earned points that served the hold ever leave. */}
+              settled one: only earned money that served the hold ever leaves. */}
           <p className="text-xs text-muted-foreground tabular-nums">
-            {withdrawable.toLocaleString()} ready to cash out.
+            {usd(withdrawable)} ready to cash out.
           </p>
         </div>
       </Card>
@@ -84,7 +82,7 @@ export function PointsSummary() {
         <CashOutDialog overview={payouts} open={cashOutOpen} onOpenChange={setCashOutOpen} />
       )}
 
-      {topups && <BuyPointsDialog overview={topups} open={buyOpen} onOpenChange={setBuyOpen} />}
+      {topups && <TopUpDialog overview={topups} open={buyOpen} onOpenChange={setBuyOpen} />}
     </>
   );
 }

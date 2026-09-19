@@ -1,5 +1,6 @@
 import { Plus, SealCheck } from "@phosphor-icons/react";
 import { economy } from "@repo/config/economy";
+import { usd } from "@repo/config/money";
 import type { CampaignWithListings, Listing } from "@repo/contracts/types";
 import { Badge, Tooltip, TooltipContent, TooltipTrigger } from "@repo/ui";
 import { CampaignActions } from "./campaign-actions";
@@ -44,7 +45,7 @@ const STATE_LABEL: Record<CampaignWithListings["campaign"]["state"], string> = {
  */
 const PAUSE_REASON: Record<NonNullable<CampaignWithListings["campaign"]["pauseReason"]>, string> = {
   budget: "Today's budget is spent. This campaign runs again tomorrow.",
-  balance: "Your CapyPoints ran out. This campaign runs again once you add points.",
+  balance: "Your balance ran out. This campaign runs again once you top up.",
 };
 
 export function CampaignSection({
@@ -116,7 +117,7 @@ export function CampaignSection({
         {/* What the campaign has spent against what it may spend. Without it the
             budget is a number nobody can act on. */}
         <p className="hidden shrink-0 text-xs tabular-nums text-muted-foreground sm:block">
-          {spentToday.toLocaleString()} / {campaign.dailyBudget.toLocaleString()} today
+          {usd(spentToday)} / {usd(campaign.dailyBudget)} today
         </p>
 
         <CampaignActions item={item} />

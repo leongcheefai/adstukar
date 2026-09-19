@@ -1,3 +1,4 @@
+import { usd } from "@repo/config/money";
 import type { StatsDay } from "@repo/contracts/types";
 import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@repo/ui";
 import { useId } from "react";
@@ -11,42 +12,42 @@ import {
   ChartCardFigureSkeleton,
 } from "./chart-card";
 
-/** Days of history the card reports. Short enough that every point gets a dot. */
+/** Days of history the card reports. Short enough that every day gets a dot. */
 const WINDOW_DAYS = 14;
 
 const TITLE = "Payout history";
-const DESCRIPTION = "CapyPoints earned each day";
+const DESCRIPTION = "Earned each day";
 const META_LABEL = `Past ${WINDOW_DAYS} days`;
 
 const chartConfig = {
-  points: { label: "CapyPoints", color: "var(--chart-1)" },
+  earned: { label: "Earned", color: "var(--chart-1)" },
 } satisfies ChartConfig;
 
 interface PayoutDay {
   label: string;
-  points: number;
+  earned: number;
 }
 
 /**
- * A day of plays turned into the points it paid.
+ * A day of plays turned into the money it paid.
  *
  * The API already nets the fee off the earn, so this reads one field rather than
  * multiplying by a rate. A rate would be wrong anyway: it is tier by format now,
  * and one member may hold devices in several tiers.
  */
 function toPayout(day: StatsDay): PayoutDay {
-  return { label: shortDay(day.day), points: day.earned };
+  return { label: shortDay(day.day), earned: day.earned };
 }
 
 /**
- * Daily CapyPoints paid for the plays a member's devices ran.
+ * Daily earnings for the plays a member's devices ran.
  *
  * One series, so it takes an area rather than a line: the fill carries the
  * total the header states, and a single line would leave that quantity unread.
  */
 export function PayoutHistory({ data }: { data: StatsDay[] }) {
   const rows = data.slice(-WINDOW_DAYS).map(toPayout);
-  const total = rows.reduce((sum, row) => sum + row.points, 0);
+  const total = rows.reduce((sum, row) => sum + row.earned, 0);
   // useId returns colons, which are not valid in a CSS url() reference.
   const fillId = `payout-fill-${useId().replace(/:/g, "")}`;
 
@@ -61,7 +62,7 @@ export function PayoutHistory({ data }: { data: StatsDay[] }) {
       title={TITLE}
       description={DESCRIPTION}
       metaLabel={META_LABEL}
-      meta={<ChartCardFigure>{total.toLocaleString()}</ChartCardFigure>}
+      meta={<ChartCardFigure>{usd(total)}</ChartCardFigure>}
     >
       <ChartContainer
         config={chartConfig}
@@ -92,15 +93,17 @@ export function PayoutHistory({ data }: { data: StatsDay[] }) {
             axisLine={false}
             tickMargin={4}
             tickCount={3}
-            allowDecimals={false}
-            width={44}
+            tickFormatter={usd}
+            width={56}
           />
-          <ChartTooltip content={<ChartTooltipContent />} />
-          {/* Linear, not monotone: a spline invents points between two days
+          <ChartTooltip
+            content={<ChartTooltipContent formatter={(value) => usd(Number(value))} />}
+          />
+          {/* Linear, not monotone: a spline invents values between two days
               that no play was counted on. */}
           <Area
             type="linear"
-            dataKey="points"
+            dataKey="earned"
             stroke="var(--chart-1)"
             strokeWidth={2}
             fill={`url(#${fillId})`}

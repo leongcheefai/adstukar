@@ -1,6 +1,6 @@
+import { usd, usdCents } from "@repo/config/money";
 import type { PayoutRequest, PayoutState } from "@repo/contracts/types";
 import { Badge, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@repo/ui";
-import { usd } from "../../lib/money";
 
 const STATE_LABEL: Record<PayoutState, string> = {
   requested: "Under review",
@@ -18,7 +18,7 @@ const STATE_VARIANT: Record<PayoutState, "warning" | "success" | "danger"> = {
 
 /**
  * Every payout this member asked for. A refused one keeps its reason on the row,
- * because the points came back and nothing else on the ledger says why.
+ * because the money came back and nothing else on the ledger says why.
  */
 export function PayoutRequests({ requests }: { requests: PayoutRequest[] }) {
   if (requests.length === 0) return null;
@@ -31,7 +31,7 @@ export function PayoutRequests({ requests }: { requests: PayoutRequest[] }) {
           <TableHeader>
             <TableRow>
               <TableHead>Asked</TableHead>
-              <TableHead>CapyPoints</TableHead>
+              <TableHead>Amount</TableHead>
               <TableHead>Money</TableHead>
               <TableHead>State</TableHead>
               <TableHead>Note</TableHead>
@@ -43,8 +43,8 @@ export function PayoutRequests({ requests }: { requests: PayoutRequest[] }) {
                 <TableCell className="whitespace-nowrap">
                   {new Date(row.createdAt).toLocaleDateString()}
                 </TableCell>
-                <TableCell className="tabular-nums">{row.points.toLocaleString()}</TableCell>
-                <TableCell className="tabular-nums">{usd(row.usdCents)}</TableCell>
+                <TableCell className="tabular-nums">{usd(row.amount)}</TableCell>
+                <TableCell className="tabular-nums">{usdCents(row.usdCents)}</TableCell>
                 <TableCell>
                   <Badge variant={STATE_VARIANT[row.state]}>{STATE_LABEL[row.state]}</Badge>
                 </TableCell>

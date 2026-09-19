@@ -64,7 +64,7 @@ export function RecentLedger() {
     <Card>
       <CardHeader>
         <CardTitle className="text-base">Recent activity</CardTitle>
-        <CardDescription>Your most recent CapyPoint movements</CardDescription>
+        <CardDescription>Your most recent wallet movements</CardDescription>
         <CardAction>
           <Button asChild variant="ghost" size="sm">
             <Link to="/dashboard/ledger">View all</Link>
@@ -90,7 +90,7 @@ export function RecentLedger() {
           <EmptyState
             icon={<Receipt />}
             title="No movements yet"
-            description="CapyPoints land here once a listing plays on a screen."
+            description="Money lands here once a listing plays on a screen."
             action={
               <Button asChild size="sm">
                 <Link to="/">Start CapyTV</Link>
@@ -108,7 +108,7 @@ export function RecentLedger() {
                 <TableHead>When</TableHead>
                 <TableHead>Reason</TableHead>
                 <TableHead>State</TableHead>
-                <TableHead>CapyPoints</TableHead>
+                <TableHead>Amount</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody aria-busy={query.isPending}>
