@@ -1,6 +1,6 @@
 import { Pause, PencilSimple, Play, Trash } from "@phosphor-icons/react";
 import { economy } from "@repo/config/economy";
-import { parseUsd, usd } from "@repo/config/money";
+import { parseUsd, usd, usdInput } from "@repo/config/money";
 import type { CampaignWithListings } from "@repo/contracts/types";
 import {
   AlertDialog,
@@ -64,7 +64,7 @@ export function CampaignActions({ item }: { item: CampaignWithListings }) {
   function openEdit() {
     setName(campaign.name);
     setUrl(campaign.url);
-    setBudget((campaign.dailyBudget / economy.unit.perUsd).toFixed(2));
+    setBudget(usdInput(campaign.dailyBudget));
     setEditOpen(true);
   }
 
@@ -228,7 +228,7 @@ export function CampaignActions({ item }: { item: CampaignWithListings }) {
                 inputMode="decimal"
                 value={budget}
                 onChange={(e) => setBudget(e.target.value)}
-                placeholder="20.00"
+                placeholder={usdInput(economy.caps.defaultDailyBudget)}
                 required
                 className="font-mono text-sm tabular-nums"
               />

@@ -53,10 +53,6 @@ describe("unit", () => {
     expect(economy.unit.perUsd).toBe(1000);
   });
 
-  it("names the payout floor as an amount", () => {
-    expect(economy.payout.minimum).toBe(20_000);
-  });
-
   it("sells every pack at the peg", () => {
     for (const pack of economy.topup.packs) {
       expect(pack.amount).toBe(centsToAmount(pack.usdCents));

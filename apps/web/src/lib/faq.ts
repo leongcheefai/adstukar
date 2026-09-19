@@ -1,5 +1,5 @@
 import { distributorPercent, economy, playRateRange } from "@repo/config/economy";
-import { perThousandPlays, usd, usdCents, usdPerThousand } from "@repo/config/money";
+import { perThousandPlaysRange, usd, usdCents } from "@repo/config/money";
 import { project } from "@repo/config/project";
 
 export interface FaqEntry {
@@ -37,7 +37,7 @@ export const FAQ_GROUPS: FaqGroup[] = [
     items: [
       {
         question: "How do I make money?",
-        answer: `Open CapyTV in a browser and play music, a podcast, or a video. Listings crawl along the foot of the picture. Each play earns ${perThousandPlays(lowestPlayRate)} to ${usdPerThousand(highestPlayRate)}, and a scan pays a bonus on top. Cash-out is not open yet.`,
+        answer: `Open CapyTV in a browser and play music, a podcast, or a video. Listings crawl along the foot of the picture. Each play earns ${perThousandPlaysRange(lowestPlayRate, highestPlayRate)}, and a scan pays a bonus on top. Cash-out is not open yet.`,
       },
       {
         question: "What kind of screen do I need?",
@@ -74,7 +74,7 @@ export const FAQ_GROUPS: FaqGroup[] = [
     items: [
       {
         question: "What does it cost?",
-        answer: `You top up in US dollars, from ${usdCents(economy.topup.packs[0]?.usdCents ?? 0)}. No pack carries a bonus. Each play of your listing costs ${perThousandPlays(lowestPlayRate)} to ${usdPerThousand(highestPlayRate)}, by the tier of the screen, and a scan costs a bonus on top. There is no monthly fee.`,
+        answer: `You top up in US dollars, from ${usdCents(economy.topup.packs[0]?.usdCents ?? 0)}. No pack carries a bonus. Each play of your listing costs ${perThousandPlaysRange(lowestPlayRate, highestPlayRate)}, by the tier of the screen, and a scan costs a bonus on top. There is no monthly fee.`,
       },
       {
         question: "What does a listing look like on screen?",

@@ -1,4 +1,4 @@
-import { economy } from "./economy";
+import { centsToAmount, economy } from "./economy";
 
 /**
  * The one place that turns the ledger unit into a dollar string, and back.
@@ -32,6 +32,22 @@ export function usd(amount: number): string {
   return format.format(amount / economy.unit.perUsd);
 }
 
+/** A ledger amount with its sign in front: `+$0.003` for a credit, `-$4.00` for a debit. */
+export function usdSigned(amount: number): string {
+  return amount > 0 ? `+${usd(amount)}` : usd(amount);
+}
+
+/**
+ * A ledger amount as the plain figure a member edits: `20.00`, with no sign
+ * and no commas. A third decimal stays rather than round away, so what the
+ * field shows is what the row holds; `parseUsd` then refuses it until the
+ * member types a whole-cent figure.
+ */
+export function usdInput(amount: number): string {
+  const decimals = amount % PER_CENT === 0 ? 2 : 3;
+  return (amount / economy.unit.perUsd).toFixed(decimals);
+}
+
 /** What Stripe moved, in cents, as dollars. */
 export function usdCents(cents: number): string {
   return wholeCents.format(cents / 100);
@@ -47,9 +63,9 @@ export function perThousandPlays(rate: number): string {
   return `${usdPerThousand(rate)} per 1,000 plays`;
 }
 
-/** A scan rate in a sentence. A scan is always whole cents. */
-export function perScan(rate: number): string {
-  return `${usd(rate)} per scan`;
+/** A range of play rates in a sentence. */
+export function perThousandPlaysRange(lowest: number, highest: number): string {
+  return `${usdPerThousand(lowest)} to ${perThousandPlays(highest)}`;
 }
 
 /**
@@ -63,5 +79,5 @@ export function parseUsd(text: string): number | null {
   if (!/^\d+(\.\d{1,2})?$/.test(cleaned)) return null;
   const [whole, fraction = ""] = cleaned.split(".");
   const cents = Number(whole) * 100 + Number(fraction.padEnd(2, "0"));
-  return (cents * economy.unit.perUsd) / 100;
+  return centsToAmount(cents);
 }

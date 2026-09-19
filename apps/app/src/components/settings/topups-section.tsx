@@ -1,6 +1,5 @@
 import { Receipt } from "@phosphor-icons/react";
 import { usd, usdCents } from "@repo/config/money";
-import { project } from "@repo/config/project";
 import type { TopupRefundBlock, TopupReview, TopupState } from "@repo/contracts/types";
 import {
   AlertDialog,

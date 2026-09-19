@@ -163,7 +163,7 @@ export interface PostSpendInput {
 
 /**
  * Takes from the granted lot first, then the bought lot. Money inside one
- * lot are fungible, so "oldest first" needs no per-entry consumption record —
+ * lot is fungible, so "oldest first" needs no per-entry consumption record —
  * age only decides expiry, which already works entry by entry.
  *
  * Returns what it actually took. A caller that asked for more than the account
@@ -208,7 +208,7 @@ export async function settleDue(now: Date = new Date()): Promise<number> {
  * older than the expiry window that has not been expired yet. Idempotent through
  * `expiry:<id>`.
  *
- * The bought lot is excluded at the query level: somebody paid money for those
+ * The bought lot is excluded at the query level: somebody paid for that
  * money, and expiring it is a consumer-law problem.
  *
  * Expiry takes back only what the lot still holds. Reversing an entry in full

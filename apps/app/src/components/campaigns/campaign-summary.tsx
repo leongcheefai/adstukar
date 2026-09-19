@@ -1,4 +1,4 @@
-import { usd } from "@repo/config/money";
+import { usd, usdSigned } from "@repo/config/money";
 import { useStats } from "../../lib/stats";
 import { DeltaBadge } from "../delta-badge";
 import { StatCard, StatCardSkeleton } from "../stat-card";
@@ -53,7 +53,7 @@ export function CampaignSummary() {
           <StatCard
             label={LABELS.balance}
             value={usd(stats.balance.settled)}
-            meta={pending !== 0 ? `${pending > 0 ? "+" : ""}${usd(pending)} pending` : undefined}
+            meta={pending !== 0 ? `${usdSigned(pending)} pending` : undefined}
           />
           <StatCard
             label={LABELS.plays}

@@ -1,5 +1,5 @@
 import { economy } from "@repo/config/economy";
-import { usd } from "@repo/config/money";
+import { usdSigned } from "@repo/config/money";
 import type { LedgerEntry, LedgerLot, LedgerReason, LedgerState } from "@repo/contracts/types";
 import { Badge, TableCell, TableRow, Tooltip, TooltipContent, TooltipTrigger } from "@repo/ui";
 
@@ -35,7 +35,7 @@ export function LedgerAmount({ delta }: { delta: number }) {
     <span
       className={`font-mono tabular-nums ${delta > 0 ? "text-[color:var(--success-500)]" : ""}`}
     >
-      {delta > 0 ? `+${usd(delta)}` : usd(delta)}
+      {usdSigned(delta)}
     </span>
   );
 }

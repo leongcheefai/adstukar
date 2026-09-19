@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { parseUsd, perScan, perThousandPlays, usd, usdCents, usdPerThousand } from "./money";
+import {
+  parseUsd,
+  perThousandPlays,
+  perThousandPlaysRange,
+  usd,
+  usdCents,
+  usdInput,
+  usdPerThousand,
+  usdSigned,
+} from "./money";
 
 describe("usd", () => {
   it("shows two decimals for whole cents", () => {
@@ -23,6 +32,29 @@ describe("usd", () => {
   });
 });
 
+describe("usdSigned", () => {
+  it("leads a credit with a plus and a debit with a minus", () => {
+    expect(usdSigned(3)).toBe("+$0.003");
+    expect(usdSigned(-4_000)).toBe("-$4.00");
+    expect(usdSigned(0)).toBe("$0.00");
+  });
+});
+
+describe("usdInput", () => {
+  it("is the plain figure a member edits, with no sign and no commas", () => {
+    expect(usdInput(20_000)).toBe("20.00");
+    expect(usdInput(1_234_560)).toBe("1234.56");
+  });
+
+  it("keeps a third decimal rather than round it away", () => {
+    expect(usdInput(1_005)).toBe("1.005");
+  });
+
+  it("round-trips through parseUsd", () => {
+    expect(parseUsd(usdInput(20_000))).toBe(20_000);
+  });
+});
+
 describe("usdCents", () => {
   it("shows what Stripe moved", () => {
     expect(usdCents(941)).toBe("$9.41");
@@ -36,8 +68,8 @@ describe("rates", () => {
     expect(perThousandPlays(4)).toBe("$4.00 per 1,000 plays");
   });
 
-  it("shows a scan rate per scan", () => {
-    expect(perScan(40)).toBe("$0.04 per scan");
+  it("shows a range of play rates as one sentence", () => {
+    expect(perThousandPlaysRange(3, 6)).toBe("$3.00 to $6.00 per 1,000 plays");
   });
 });
 

@@ -1,5 +1,5 @@
 import { type DeviceTierRate, economy, playRateRange, rateTable } from "@repo/config/economy";
-import { perThousandPlays, usd, usdPerThousand } from "@repo/config/money";
+import { perThousandPlaysRange, usd, usdPerThousand } from "@repo/config/money";
 import { project } from "@repo/config/project";
 import { Container, Logo, Section, SectionHeader } from "@repo/ui";
 import type { CSSProperties, ReactNode } from "react";
@@ -237,7 +237,7 @@ function Rates({ spacing, className }: { spacing: LandingConfig["density"]; clas
 const ADVERTISER_CLAIMS = [
   {
     title: "Pay per play",
-    body: `${perThousandPlays(LOWEST_RATE)} to ${usdPerThousand(HIGHEST_RATE)}, by the tier of the screen. Set a daily budget from ${usd(economy.caps.minDailyBudget)}; the campaign stops when it is spent and starts again tomorrow.`,
+    body: `${perThousandPlaysRange(LOWEST_RATE, HIGHEST_RATE)}, by the tier of the screen. Set a daily budget from ${usd(economy.caps.minDailyBudget)}; the campaign stops when it is spent and starts again tomorrow.`,
   },
   {
     title: "One verified domain",

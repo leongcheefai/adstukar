@@ -1,5 +1,5 @@
 import { Coin } from "@phosphor-icons/react";
-import { usd } from "@repo/config/money";
+import { usd, usdSigned } from "@repo/config/money";
 import { Button, Card, CardContent } from "@repo/ui";
 import { PayoutHistory, PayoutHistorySkeleton } from "../../components/overview/payout-history";
 import { PlaysCard, PlaysCardSkeleton } from "../../components/overview/plays-card";
@@ -72,7 +72,7 @@ export function DashboardHome() {
                 <StatCard
                   label={STAT_LABELS.balance}
                   value={usd(stats.balance.settled)}
-                  meta={pending !== 0 ? `${pending > 0 ? "+" : ""}${pending} pending` : undefined}
+                  meta={pending !== 0 ? `${usdSigned(pending)} pending` : undefined}
                   icon={<Coin size={28} weight="fill" className="text-primary" />}
                 />
                 <StatCard label={STAT_LABELS.played} value={stats.today.played.toLocaleString()} />
