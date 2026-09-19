@@ -19,8 +19,13 @@ gates a request. A row with `payouts_enabled` false blocks with
 
 The account is a v1 connected account with `controller` properties: Stripe
 collects the requirements, Stripe carries the losses, CapyAds pays the Stripe
-fees, and the member gets the Express dashboard. Only the `transfers`
-capability is requested, because the account receives and never charges.
+fees, and the member gets the Express dashboard. The account receives and
+never charges, so it asks for the `transfers` capability. Stripe allows that
+alone only in the platform's own country (`economy.payout.platformCountry`);
+anywhere else the account must ask for `card_payments` too, and Stripe then
+collects the merchant requirements as well. The recipient service agreement,
+which would avoid that, is not offered to this platform. The same rule holds on
+the v2 API, so it is Stripe's rule and not the API's.
 
 We did not use the v2 Accounts API with the `recipient` configuration. It is
 built for this case, but it is young, and its country coverage for a Malaysia
@@ -61,15 +66,19 @@ the webhook lands.
 
 - A connected account's country is fixed at creation, so the member chooses it
   before the account exists, from the list in `economy.payout.countries`. Which
-  countries a Malaysia platform may pay cross-border is Stripe's list, and ours
-  must match it.
+  countries the platform may pay is Stripe's list, and ours must match it. The
+  sandbox platform is in Singapore. Probed on 2026-09-19: SG, MY, TH, US, GB,
+  AU, JP and HK accept an account; ID, PH, VN and IN refuse one. Stripe's hosted
+  onboarding then refuses MY from a Singapore platform, and accepts every other
+  one on the list. A Malaysia platform account, or embedded onboarding, is the
+  way to pay a Malaysian distributor; that decision is open.
+- The row commits before the Account Link is made, on purpose. A link can fail
+  where the account did not, and a rollback then would leave an account on
+  Stripe that no row names; the next press would make another.
 - The row is frozen while a request is under review, as the old account form
   was: the account an admin approved is the account that is paid.
 - A capability lost after a request opens makes the approval fail with 409. The
   admin refuses, or waits.
-- An account outside the platform's country may need
-  `tos_acceptance.service_agreement: "recipient"` at creation. Verify it with
-  the country list before launch; `connect.ts` is the one place to add it.
 - `connectStripe` holds the member lock across two Stripe calls. Only the
   create needs the transaction; the link could follow the commit. It is a
   one-member lock for a few hundred milliseconds, so it stays until it hurts.

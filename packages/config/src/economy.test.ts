@@ -85,4 +85,9 @@ describe("payout", () => {
     expect(economy.payout.countries.length).toBeGreaterThan(0);
     for (const country of economy.payout.countries) expect(country).toMatch(/^[A-Z]{2}$/);
   });
+
+  it("names the platform's own country, and it is one a member may pick", () => {
+    expect(economy.payout.platformCountry).toMatch(/^[A-Z]{2}$/);
+    expect(economy.payout.countries).toContain(economy.payout.platformCountry);
+  });
 });

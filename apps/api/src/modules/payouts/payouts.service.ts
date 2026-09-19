@@ -141,8 +141,12 @@ export async function getPayoutOverview(userId: string, now: Date = new Date()) 
  * account and the row; every call returns a fresh link, because a link lives
  * for minutes and the dashboard never keeps one.
  *
- * The Stripe call runs inside the transaction, as the top-up does: if it
- * throws, no row is left behind that names an account Stripe never made.
+ * The account is created and the row committed in one transaction, as the
+ * top-up does: if Stripe throws, no row is left behind that names an account
+ * Stripe never made. The link comes after the commit, on purpose. A link can
+ * fail for a reason the account did not — Stripe's hosted onboarding does not
+ * serve every country the account API does — and a rollback then would leave
+ * an account on Stripe that no row names, and the next press would make another.
  *
  * It is refused while a request is under review. The admin's approval pays the
  * account on the row, so the row must not change under them.
@@ -153,7 +157,7 @@ export async function connectStripe(
   input: ConnectStripeInput,
   now: Date = new Date(),
 ) {
-  return db.transaction(async (tx) => {
+  const row = await db.transaction(async (tx) => {
     await lockMember(tx, userId);
     if ((await countOpenRequests(tx, userId)) > 0) {
       throw new HTTPException(409, {
@@ -161,35 +165,35 @@ export async function connectStripe(
       });
     }
 
-    let row = await findStripeAccount(tx, userId);
-    if (!row) {
-      const account = await stripe.accounts.create(
-        accountParams({ country: input.country, email, userId }),
-      );
-      const [inserted] = await tx
-        .insert(schema.stripeAccount)
-        .values({
-          id: crypto.randomUUID(),
-          userId,
-          stripeAccountId: account.id,
-          country: input.country,
-          ...accountFlags(account),
-          createdAt: now,
-          updatedAt: now,
-        })
-        .returning();
-      if (!inserted) throw new HTTPException(500, { message: "Could not save the Stripe account" });
-      row = inserted;
-    }
+    const existing = await findStripeAccount(tx, userId);
+    if (existing) return existing;
 
-    const link = await stripe.accountLinks.create({
-      account: row.stripeAccountId,
-      type: "account_onboarding",
-      return_url: input.returnUrl,
-      refresh_url: input.refreshUrl,
-    });
-    return { url: link.url };
+    const account = await stripe.accounts.create(
+      accountParams({ country: input.country, email, userId }),
+    );
+    const [inserted] = await tx
+      .insert(schema.stripeAccount)
+      .values({
+        id: crypto.randomUUID(),
+        userId,
+        stripeAccountId: account.id,
+        country: input.country,
+        ...accountFlags(account),
+        createdAt: now,
+        updatedAt: now,
+      })
+      .returning();
+    if (!inserted) throw new HTTPException(500, { message: "Could not save the Stripe account" });
+    return inserted;
   });
+
+  const link = await stripe.accountLinks.create({
+    account: row.stripeAccountId,
+    type: "account_onboarding",
+    return_url: input.returnUrl,
+    refresh_url: input.refreshUrl,
+  });
+  return { url: link.url };
 }
 
 /**

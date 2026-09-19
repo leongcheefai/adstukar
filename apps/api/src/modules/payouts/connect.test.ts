@@ -1,3 +1,4 @@
+import { economy } from "@repo/config/economy";
 import type Stripe from "stripe";
 import { describe, expect, it } from "vitest";
 import { accountFlags, accountParams, connectEventChange } from "./connect";
@@ -7,8 +8,20 @@ const ACCOUNT = { details_submitted: true, payouts_enabled: false } as Stripe.Ac
 describe("accountParams", () => {
   const params = accountParams({ country: "MY", email: "a@b.c", userId: "u1" });
 
-  it("asks only for the transfers capability, because the account receives and never charges", () => {
-    expect(params.capabilities).toEqual({ transfers: { requested: true } });
+  it("asks for transfers alone when the account lives where the platform does", () => {
+    const home = accountParams({
+      country: economy.payout.platformCountry,
+      email: "a@b.c",
+      userId: "u1",
+    });
+    expect(home.capabilities).toEqual({ transfers: { requested: true } });
+  });
+
+  it("asks for card payments too in any other country, because Stripe refuses transfers alone there", () => {
+    expect(params.capabilities).toEqual({
+      card_payments: { requested: true },
+      transfers: { requested: true },
+    });
   });
 
   it("lets Stripe collect the identity and carry the losses, with the Express dashboard", () => {
