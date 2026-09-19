@@ -15,7 +15,7 @@ export async function runExpiry(now: Date = new Date()) {
   return expired;
 }
 
-/** An open play whose report never arrived is not a play. It moves no points. */
+/** An open play whose report never arrived is not a play. It moves no money. */
 export async function runPlayCleanup(now: Date = new Date()) {
   const voided = await voidStalePlays(now);
   if (voided > 0) log("info", "plays_voided", { voided });
@@ -23,8 +23,8 @@ export async function runPlayCleanup(now: Date = new Date()) {
 }
 
 /**
- * Keeps every campaign in step with the points behind it. It stops what can no
- * longer pay — points leave through expiry and through a payout, and neither of
+ * Keeps every campaign in step with the money behind it. It stops what can no
+ * longer pay — money leaves through expiry and through a payout, and neither of
  * those touches a campaign — and starts what can pay again.
  */
 export async function runCampaignPacing(now: Date = new Date()) {

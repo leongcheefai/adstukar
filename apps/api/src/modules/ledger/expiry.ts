@@ -2,7 +2,7 @@
  * How much an expiring entry may actually take back.
  *
  * A credit is clamped to what its lot still holds: the member may have spent the
- * points already, and reversing the entry in full would charge for them twice and
+ * money already, and reversing the entry in full would charge for them twice and
  * leave the lot negative. A debit — the fee that pairs with an earn — expires in
  * full, because giving it back grows the lot rather than shrinking it.
  *

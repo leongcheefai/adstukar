@@ -16,7 +16,7 @@ export const MARKETING_PAGES: MarketingPage[] = [
     path: "/",
     title: `${project.name} — ${project.tagline}`,
     description:
-      "Play ads on a screen while you listen or watch, and earn CapyPoints. Advertisers see every play.",
+      "Play ads on a screen while you listen or watch, and earn money. Advertisers see every play.",
   },
   {
     slug: "blog",
@@ -28,7 +28,7 @@ export const MARKETING_PAGES: MarketingPage[] = [
     slug: "faq",
     path: "/faq",
     title: `FAQ — ${project.name}`,
-    description: `How earning with a screen, advertising, and ${project.pointsName} work on ${project.name}.`,
+    description: `How earning with a screen, advertising, and money work on ${project.name}.`,
   },
   {
     slug: "terms",

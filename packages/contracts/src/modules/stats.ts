@@ -8,7 +8,7 @@ export const statsDayContract = z.object({
   received: z.number().int(),
   /** Scans of this member's own listings. */
   scans: z.number().int(),
-  /** Points this member's devices earned, net of the fee. */
+  /** What this member's devices earned, net of the fee. */
   earned: z.number().int(),
 });
 

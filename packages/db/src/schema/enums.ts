@@ -80,7 +80,7 @@ export const LEDGER_REASONS = [
 ] as const;
 
 /**
- * The origin of a point. The lot decides the rules, not the label:
+ * The origin of an amount. The lot decides the rules, not the label:
  * `bought` refunds and never expires, `earned` withdraws after the hold and
  * expires, `granted` neither refunds nor withdraws, and expires.
  */
@@ -111,8 +111,8 @@ export type PayoutMethod = (typeof PAYOUT_METHODS)[number];
 
 /**
  * A top-up opens the moment a member picks a pack, so the row exists before the
- * money does. `paid` is the only state that ever put points in an account, and
- * `refunded` is a paid top-up whose unspent points went back as money.
+ * money does. `paid` is the only state that ever put money in an account, and
+ * `refunded` is a paid top-up whose unspent part went back as money.
  * `abandoned` is a checkout nobody finished.
  */
 export const TOPUP_STATES = ["pending", "paid", "refunded", "abandoned"] as const;

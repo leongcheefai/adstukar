@@ -41,7 +41,7 @@ function navItems(pathname: string): NavItem[] {
       icon: <Monitor size={16} />,
     },
     {
-      label: "CapyPoints",
+      label: "Wallet",
       // The path stays /ledger. It is the append-only record either way, and a
       // rename here would break every link people already saved.
       href: "/dashboard/ledger",
@@ -231,7 +231,7 @@ export function DashboardLayout() {
       <DrawerContent className="overflow-hidden p-0 data-[vaul-drawer-direction=bottom]:mt-0 data-[vaul-drawer-direction=bottom]:h-[calc(100dvh-12px)] data-[vaul-drawer-direction=bottom]:max-h-[calc(100dvh-12px)] data-[vaul-drawer-direction=bottom]:rounded-t-2xl">
         <DrawerTitle className="sr-only">Dashboard</DrawerTitle>
         <DrawerDescription className="sr-only">
-          Campaigns, devices, points, and settings.
+          Campaigns, devices, wallet, and settings.
         </DrawerDescription>
         <div className="flex min-h-0 flex-1 flex-col">
           <DashboardContent onClose={() => setOpen(false)} />

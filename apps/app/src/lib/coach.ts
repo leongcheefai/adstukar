@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useState } from "react";
 
 /**
  * First-run hints. `source` is the profile control on the chooser; `dashboard`
- * is the campaign / CapyPoints tip after the drawer opens; `stripe` guides the
+ * is the campaign / wallet tip after the drawer opens; `stripe` guides the
  * first top-up, which is where Stripe enters the product; `opened` records
  * that the dashboard was opened at all, which is what the red dot on the
  * profile picture waits for. A dismissed step stays dismissed on this browser.

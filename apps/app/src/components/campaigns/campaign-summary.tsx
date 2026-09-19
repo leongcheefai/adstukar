@@ -1,3 +1,4 @@
+import { usd, usdSigned } from "@repo/config/money";
 import { useStats } from "../../lib/stats";
 import { DeltaBadge } from "../delta-badge";
 import { StatCard, StatCardSkeleton } from "../stat-card";
@@ -9,7 +10,7 @@ import { StatCard, StatCardSkeleton } from "../stat-card";
  * stops the two branches from drifting apart.
  */
 const LABELS = {
-  points: "Available CapyPoints",
+  balance: "Balance",
   plays: "Plays received",
   scans: "Scans",
   scanRate: "Scan rate",
@@ -50,9 +51,9 @@ export function CampaignSummary() {
       {stats ? (
         <>
           <StatCard
-            label={LABELS.points}
-            value={stats.balance.settled.toLocaleString()}
-            meta={pending !== 0 ? `${pending > 0 ? "+" : ""}${pending} pending` : undefined}
+            label={LABELS.balance}
+            value={usd(stats.balance.settled)}
+            meta={pending !== 0 ? `${usdSigned(pending)} pending` : undefined}
           />
           <StatCard
             label={LABELS.plays}

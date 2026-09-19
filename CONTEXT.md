@@ -74,7 +74,7 @@ _Avoid_: Playlist, queue, rotation
 
 **House card**:
 A free card played when no paid listing is eligible. It is the distributor's own
-promotion, or the CapyAds card. It moves no points.
+promotion, or the CapyAds card. It moves no money.
 
 **Veto**:
 A distributor's refusal of a listing on their own devices.
@@ -87,7 +87,7 @@ A phrase that stops any listing whose name or tagline contains it.
 
 **Play**:
 One listing shown in one placement for its full dwell. The play is the event
-that moves points.
+that moves money.
 _Avoid_: Impression, view, showing
 
 **Scan**:
@@ -102,38 +102,44 @@ venue's own time. The payout review counts the plays that fall outside them.
 The largest number of plays one device may be paid for in one day.
 
 **Daily budget**:
-The largest number of points one campaign may spend in one day. The listings
+The most money one campaign may spend in one day. The listings
 under the campaign split it evenly, so one creative cannot take the whole day.
 
 **Pause reason**:
 Why the system stopped a campaign: `budget` when the daily budget is spent, or
-`balance` when the owner's points ran out. A campaign a person paused carries no
+`balance` when the owner's balance ran out. A campaign a person paused carries no
 reason. A budget pause lifts on the next day; a balance pause lifts when the
-points come back.
+balance comes back.
 _Avoid_: Auto-pause, throttle
 
 ## Money
 
-**Point**:
-The single internal unit. A point is bought, earned, or granted. Members see the
-brand name CapyPoints; the code says point.
-_Avoid_: Credit, coin, token
+**Wallet**:
+A member's balance in US dollars. Money enters as a top-up, moves with each
+play, and leaves as a payout.
+_Avoid_: Points, credits, coins, tokens
+
+**Amount**:
+The stored unit: one thousandth of a US dollar. The ledger holds integers in
+this unit, so a play rate below one cent is still a whole number. A member
+never sees the unit; every page shows dollars.
+_Avoid_: Point, mil
 
 **Lot**:
-The origin of a point: `bought`, `earned`, or `granted`. The lot decides whether
-the point may be withdrawn, refunded, or expired.
+The origin of money in the wallet: `bought`, `earned`, or `granted`. The lot
+decides whether the money may be withdrawn, refunded, or expired.
 
 **Top-up**:
-An advertiser's purchase of points with money. It opens as a checkout and only
-becomes points when the payment lands.
+An advertiser's payment into the wallet. It opens as a checkout and only
+becomes balance when the payment lands.
 _Avoid_: Deposit, recharge, refill
 
 **Pack**:
-One size a top-up sells: an amount of points at the peg. No pack carries a
-bonus, because a bonus point has no honest refund rate.
+One size a top-up sells. No pack carries a bonus, because a bonus has no
+honest refund rate.
 
 **Payout**:
-A distributor's conversion of earned points back into money. A member asks, an
+A distributor's request to turn earned money into a payment. A member asks, an
 admin reviews the history, and the money goes out by hand (docs/adr/0005).
 _Avoid_: Withdrawal, cash-out
 
@@ -142,39 +148,40 @@ The name and the destination we pay. It goes on file the day a member cashes
 out, not at signup.
 
 **Withdrawable**:
-The earned points that have served the hold, less what already left. It is what
+The earned money that has served the hold, less what already left. It is what
 one payout may take, and it is never the same number as the balance.
 
 **Fee**:
-The points CapyAds keeps from each play and each scan.
+The share CapyAds keeps from each play and each scan.
 _Avoid_: Commission, margin, spread
 
 **Refund**:
-Money returned for bought points that a member did not spend. It runs for a
-window after the payment, pays at the peg less what the card processor kept, and
+Money returned for a top-up that a member did not spend. It runs for a window
+after the payment, pays what was paid less what the card processor kept, and
 posts a `refund` entry against the `bought` lot. Only an admin gives one: the
 member asks, and the act lives under Settings → Top-ups (docs/adr/0006).
 
 **Refundable**:
-The unspent points of one top-up. A spend takes the oldest bought points, so the
-bought balance says how many are left, never the rows.
+The unspent part of one top-up. A spend takes the oldest bought money, so the
+bought balance says how much is left, never the rows.
 
 **Ledger entry**:
-One immutable point movement. It carries an amount, a reason, a state, and a lot.
+One immutable movement. It carries an amount, a reason, a state, and a lot.
 
 **Balance**:
-The sum of a member's settled ledger entries.
+The sum of a member's settled ledger entries, shown in dollars.
 
 **Settlement**:
 The delay after which an earn entry counts towards the balance.
 
 **Hold**:
-The longer delay after settlement before earned points may leave as a payout. It
+The longer delay after settlement before earned money may leave as a payout. It
 is the window in which a dead screen is caught before cash leaves.
 
 **Expiry**:
-The moment granted or earned points lose their value. Bought points never expire.
+The moment granted or earned money loses its value. Bought money never expires.
 
-**Grant**:
-Points the system gives. A new advertiser gets a trial grant at the first
-approved listing.
+**Trial credit**:
+Money the system grants. A new advertiser gets it at the first approved
+listing. It is the `granted` lot on screen.
+_Avoid_: Grant, welcome points, bonus

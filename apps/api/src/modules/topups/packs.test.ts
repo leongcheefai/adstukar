@@ -2,13 +2,13 @@ import { DAY_MS, economy } from "@repo/config/economy";
 import { describe, expect, it } from "vitest";
 import { findPack, refundAmount, refundBlock, refundDeadline, unspentByTopup } from "./packs";
 
-const PACK = { points: 10_000, usdCents: 1_000 };
+const PACK = { amount: 10_000, usdCents: 1_000 };
 const NOW = new Date("2026-06-01T00:00:00Z");
 
 describe("findPack", () => {
   it("returns the pack an advertiser asked for", () => {
-    expect(findPack(10_000)).toEqual({ points: 10_000, usdCents: 1_000 });
-    expect(findPack(250_000)).toEqual({ points: 250_000, usdCents: 25_000 });
+    expect(findPack(10_000)).toEqual({ amount: 10_000, usdCents: 1_000 });
+    expect(findPack(250_000)).toEqual({ amount: 250_000, usdCents: 25_000 });
   });
 
   it("refuses an amount we do not sell", () => {
@@ -18,7 +18,7 @@ describe("findPack", () => {
 
   it("prices every pack at the peg, with no bonus", () => {
     for (const pack of economy.topup.packs) {
-      expect(pack.points).toBe((pack.usdCents * economy.pointsPerUsd) / 100);
+      expect(pack.amount).toBe((pack.usdCents * economy.unit.perUsd) / 100);
     }
   });
 });
@@ -31,11 +31,11 @@ describe("refundDeadline", () => {
 });
 
 describe("unspentByTopup", () => {
-  const fresh = (points: number, refunded = 0) => ({ points, refunded });
+  const fresh = (amount: number, refunded = 0) => ({ amount, refunded });
 
   it("takes the spend off the oldest top-up first", () => {
-    // Two packs of 10,000 and 12,000 points left: 8,000 were spent, and a spend
-    // takes the oldest bought points. The list arrives oldest first.
+    // Two packs of 10,000 and 12,000 units left: 8,000 were spent, and a spend
+    // takes the oldest bought money. The list arrives oldest first.
     expect(unspentByTopup([fresh(10_000), fresh(10_000)], 12_000)).toEqual([2_000, 10_000]);
   });
 
@@ -44,7 +44,7 @@ describe("unspentByTopup", () => {
   });
 
   it("counts a refund against the top-up that gave it back, not against the oldest", () => {
-    // The newer pack already refunded 6,000. Of the 4,000 points that went, the
+    // The newer pack already refunded 6,000. Of the 4,000 units that went, the
     // spend came out of the older pack.
     expect(unspentByTopup([fresh(10_000), fresh(10_000, 6_000)], 10_000)).toEqual([6_000, 4_000]);
   });
@@ -57,7 +57,7 @@ describe("unspentByTopup", () => {
     expect(unspentByTopup([fresh(10_000)], -500)).toEqual([0]);
   });
 
-  it("holds no points on a top-up that refunded in full", () => {
+  it("holds nothing on a top-up that refunded in full", () => {
     expect(unspentByTopup([fresh(10_000, 10_000)], 0)).toEqual([0]);
   });
 });
@@ -66,7 +66,7 @@ describe("refundAmount", () => {
   it("returns the whole pack less the processor fee", () => {
     // $10 back: 290 basis points is 29 cents, plus the 30-cent fixed fee.
     expect(refundAmount(10_000, PACK)).toEqual({
-      points: 10_000,
+      amount: 10_000,
       grossCents: 1_000,
       feeCents: 59,
       netCents: 941,
@@ -76,17 +76,17 @@ describe("refundAmount", () => {
   it("charges the fixed fee only for the share it refunds", () => {
     // Half the pack: 15 cents of the fixed fee, and 15 cents of the percentage.
     expect(refundAmount(5_000, PACK)).toEqual({
-      points: 5_000,
+      amount: 5_000,
       grossCents: 500,
       feeCents: 30,
       netCents: 470,
     });
   });
 
-  it("rounds the points down to a whole cent and leaves the rest in the account", () => {
+  it("rounds the amount down to a whole cent and leaves the rest in the account", () => {
     const result = refundAmount(1_005, PACK);
     expect(result.grossCents).toBe(100);
-    expect(result.points).toBe(1_000);
+    expect(result.amount).toBe(1_000);
   });
 
   it("never returns more money than it took", () => {
@@ -97,7 +97,7 @@ describe("refundAmount", () => {
 });
 
 describe("refundBlock", () => {
-  const base = { state: "paid" as const, paidAt: NOW, refundablePoints: 10_000, netCents: 941 };
+  const base = { state: "paid" as const, paidAt: NOW, refundable: 10_000, netCents: 941 };
 
   it("lets a fresh, unspent top-up through", () => {
     expect(refundBlock({ ...base, now: NOW })).toBeNull();
@@ -116,13 +116,11 @@ describe("refundBlock", () => {
     expect(refundBlock({ ...base, now: late })).toBe("window-closed");
   });
 
-  it("refuses one whose points are spent", () => {
-    expect(refundBlock({ ...base, refundablePoints: 0, netCents: 0, now: NOW })).toBe(
-      "nothing-left",
-    );
+  it("refuses one whose money is spent", () => {
+    expect(refundBlock({ ...base, refundable: 0, netCents: 0, now: NOW })).toBe("nothing-left");
   });
 
   it("refuses one the processor fee would swallow", () => {
-    expect(refundBlock({ ...base, refundablePoints: 10, netCents: 0, now: NOW })).toBe("below-fee");
+    expect(refundBlock({ ...base, refundable: 10, netCents: 0, now: NOW })).toBe("below-fee");
   });
 });

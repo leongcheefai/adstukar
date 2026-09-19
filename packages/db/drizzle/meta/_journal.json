@@ -78,6 +78,13 @@
       "when": 1789624719269,
       "tag": "0010_drop_subscription",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1789800509641,
+      "tag": "0011_wallet_speaks_money",
+      "breakpoints": true
     }
   ]
 }

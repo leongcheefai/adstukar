@@ -13,7 +13,7 @@ export const servedListingContract = z.object({
 
 /**
  * The distributor's own promotion, shown when nothing paid is eligible. It has
- * no `scanUrl`, because it moves no points: the code on screen goes straight to
+ * no `scanUrl`, because it moves no money: the code on screen goes straight to
  * the distributor's own address and never through a play.
  */
 export const promotionContract = z.object({

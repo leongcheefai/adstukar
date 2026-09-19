@@ -1,7 +1,7 @@
 # apps/api
 
 ## Purpose
-Hono API server on Node.js. Handles auth (Better Auth), the CapyAds exchange (campaigns, listings, devices, placements, serve/report/scan, ledger, stats, moderation, jobs), and the Stripe webhook that lands a CapyPoints top-up. Runs on port 3001 in development.
+Hono API server on Node.js. Handles auth (Better Auth), the CapyAds exchange (campaigns, listings, devices, placements, serve/report/scan, ledger, stats, moderation, jobs), and the Stripe webhook that lands a top-up. Runs on port 3001 in development.
 
 ## Exchange modules
 | Module | Routes | Auth |
@@ -44,7 +44,7 @@ key and blacking out a screen somebody has already paired. A rejection clears it
 so approving a refused screen later does issue a fresh key.
 
 The daily play cap and the state of the campaign and the listing are read when
-the points move, never when the play was served. Above the cap, or on a listing
+the money moves, never when the play was served. Above the cap, or on a listing
 an admin rejected after the batch was cut, the play still counts and simply pays
 nothing — "plays above the cap still show, and pay nothing" (issue #7).
 
@@ -53,30 +53,30 @@ phone has its own network. `recordScan` then marks the play scanned and pays
 nothing; `recordReport` settles the bonus when the screen reports the play.
 
 A campaign paces itself. The listings under it split the daily budget evenly. The
-campaign stops when the budget is spent, or when the owner's points run out. The
+campaign stops when the budget is spent, or when the owner's balance runs out. The
 pacing job starts it again when the reason has gone. See
 `src/modules/campaigns/pacing.ts` for the rules and `pacing.service.ts` for the
 writes.
 
-A payout takes earned points that have served the hold, and nothing else. The
+A payout takes earned money that has served the hold, and nothing else. The
 request debits the account at once, so no balance can answer two requests; a
-refusal posts the compensating row and the points come back. Payment is manual
+refusal posts the compensating row and the amount comes back. Payment is manual
 and an admin reviews the history first — the scan-to-play ratio, the plays that
 fell outside the venue's stated open hours, and devices sharing an address or a
 network. See
 `docs/adr/0005`, `src/modules/payouts/eligibility.ts` for the rules and
 `review.ts` for the signals.
 
-An advertiser buys points with money. `POST /topups/checkout` opens the row
+An advertiser tops up in US dollars. `POST /topups/checkout` opens the row
 first and the Stripe session inside the same transaction, so a session can never
-exist without the row the webhook looks for. The points go in only when
+exist without the row the webhook looks for. The amount goes in only when
 `checkout.session.completed` arrives, keyed on the payment id, so a webhook
-Stripe sends twice posts them once.
+Stripe sends twice posts it once.
 
 A refund gives the unspent part of one top-up back, for a window after the
 payment, at the peg less what the card processor kept. The debit is posted
 before the Stripe call and inside the same transaction, so a refusal rolls it
-back. Which points are still unspent comes from the bought balance, never from
+back. Which part is still unspent comes from the bought balance, never from
 the rows: see `src/modules/topups/packs.ts`.
 
 `POST /report` also stamps `device.last_seen_at` and `device.last_network`
@@ -113,7 +113,7 @@ curl http://localhost:3001/me -H "Cookie: <session-cookie>"
 
 ## Stripe
 
-Stripe sells one thing: a CapyPoints top-up (`src/modules/topups/`). There is no
+Stripe sells one thing: a top-up (`src/modules/topups/`). There is no
 subscription, no invoice, and no portal (docs/adr/0001). The webhook in
 `src/modules/billing/` is the only route Stripe calls.
 

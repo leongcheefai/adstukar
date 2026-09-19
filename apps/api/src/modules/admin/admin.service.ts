@@ -42,7 +42,7 @@ export async function listModerationQueue() {
 
 /**
  * Approving a member's first listing pays the welcome grant. The grant lot
- * neither refunds nor withdraws, so a free point can never leave as cash.
+ * neither refunds nor withdraws, so free money can never leave as cash.
  */
 export async function approveListing(listingId: string, now: Date = new Date()) {
   return db.transaction(async (tx) => {

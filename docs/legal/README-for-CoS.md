@@ -30,7 +30,7 @@ Applied after a review of the drafts against the product code (the `adstukar` re
 | Topic | Change applied in drafts |
 |-------|--------------------------|
 | **Product name** | ~~Not confirmed~~ — **superseded 16 Sep: CapyChannel.** Every product-name mention read **`[PRODUCT NAME]`**. The domain and the contact email carried the old name, so they read **`[PRODUCT DOMAIN]`** and **`[CONTACT EMAIL]`** — both are **resolved on 16 Sep** to `capychannel.site` and `support@capychannel.site`. The inline “temporary / placeholder” and “not yet formally confirmed” notes are removed, because the placeholders already say it. File and folder names keep `capytv` until the name is confirmed. For reference: the code brands the network **CapyAds** (`capyads.com`) and calls the screen app **CapyTV** (`packages/config/src/project.ts`, `CONTEXT.md`). |
-| **Point system** | Not complete. Every passage on points or credit, pricing, rates, revenue share, earnings, measurement for billing and earnings, purchases, refunds, balances, expiry, and payouts now reads **`[to fill in later]`**. The defined term “Media Credit” is removed, and so is the “Valid Impression” definition. See **Point system — to fill in later** below. |
+| **Wallet and payment system** | Not complete. Every passage on points or credit, pricing, rates, revenue share, earnings, measurement for billing and earnings, purchases, refunds, balances, expiry, and payouts now reads **`[to fill in later]`**. The defined term “Media Credit” is removed, and so is the “Valid Impression” definition. See **Wallet and payment system — to fill in later** below. |
 | **Payment system** | Not set up. Payment providers, payout providers, payout verification, and **which countries can receive payouts** are **`[to fill in later]`**. |
 | **Ad categories** | Ads Policy §4 adds seven categories: tobacco, vapes, and smoking products; alcohol; medicines and health products; moneylending and unlicensed credit; pyramid and unlicensed direct-selling schemes; false halal claims; race, religion, and royalty. It also adds a **venue-fit** rule, because people of all ages can see the screens. Each new row carries a counsel note that names the Malaysian law to check. The typo “RMX/day” is fixed. |
 | **GDPR (EEA / UK)** | New Privacy Policy **§13**: controller details, EU / UK representative and DPO placeholders, a legal-basis table, GDPR rights, automated decisions, transfer safeguards, and the one-month response time. |
@@ -53,7 +53,7 @@ Rows marked **superseded** were replaced by the 15 Sep changes above.
 | **Mailing address** | Left as **[TBD: mailing address]**. |
 | **v1 surfaces** | **Website / browser only.** Native app, Mac menu-bar, and dedicated native display-client language rewritten to **web/browser / browser session / web player**. No promise of native Mac/display clients in v1. |
 | **Governing law / venue** | Laws of **Malaysia**; disputes in **Malaysian courts**. Optional mediation/arbitration kept as an **optional counsel note** only (not default). |
-| **Payments / payouts** | ~~Mechanics remain [TBD] placeholders~~ — **superseded 15 Sep:** point system not complete and payment system not set up; `[to fill in later]`. |
+| **Payments / payouts** | ~~Mechanics remain [TBD] placeholders~~ — **superseded 15 Sep:** wallet and payment system not complete and payment system not set up; `[to fill in later]`. |
 | **Primary domain** | ~~**capytv.app** as a working assumption~~ · ~~`[PRODUCT DOMAIN]` (15 Sep)~~ — **superseded 16 Sep:** **`capychannel.site`** (confirmed). |
 
 ---
@@ -89,9 +89,9 @@ Before publication, search all files for `[` to find every open placeholder.
 
 ---
 
-## Point system — to fill in later
+## Wallet and payment system — to fill in later
 
-The point system is not complete, and the payment system is not set up. These sections are blank on purpose:
+The wallet and payment system is not complete, and the payment system is not set up. These sections are blank on purpose:
 
 | File | Section | What it must cover when filled |
 |------|---------|--------------------------------|
@@ -162,7 +162,7 @@ Adapted **structure and spirit**, not brand, product model, or jurisdiction copy
 |-----------------|--------------------------------|
 | Parties / roles | **Advertisers/Businesses** + **Distributor Ops**. Placement for **v1** is **web/browser-based**; ads distributed **outside X/Threads**. |
 | Eligibility, accounts, license | Same high-level sections; Malaysia operator; no SF address / US corp invent. |
-| Impressions / measurement | Section heading kept; content is **`[to fill in later]`** until the point system is complete (15 Sep). |
+| Impressions / measurement | Section heading kept; content is **`[to fill in later]`** until the wallet and payment system is complete (15 Sep). |
 | Earnings / billing | Section headings kept; content is **`[to fill in later]`** (15 Sep). No commercial numbers in the drafts. |
 | Prohibited conduct, IP, disclaimers, liability, termination, changes | Covered; disclaimers flagged for Malaysian counsel. |
 | Governing law / disputes | **Laws of Malaysia**; disputes in **Malaysian courts**; optional mediation/arbitration as counsel note only — **no** mandatory US arbitration / class-waiver as default. |
@@ -280,7 +280,7 @@ Statute names below are pointers for counsel to confirm, **not** legal conclusio
 ## Review checklist (suggested for KEV-6)
 
 1. ~~Confirm the **product name**.~~ Done: **CapyChannel**. The domain and the email are set. Fill the **mailing address** — it is the last identity item.  
-2. Finish the **point system** and set up the **payment system**. Then fill every `[to fill in later]`, and match the public FAQ.  
+2. Finish the **wallet and payment system** and set up the **payment system**. Then fill every `[to fill in later]`, and match the public FAQ.  
 3. Malaysian counsel: contracting party, PDPA (bilingual notice, 2024 amendments), consumer/limitation language, independent-contractor wording, optional mediation clause, and the new ad categories.  
 4. Privacy counsel: whether the GDPR and the CCPA apply, the Article 27 representative, transfer mechanisms, and the CCPA category list.  
 5. Work through **Review findings still open**, including the *(code)* items.  
@@ -292,6 +292,6 @@ Statute names below are pointers for counsel to confirm, **not** legal conclusio
 ## Agent constraints honored
 
 - Research/structure adapted from provided SponsorBar-style summaries only; no invented Malaysian statute conclusions. Statute names in the new ad categories are counsel pointers, not conclusions.  
-- No Stripe/Whop or 70/30 figures invented. Since 15 Sep, no point-system numbers are taken from the product code either, because the point system is not final.  
+- No Stripe/Whop or 70/30 figures invented. Since 15 Sep, no point-system numbers are taken from the product code either, because the wallet and payment system is not final.  
 - No Linear publish / no outbound messaging / no GitHub publish from the drafting agent.  
 - Success criterion: three full markdown drafts + this README updated on disk in this folder.

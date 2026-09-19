@@ -1,4 +1,4 @@
-import { economy, pointsToUsdCents } from "@repo/config/economy";
+import { amountToCents, economy } from "@repo/config/economy";
 import type {
   Campaign,
   CampaignWithListings,
@@ -437,7 +437,7 @@ let payoutAccount: PayoutAccount | null = {
 let payoutRequests: PayoutRequest[] = [
   {
     id: "pay_req_1",
-    points: 24_000,
+    amount: 24_000,
     usdCents: 2_400,
     state: "paid",
     ledgerEntryId: "led_0001",
@@ -453,11 +453,11 @@ let withdrawable = 31_400;
 let topups: Topup[] = [
   {
     id: "top_2",
-    points: 25_000,
+    amount: 25_000,
     usdCents: 2_500,
     state: "paid",
     ledgerEntryId: "led_0004",
-    refundedPoints: null,
+    refunded: null,
     refundUsdCents: null,
     refundLedgerEntryId: null,
     createdAt: iso(3),
@@ -466,11 +466,11 @@ let topups: Topup[] = [
   },
   {
     id: "top_1",
-    points: 10_000,
+    amount: 10_000,
     usdCents: 1_000,
     state: "paid",
     ledgerEntryId: "led_0003",
-    refundedPoints: null,
+    refunded: null,
     refundUsdCents: null,
     refundLedgerEntryId: null,
     createdAt: iso(90),
@@ -483,15 +483,15 @@ let topups: Topup[] = [
  * What each top-up may still give back. The API derives these from the bought
  * balance and the processor fee; design mode names them, the same way
  * `payoutOverview` names its own block rather than importing the rule. The
- * fixture shows one top-up inside the window with points left, and one the
+ * fixture shows one top-up inside the window with money left, and one the
  * window has closed on.
  */
 const refundable: Record<
   string,
-  { points: number; netCents: number; block: TopupRefundBlock | null }
+  { amount: number; netCents: number; block: TopupRefundBlock | null }
 > = {
-  top_2: { points: 18_000, netCents: 1_748, block: null },
-  top_1: { points: 0, netCents: 0, block: "window-closed" },
+  top_2: { amount: 18_000, netCents: 1_748, block: null },
+  top_1: { amount: 0, netCents: 0, block: "window-closed" },
 };
 
 function topupOverview(): TopupOverview {
@@ -499,10 +499,10 @@ function topupOverview(): TopupOverview {
     packs: economy.topup.packs.map((pack) => ({ ...pack })),
     refundWindowDays: economy.topup.refundWindowDays,
     items: topups.map((topup) => {
-      const money = refundable[topup.id] ?? { points: 0, netCents: 0, block: "nothing-left" };
+      const money = refundable[topup.id] ?? { amount: 0, netCents: 0, block: "nothing-left" };
       return {
         topup: { ...topup },
-        refundablePoints: topup.state === "paid" ? money.points : 0,
+        refundable: topup.state === "paid" ? money.amount : 0,
         refundNetCents: topup.state === "paid" ? money.netCents : 0,
         block: topup.state === "paid" ? money.block : "not-paid",
       };
@@ -527,13 +527,13 @@ function payoutOverview(): PayoutOverview {
   return {
     account: payoutAccount ? { ...payoutAccount } : null,
     withdrawable,
-    minimumPoints: economy.payout.minimumPoints,
+    minimum: economy.payout.minimum,
     holdDays: economy.payout.holdDays,
     block: open
       ? "open-request"
       : payoutAccount === null
         ? "identity"
-        : withdrawable < economy.payout.minimumPoints
+        : withdrawable < economy.payout.minimum
           ? "below-minimum"
           : null,
     requests: payoutRequests.map((row) => ({ ...row })),
@@ -561,7 +561,7 @@ function payoutReviewQueue(): PayoutQueue {
       {
         request: {
           id: "pay_req_2",
-          points: 46_500,
+          amount: 46_500,
           usdCents: 4_650,
           state: "requested",
           ledgerEntryId: "led_0002",
@@ -648,8 +648,8 @@ const releases: Release[] = [
   {
     id: "rel_001",
     tag: "v0.2.0",
-    name: "CapyPoints filters",
-    body: "- Filter CapyPoints by reason, state and lot\n- Infinite scroll at 50 rows a page",
+    name: "Wallet filters",
+    body: "- Filter the wallet by reason, state and lot\n- Infinite scroll at 50 rows a page",
     url: "https://github.com/example/adstukar/releases/tag/v0.2.0",
     prerelease: false,
     publishedAt: iso(20),
@@ -1077,8 +1077,8 @@ function writePayouts(seg: string[], method: string, patch: Record<string, unkno
   if (method === "POST" && seg.length === 1) {
     const opened: PayoutRequest = {
       id: fakeId("pay_req"),
-      points: withdrawable,
-      usdCents: pointsToUsdCents(withdrawable),
+      amount: withdrawable,
+      usdCents: amountToCents(withdrawable),
       state: "requested",
       ledgerEntryId: fakeId("led"),
       reference: null,
@@ -1086,7 +1086,7 @@ function writePayouts(seg: string[], method: string, patch: Record<string, unkno
       reviewedAt: null,
       createdAt: nowIso(),
     };
-    // The points leave the account the moment the request is made, exactly as
+    // The amount leaves the account the moment the request is made, exactly as
     // the API does it, so the panel below the button reads right afterwards.
     withdrawable = 0;
     payoutRequests = [opened, ...payoutRequests];
@@ -1113,7 +1113,7 @@ function writeTopupRefund(seg: string[]): unknown {
   const refunded: Topup = {
     ...target,
     state: "refunded",
-    refundedPoints: money.points,
+    refunded: money.amount,
     refundUsdCents: money.netCents,
     refundLedgerEntryId: fakeId("led"),
     refundedAt: nowIso(),
@@ -1122,7 +1122,7 @@ function writeTopupRefund(seg: string[]): unknown {
   return { ...refunded };
 }
 
-/** The admin side: pay the request, or refuse it and hand the points back. */
+/** The admin side: pay the request, or refuse it and hand the money back. */
 function writePayoutReview(seg: string[], patch: Record<string, unknown>): unknown {
   const queue = payoutReviewQueue();
   const item = queue.items.find((row) => row.request.id === seg[2]);

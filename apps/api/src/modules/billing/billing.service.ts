@@ -7,7 +7,7 @@ import { abandonTopup, recordPaidTopup } from "../topups/topups.service";
  * Stripe's side of a top-up. Every event is verified against the webhook
  * secret and recorded once by id, so a retry from Stripe changes nothing.
  *
- * Only the two checkout events matter. A one-off payment is a CapyPoints
+ * Only the two checkout events matter. A one-off payment is a
  * top-up, and CapyAds sells nothing else through Stripe: no subscription, no
  * invoice, no portal (docs/adr/0001).
  */
@@ -23,7 +23,7 @@ export async function handleWebhook(body: string, signature: string) {
   if (deduped.length === 0) return;
 
   switch (event.type) {
-    // The points go in here, keyed on the payment, so the money and the ledger
+    // The money goes in here, keyed on the payment, so the money and the ledger
     // entry are the same movement.
     case "checkout.session.completed": {
       const session = event.data.object;

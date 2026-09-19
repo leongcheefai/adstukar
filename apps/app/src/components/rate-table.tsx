@@ -1,5 +1,5 @@
 import { type DeviceTierRate, distributorPercent, economy, rateTable } from "@repo/config/economy";
-import { project } from "@repo/config/project";
+import { usd, usdPerThousand } from "@repo/config/money";
 import {
   Card,
   CardContent,
@@ -32,8 +32,6 @@ const ROWS = rateTable();
  */
 export function RateTable({ side }: { side: "advertiser" | "distributor" }) {
   const pays = side === "advertiser";
-  const points = project.pointsName;
-
   return (
     <Card>
       <CardHeader>
@@ -42,8 +40,8 @@ export function RateTable({ side }: { side: "advertiser" | "distributor" }) {
         </CardTitle>
         <CardDescription>
           {pays
-            ? `In ${points}, by the tier of the screen it plays on. ${economy.pointsPerUsd.toLocaleString()} ${points} are US$1.`
-            : `In ${points}, after the ${economy.feePercent}% fee, so you keep ${distributorPercent()}%. ${economy.pointsPerUsd.toLocaleString()} ${points} are US$1.`}
+            ? "In US dollars, by the tier of the screen it plays on."
+            : `In US dollars, after the ${economy.feePercent}% fee, so you keep ${distributorPercent()}%.`}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -53,7 +51,7 @@ export function RateTable({ side }: { side: "advertiser" | "distributor" }) {
               <TableHead className="w-40">Screen tier</TableHead>
               {/* Fixed widths, so the figures sit beside the tier they belong
                   to instead of at the far edge of a wide card. */}
-              <TableHead className="w-28 text-right">A play</TableHead>
+              <TableHead className="w-36 text-right">A play, per 1,000</TableHead>
               <TableHead className="w-28 text-right">A scan</TableHead>
             </TableRow>
           </TableHeader>
@@ -65,9 +63,9 @@ export function RateTable({ side }: { side: "advertiser" | "distributor" }) {
                 <TableRow key={row.tier}>
                   <TableCell className="font-medium">{TIER_LABEL[row.tier]}</TableCell>
                   <TableCell className="text-right tabular-nums">
-                    {play.lowest}–{play.highest}
+                    {usdPerThousand(play.lowest)}–{usdPerThousand(play.highest)}
                   </TableCell>
-                  <TableCell className="text-right tabular-nums">{scan.toLocaleString()}</TableCell>
+                  <TableCell className="text-right tabular-nums">{usd(scan)}</TableCell>
                 </TableRow>
               );
             })}

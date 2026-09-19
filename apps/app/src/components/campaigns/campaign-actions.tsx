@@ -1,5 +1,6 @@
 import { Pause, PencilSimple, Play, Trash } from "@phosphor-icons/react";
 import { economy } from "@repo/config/economy";
+import { parseUsd, usd, usdInput } from "@repo/config/money";
 import type { CampaignWithListings } from "@repo/contracts/types";
 import {
   AlertDialog,
@@ -63,15 +64,15 @@ export function CampaignActions({ item }: { item: CampaignWithListings }) {
   function openEdit() {
     setName(campaign.name);
     setUrl(campaign.url);
-    setBudget(String(campaign.dailyBudget));
+    setBudget(usdInput(campaign.dailyBudget));
     setEditOpen(true);
   }
 
   const nextName = name.trim();
   const nextUrl = normalizeUrl(url);
   const nextDomain = domainOf(nextUrl);
-  const nextBudget = Number.parseInt(budget, 10);
-  const budgetValid = Number.isFinite(nextBudget) && nextBudget >= economy.caps.minDailyBudget;
+  const nextBudget = parseUsd(budget);
+  const budgetValid = nextBudget !== null && nextBudget >= economy.caps.minDailyBudget;
   const domainChanges = isProbablyUrl(nextUrl) && nextDomain !== campaign.domain;
   const urlChanges = isProbablyUrl(nextUrl) && nextUrl !== campaign.url;
   const nameChanges = nextName.length > 0 && nextName !== campaign.name;
@@ -92,7 +93,7 @@ export function CampaignActions({ item }: { item: CampaignWithListings }) {
         input: {
           ...(nameChanges ? { name: nextName } : {}),
           ...(urlChanges ? { url: nextUrl } : {}),
-          ...(budgetChanges ? { dailyBudget: nextBudget } : {}),
+          ...(budgetChanges && nextBudget !== null ? { dailyBudget: nextBudget } : {}),
         },
       });
       toast.success(
@@ -223,18 +224,17 @@ export function CampaignActions({ item }: { item: CampaignWithListings }) {
               <Label htmlFor={`campaign-budget-${campaign.id}`}>Daily budget</Label>
               <Input
                 id={`campaign-budget-${campaign.id}`}
-                type="number"
-                inputMode="numeric"
+                type="text"
+                inputMode="decimal"
                 value={budget}
                 onChange={(e) => setBudget(e.target.value)}
-                min={economy.caps.minDailyBudget}
-                step={100}
+                placeholder={usdInput(economy.caps.defaultDailyBudget)}
                 required
                 className="font-mono text-sm tabular-nums"
               />
               <p className="text-xs text-muted-foreground">
-                The most CapyPoints this campaign spends in one day. At least{" "}
-                {economy.caps.minDailyBudget.toLocaleString()}.
+                The most this campaign spends in one day, in US dollars. At least{" "}
+                {usd(economy.caps.minDailyBudget)}.
               </p>
             </div>
 
@@ -265,7 +265,7 @@ export function CampaignActions({ item }: { item: CampaignWithListings }) {
               {count === 0
                 ? "This campaign has no listing yet, so only the campaign goes."
                 : `This stops all ${count} ${listingWord} in this campaign.`}{" "}
-              The record stays, because your CapyPoints reference it.
+              The record stays, because your ledger references it.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -1,4 +1,5 @@
 import { distributorPercent, economy, playRateRange } from "@repo/config/economy";
+import { perThousandPlaysRange, usd, usdCents } from "@repo/config/money";
 import { project } from "@repo/config/project";
 
 export interface FaqEntry {
@@ -6,7 +7,7 @@ export interface FaqEntry {
   answer: string;
 }
 
-export type FaqGroupId = "screens" | "advertising" | "points";
+export type FaqGroupId = "screens" | "advertising" | "money";
 
 export interface FaqGroup {
   id: FaqGroupId;
@@ -19,8 +20,6 @@ export interface FaqGroup {
 
 const { lowest: lowestPlayRate, highest: highestPlayRate } = playRateRange();
 const distributorShare = distributorPercent();
-const peg = economy.pointsPerUsd.toLocaleString();
-const points = project.pointsName;
 
 /**
  * Every question on the site, in three groups: one per audience and one for
@@ -38,7 +37,7 @@ export const FAQ_GROUPS: FaqGroup[] = [
     items: [
       {
         question: "How do I make money?",
-        answer: `Open CapyTV in a browser and play music, a podcast, or a video. Listings crawl along the foot of the picture. Each play earns ${lowestPlayRate} to ${highestPlayRate} ${points}, and a scan pays a bonus on top. ${peg} ${points} are 1 US dollar. Cash-out is not open yet.`,
+        answer: `Open CapyTV in a browser and play music, a podcast, or a video. Listings crawl along the foot of the picture. Each play earns ${perThousandPlaysRange(lowestPlayRate, highestPlayRate)}, and a scan pays a bonus on top. Cash-out is not open yet.`,
       },
       {
         question: "What kind of screen do I need?",
@@ -60,7 +59,7 @@ export const FAQ_GROUPS: FaqGroup[] = [
       },
       {
         question: "What plays when no advertiser is eligible?",
-        answer: `Your own promotion, or the ${project.name} card. Both play free and move no points. The screen is never blank.`,
+        answer: `Your own promotion, or the ${project.name} card. Both play free and move no money. The screen is never blank.`,
       },
       {
         question: "Is there a limit to what one screen earns?",
@@ -75,7 +74,7 @@ export const FAQ_GROUPS: FaqGroup[] = [
     items: [
       {
         question: "What does it cost?",
-        answer: `You buy ${points} at the peg, ${peg} for 1 US dollar, in packs from ${(economy.topup.packs[0]?.usdCents ?? 0) / 100} dollars. No pack carries a bonus. Each play of your listing costs ${lowestPlayRate} to ${highestPlayRate} ${points}, by the tier of the screen, and a scan costs a bonus on top. There is no monthly fee.`,
+        answer: `You top up in US dollars, from ${usdCents(economy.topup.packs[0]?.usdCents ?? 0)}. No pack carries a bonus. Each play of your listing costs ${perThousandPlaysRange(lowestPlayRate, highestPlayRate)}, by the tier of the screen, and a scan costs a bonus on top. There is no monthly fee.`,
       },
       {
         question: "What does a listing look like on screen?",
@@ -83,7 +82,7 @@ export const FAQ_GROUPS: FaqGroup[] = [
       },
       {
         question: "How does moderation work?",
-        answer: `A person reviews every listing and every screen. The listing review checks that the site is live, that the domain is verified, and that the tagline is accurate. The screen review checks the screen and the room, and stamps the tier that sets its rate. Your first approved listing receives ${economy.grants.firstListingApproval.toLocaleString()} welcome ${points}.`,
+        answer: `A person reviews every listing and every screen. The listing review checks that the site is live, that the domain is verified, and that the tagline is accurate. The screen review checks the screen and the room, and stamps the tier that sets its rate. Your first approved listing receives a ${usd(economy.grants.firstListingApproval)} trial credit.`,
       },
       {
         question: "How do I verify my domain?",
@@ -91,7 +90,7 @@ export const FAQ_GROUPS: FaqGroup[] = [
       },
       {
         question: "What is a daily budget?",
-        answer: `The most a campaign spends in one day, ${economy.caps.defaultDailyBudget.toLocaleString()} ${points} unless you set less, down to ${economy.caps.minDailyBudget.toLocaleString()}. The listings under the campaign split it evenly. When it is spent the campaign stops, and it starts again the next day.`,
+        answer: `The most a campaign spends in one day, ${usd(economy.caps.defaultDailyBudget)} unless you set less, down to ${usd(economy.caps.minDailyBudget)}. The listings under the campaign split it evenly. When it is spent the campaign stops, and it starts again the next day.`,
       },
       {
         question: "How do I remove a listing?",
@@ -100,34 +99,34 @@ export const FAQ_GROUPS: FaqGroup[] = [
       },
       {
         question: "Can I get a refund?",
-        answer: `Yes, for ${points} you bought and did not spend, within ${economy.topup.refundWindowDays} days of the payment. It pays at the peg, less what the card processor kept. Earned and welcome ${points} are not refunded.`,
+        answer: `Yes, for money you added and did not spend, within ${economy.topup.refundWindowDays} days of the payment. It pays what you paid, less what the card processor kept. Earned money and the trial credit are not refunded.`,
       },
     ],
   },
   {
-    id: "points",
-    title: `${points} and money`,
-    lede: "How the unit works, and when it becomes cash.",
+    id: "money",
+    title: "Money",
+    lede: "How the wallet works, and when it becomes cash.",
     items: [
       {
-        question: `What is a ${project.pointsName.replace(/s$/, "")} worth?`,
-        answer: `${peg} ${points} are 1 US dollar, at a fixed rate. Money comes in as a top-up and goes out as a payout. Inside ${project.name}, everything is counted in ${points}.`,
+        question: "What currency does the wallet hold?",
+        answer: `US dollars. Money comes in as a top-up and goes out as a payout. Inside ${project.name}, every figure is in US dollars.`,
       },
       {
-        question: "When do my points become money?",
-        answer: `A play stays pending for ${economy.settlementDelayHours} hours, then it settles. Cash-out is not open yet. When it opens, settled earned ${points} wait out a ${economy.payout.holdDays}-day hold and come out from ${economy.payout.minimumPoints.toLocaleString()} ${points} up. An admin reviews each request and pays by hand.`,
+        question: "When can I cash out?",
+        answer: `A play stays pending for ${economy.settlementDelayHours} hours, then it settles. Cash-out is not open yet. When it opens, settled earnings wait out a ${economy.payout.holdDays}-day hold and come out from ${usd(economy.payout.minimum)} up. An admin reviews each request and pays by hand.`,
       },
       {
         question: "Where does the fee go?",
-        answer: `${project.name} keeps ${economy.feePercent}% of every play and every scan, and you keep ${distributorShare}%. The fee is its own line on your ${points} page, never a hidden spread, so what an advertiser pays and what you earn always add up.`,
+        answer: `${project.name} keeps ${economy.feePercent}% of every play and every scan, and you keep ${distributorShare}%. The fee is its own line on your wallet page, never a hidden spread, so what an advertiser pays and what you earn always add up.`,
       },
       {
-        question: "Do points expire?",
-        answer: `Earned and welcome ${points} expire ${economy.expiryMonths} months after they settle. ${points} you bought never expire.`,
+        question: "Does my balance expire?",
+        answer: `Earned money and the trial credit expire ${economy.expiryMonths} months after they settle. Money you added never expires.`,
       },
       {
-        question: "What are welcome points?",
-        answer: `${economy.grants.firstListingApproval.toLocaleString()} ${points}, granted once, when your first listing is approved. A spend uses them before your bought ${points}. They cannot be withdrawn or refunded.`,
+        question: "What is the trial credit?",
+        answer: `${usd(economy.grants.firstListingApproval)}, granted once, when your first listing is approved. A spend uses it before the money you added. It cannot be withdrawn or refunded.`,
       },
     ],
   },

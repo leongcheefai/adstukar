@@ -1,4 +1,5 @@
 import { DAY_MS, economy } from "@repo/config/economy";
+import { usd } from "@repo/config/money";
 import type { SavePayoutAccountInput } from "@repo/contracts";
 import { db, schema } from "@repo/db";
 import type { PayoutBlock } from "@repo/db/enums";
@@ -17,7 +18,7 @@ import {
 
 /**
  * The database side of a payout. A distributor asks, an admin reads the history
- * behind the request, and either the money leaves or the points come back. The
+ * behind the request, and either the money leaves or the amount comes back. The
  * rules themselves are pure and live in `eligibility.ts` and `review.ts`.
  *
  * Payout is manual for the MVP: an admin pays by hand in one monthly session and
@@ -28,7 +29,7 @@ import {
 const BLOCK_MESSAGE: Record<PayoutBlock, string> = {
   "open-request": "A payout is already under review.",
   identity: "Add your payout details before you cash out.",
-  "below-minimum": `A payout takes at least ${economy.payout.minimumPoints.toLocaleString()} CapyPoints.`,
+  "below-minimum": `A payout takes at least ${usd(economy.payout.minimum)}.`,
 };
 
 /**
@@ -40,7 +41,7 @@ const BLOCK_MESSAGE: Record<PayoutBlock, string> = {
  * a second hold before it counted would let one balance answer two requests.
  *
  * The reversal of a payout is the one credit that counts before the cutoff. It
- * gives back points that already served the hold once, and a second hold on them
+ * gives back money that already served the hold once, and a second hold on them
  * would punish a member for a refusal that was not theirs. The exemption is
  * narrow on purpose: the reversal of anything else — a voided fee, say — serves
  * the hold like any other credit.
@@ -119,7 +120,7 @@ export async function getPayoutOverview(userId: string, now: Date = new Date()) 
   return {
     account,
     withdrawable: available,
-    minimumPoints: economy.payout.minimumPoints,
+    minimum: economy.payout.minimum,
     holdDays: economy.payout.holdDays,
     block: payoutBlock({
       withdrawable: available,
@@ -165,7 +166,7 @@ export async function savePayoutAccount(
 
 /**
  * Opens a request for what the withdrawable balance is worth in whole cents, and
- * takes those points out of the account at once. The points leave now rather
+ * takes that amount out of the account at once. It leaves now rather
  * than at payment: a balance left in place would answer a second request, and it
  * would expire while an admin reviewed it.
  *
@@ -186,13 +187,13 @@ export async function requestPayout(userId: string, now: Date = new Date()) {
     });
     if (block) throw new HTTPException(409, { message: BLOCK_MESSAGE[block] });
 
-    const { points, usdCents } = payoutAmount(available);
+    const { amount, usdCents } = payoutAmount(available);
     const id = crypto.randomUUID();
     // The debit is posted before the row that names it, so a request can never
-    // exist without the entry that took its points.
+    // exist without the entry that took its amount.
     const entry = await postEntry(tx, {
       userId,
-      delta: -points,
+      delta: -amount,
       reason: "payout",
       lot: "earned",
       state: "settled",
@@ -202,14 +203,14 @@ export async function requestPayout(userId: string, now: Date = new Date()) {
     // The key carries a fresh id, so nothing can already hold it. If that ever
     // stops being true, the request must not open without the debit behind it:
     // a refusal reverses the entry this row names.
-    if (!entry.id) throw new HTTPException(500, { message: "Could not take the CapyPoints" });
+    if (!entry.id) throw new HTTPException(500, { message: "Could not take the money" });
 
     const [row] = await tx
       .insert(schema.payoutRequest)
       .values({
         id,
         userId,
-        points,
+        amount,
         usdCents,
         state: "requested",
         ledgerEntryId: entry.id,
@@ -390,9 +391,9 @@ async function decide(
   return db.transaction(async (tx) => {
     const request = await takeOpenRequest(tx, id);
 
-    // A refusal hands the points back. It reverses the debit with a compensating
+    // A refusal hands the amount back. It reverses the debit with a compensating
     // row and never edits it: the ledger is append-only, and a member who was
-    // refused must be able to read why their points came back.
+    // refused must be able to read why their money came back.
     if (decision.state === "rejected" && request.ledgerEntryId) {
       await voidEntry(request.ledgerEntryId, now, tx);
     }
@@ -408,7 +409,7 @@ async function decide(
 }
 
 /**
- * The money left. The points already did, at the request, so nothing moves on
+ * The money left. The amount already did, at the request, so nothing moves on
  * the ledger here: this records that the transfer went out and how to trace it.
  */
 export async function payPayout(
@@ -420,7 +421,7 @@ export async function payPayout(
   return decide(id, adminId, now, { state: "paid", reference });
 }
 
-/** The admin refused the request, so the points go back. */
+/** The admin refused the request, so the amount goes back. */
 export async function rejectPayout(
   id: string,
   adminId: string,

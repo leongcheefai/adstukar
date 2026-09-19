@@ -1,4 +1,5 @@
 import { Coin } from "@phosphor-icons/react";
+import { usd, usdSigned } from "@repo/config/money";
 import { Button, Card, CardContent } from "@repo/ui";
 import { PayoutHistory, PayoutHistorySkeleton } from "../../components/overview/payout-history";
 import { PlaysCard, PlaysCardSkeleton } from "../../components/overview/plays-card";
@@ -22,7 +23,7 @@ function greeting(now = new Date()): string {
  * stops the two branches from drifting apart.
  */
 const STAT_LABELS = {
-  points: "CapyPoints",
+  balance: "Balance",
   played: "Played today",
   received: "Received today",
   scans: "Scans today",
@@ -55,7 +56,7 @@ export function DashboardHome() {
             <div>
               <p className="text-sm font-medium">Could not load your stats</p>
               <p className="text-sm text-muted-foreground">
-                Your CapyPoints and history are safe. This is a read that failed.
+                Your balance and history are safe. This is a read that failed.
               </p>
             </div>
             <Button variant="outline" onClick={() => refetch()} disabled={isFetching}>
@@ -69,9 +70,9 @@ export function DashboardHome() {
             {stats ? (
               <>
                 <StatCard
-                  label={STAT_LABELS.points}
-                  value={stats.balance.settled.toLocaleString()}
-                  meta={pending !== 0 ? `${pending > 0 ? "+" : ""}${pending} pending` : undefined}
+                  label={STAT_LABELS.balance}
+                  value={usd(stats.balance.settled)}
+                  meta={pending !== 0 ? `${usdSigned(pending)} pending` : undefined}
                   icon={<Coin size={28} weight="fill" className="text-primary" />}
                 />
                 <StatCard label={STAT_LABELS.played} value={stats.today.played.toLocaleString()} />

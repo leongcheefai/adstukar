@@ -132,7 +132,7 @@ let networkPlaysCache: { plays: number; at: number } | null = null;
 
 /**
  * Counted paid plays on the whole network. House cards do not count: they
- * move no points, and the number on the marketing site is for advertisers.
+ * move no money, and the number on the marketing site is for advertisers.
  */
 export async function getNetworkPlays(): Promise<number> {
   const now = Date.now();
