@@ -16,6 +16,7 @@ export const payoutRequestContract = toWire(
     state: true,
     ledgerEntryId: true,
     reference: true,
+    stripeTransferId: true,
     rejectionReason: true,
     reviewedAt: true,
     createdAt: true,

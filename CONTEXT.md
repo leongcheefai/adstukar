@@ -140,12 +140,15 @@ panel offers. Every amount is at the same rate and none carries a bonus.
 
 **Payout**:
 A distributor's request to turn earned money into a payment. A member asks, an
-admin reviews the history, and the money goes out by hand (docs/adr/0005).
+admin reviews the history and approves, and Stripe sends the money to the
+member's connected account (docs/adr/0005, docs/adr/0008).
 _Avoid_: Withdrawal, cash-out
 
-**Payout account**:
-The name and the destination we pay. It goes on file the day a member cashes
-out, not at signup.
+**Stripe account**:
+The connected Stripe account a distributor is paid to. It goes on file the day
+a member cashes out, not at signup. Stripe holds the identity and the bank
+details; we hold the id, the country, and whether Stripe has cleared it.
+_Avoid_: Payout account, payout details
 
 **Withdrawable**:
 The earned money that has served the hold, less what already left. It is what

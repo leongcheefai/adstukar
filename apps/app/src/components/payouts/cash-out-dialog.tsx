@@ -1,6 +1,8 @@
-import { usd, usdCents } from "@repo/config/money";
-import type { PayoutBlock, PayoutMethod, PayoutOverview } from "@repo/contracts/types";
+import { type PayoutCountry, economy } from "@repo/config/economy";
+import { usd } from "@repo/config/money";
+import type { PayoutBlock, PayoutOverview } from "@repo/contracts/types";
 import {
+  Badge,
   Button,
   Dialog,
   DialogContent,
@@ -8,7 +10,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  Input,
   Label,
   Select,
   SelectContent,
@@ -16,21 +17,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@repo/ui";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
-import { useRequestPayout, useSavePayoutAccount } from "../../lib/payouts";
+import { useConnectStripe, useRequestPayout } from "../../lib/payouts";
 
-const METHOD_LABEL: Record<PayoutMethod, string> = {
-  bank: "Bank transfer",
-  paypal: "PayPal",
-};
-
-const METHODS = Object.keys(METHOD_LABEL) as PayoutMethod[];
-
-const DESTINATION_LABEL: Record<PayoutMethod, string> = {
-  bank: "Account number or IBAN",
-  paypal: "PayPal address",
-};
+const COUNTRIES = economy.payout.countries;
 
 /**
  * Why the button is not there. Every reason is a state a member can leave, so
@@ -40,17 +31,22 @@ function blockMessage(overview: PayoutOverview, block: PayoutBlock): string {
   switch (block) {
     case "open-request":
       return "A payout is already under review. You may ask for the next one once it is paid.";
-    case "identity":
-      return "Add the name and the account we pay, then ask for the payout.";
+    case "stripe":
+      return "Connect a Stripe account, then ask for the payout.";
+    case "stripe-pending":
+      return "Stripe is still checking your details. The button opens once they clear.";
     case "below-minimum":
       return `A payout takes at least ${usd(overview.minimum)}. Below that, the balance rolls over.`;
   }
 }
 
 /**
- * The cash-out panel. Identity comes first, because it is on file before the
- * first payout and not at signup; the request itself takes the whole
+ * The cash-out panel. A Stripe account comes first, because it is on file
+ * before the first payout and not at signup; the request itself takes the whole
  * withdrawable balance, and whatever has not served the hold rolls over.
+ *
+ * Stripe holds the identity and the bank details. This panel only sends the
+ * member there and reads back whether Stripe has cleared the account.
  */
 export function CashOutDialog({
   overview,
@@ -61,38 +57,24 @@ export function CashOutDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const account = overview.account;
-  const saveAccount = useSavePayoutAccount();
+  const account = overview.stripeAccount;
+  const connect = useConnectStripe();
   const request = useRequestPayout();
-  const [editing, setEditing] = useState(account === null);
-  const [legalName, setLegalName] = useState(account?.legalName ?? "");
-  const [country, setCountry] = useState(account?.country ?? "");
-  const [method, setMethod] = useState<PayoutMethod>(account?.method ?? "bank");
-  const [destination, setDestination] = useState(account?.destination ?? "");
+  // The first country in the list is the platform's own, so it is the default.
+  const [country, setCountry] = useState<PayoutCountry>(COUNTRIES[0]);
 
-  // The panel keeps its own copy of the form, so a save elsewhere — or the first
-  // load landing after the dialog opened — must reach it.
-  useEffect(() => {
-    setEditing(account === null);
-    setLegalName(account?.legalName ?? "");
-    setCountry(account?.country ?? "");
-    setMethod(account?.method ?? "bank");
-    setDestination(account?.destination ?? "");
-  }, [account]);
-
-  function submitAccount(event: React.FormEvent) {
-    event.preventDefault();
-    saveAccount.mutate(
+  function goToStripe() {
+    const origin = window.location.origin;
+    connect.mutate(
       {
-        legalName: legalName.trim(),
-        country: country.trim(),
-        method,
-        destination: destination.trim(),
+        country,
+        returnUrl: `${origin}/dashboard/ledger?stripe=return`,
+        refreshUrl: `${origin}/dashboard/ledger?stripe=refresh`,
       },
       {
-        onSuccess: () => {
-          toast.success("Payout details saved");
-          setEditing(false);
+        // The link lives for minutes, so the browser goes there at once.
+        onSuccess: ({ url }) => {
+          window.location.href = url;
         },
         onError: (err) => toast.error(err.message),
       },
@@ -116,7 +98,7 @@ export function CashOutDialog({
           <DialogTitle>Cash out</DialogTitle>
           <DialogDescription>
             Only earned money leaves as a payment, and only {overview.holdDays} days after it
-            settles. An admin reviews each payout and sends the money by hand.
+            settles. An admin reviews each payout, then Stripe sends the money to your account.
           </DialogDescription>
         </DialogHeader>
 
@@ -127,91 +109,60 @@ export function CashOutDialog({
           <p className="text-2xl tabular-nums">{usd(overview.withdrawable)}</p>
         </div>
 
-        {editing ? (
-          <form className="space-y-3" onSubmit={submitAccount}>
+        {account === null ? (
+          <div className="space-y-3">
             <div className="space-y-1.5">
-              <Label htmlFor="payout-name">Name on the account</Label>
-              <Input
-                id="payout-name"
-                value={legalName}
-                onChange={(e) => setLegalName(e.target.value)}
-                required
-                maxLength={120}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="payout-country">Country</Label>
-              <Input
-                id="payout-country"
-                value={country}
-                onChange={(e) => setCountry(e.target.value.toUpperCase())}
-                placeholder="MY"
-                required
-                maxLength={2}
-                className="w-24 uppercase"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="payout-method">How we pay you</Label>
-              <Select value={method} onValueChange={(v) => setMethod(v as PayoutMethod)}>
-                <SelectTrigger id="payout-method">
+              <Label htmlFor="payout-country">Country of your bank account</Label>
+              <Select value={country} onValueChange={(v) => setCountry(v as PayoutCountry)}>
+                <SelectTrigger id="payout-country" className="w-40">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {METHODS.map((value) => (
+                  {COUNTRIES.map((value) => (
                     <SelectItem key={value} value={value}>
-                      {METHOD_LABEL[value]}
+                      {value}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="payout-destination">{DESTINATION_LABEL[method]}</Label>
-              <Input
-                id="payout-destination"
-                value={destination}
-                onChange={(e) => setDestination(e.target.value)}
-                required
-                maxLength={200}
-              />
+              <p className="text-xs text-muted-foreground">
+                Stripe fixes the country when the account is made. Choose the one your bank is in.
+              </p>
             </div>
             <DialogFooter>
-              {account && (
-                <Button type="button" variant="ghost" onClick={() => setEditing(false)}>
-                  Cancel
-                </Button>
-              )}
-              <Button type="submit" disabled={saveAccount.isPending}>
-                {saveAccount.isPending ? "Saving…" : "Save details"}
+              <Button type="button" onClick={goToStripe} disabled={connect.isPending}>
+                {connect.isPending ? "Opening Stripe…" : "Connect Stripe"}
               </Button>
             </DialogFooter>
-          </form>
+          </div>
         ) : (
           <>
-            {account && (
-              <div className="space-y-1 rounded-lg border p-4 text-sm">
-                <p data-slot="label" className="text-muted-foreground">
-                  We pay
-                </p>
-                <p data-usertext className="font-medium">
-                  {account.legalName}
-                </p>
-                <p data-usertext className="text-muted-foreground">
-                  {METHOD_LABEL[account.method]} · {account.destination} · {account.country}
-                </p>
+            <div className="space-y-1 rounded-lg border p-4 text-sm">
+              <p data-slot="label" className="text-muted-foreground">
+                We pay
+              </p>
+              <p className="flex items-center gap-2 font-medium">
+                Your Stripe account in {account.country}
+                {account.payoutsEnabled ? (
+                  <Badge variant="success">Ready</Badge>
+                ) : (
+                  <Badge variant="warning">Onboarding</Badge>
+                )}
+              </p>
+              {!account.payoutsEnabled && (
                 <Button
                   type="button"
                   variant="link"
                   className="h-auto p-0"
-                  onClick={() => setEditing(true)}
+                  onClick={goToStripe}
+                  disabled={connect.isPending}
                 >
-                  Change these details
+                  {connect.isPending ? "Opening Stripe…" : "Continue on Stripe"}
                 </Button>
-              </div>
-            )}
+              )}
+            </div>
 
-            {overview.block && overview.block !== "identity" && (
+            {overview.block && (
               <p className="text-sm text-muted-foreground">
                 {blockMessage(overview, overview.block)}
               </p>

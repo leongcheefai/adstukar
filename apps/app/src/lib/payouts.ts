@@ -1,9 +1,10 @@
 import type {
-  PayoutAccount,
+  ConnectStripeInput,
+  ConnectStripeResponse,
   PayoutOverview,
   PayoutQueue,
   PayoutRequest,
-  SavePayoutAccountInput,
+  StripeAccount,
 } from "@repo/contracts/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "./api";
@@ -32,11 +33,19 @@ function useRefreshMoney() {
   };
 }
 
-export function useSavePayoutAccount() {
+/** Opens Stripe's onboarding. The first call also creates the connected account. */
+export function useConnectStripe() {
+  return useMutation({
+    mutationFn: (body: ConnectStripeInput) =>
+      apiFetch<ConnectStripeResponse>("/payouts/stripe/connect", { method: "POST", body }),
+  });
+}
+
+/** Reads the flags back from Stripe, for the moment the member returns. */
+export function useRefreshStripeAccount() {
   const refresh = useRefreshMoney();
   return useMutation({
-    mutationFn: (body: SavePayoutAccountInput) =>
-      apiFetch<PayoutAccount>("/payouts/account", { method: "PUT", body }),
+    mutationFn: () => apiFetch<StripeAccount>("/payouts/stripe/refresh", { method: "POST" }),
     onSuccess: refresh,
   });
 }
@@ -65,8 +74,8 @@ function useInvalidateQueue() {
 export function usePayPayout() {
   const invalidate = useInvalidateQueue();
   return useMutation({
-    mutationFn: ({ id, reference }: { id: string; reference: string }) =>
-      apiFetch<PayoutRequest>(`/admin/payouts/${id}/pay`, { method: "POST", body: { reference } }),
+    mutationFn: ({ id }: { id: string }) =>
+      apiFetch<PayoutRequest>(`/admin/payouts/${id}/pay`, { method: "POST" }),
     onSuccess: invalidate,
   });
 }

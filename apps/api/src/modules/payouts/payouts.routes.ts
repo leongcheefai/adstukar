@@ -1,15 +1,21 @@
 import { zValidator } from "@hono/zod-validator";
 import {
+  connectStripeInput,
+  connectStripeOutput,
   payoutOverviewOutput,
   payoutRequestOutput,
-  savePayoutAccountInput,
-  savePayoutAccountOutput,
+  stripeAccountOutput,
 } from "@repo/contracts";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import type * as z from "zod/v4";
 import type { AppVariables } from "../../lib/context";
-import { getPayoutOverview, requestPayout, savePayoutAccount } from "./payouts.service";
+import {
+  connectStripe,
+  getPayoutOverview,
+  refreshStripeAccount,
+  requestPayout,
+} from "./payouts.service";
 
 /** The distributor's own side of a payout. The admin side lives under `/admin`. */
 export const payoutsRouter = new Hono<{ Variables: AppVariables }>();
@@ -28,13 +34,20 @@ payoutsRouter.get("/", async (c) => {
   );
 });
 
-payoutsRouter.put("/account", zValidator("json", savePayoutAccountInput), async (c) => {
+/** Opens Stripe's onboarding. The first call also creates the connected account. */
+payoutsRouter.post("/stripe/connect", zValidator("json", connectStripeInput), async (c) => {
   const user = c.get("user");
   if (!user) throw new HTTPException(401, { message: "Unauthorized" });
-  const row = await savePayoutAccount(user.id, c.req.valid("json"));
-  return c.json(
-    savePayoutAccountOutput.parse(row satisfies z.input<typeof savePayoutAccountOutput>),
-  );
+  const result = await connectStripe(user.id, user.email, c.req.valid("json"));
+  return c.json(connectStripeOutput.parse(result satisfies z.input<typeof connectStripeOutput>));
+});
+
+/** Reads the flags back from Stripe, for the moment the member returns. */
+payoutsRouter.post("/stripe/refresh", async (c) => {
+  const user = c.get("user");
+  if (!user) throw new HTTPException(401, { message: "Unauthorized" });
+  const row = await refreshStripeAccount(user.id);
+  return c.json(stripeAccountOutput.parse(row satisfies z.input<typeof stripeAccountOutput>));
 });
 
 payoutsRouter.post("/", async (c) => {

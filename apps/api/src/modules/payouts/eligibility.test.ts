@@ -31,35 +31,48 @@ describe("withdrawable", () => {
 
 describe("payoutBlock", () => {
   const enough = economy.payout.minimum;
+  const ready = { hasStripeAccount: true, payoutsEnabled: true, hasOpenRequest: false };
 
-  it("lets a member with identity, no open request and enough money through", () => {
-    expect(
-      payoutBlock({ withdrawable: enough, hasAccount: true, hasOpenRequest: false }),
-    ).toBeNull();
+  it("lets a member with a cleared Stripe account, no open request and enough money through", () => {
+    expect(payoutBlock({ withdrawable: enough, ...ready })).toBeNull();
   });
 
   it("stops a second request while one is still open", () => {
-    expect(payoutBlock({ withdrawable: enough, hasAccount: true, hasOpenRequest: true })).toBe(
+    expect(payoutBlock({ withdrawable: enough, ...ready, hasOpenRequest: true })).toBe(
       "open-request",
     );
   });
 
-  it("asks for identity before the first payout, not at signup", () => {
-    expect(payoutBlock({ withdrawable: enough, hasAccount: false, hasOpenRequest: false })).toBe(
-      "identity",
+  it("asks for a Stripe account before the first payout, not at signup", () => {
+    expect(
+      payoutBlock({
+        withdrawable: enough,
+        ...ready,
+        hasStripeAccount: false,
+        payoutsEnabled: false,
+      }),
+    ).toBe("stripe");
+  });
+
+  it("waits while Stripe has not cleared the account", () => {
+    expect(payoutBlock({ withdrawable: enough, ...ready, payoutsEnabled: false })).toBe(
+      "stripe-pending",
     );
   });
 
   it("rolls the remainder over below the threshold", () => {
-    expect(payoutBlock({ withdrawable: enough - 1, hasAccount: true, hasOpenRequest: false })).toBe(
-      "below-minimum",
-    );
+    expect(payoutBlock({ withdrawable: enough - 1, ...ready })).toBe("below-minimum");
   });
 
   it("names the open request first, because it blocks whatever else is wrong", () => {
-    expect(payoutBlock({ withdrawable: 0, hasAccount: false, hasOpenRequest: true })).toBe(
-      "open-request",
-    );
+    expect(
+      payoutBlock({
+        withdrawable: 0,
+        hasStripeAccount: false,
+        payoutsEnabled: false,
+        hasOpenRequest: true,
+      }),
+    ).toBe("open-request");
   });
 });
 

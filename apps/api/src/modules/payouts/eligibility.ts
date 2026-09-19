@@ -35,15 +35,18 @@ export function withdrawable(matured: number, debits: number): number {
 /**
  * The one reason a request is refused, or null when it may go ahead. The open
  * request comes first: while one is under review, nothing else about the account
- * changes the answer.
+ * changes the answer. Then the Stripe account, in two steps: it must exist, and
+ * Stripe must have cleared it to receive money.
  */
 export function payoutBlock(input: {
   withdrawable: number;
-  hasAccount: boolean;
+  hasStripeAccount: boolean;
+  payoutsEnabled: boolean;
   hasOpenRequest: boolean;
 }): PayoutBlock | null {
   if (input.hasOpenRequest) return "open-request";
-  if (!input.hasAccount) return "identity";
+  if (!input.hasStripeAccount) return "stripe";
+  if (!input.payoutsEnabled) return "stripe-pending";
   if (input.withdrawable < economy.payout.minimum) return "below-minimum";
   return null;
 }

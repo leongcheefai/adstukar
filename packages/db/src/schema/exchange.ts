@@ -20,7 +20,6 @@ import {
   LEDGER_REASONS,
   LEDGER_STATES,
   LISTING_STATES,
-  PAYOUT_METHODS,
   PAYOUT_STATES,
   PLACEMENT_FORMATS,
   PLACEMENT_SIZES,
@@ -42,7 +41,6 @@ export const ledgerStateEnum = pgEnum("ledger_state", LEDGER_STATES);
 export const ledgerReasonEnum = pgEnum("ledger_reason", LEDGER_REASONS);
 export const ledgerLotEnum = pgEnum("ledger_lot", LEDGER_LOTS);
 export const payoutStateEnum = pgEnum("payout_state", PAYOUT_STATES);
-export const payoutMethodEnum = pgEnum("payout_method", PAYOUT_METHODS);
 export const topupStateEnum = pgEnum("topup_state", TOPUP_STATES);
 
 /**
@@ -294,25 +292,25 @@ export const ledgerEntry = pgTable(
 );
 
 /**
- * Where a distributor's money goes. Identity is on file before the first payout,
- * not at signup, so this row appears the day a member asks to cash out.
+ * The Stripe account a distributor's money goes to. Stripe holds the identity
+ * and the bank details; this row holds only what the API needs to pay and to
+ * know whether it may (docs/adr/0008).
  *
- * The destination is what a person reads to send the money by hand: an account
- * number, an IBAN, or a PayPal address. It is the member's own data and it never
- * leaves the payout review, so no contract that is not an admin one picks it.
+ * `payoutsEnabled` is Stripe's word that money may go there. It is the only
+ * flag that gates a request. `country` is fixed at creation, so it is chosen
+ * before the account exists.
  */
-export const payoutAccount = pgTable("payout_account", {
+export const stripeAccount = pgTable("stripe_account", {
   id: text("id").primaryKey(),
   userId: text("user_id")
     .notNull()
     .unique()
     .references(() => user.id, { onDelete: "cascade" }),
-  /** The name on the account. It must be the name we pay. */
-  legalName: text("legal_name").notNull(),
-  /** ISO 3166-1 alpha-2. It decides which rails an admin can use. */
+  stripeAccountId: text("stripe_account_id").notNull().unique(),
+  /** ISO 3166-1 alpha-2. */
   country: text("country").notNull(),
-  method: payoutMethodEnum("method").notNull(),
-  destination: text("destination").notNull(),
+  detailsSubmitted: boolean("details_submitted").notNull().default(false),
+  payoutsEnabled: boolean("payouts_enabled").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -326,7 +324,7 @@ export const payoutAccount = pgTable("payout_account", {
  * amount comes back; it never edits the debit.
  *
  * `usdCents` is stored rather than derived, so a change to the peg never rewrites
- * what we already paid.
+ * what we already paid. It is also the amount the Stripe Transfer carries.
  */
 export const payoutRequest = pgTable(
   "payout_request",
@@ -343,8 +341,10 @@ export const payoutRequest = pgTable(
     ledgerEntryId: text("ledger_entry_id").references(() => ledgerEntry.id, {
       onDelete: "restrict",
     }),
-    /** What the admin typed after sending the money: a transfer reference. */
+    /** How the payment is traced: the Stripe transfer id, or what an admin typed before Stripe. */
     reference: text("reference"),
+    /** The Stripe Transfer that paid this request. `reference` carries it too. */
+    stripeTransferId: text("stripe_transfer_id").unique(),
     rejectionReason: text("rejection_reason"),
     reviewedBy: text("reviewed_by").references(() => user.id, { onDelete: "set null" }),
     reviewedAt: timestamp("reviewed_at"),

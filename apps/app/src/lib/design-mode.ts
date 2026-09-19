@@ -9,7 +9,6 @@ import type {
   ListLedgerResponse,
   Listing,
   ModerationQueue,
-  PayoutAccount,
   PayoutOverview,
   PayoutQueue,
   PayoutRequest,
@@ -18,6 +17,7 @@ import type {
   PlacementSize,
   Release,
   StatsOverview,
+  StripeAccount,
   Topup,
   TopupOverview,
   TopupQueue,
@@ -424,12 +424,11 @@ function moderationQueue(): ModerationQueue {
  * The cash-out panel. One payout already paid, so the history table has a row,
  * and enough left over the hold that the button is live.
  */
-let payoutAccount: PayoutAccount | null = {
-  id: "pay_acct_1",
-  legalName: "Nur Aisyah binti Rahman",
+let stripeAccount: StripeAccount | null = {
+  id: "stripe_acct_1",
   country: "MY",
-  method: "bank",
-  destination: "1234567890",
+  detailsSubmitted: true,
+  payoutsEnabled: true,
   createdAt: iso(40),
   updatedAt: iso(40),
 };
@@ -441,7 +440,8 @@ let payoutRequests: PayoutRequest[] = [
     usdCents: 2_400,
     state: "paid",
     ledgerEntryId: "led_0001",
-    reference: "MBB-2026-08-01",
+    reference: "tr_design_0001",
+    stripeTransferId: "tr_design_0001",
     rejectionReason: null,
     reviewedAt: iso(35),
     createdAt: iso(38),
@@ -525,17 +525,19 @@ function topupQueue(): TopupQueue {
 function payoutOverview(): PayoutOverview {
   const open = payoutRequests.some((row) => row.state === "requested");
   return {
-    account: payoutAccount ? { ...payoutAccount } : null,
+    stripeAccount: stripeAccount ? { ...stripeAccount } : null,
     withdrawable,
     minimum: economy.payout.minimum,
     holdDays: economy.payout.holdDays,
     block: open
       ? "open-request"
-      : payoutAccount === null
-        ? "identity"
-        : withdrawable < economy.payout.minimum
-          ? "below-minimum"
-          : null,
+      : stripeAccount === null
+        ? "stripe"
+        : !stripeAccount.payoutsEnabled
+          ? "stripe-pending"
+          : withdrawable < economy.payout.minimum
+            ? "below-minimum"
+            : null,
     requests: payoutRequests.map((row) => ({ ...row })),
   };
 }
@@ -566,17 +568,17 @@ function payoutReviewQueue(): PayoutQueue {
           state: "requested",
           ledgerEntryId: "led_0002",
           reference: null,
+          stripeTransferId: null,
           rejectionReason: null,
           reviewedAt: null,
           createdAt: iso(2),
         },
         owner: { name: "Wai Hong", email: "waihong@example.com" },
-        account: {
-          id: "pay_acct_2",
-          legalName: "Lim Wai Hong",
+        stripeAccount: {
+          id: "stripe_acct_2",
           country: "MY",
-          method: "paypal",
-          destination: "waihong@example.com",
+          detailsSubmitted: true,
+          payoutsEnabled: true,
           createdAt: iso(6),
           updatedAt: iso(6),
         },
@@ -1059,19 +1061,26 @@ function writeAdmin(seg: string[], patch: Record<string, unknown>): unknown {
   return undefined;
 }
 
-/** The distributor's own side: save the details, or ask for the money. */
+/**
+ * The distributor's own side: connect Stripe, read it back, or ask for the
+ * money. Design mode cannot open Stripe, so a connect makes the row at once,
+ * already cleared, and sends the browser back to the return URL the panel
+ * named; the panel then reads as connected.
+ */
 function writePayouts(seg: string[], method: string, patch: Record<string, unknown>): unknown {
-  if (method === "PUT" && seg[1] === "account") {
-    payoutAccount = {
-      id: payoutAccount?.id ?? fakeId("pay_acct"),
-      legalName: (patch.legalName as string | undefined) ?? "",
+  if (method === "POST" && seg[1] === "stripe" && seg[2] === "connect") {
+    stripeAccount ??= {
+      id: fakeId("stripe_acct"),
       country: (patch.country as string | undefined) ?? "MY",
-      method: (patch.method as PayoutAccount["method"] | undefined) ?? "bank",
-      destination: (patch.destination as string | undefined) ?? "",
-      createdAt: payoutAccount?.createdAt ?? nowIso(),
+      detailsSubmitted: true,
+      payoutsEnabled: true,
+      createdAt: nowIso(),
       updatedAt: nowIso(),
     };
-    return { ...payoutAccount };
+    return { url: (patch.returnUrl as string | undefined) ?? "/dashboard/ledger?stripe=return" };
+  }
+  if (method === "POST" && seg[1] === "stripe" && seg[2] === "refresh") {
+    return stripeAccount ? { ...stripeAccount } : undefined;
   }
 
   if (method === "POST" && seg.length === 1) {
@@ -1082,6 +1091,7 @@ function writePayouts(seg: string[], method: string, patch: Record<string, unkno
       state: "requested",
       ledgerEntryId: fakeId("led"),
       reference: null,
+      stripeTransferId: null,
       rejectionReason: null,
       reviewedAt: null,
       createdAt: nowIso(),
@@ -1133,7 +1143,8 @@ function writePayoutReview(seg: string[], patch: Record<string, unknown>): unkno
       ? {
           ...item.request,
           state: "paid",
-          reference: (patch.reference as string | undefined) ?? "",
+          reference: "tr_design_paid",
+          stripeTransferId: "tr_design_paid",
           reviewedAt: nowIso(),
         }
       : seg[3] === "reject"

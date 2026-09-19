@@ -58,7 +58,21 @@ export const economy = {
     /** Days after settlement before earned money may leave as a payout. */
     holdDays: 30,
     /** The least one payout may take, as an amount. */
-    minimum: 20_000,
+    minimum: 10_000,
+    /**
+     * The country of the CapyAds Stripe platform account. A connected account
+     * in the same country may hold the `transfers` capability alone; one in any
+     * other country must hold `card_payments` too, and Stripe then collects the
+     * merchant requirements. Set it to what the live Stripe account says.
+     */
+    platformCountry: "SG",
+    /**
+     * Where a connected Stripe account may live, ISO 3166-1 alpha-2. Stripe
+     * limits the list per platform country, so the select offers only these,
+     * and the first is the default. Probed against the sandbox on 2026-09-19:
+     * ID, PH, VN and IN are refused. Probe again before launch.
+     */
+    countries: ["MY", "SG", "TH", "US", "GB", "AU", "JP", "HK"],
     /**
      * Days of device history the fraud review reads before an admin pays. It
      * matches the hold, so the window an admin looks at is the window the hold
@@ -180,6 +194,7 @@ export const DAY_MS = 86_400_000;
 export type Economy = typeof economy;
 export type DeviceTierRate = keyof typeof economy.playRate;
 export type PlacementFormatRate = keyof (typeof economy.playRate)["standard"];
+export type PayoutCountry = (typeof economy.payout.countries)[number];
 
 /** The advertiser's cost for one play. */
 export function playCost(tier: DeviceTierRate, format: PlacementFormatRate): number {

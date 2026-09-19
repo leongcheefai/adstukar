@@ -23,6 +23,7 @@ export function WalletSummary() {
   const [buyOpen, setBuyOpen] = useState(false);
   const [params, setParams] = useSearchParams();
   const wantsBuy = params.get("buy") === "1";
+  const wantsCashOut = params.get("cashout") === "1";
 
   // The Stripe onboarding tip lands here with ?buy=1, so the buy panel opens
   // by itself once the bounds are known. The flag leaves the URL at once: a
@@ -38,6 +39,20 @@ export function WalletSummary() {
       { replace: true },
     );
   }, [wantsBuy, topups, setParams]);
+
+  // The return from Stripe lands with ?cashout=1, so the cash-out panel opens
+  // by itself once the overview is known. The flag leaves the URL at once.
+  useEffect(() => {
+    if (!wantsCashOut || !payouts) return;
+    setCashOutOpen(true);
+    setParams(
+      (prev) => {
+        prev.delete("cashout");
+        return prev;
+      },
+      { replace: true },
+    );
+  }, [wantsCashOut, payouts, setParams]);
 
   const settled = stats?.balance.settled ?? 0;
   const withdrawable = payouts?.withdrawable ?? 0;

@@ -1,7 +1,7 @@
 # apps/api
 
 ## Purpose
-Hono API server on Node.js. Handles auth (Better Auth), the CapyAds exchange (campaigns, listings, devices, placements, serve/report/scan, ledger, stats, moderation, jobs), and the Stripe webhook that lands a top-up. Runs on port 3001 in development.
+Hono API server on Node.js. Handles auth (Better Auth), the CapyAds exchange (campaigns, listings, devices, placements, serve/report/scan, ledger, stats, moderation, jobs), and the two Stripe webhooks: one lands a top-up, one reads a connected account. Runs on port 3001 in development.
 
 ## Exchange modules
 | Module | Routes | Auth |
@@ -13,7 +13,7 @@ Hono API server on Node.js. Handles auth (Better Auth), the CapyAds exchange (ca
 | `serve` | `GET /serve?key=`, `GET /loop?key=&size=`, `POST /report` (text/plain JSON), `GET /scan/:playId` | public, rate-limited |
 | `stats` | `GET /stats/overview` | member |
 | `ledger` | `GET /ledger?reason&state&lot&cursor&limit` | member |
-| `payouts` | `GET /payouts`, `PUT /payouts/account`, `POST /payouts` | member |
+| `payouts` | `GET /payouts`, `POST /payouts/stripe/connect`, `POST /payouts/stripe/refresh`, `POST /payouts` | member |
 | `topups` | `GET /topups`, `POST /topups/checkout`, `POST /topups/:id/refund` | member |
 | `admin` | `GET /admin/moderation`, `POST /admin/listings/:id/approve\|reject`, `POST /admin/devices/:id/approve\|reject`, `GET /admin/payouts`, `POST /admin/payouts/:id/pay\|reject` | admin |
 | `jobs` | `startJobs()` from `index.ts`; `pnpm jobs:run` one-shot. Settlement, expiry, stale plays, and campaign pacing | — |
@@ -60,12 +60,13 @@ writes.
 
 A payout takes earned money that has served the hold, and nothing else. The
 request debits the account at once, so no balance can answer two requests; a
-refusal posts the compensating row and the amount comes back. Payment is manual
-and an admin reviews the history first — the scan-to-play ratio, the plays that
-fell outside the venue's stated open hours, and devices sharing an address or a
-network. See
-`docs/adr/0005`, `src/modules/payouts/eligibility.ts` for the rules and
-`review.ts` for the signals.
+refusal posts the compensating row and the amount comes back. An admin reviews
+the history first — the scan-to-play ratio, the plays that fell outside the
+venue's stated open hours, and devices sharing an address or a network — and
+approval sends a Stripe Transfer to the member's connected account, keyed on
+the request id. See `docs/adr/0005` and `docs/adr/0008`,
+`src/modules/payouts/eligibility.ts` for the rules, `connect.ts` for the Stripe
+shapes, and `review.ts` for the signals.
 
 An advertiser tops up in US dollars. `POST /topups/checkout` opens the row
 first and the Stripe session inside the same transaction, so a session can never
@@ -114,8 +115,10 @@ curl http://localhost:3001/me -H "Cookie: <session-cookie>"
 ## Stripe
 
 Stripe sells one thing: a top-up (`src/modules/topups/`). There is no
-subscription, no invoice, and no portal (docs/adr/0001). The webhook in
-`src/modules/billing/` is the only route Stripe calls.
+subscription, no invoice, and no portal (docs/adr/0001). Stripe also pays one
+thing: a payout, as a Transfer to a connected account (`src/modules/payouts/`,
+docs/adr/0008). The two webhooks in `src/modules/billing/` are the only routes
+Stripe calls.
 
 ### Local webhook testing with Stripe CLI
 ```bash
@@ -129,6 +132,10 @@ stripe login
 # Without it the CLI listens to whatever account `stripe login` chose, the
 # secret still verifies, and no event ever arrives.
 STRIPE_API_KEY=sk_test_... stripe listen --forward-to localhost:3001/billing/webhook
+
+# Events from connected accounts arrive on a Connect endpoint with its own
+# secret. Run a second listener and put its secret in STRIPE_CONNECT_WEBHOOK_SECRET.
+STRIPE_API_KEY=sk_test_... stripe listen --forward-connect-to localhost:3001/billing/connect-webhook
 ```
 
 ### Webhook events handled
@@ -136,6 +143,7 @@ STRIPE_API_KEY=sk_test_... stripe listen --forward-to localhost:3001/billing/web
 |---|---|
 | `checkout.session.completed` | Payment mode: mark the top-up paid and post its `topup` entry, once per payment |
 | `checkout.session.expired` | Mark an unpaid top-up abandoned |
+| `account.updated` (Connect endpoint) | Store `details_submitted` and `payouts_enabled` on the member's `stripe_account` |
 
 Every event is recorded in `webhook_event` by its Stripe id before it acts, so a
 retry changes nothing.
@@ -148,5 +156,5 @@ against the `bought` lot.
 ## Gotchas
 - `POST /report` reads a **text/plain** body (`navigator.sendBeacon` cannot send JSON content types) and parses it by hand — do not add `zValidator("json")` there
 - `/serve`, `/loop`, `/report` and `/scan/*` accept any origin, because CapyTV runs on member devices. Every other route keeps the `APP_URL`/`WEB_URL` allow-list; the check lives in `PUBLIC_PREFIXES` and the `cors()` origin function in `src/lib/app.ts`. A new public screen route must be added there too
-- Webhook endpoint at `POST /billing/webhook` must receive the **raw body** for signature verification — do not add JSON body-parsing middleware to this route
+- Both webhook endpoints, `POST /billing/webhook` and `POST /billing/connect-webhook`, must receive the **raw body** for signature verification — do not add JSON body-parsing middleware to them. Each verifies with its own secret.
 - Stripe API version is pinned in `src/lib/stripe.ts` — update after checking Stripe changelog for breaking changes

@@ -3,8 +3,8 @@ import * as z from "zod/v4";
 import { campaignContract } from "../entities/campaign";
 import { deviceAdminContract } from "../entities/device";
 import { listingContract } from "../entities/listing";
-import { payoutAccountContract } from "../entities/payout-account";
 import { payoutRequestContract } from "../entities/payout-request";
+import { stripeAccountContract } from "../entities/stripe-account";
 import { topupContract } from "../entities/topup";
 import { toWire } from "../lib/wire";
 import { topupHistoryItemContract } from "./topups";
@@ -73,14 +73,14 @@ export const reviewedDeviceContract = toWire(
 );
 
 /**
- * One payout waiting for a decision, with the history behind it. The account is
- * here because an admin sends the money by hand and needs the destination in
- * front of them (docs/adr/0005).
+ * One payout waiting for a decision, with the history behind it. The Stripe
+ * account is here because the admin's approval sends the money there, and the
+ * queue must say whether it may (docs/adr/0008).
  */
 export const payoutReviewContract = z.object({
   request: payoutRequestContract,
   owner,
-  account: payoutAccountContract.nullable(),
+  stripeAccount: stripeAccountContract.nullable(),
   devices: z.array(reviewedDeviceContract),
 });
 
