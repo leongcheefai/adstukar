@@ -38,18 +38,27 @@ and Connect.js is a browser dependency for no gain.
 
 - The amount leaves the ledger at the request, as before. Nothing about the
   ledger changes.
-- Approval creates a Transfer for the request's `usd_cents`, keyed on the
-  request id, inside the transaction that marks the row paid. Stripe throws →
-  the row stays `requested` and the admin tries again. The row update fails
-  after the transfer → the row still says `requested`, so both Pay and Refuse
-  look for a transfer in the request's `transfer_group` first. Pay records the
-  one it finds; Refuse stops, because the money already left. The idempotency
-  key covers the same day; the group lookup covers every day after it. Neither
-  path pays twice.
+- Approval creates a Transfer for the request's `usd_cents`, with the request
+  id as its `transfer_group`, inside the transaction that marks the row paid.
+  Stripe throws → the row stays `requested` and the admin tries again. The row
+  update fails after the transfer → the row still says `requested`, so both Pay
+  and Refuse look for a transfer in the group first. Pay records the one it
+  finds; Refuse stops, because the money already left. Neither path pays twice.
+- The idempotency key is fresh on every attempt, not the request id. Stripe
+  keeps the first result under a key, a failure included, so a fixed key would
+  hand back the first refusal for a day and no retry could pay. The key covers
+  only the SDK's own retries of one attempt; the group lookup is the guard.
 - The transfer id goes in `stripe_transfer_id` and in `reference`, so the
   member's ledger page reads the same for a payout sent by hand and one sent by
   Stripe.
 - Refusal does not change: the compensating row posts and the amount comes back.
+- A transfer is in USD, because the ledger is. Stripe takes it from the
+  platform's USD balance and nothing else, so the platform must settle USD in
+  USD: a USD bank account on the platform account, under Settings → Bank
+  accounts and currencies. Without it every USD charge converts to the
+  platform's home currency at settlement, and every transfer fails with
+  `balance_insufficient`. This is a Stripe setting, not code, and it is a
+  launch step.
 
 ## The webhook
 

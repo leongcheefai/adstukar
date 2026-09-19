@@ -480,8 +480,12 @@ async function findTransfer(requestId: string): Promise<Stripe.Transfer | null> 
  * throws, the row stays `requested` and the admin tries again. If the update
  * fails after the transfer, the row still says `requested`, so the retry looks
  * for a transfer in the request's group first and records the one it finds.
- * The idempotency key covers the same case for a day; the group lookup covers
- * it for ever. Neither path pays twice.
+ *
+ * The idempotency key is fresh on every attempt. Stripe keeps the first result
+ * under a key, a failure included, so a key made from the request id would
+ * hand back the first refusal for a day and no retry could ever pay. The key
+ * therefore covers only the SDK's own retries of one attempt; the group lookup
+ * is what stops a second payment. Neither path pays twice.
  */
 export async function payPayout(id: string, adminId: string, now: Date = new Date()) {
   return db.transaction(async (tx) => {
@@ -506,7 +510,7 @@ export async function payPayout(id: string, adminId: string, now: Date = new Dat
           transfer_group: transferGroup(request.id),
           metadata: { payoutRequestId: request.id, userId: request.userId },
         },
-        { idempotencyKey: transferGroup(request.id) },
+        { idempotencyKey: `${transferGroup(request.id)}:${crypto.randomUUID()}` },
       ));
 
     const [row] = await tx
