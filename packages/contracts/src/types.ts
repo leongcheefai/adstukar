@@ -74,7 +74,7 @@ export type {
   TopupCheckoutResponse,
   TopupHistoryItem,
   TopupOverview,
-  TopupPack,
+  TopupAmountRule,
   TopupRefundBlock,
 } from "./modules/topups";
 export type { PresignDevicePhotoResponse, PresignLogoResponse } from "./modules/uploads";
