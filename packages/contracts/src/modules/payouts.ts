@@ -9,9 +9,9 @@ import { payoutRequestContract } from "../entities/payout-request";
  */
 export const payoutOverviewOutput = z.object({
   account: payoutAccountContract.nullable(),
-  /** Earned points that have served the hold, less what already left. */
+  /** Earned money that has served the hold, less what already left. */
   withdrawable: z.number().int(),
-  minimumPoints: z.number().int(),
+  minimum: z.number().int(),
   holdDays: z.number().int(),
   block: z.enum(PAYOUT_BLOCKS).nullable(),
   requests: z.array(payoutRequestContract),

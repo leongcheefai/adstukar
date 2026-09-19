@@ -4,18 +4,18 @@ import { topupContract } from "../entities/topup";
 
 /** One pack on the buy panel. The price follows the peg, so no pack carries a bonus. */
 export const topupPackContract = z.object({
-  points: z.number().int(),
+  amount: z.number().int(),
   usdCents: z.number().int(),
 });
 
 /**
- * One past top-up and what it may still give back. The refundable points and the
+ * One past top-up and what it may still give back. The refundable amount and the
  * money are worked out on the server, so the dashboard never repeats the fee
  * arithmetic, and `block` is the one reason a refund would be refused.
  */
 export const topupHistoryItemContract = z.object({
   topup: topupContract,
-  refundablePoints: z.number().int(),
+  refundable: z.number().int(),
   /** What the member would get back today, after the processor fee. */
   refundNetCents: z.number().int(),
   block: z.enum(TOPUP_REFUND_BLOCKS).nullable(),
