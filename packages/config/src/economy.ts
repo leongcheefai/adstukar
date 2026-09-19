@@ -87,16 +87,16 @@ export const economy = {
 
   topup: {
     /**
-     * What a top-up sells. Every price follows the peg exactly, and no pack
-     * carries a bonus: a bonus is not bought money, so a refund of it would
-     * have no honest rate (docs/adr/0001).
+     * What a top-up may be. Any whole-cent amount between the bounds, and the
+     * presets are the quick buttons. Every amount is at the peg and none carries
+     * a bonus: a bonus is not bought money, so a refund of it would have no
+     * honest rate (docs/adr/0001).
      */
-    packs: [
-      { amount: 10_000, usdCents: 1_000 },
-      { amount: 25_000, usdCents: 2_500 },
-      { amount: 100_000, usdCents: 10_000 },
-      { amount: 250_000, usdCents: 25_000 },
-    ],
+    amount: {
+      minCents: 1_000,
+      maxCents: 100_000,
+      presetsCents: [1_000, 2_500, 10_000, 25_000],
+    },
     /** Days after payment in which the unspent part of a top-up may go back as money. */
     refundWindowDays: 30,
     /**

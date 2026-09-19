@@ -53,9 +53,12 @@ describe("unit", () => {
     expect(economy.unit.perUsd).toBe(1000);
   });
 
-  it("sells every pack at the peg", () => {
-    for (const pack of economy.topup.packs) {
-      expect(pack.amount).toBe(centsToAmount(pack.usdCents));
+  it("bounds a top-up and lists presets inside the bounds", () => {
+    const { minCents, maxCents, presetsCents } = economy.topup.amount;
+    expect(minCents).toBeLessThan(maxCents);
+    for (const preset of presetsCents) {
+      expect(preset).toBeGreaterThanOrEqual(minCents);
+      expect(preset).toBeLessThanOrEqual(maxCents);
     }
   });
 });
