@@ -1064,7 +1064,8 @@ function writeAdmin(seg: string[], patch: Record<string, unknown>): unknown {
 /**
  * The distributor's own side: connect Stripe, read it back, or ask for the
  * money. Design mode cannot open Stripe, so a connect makes the row at once,
- * already cleared, and returns no URL; the panel then reads as connected.
+ * already cleared, and sends the browser back to the return URL the panel
+ * named; the panel then reads as connected.
  */
 function writePayouts(seg: string[], method: string, patch: Record<string, unknown>): unknown {
   if (method === "POST" && seg[1] === "stripe" && seg[2] === "connect") {
@@ -1076,7 +1077,7 @@ function writePayouts(seg: string[], method: string, patch: Record<string, unkno
       createdAt: nowIso(),
       updatedAt: nowIso(),
     };
-    return { url: "" };
+    return { url: (patch.returnUrl as string | undefined) ?? "/dashboard/ledger?stripe=return" };
   }
   if (method === "POST" && seg[1] === "stripe" && seg[2] === "refresh") {
     return stripeAccount ? { ...stripeAccount } : undefined;

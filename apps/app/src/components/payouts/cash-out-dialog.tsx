@@ -1,4 +1,4 @@
-import { economy } from "@repo/config/economy";
+import { type PayoutCountry, economy } from "@repo/config/economy";
 import { usd } from "@repo/config/money";
 import type { PayoutBlock, PayoutOverview } from "@repo/contracts/types";
 import {
@@ -22,7 +22,6 @@ import { toast } from "sonner";
 import { useConnectStripe, useRequestPayout } from "../../lib/payouts";
 
 const COUNTRIES = economy.payout.countries;
-type Country = (typeof COUNTRIES)[number];
 
 /**
  * Why the button is not there. Every reason is a state a member can leave, so
@@ -61,7 +60,8 @@ export function CashOutDialog({
   const account = overview.stripeAccount;
   const connect = useConnectStripe();
   const request = useRequestPayout();
-  const [country, setCountry] = useState<Country>("MY");
+  // The first country in the list is the platform's own, so it is the default.
+  const [country, setCountry] = useState<PayoutCountry>(COUNTRIES[0]);
 
   function goToStripe() {
     const origin = window.location.origin;
@@ -74,10 +74,6 @@ export function CashOutDialog({
       {
         // The link lives for minutes, so the browser goes there at once.
         onSuccess: ({ url }) => {
-          if (!url) {
-            toast.error("Stripe did not return an onboarding page. Try again.");
-            return;
-          }
           window.location.href = url;
         },
         onError: (err) => toast.error(err.message),
@@ -117,7 +113,7 @@ export function CashOutDialog({
           <div className="space-y-3">
             <div className="space-y-1.5">
               <Label htmlFor="payout-country">Country of your bank account</Label>
-              <Select value={country} onValueChange={(v) => setCountry(v as Country)}>
+              <Select value={country} onValueChange={(v) => setCountry(v as PayoutCountry)}>
                 <SelectTrigger id="payout-country" className="w-40">
                   <SelectValue />
                 </SelectTrigger>
@@ -150,7 +146,7 @@ export function CashOutDialog({
                 {account.payoutsEnabled ? (
                   <Badge variant="success">Ready</Badge>
                 ) : (
-                  <Badge variant="warning">Checking</Badge>
+                  <Badge variant="warning">Onboarding</Badge>
                 )}
               </p>
               {!account.payoutsEnabled && (

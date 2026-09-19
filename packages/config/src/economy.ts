@@ -62,7 +62,8 @@ export const economy = {
     /**
      * Where a connected Stripe account may live, ISO 3166-1 alpha-2. A Malaysia
      * platform pays cross-border to a fixed list, so the select offers only
-     * these. Correct the list against the Stripe dashboard before launch.
+     * these, and the first is the default. Correct the list against the Stripe
+     * dashboard before launch.
      */
     countries: ["MY", "SG", "US", "GB", "AU"],
     /**

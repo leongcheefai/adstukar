@@ -36,8 +36,11 @@ and Connect.js is a browser dependency for no gain.
 - Approval creates a Transfer for the request's `usd_cents`, keyed on the
   request id, inside the transaction that marks the row paid. Stripe throws →
   the row stays `requested` and the admin tries again. The row update fails
-  after the transfer → the retry hits the idempotency key, gets the same
-  transfer, and completes the row. Neither path pays twice.
+  after the transfer → the row still says `requested`, so both Pay and Refuse
+  look for a transfer in the request's `transfer_group` first. Pay records the
+  one it finds; Refuse stops, because the money already left. The idempotency
+  key covers the same day; the group lookup covers every day after it. Neither
+  path pays twice.
 - The transfer id goes in `stripe_transfer_id` and in `reference`, so the
   member's ledger page reads the same for a payout sent by hand and one sent by
   Stripe.
@@ -48,9 +51,11 @@ and Connect.js is a browser dependency for no gain.
 Stripe signs events from connected accounts with a Connect endpoint's own
 secret, so they arrive on `/billing/connect-webhook` under
 `STRIPE_CONNECT_WEBHOOK_SECRET`, not on the top-up route. One event matters:
-`account.updated` stores the two flags. The dashboard also reads the flags
-straight from Stripe when the member returns from onboarding, so the panel is
-right before the webhook lands.
+`account.updated`. The handler reads the account back from Stripe and stores
+the two flags; it does not trust the payload, because Stripe may deliver an old
+event after a newer one. The dashboard also reads the flags straight from
+Stripe when the member returns from onboarding, so the panel is right before
+the webhook lands.
 
 ## Consequences
 
@@ -62,5 +67,11 @@ right before the webhook lands.
   was: the account an admin approved is the account that is paid.
 - A capability lost after a request opens makes the approval fail with 409. The
   admin refuses, or waits.
+- An account outside the platform's country may need
+  `tos_acceptance.service_agreement: "recipient"` at creation. Verify it with
+  the country list before launch; `connect.ts` is the one place to add it.
+- `connectStripe` holds the member lock across two Stripe calls. Only the
+  create needs the transaction; the link could follow the commit. It is a
+  one-member lock for a few hundred milliseconds, so it stays until it hurts.
 - Not handled yet: `transfer.reversed`, a Stripe balance shortfall on the
   platform, and a capability lost after payment. Each is a follow-up.

@@ -211,17 +211,27 @@ export async function refreshStripeAccount(userId: string, now: Date = new Date(
 }
 
 /**
- * Stripe's word on a connected account, from the Connect webhook. An event for
- * an account no row names is not an error: Stripe may send one for an account
- * the transaction in `connectStripe` rolled back.
+ * Stripe's word on a connected account, from the Connect webhook. The flags
+ * come from a fresh read of the account, not from the event: Stripe may
+ * deliver an old event after a newer one, and the payload would then put back
+ * a state the account has left. An event for an account no row names is not
+ * an error: Stripe may send one for an account the transaction in
+ * `connectStripe` rolled back.
  */
 export async function applyConnectEvent(event: Stripe.Event, now: Date = new Date()) {
   const change = connectEventChange(event);
   if (!change) return;
+  const [row] = await db
+    .select({ id: schema.stripeAccount.id })
+    .from(schema.stripeAccount)
+    .where(eq(schema.stripeAccount.stripeAccountId, change.stripeAccountId))
+    .limit(1);
+  if (!row) return;
+  const account = await stripe.accounts.retrieve(change.stripeAccountId);
   await db
     .update(schema.stripeAccount)
-    .set({ ...change.flags, updatedAt: now })
-    .where(eq(schema.stripeAccount.stripeAccountId, change.stripeAccountId));
+    .set({ ...accountFlags(account), updatedAt: now })
+    .where(eq(schema.stripeAccount.id, row.id));
 }
 
 /**
@@ -443,13 +453,31 @@ async function takeOpenRequest(tx: Tx, id: string) {
 }
 
 /**
+ * Every transfer carries its request id as its group, so a request's transfer
+ * can be found again without a row that names it. That is the guard against
+ * the one gap the transaction cannot close: a transfer that went out, and a
+ * row update that failed after it.
+ */
+function transferGroup(requestId: string): string {
+  return `payout:${requestId}`;
+}
+
+/** The transfer Stripe already made for this request, if one exists. */
+async function findTransfer(requestId: string): Promise<Stripe.Transfer | null> {
+  const page = await stripe.transfers.list({ transfer_group: transferGroup(requestId), limit: 1 });
+  return page.data[0] ?? null;
+}
+
+/**
  * The money leaves. The amount already did, at the request, so nothing moves on
  * the ledger here: this sends the Stripe Transfer and records it.
  *
  * The transfer runs inside the transaction, before the row changes. If Stripe
  * throws, the row stays `requested` and the admin tries again. If the update
- * fails after the transfer, the retry hits the idempotency key, gets the same
- * transfer back, and completes the row. Neither path pays twice.
+ * fails after the transfer, the row still says `requested`, so the retry looks
+ * for a transfer in the request's group first and records the one it finds.
+ * The idempotency key covers the same case for a day; the group lookup covers
+ * it for ever. Neither path pays twice.
  */
 export async function payPayout(id: string, adminId: string, now: Date = new Date()) {
   return db.transaction(async (tx) => {
@@ -464,15 +492,18 @@ export async function payPayout(id: string, adminId: string, now: Date = new Dat
       });
     }
 
-    const transfer = await stripe.transfers.create(
-      {
-        amount: request.usdCents,
-        currency: "usd",
-        destination: account.stripeAccountId,
-        metadata: { payoutRequestId: request.id, userId: request.userId },
-      },
-      { idempotencyKey: `payout:${request.id}` },
-    );
+    const transfer =
+      (await findTransfer(request.id)) ??
+      (await stripe.transfers.create(
+        {
+          amount: request.usdCents,
+          currency: "usd",
+          destination: account.stripeAccountId,
+          transfer_group: transferGroup(request.id),
+          metadata: { payoutRequestId: request.id, userId: request.userId },
+        },
+        { idempotencyKey: transferGroup(request.id) },
+      ));
 
     const [row] = await tx
       .update(schema.payoutRequest)
@@ -494,6 +525,11 @@ export async function payPayout(id: string, adminId: string, now: Date = new Dat
  * The admin refused the request, so the amount goes back. It reverses the debit
  * with a compensating row and never edits it: the ledger is append-only, and a
  * member who was refused must be able to read why their money came back.
+ *
+ * A request Stripe already paid cannot be refused: giving the amount back on
+ * top of the transfer would pay the member twice. The row says `requested`
+ * only when the update after the transfer failed, so the group lookup is what
+ * tells the two apart.
  */
 export async function rejectPayout(
   id: string,
@@ -503,6 +539,11 @@ export async function rejectPayout(
 ) {
   return db.transaction(async (tx) => {
     const request = await takeOpenRequest(tx, id);
+    if (await findTransfer(request.id)) {
+      throw new HTTPException(409, {
+        message: "Stripe already paid this request. Press Pay to record the transfer.",
+      });
+    }
     if (request.ledgerEntryId) await voidEntry(request.ledgerEntryId, now, tx);
 
     const [row] = await tx
