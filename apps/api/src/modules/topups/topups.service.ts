@@ -1,21 +1,21 @@
-import { economy } from "@repo/config/economy";
+import { centsToAmount, economy } from "@repo/config/economy";
 import { usdCents } from "@repo/config/money";
 import { project } from "@repo/config/project";
 import type { CreateTopupInput } from "@repo/contracts";
 import { db, schema } from "@repo/db";
-import type { TopupRefundBlock } from "@repo/db/enums";
+import type { TopupAmountBlock, TopupRefundBlock } from "@repo/db/enums";
 import { and, desc, eq, inArray, isNotNull } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import { stripe } from "../../lib/stripe";
 import { type Tx, getLotBalances, lockMember, postEntry } from "../ledger/ledger.service";
-import { findPack, refundAmount, refundBlock, unspentByTopup } from "./packs";
+import { refundAmount, refundBlock, topupAmountBlock, unspentByTopup } from "./amounts";
 
 /**
- * The database side of a top-up. An advertiser picks a pack, pays Stripe, and
+ * The database side of a top-up. An advertiser names an amount, pays Stripe, and
  * the webhook posts the amount against the `bought` lot. A refund inside the
  * window takes the unspent part back at the peg, less what the processor kept.
  *
- * The rules themselves are pure and live in `packs.ts`.
+ * The rules themselves are pure and live in `amounts.ts`.
  */
 
 /** What a member is told when a refund cannot go ahead. */
@@ -26,30 +26,36 @@ const BLOCK_MESSAGE: Record<TopupRefundBlock, string> = {
   "below-fee": "The card fee is more than this refund is worth.",
 };
 
+/** What a member is told when the amount is out of bounds. */
+const AMOUNT_MESSAGE: Record<TopupAmountBlock, string> = {
+  "below-minimum": `A top-up is at least ${usdCents(economy.topup.amount.minCents)}.`,
+  "above-maximum": `A top-up is at most ${usdCents(economy.topup.amount.maxCents)}.`,
+};
+
 /**
- * Opens a checkout for one pack.
+ * Opens a checkout for one amount.
  *
  * The row goes in before the Stripe call, so a session can never exist without
  * the row the webhook looks for. The Stripe call then runs inside the same
  * transaction: if it throws, the row rolls back with it and no dead pending
  * top-up is left behind.
  *
- * The price comes from the pack, never from the request. A browser names an
- * amount and nothing else.
+ * The price is the amount the member named, inside the bounds the config sets.
+ * The ledger amount derives from it at the peg, so the two can never disagree.
  */
 export async function createTopupCheckout(userId: string, input: CreateTopupInput) {
-  const pack = findPack(input.amount);
-  if (!pack) {
-    throw new HTTPException(400, { message: "That is not an amount we sell" });
-  }
+  const block = topupAmountBlock(input.usdCents);
+  if (block) throw new HTTPException(400, { message: AMOUNT_MESSAGE[block] });
+  const usdCentsPaid = input.usdCents;
+  const amount = centsToAmount(usdCentsPaid);
 
   return db.transaction(async (tx) => {
     const id = crypto.randomUUID();
     await tx.insert(schema.topup).values({
       id,
       userId,
-      amount: pack.amount,
-      usdCents: pack.usdCents,
+      amount,
+      usdCents: usdCentsPaid,
       state: "pending",
     });
 
@@ -60,9 +66,9 @@ export async function createTopupCheckout(userId: string, input: CreateTopupInpu
           quantity: 1,
           price_data: {
             currency: "usd",
-            unit_amount: pack.usdCents,
+            unit_amount: usdCentsPaid,
             product_data: {
-              name: `${usdCents(pack.usdCents)} advertising credit`,
+              name: `${usdCents(usdCentsPaid)} advertising credit`,
               description: project.name,
             },
           },
@@ -230,7 +236,7 @@ export async function getTopupOverview(userId: string, now: Date = new Date()) {
   ]);
 
   return {
-    packs: economy.topup.packs.map((pack) => ({ ...pack })),
+    amount: { ...economy.topup.amount, presetsCents: [...economy.topup.amount.presetsCents] },
     refundWindowDays: economy.topup.refundWindowDays,
     items: rows.map((row) => toHistoryItem(row, unspent.get(row.id) ?? 0, now)),
   };

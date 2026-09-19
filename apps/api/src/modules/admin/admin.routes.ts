@@ -86,7 +86,7 @@ adminRouter.post("/payouts/:id/reject", zValidator("json", rejectInput), async (
 /**
  * The refund desk. A member never refunds their own top-up: they ask, and an
  * admin gives the unspent part back from here. The rules that decide what may
- * go back are the same pure ones the member's table reads (`topups/packs.ts`).
+ * go back are the same pure ones the member's table reads (`topups/amounts.ts`).
  */
 adminRouter.get("/topups", async (c) => {
   const queue = await listTopupQueue();

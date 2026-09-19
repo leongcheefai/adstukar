@@ -1,8 +1,8 @@
 import { DAY_MS, amountToCents, centsToAmount, economy } from "@repo/config/economy";
-import type { TopupRefundBlock, TopupState } from "@repo/db/enums";
+import type { TopupAmountBlock, TopupRefundBlock, TopupState } from "@repo/db/enums";
 
 /**
- * The rules that decide what a top-up sells and what it may give back. They are
+ * The rules that decide what a top-up may be and what it may give back. They are
  * pure, so the money and the refusals can be read without a database.
  *
  * Bought money never expires, and a refund is the only way it leaves. It
@@ -11,14 +11,13 @@ import type { TopupRefundBlock, TopupState } from "@repo/db/enums";
  */
 
 /**
- * One pack, as the config declares it. The shape is derived rather than written
- * out again, so a new field on a pack reaches every reader at once.
+ * The one reason a top-up amount is refused, or null when it may go ahead. The
+ * bounds are in cents, because that is what Stripe charges.
  */
-export type TopupPack = (typeof economy.topup.packs)[number];
-
-/** The pack an advertiser asked for, or null when the amount is not one we sell. */
-export function findPack(amount: number): TopupPack | null {
-  return economy.topup.packs.find((pack) => pack.amount === amount) ?? null;
+export function topupAmountBlock(cents: number): TopupAmountBlock | null {
+  if (cents < economy.topup.amount.minCents) return "below-minimum";
+  if (cents > economy.topup.amount.maxCents) return "above-maximum";
+  return null;
 }
 
 /** The last moment a top-up may go back as money. The window runs from the payment. */
@@ -82,11 +81,11 @@ export interface RefundAmount {
  */
 export function refundAmount(
   refundable: number,
-  pack: { amount: number; usdCents: number },
+  topup: { amount: number; usdCents: number },
 ): RefundAmount {
   const grossCents = amountToCents(Math.max(0, refundable));
   const amount = centsToAmount(grossCents);
-  const share = pack.amount > 0 ? amount / pack.amount : 0;
+  const share = topup.amount > 0 ? amount / topup.amount : 0;
   const percentCents = Math.ceil((grossCents * economy.topup.processorFeeBps) / 10_000);
   const fixedCents = Math.ceil(economy.topup.processorFeeFixedCents * share);
   const feeCents = Math.min(grossCents, percentCents + fixedCents);
