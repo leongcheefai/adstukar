@@ -68,7 +68,7 @@ export function shareByListing(
 
 /**
  * True when what is left of the budget cannot buy the cheapest play. A campaign
- * with three points left is finished for the day, so it says so rather than
+ * with three units left is finished for the day, so it says so rather than
  * standing as running and serving nothing.
  */
 export function outOfBudget(spentToday: number, dailyBudget: number): boolean {
@@ -79,14 +79,14 @@ export function outOfBudget(spentToday: number, dailyBudget: number): boolean {
  * True when the purse cannot pay for one play. An empty purse is the common
  * case; a purse holding less than the cheapest play is the same thing.
  */
-export function outOfPoints(spendable: number): boolean {
+export function outOfFunds(spendable: number): boolean {
   return spendable < cheapestPlay();
 }
 
 export interface ResumeInput {
   reason: CampaignPauseReason | null;
   pausedAt: Date | null;
-  /** The owner's spendable points, right now. */
+  /** The owner's spendable balance, right now. */
   spendable: number;
   now: Date;
 }
@@ -102,7 +102,7 @@ export interface ResumeInput {
  */
 export function readyToResume(input: ResumeInput): boolean {
   if (input.reason === null || input.pausedAt === null) return false;
-  if (outOfPoints(input.spendable)) return false;
+  if (outOfFunds(input.spendable)) return false;
   if (input.reason === "balance") return true;
   return input.pausedAt < startOfUtcDay(input.now);
 }

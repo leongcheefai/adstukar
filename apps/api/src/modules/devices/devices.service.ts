@@ -268,7 +268,7 @@ export async function setVetoedListings(
 
 /**
  * The distributor's own promotion. It plays free when nothing paid is eligible,
- * so it moves no points and never goes through moderation.
+ * so it moves no money and never goes through moderation.
  *
  * The fields go together: a promotion with no name or no tagline is no promotion,
  * and the loop falls back to the CapyAds card.

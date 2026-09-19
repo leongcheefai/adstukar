@@ -40,7 +40,7 @@ function toServedListing(name: string, tagline: string, logoUrl: string | null, 
 
 /**
  * The distributor's own promotion, or null when they wrote none. It moves no
- * points, so it carries no `scanUrl`: the code on a promotion goes straight to
+ * money, so it carries no `scanUrl`: the code on a promotion goes straight to
  * the distributor's address and never through a play.
  */
 function toPromotion(device: DeviceRow): Promotion | null {
@@ -118,7 +118,7 @@ async function paidPlaysToday(tx: Tx, deviceId: string, now: Date): Promise<numb
 
 /**
  * Listings that may play on this device right now: approved creative, a running
- * campaign on a verified domain, somebody else's account, enough spendable points
+ * campaign on a verified domain, somebody else's account, enough spendable balance
  * to cover one play at this device's rate, and budget left for today.
  */
 async function loadCandidates(
@@ -282,7 +282,7 @@ export interface ServeContext {
 
 /**
  * Hands CapyTV the next listing for one of the device's regions, and opens the
- * play that will carry the points. Nothing is charged here: the device reports
+ * play that will carry the money. Nothing is charged here: the device reports
  * the full dwell first (see `recordReport`).
  */
 export async function serveListing(ctx: ServeContext): Promise<ServeResponse> {
@@ -303,7 +303,7 @@ export async function serveListing(ctx: ServeContext): Promise<ServeResponse> {
   }
 
   // The cap is not read here. Above it a listing still shows and simply pays
-  // nothing, so the cap belongs at the moment the points move and nowhere else.
+  // nothing, so the cap belongs at the moment the money moves and nowhere else.
   const candidates = await eligibleFor(device, placement, now, await loadFilters(device.id));
   const winner = rankCandidates(candidates)[0] ?? null;
 
@@ -317,7 +317,7 @@ export async function serveListing(ctx: ServeContext): Promise<ServeResponse> {
  * playing and reports the batch when the network returns.
  *
  * Nothing is charged here either, and the checks that matter run again at report
- * time: the daily cap and the campaign's budget are read when the points move,
+ * time: the daily cap and the campaign's budget are read when the money moves,
  * not when the batch was cut. A batch is therefore an offer of plays, never a
  * promise that every one of them pays.
  */
@@ -561,7 +561,7 @@ export interface PlayReport {
 
 /**
  * CapyTV reports that the listing held the placement for its full dwell. The play
- * counts, and the points move in the same transaction. Idempotent: a second
+ * counts, and the money moves in the same transaction. Idempotent: a second
  * report is a no-op.
  */
 export async function recordReport(report: PlayReport): Promise<{ counted: boolean }> {
@@ -698,7 +698,7 @@ export async function recordScan(playId: string, now: Date = new Date()): Promis
 }
 
 /**
- * Closes every play whose report never arrived. An open play holds no points, so
+ * Closes every play whose report never arrived. An open play holds no money, so
  * this only stops a stale row from being reported hours later and paid for.
  * Returns the number of rows touched.
  */

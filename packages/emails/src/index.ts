@@ -40,7 +40,7 @@ export async function sendResetPasswordEmail(to: string, url: string) {
 }
 
 export async function sendLowBalanceEmail(to: string, appUrl: string) {
-  await send(to, "Your campaigns stopped: no points left", LowBalanceEmail({ appUrl }));
+  await send(to, "Your campaigns stopped: balance ran out", LowBalanceEmail({ appUrl }));
 }
 
 export async function sendChangeEmailConfirmationEmail(to: string, url: string, oldEmail: string) {

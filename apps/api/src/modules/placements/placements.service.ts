@@ -71,7 +71,7 @@ export async function updatePlacement(
 
 /**
  * A placement that never played holds nothing, so it really is deleted. One that
- * has played is where points came from, and the ledger reaches it through those
+ * has played is where money came from, and the ledger reaches it through those
  * plays, so it stays. Archive the device instead.
  */
 export async function deletePlacement(userId: string, placementId: string) {

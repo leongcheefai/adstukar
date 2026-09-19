@@ -3,7 +3,7 @@ import { clampExpiry } from "./expiry";
 
 /**
  * Expiry takes back only what the lot still holds. Reversing an entry in full
- * would charge twice for points the member already spent, and would drive the lot
+ * would charge twice for money the member already spent, and would drive the lot
  * negative — which then reads as a debt the member never owed.
  */
 describe("clampExpiry", () => {

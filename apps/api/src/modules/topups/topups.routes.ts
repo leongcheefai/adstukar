@@ -8,7 +8,7 @@ import { createTopupCheckout, getTopupOverview } from "./topups.service";
 
 /**
  * The advertiser's own side of a top-up. The money arrives through the Stripe
- * webhook in `../billing`, so no route here ever puts points in. A refund is an
+ * webhook in `../billing`, so no route here ever puts money in. A refund is an
  * admin's act and lives under `../admin`: a member asks, and never presses it.
  */
 export const topupsRouter = new Hono<{ Variables: AppVariables }>();
