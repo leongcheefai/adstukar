@@ -3,7 +3,7 @@ import { Button } from "@repo/ui";
 import { useMemo, useState } from "react";
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router";
 import { SlotForm } from "../../components/campaigns/slot-form";
-import { BuyPointsDialog } from "../../components/topups/buy-points-dialog";
+import { TopUpDialog } from "../../components/topups/topup-dialog";
 import { useCampaigns } from "../../lib/campaigns";
 import {
   type SlotPosition,
@@ -81,7 +81,7 @@ export function SlotBookPage() {
         />
       )}
 
-      {topups && <BuyPointsDialog overview={topups} open={buyOpen} onOpenChange={setBuyOpen} />}
+      {topups && <TopUpDialog overview={topups} open={buyOpen} onOpenChange={setBuyOpen} />}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { ArrowRight, Info } from "@phosphor-icons/react";
-import { economy, pointsToUsdCents } from "@repo/config/economy";
+import { economy } from "@repo/config/economy";
+import { usd, usdCents } from "@repo/config/money";
 import type { PayoutOverview, StatsOverview } from "@repo/contracts/types";
 import {
   Button,
@@ -12,7 +13,6 @@ import {
   TooltipTrigger,
 } from "@repo/ui";
 import { Link } from "react-router";
-import { pointsUsd, usd } from "../../lib/money";
 
 /**
  * One sum. The note that says which sum it is sits behind an info mark: the
@@ -66,7 +66,7 @@ export function BalanceCard({
   payouts: PayoutOverview | undefined;
 }) {
   const total = stats.balance.settled + stats.balance.pending;
-  const minimum = payouts?.minimumPoints ?? economy.payout.minimumPoints;
+  const minimum = payouts?.minimum ?? economy.payout.minimum;
   const available = payouts?.withdrawable ?? 0;
   const paidCents = (payouts?.requests ?? [])
     .filter((request) => request.state === "paid")
@@ -80,7 +80,7 @@ export function BalanceCard({
         <CardTitle className="text-base">Balance</CardTitle>
         {/* Only while there is nowhere to pay. Once the details are on file the
             button goes, and the Wallet owns the cash-out. */}
-        {payouts && !payouts.account && (
+        {payouts && !payouts.stripeAccount?.payoutsEnabled && (
           <Button
             asChild
             size="sm"
@@ -94,16 +94,12 @@ export function BalanceCard({
         )}
       </CardHeader>
       <CardContent className="grid flex-1 gap-0 divide-y p-0 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-        <Figure label="Total earning" value={pointsUsd(total)} note="Pending plus settled funds" />
-        <Figure
-          label="Available"
-          value={payouts ? usd(pointsToUsdCents(available)) : "—"}
-          note="Ready to cash out"
-        />
+        <Figure label="Total earning" value={usd(total)} note="Pending plus settled funds" />
+        <Figure label="Available" value={payouts ? usd(available) : "—"} note="Ready to cash out" />
         <Figure
           label="Cash out"
-          value={payouts ? usd(paidCents) : "—"}
-          note={`Minimum payout ${pointsUsd(minimum)}`}
+          value={payouts ? usdCents(paidCents) : "—"}
+          note={`Minimum payout ${usd(minimum)}`}
         />
       </CardContent>
     </Card>

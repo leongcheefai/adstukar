@@ -6,7 +6,7 @@ import { alias } from "drizzle-orm/pg-core";
 import { clampExpiry } from "./expiry";
 
 /**
- * The only module that writes `ledger_entry`. Every point movement is one immutable,
+ * The only module that writes `ledger_entry`. Every movement is one immutable,
  * idempotent row; balances are derived by summing. Callers pass a `tx` when the
  * movement must commit together with other writes (serve/report, approval).
  *
@@ -31,13 +31,13 @@ export type LedgerReason = (typeof schema.LEDGER_REASONS)[number];
 export type LedgerState = (typeof schema.LEDGER_STATES)[number];
 export type LedgerLot = (typeof schema.LEDGER_LOTS)[number];
 
-/** A spend takes free points before paid ones. See docs/adr/0001. */
+/** A spend takes free money before paid money. See docs/adr/0001. */
 const SPEND_ORDER = ["granted", "bought"] as const satisfies readonly LedgerLot[];
 
 /**
- * Reasons that put points into an account, plus the fee that pairs with an earn.
+ * Reasons that put money into an account, plus the fee that pairs with an earn.
  * These are the only rows expiry may reverse: reversing a spend would hand the
- * points back.
+ * money back.
  */
 const EXPIRABLE_REASONS = ["earn", "grant", "fee"] as const satisfies readonly LedgerReason[];
 
@@ -104,7 +104,7 @@ export async function getBalances(tx: Tx, userId: string): Promise<Balances> {
 
 export type LotBalances = Record<LedgerLot, number>;
 
-/** Settled points per lot. What a spend may draw on, split by the rules that bind it. */
+/** Settled amount per lot. What a spend may draw on, split by the rules that bind it. */
 export async function getLotBalances(tx: Tx, userId: string): Promise<LotBalances> {
   const rows = await tx
     .select({
@@ -126,7 +126,7 @@ export function spendable(balances: LotBalances): number {
 }
 
 /**
- * Spendable points for every member at once, for the serve path's candidate scan.
+ * Spendable balance for every member at once, for the serve path's candidate scan.
  * It lives here rather than in the serve module so `SPEND_ORDER` stays the one
  * place that decides which lots a spend may draw on.
  */
@@ -152,7 +152,7 @@ export async function spendableByUser(): Promise<Map<string, number>> {
 
 export interface PostSpendInput {
   userId: string;
-  /** Points to take. Always positive. */
+  /** The amount to take. Always positive. */
   amount: number;
   reason: Extract<LedgerReason, "spend">;
   /** The lot is appended, so one spend across two lots keys two distinct rows. */
@@ -162,8 +162,8 @@ export interface PostSpendInput {
 }
 
 /**
- * Takes points from the granted lot first, then the bought lot. Points inside one
- * lot are fungible, so "oldest first" needs no per-entry consumption record —
+ * Takes from the granted lot first, then the bought lot. Money inside one
+ * lot is fungible, so "oldest first" needs no per-entry consumption record —
  * age only decides expiry, which already works entry by entry.
  *
  * Returns what it actually took. A caller that asked for more than the account
@@ -208,11 +208,11 @@ export async function settleDue(now: Date = new Date()): Promise<number> {
  * older than the expiry window that has not been expired yet. Idempotent through
  * `expiry:<id>`.
  *
- * The bought lot is excluded at the query level: somebody paid money for those
- * points, and expiring them is a consumer-law problem.
+ * The bought lot is excluded at the query level: somebody paid for that
+ * money, and expiring it is a consumer-law problem.
  *
  * Expiry takes back only what the lot still holds. Reversing an entry in full
- * would charge twice for points the member already spent, and would drive the lot
+ * would charge twice for money the member already spent, and would drive the lot
  * negative — which then reads as a debt the member never owed.
  */
 export async function expireDue(now: Date = new Date()): Promise<number> {
@@ -259,14 +259,14 @@ export async function expireDue(now: Date = new Date()): Promise<number> {
 
   let count = 0;
   for (const entry of due) {
-    // A fee is a debit, so it expires by giving its points back and the lot grows.
+    // A fee is a debit, so it expires by giving its amount back and the lot grows.
     // Only a credit can be clamped, and only down to what the lot still holds.
     const held = await left(entry.userId, entry.lot);
     const take = clampExpiry(entry.delta, held);
 
     // A zero row still goes in. It says the entry expired and nothing was left to
     // take, and it is what stops the entry coming back round on the next run to
-    // expire against points the member has earned since.
+    // expire against money the member has earned since.
     const { inserted } = await postEntry(db, {
       userId: entry.userId,
       delta: -take,
@@ -292,7 +292,7 @@ export async function expireDue(now: Date = new Date()): Promise<number> {
  * nothing is posted. A settled entry did reach the balance, so it stays settled
  * and a compensating row goes in beside it. Doing both to one entry would count
  * the reversal twice: the balance sums settled rows only, so dropping the
- * original out of that sum already gives the points back.
+ * original out of that sum already gives the amount back.
  *
  * Idempotent through `void:<id>`, and callers may pass a `tx` so the reversal
  * commits with whatever else the same act changes.

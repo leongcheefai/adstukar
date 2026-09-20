@@ -1,4 +1,5 @@
 import { Bank, Check, MapPin, Warning, X } from "@phosphor-icons/react";
+import { usdCents } from "@repo/config/money";
 import type { PayoutReview, ReviewedDevice } from "@repo/contracts/types";
 import {
   Badge,
@@ -12,14 +13,12 @@ import {
   DialogHeader,
   DialogTitle,
   EmptyState,
-  Input,
   Label,
   Textarea,
   cn,
 } from "@repo/ui";
 import { useState } from "react";
 import { toast } from "sonner";
-import { usd } from "../../lib/money";
 import { usePayPayout, usePayoutQueue, useRejectPayout } from "../../lib/payouts";
 
 /** What the open dialog is doing to a request. One dialog serves both acts. */
@@ -171,13 +170,13 @@ function PayoutCard({
   windowDays,
   onAct,
 }: { item: PayoutReview; windowDays: number; onAct: (action: Action) => void }) {
-  const { request, owner, account } = item;
+  const { request, owner, stripeAccount } = item;
   return (
     <Card>
       <CardContent className="space-y-4 pt-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0 space-y-1">
-            <p className="text-2xl tracking-tight tabular-nums">{usd(request.usdCents)}</p>
+            <p className="text-2xl tracking-tight tabular-nums">{usdCents(request.usdCents)}</p>
             <p className="text-xs text-muted-foreground">
               {owner.name} · <span className="font-mono">{owner.email}</span> · asked{" "}
               {new Date(request.createdAt).toLocaleDateString()}
@@ -189,7 +188,7 @@ function PayoutCard({
               onClick={() => onAct({ kind: "pay", id: request.id, label: owner.name })}
             >
               <Check size={14} />
-              Mark paid
+              Pay through Stripe
             </Button>
             <Button
               size="sm"
@@ -202,22 +201,29 @@ function PayoutCard({
           </div>
         </div>
 
-        {/* The money goes out by hand, so the destination sits beside the act. */}
-        {account ? (
+        {/* Approval sends the money to this account, so its state sits beside the act. */}
+        {stripeAccount ? (
           <div className="rounded-lg border p-3 text-sm">
             <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <Bank size={12} /> Pay to
             </p>
-            <p data-usertext className="font-medium">
-              {account.legalName}
+            <p className="flex items-center gap-2 font-medium">
+              Stripe account in {stripeAccount.country}
+              {stripeAccount.payoutsEnabled ? (
+                <Badge variant="success">Payouts enabled</Badge>
+              ) : (
+                <Badge variant="warning">Onboarding</Badge>
+              )}
             </p>
-            <p data-usertext className="font-mono text-xs text-muted-foreground">
-              {account.method} · {account.destination} · {account.country}
-            </p>
+            {!stripeAccount.payoutsEnabled && (
+              <p className="text-xs text-destructive">
+                Stripe has not cleared this account. Paying now fails; refuse, or wait.
+              </p>
+            )}
           </div>
         ) : (
           <p className="text-sm text-destructive">
-            No payout details on file. Refuse this request and ask the member to add them.
+            No Stripe account on file. Refuse this request and ask the member to connect one.
           </p>
         )}
 
@@ -236,8 +242,8 @@ function PayoutCard({
 }
 
 /**
- * The monthly payout batch. An admin reads the history behind each request, then
- * sends the money by hand and types the reference back in (docs/adr/0005).
+ * The payout batch. An admin reads the history behind each request, then
+ * approves it, and Stripe sends the money (docs/adr/0005, docs/adr/0008).
  */
 export function PayoutsSection() {
   const { data: queue, isLoading } = usePayoutQueue();
@@ -253,13 +259,13 @@ export function PayoutsSection() {
     if (!action) return;
     const done = {
       onSuccess: () => {
-        toast.success(action.kind === "pay" ? "Payout marked paid" : "Payout refused");
+        toast.success(action.kind === "pay" ? "Payout sent through Stripe" : "Payout refused");
         setAction(null);
         setNote("");
       },
       onError: (err: Error) => toast.error(err.message),
     };
-    if (action.kind === "pay") pay.mutate({ id: action.id, reference: note.trim() }, done);
+    if (action.kind === "pay") pay.mutate({ id: action.id }, done);
     else reject.mutate({ id: action.id, reason: note.trim() }, done);
   }
 
@@ -289,47 +295,37 @@ export function PayoutsSection() {
           <form onSubmit={submit}>
             <DialogHeader>
               <DialogTitle>
-                {action?.kind === "pay" ? "Mark the payout paid" : "Refuse the payout"}
+                {action?.kind === "pay" ? "Pay the payout through Stripe" : "Refuse the payout"}
               </DialogTitle>
               <DialogDescription>
                 {action?.kind === "pay"
-                  ? `Send the money first, then record the reference. The funds already left ${action?.label}'s wallet when they asked.`
-                  : `The funds go back to ${action?.label}. Say why, because the member reads it.`}
+                  ? `Stripe sends the money to ${action?.label}'s account now. The amount already left their balance when they asked.`
+                  : `The amount goes back to ${action?.label}. Say why, because the member reads it.`}
               </DialogDescription>
             </DialogHeader>
 
-            <div className="my-4 space-y-1.5">
-              {action?.kind === "pay" ? (
-                <>
-                  <Label htmlFor="payout-reference">Transfer reference</Label>
-                  <Input
-                    id="payout-reference"
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
-                    required
-                    maxLength={200}
-                  />
-                </>
-              ) : (
-                <>
-                  <Label htmlFor="payout-reason">Reason</Label>
-                  <Textarea
-                    id="payout-reason"
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
-                    required
-                    maxLength={500}
-                  />
-                </>
-              )}
-            </div>
+            {action?.kind === "reject" && (
+              <div className="my-4 space-y-1.5">
+                <Label htmlFor="payout-reason">Reason</Label>
+                <Textarea
+                  id="payout-reason"
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  required
+                  maxLength={500}
+                />
+              </div>
+            )}
 
             <DialogFooter>
               <Button type="button" variant="ghost" onClick={() => setAction(null)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={pending || note.trim().length === 0}>
-                {action?.kind === "pay" ? "Mark paid" : "Refuse"}
+              <Button
+                type="submit"
+                disabled={pending || (action?.kind === "reject" && note.trim().length === 0)}
+              >
+                {action?.kind === "pay" ? "Pay now" : "Refuse"}
               </Button>
             </DialogFooter>
           </form>

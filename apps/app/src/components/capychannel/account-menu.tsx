@@ -84,7 +84,7 @@ export function AccountMenu({
               </svg>
             </button>
           </div>
-          <p>Your dashboard is located here. Start Listing or Connect your Stripe to earn money.</p>
+          <p>Your dashboard is here. Start a listing, or connect your Stripe to earn money.</p>
         </div>
       ) : null}
       <div className="tv-account-menu" hidden={!open}>

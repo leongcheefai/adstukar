@@ -8,11 +8,11 @@ import { listingBudgets, startOfUtcDay } from "./pacing";
  *
  * The serve path, the billing path and the dashboard all ask the same question,
  * so they ask it here. A spend is read from the ledger and never from a counter:
- * `ledger_entry` is the only record of a point that moved.
+ * `ledger_entry` is the only record of money that moved.
  */
 
 /**
- * Points spent today, keyed by campaign. `campaignId` narrows it to one campaign
+ * The amount spent today, keyed by campaign. `campaignId` narrows it to one campaign
  * for the billing path; without it the serve path gets every campaign in one query
  * rather than one query per candidate.
  */
@@ -40,13 +40,13 @@ export async function spentTodayByCampaign(
   return new Map(rows.map((r) => [r.campaignId, r.total]));
 }
 
-/** Points this one campaign has already spent today, as a positive number. */
+/** The amount this one campaign has already spent today, as a positive number. */
 export async function spentToday(tx: Tx, campaignId: string, now: Date): Promise<number> {
   return (await spentTodayByCampaign(tx, now, campaignId)).get(campaignId) ?? 0;
 }
 
 /**
- * Points spent today, keyed by listing. The campaign's budget is split evenly
+ * The amount spent today, keyed by listing. The campaign's budget is split evenly
  * over its listings, so each one is paced against its own share and one creative
  * cannot take the whole day from the other three.
  */
@@ -74,7 +74,7 @@ export async function spentTodayByListing(
   return new Map(rows.map((r) => [r.listingId, r.total]));
 }
 
-/** Points this one listing has already spent today, as a positive number. */
+/** The amount this one listing has already spent today, as a positive number. */
 export async function spentTodayForListing(
   tx: Tx,
   listingId: string,

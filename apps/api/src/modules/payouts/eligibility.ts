@@ -1,12 +1,12 @@
-import { DAY_MS, economy, pointsToUsdCents, usdCentsToPoints } from "@repo/config/economy";
+import { DAY_MS, amountToCents, centsToAmount, economy } from "@repo/config/economy";
 import type { PayoutBlock } from "@repo/db/enums";
 
 /**
- * The rules that decide whether earned points may leave as money. They are pure,
+ * The rules that decide whether earned money may leave as a payment. They are pure,
  * so the amounts and the refusals can be read without a database.
  *
  * Only the `earned` lot ever withdraws. `bought` refunds and `granted` does
- * neither, so a free point can never become a cash faucet (docs/adr/0001).
+ * neither, so free money can never become a cash faucet (docs/adr/0001).
  */
 
 /**
@@ -35,16 +35,19 @@ export function withdrawable(matured: number, debits: number): number {
 /**
  * The one reason a request is refused, or null when it may go ahead. The open
  * request comes first: while one is under review, nothing else about the account
- * changes the answer.
+ * changes the answer. Then the Stripe account, in two steps: it must exist, and
+ * Stripe must have cleared it to receive money.
  */
 export function payoutBlock(input: {
   withdrawable: number;
-  hasAccount: boolean;
+  hasStripeAccount: boolean;
+  payoutsEnabled: boolean;
   hasOpenRequest: boolean;
 }): PayoutBlock | null {
   if (input.hasOpenRequest) return "open-request";
-  if (!input.hasAccount) return "identity";
-  if (input.withdrawable < economy.payout.minimumPoints) return "below-minimum";
+  if (!input.hasStripeAccount) return "stripe";
+  if (!input.payoutsEnabled) return "stripe-pending";
+  if (input.withdrawable < economy.payout.minimum) return "below-minimum";
   return null;
 }
 
@@ -53,9 +56,9 @@ export function payoutBlock(input: {
  *
  * A balance rarely lands on a whole cent. Debiting all of it and paying the
  * rounded-down money would destroy the difference, so the payout takes only the
- * points the money covers and the remainder rolls over to the next one.
+ * amount the money covers and the remainder rolls over to the next one.
  */
-export function payoutAmount(withdrawable: number): { points: number; usdCents: number } {
-  const usdCents = pointsToUsdCents(withdrawable);
-  return { points: usdCentsToPoints(usdCents), usdCents };
+export function payoutAmount(withdrawable: number): { amount: number; usdCents: number } {
+  const usdCents = amountToCents(withdrawable);
+  return { amount: centsToAmount(usdCents), usdCents };
 }

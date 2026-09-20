@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { distributorKeeps, economy, rateTable } from "./economy";
+import { amountToCents, centsToAmount, distributorKeeps, economy, rateTable } from "./economy";
 
 describe("distributorKeeps", () => {
   it("is the amount less the fee, so the two sides of a play add up", () => {
@@ -10,7 +10,7 @@ describe("distributorKeeps", () => {
     }
   });
 
-  it("never rounds a point away from the distributor", () => {
+  it("never rounds a unit away from the distributor", () => {
     // 30% of 3 is 0.9, and the fee rounds down, so the screen keeps all 3.
     expect(distributorKeeps(3)).toBe(3);
   });
@@ -45,5 +45,49 @@ describe("rateTable", () => {
         scanKeeps: 112,
       },
     ]);
+  });
+});
+
+describe("unit", () => {
+  it("is one thousandth of a US dollar", () => {
+    expect(economy.unit.perUsd).toBe(1000);
+  });
+
+  it("bounds a top-up and lists presets inside the bounds", () => {
+    const { minCents, maxCents, presetsCents } = economy.topup.amount;
+    expect(minCents).toBeLessThan(maxCents);
+    for (const preset of presetsCents) {
+      expect(preset).toBeGreaterThanOrEqual(minCents);
+      expect(preset).toBeLessThanOrEqual(maxCents);
+    }
+  });
+});
+
+describe("amountToCents", () => {
+  it("rounds down, so a part of a cent never becomes money", () => {
+    expect(amountToCents(12_345)).toBe(1_234);
+    expect(amountToCents(5)).toBe(0);
+  });
+});
+
+describe("centsToAmount", () => {
+  it("is exact at the peg", () => {
+    expect(centsToAmount(1_000)).toBe(10_000);
+  });
+});
+
+describe("payout", () => {
+  it("takes at least ten dollars", () => {
+    expect(economy.payout.minimum).toBe(10_000);
+  });
+
+  it("names every country a connected account may live in, upper case", () => {
+    expect(economy.payout.countries.length).toBeGreaterThan(0);
+    for (const country of economy.payout.countries) expect(country).toMatch(/^[A-Z]{2}$/);
+  });
+
+  it("names the platform's own country, and it is one a member may pick", () => {
+    expect(economy.payout.platformCountry).toMatch(/^[A-Z]{2}$/);
+    expect(economy.payout.countries).toContain(economy.payout.platformCountry);
   });
 });

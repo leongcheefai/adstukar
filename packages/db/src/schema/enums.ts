@@ -80,7 +80,7 @@ export const LEDGER_REASONS = [
 ] as const;
 
 /**
- * The origin of a point. The lot decides the rules, not the label:
+ * The origin of an amount. The lot decides the rules, not the label:
  * `bought` refunds and never expires, `earned` withdraws after the hold and
  * expires, `granted` neither refunds nor withdraws, and expires.
  */
@@ -99,20 +99,18 @@ export type PayoutState = (typeof PAYOUT_STATES)[number];
  * Why a payout request is refused. It is a union the API works out and the
  * dashboard reads; no column stores it, so it lives here beside the rest rather
  * than being written out again in each package.
+ *
+ * `stripe` is no connected account. `stripe-pending` is an account Stripe has
+ * not yet cleared to receive money.
  */
-export const PAYOUT_BLOCKS = ["open-request", "identity", "below-minimum"] as const;
+export const PAYOUT_BLOCKS = ["open-request", "stripe", "stripe-pending", "below-minimum"] as const;
 
 export type PayoutBlock = (typeof PAYOUT_BLOCKS)[number];
 
-/** How a distributor takes money out. The MVP sends both by hand. */
-export const PAYOUT_METHODS = ["bank", "paypal"] as const;
-
-export type PayoutMethod = (typeof PAYOUT_METHODS)[number];
-
 /**
- * A top-up opens the moment a member picks a pack, so the row exists before the
- * money does. `paid` is the only state that ever put points in an account, and
- * `refunded` is a paid top-up whose unspent points went back as money.
+ * A top-up opens the moment a member names an amount, so the row exists before the
+ * money does. `paid` is the only state that ever put money in an account, and
+ * `refunded` is a paid top-up whose unspent part went back as money.
  * `abandoned` is a checkout nobody finished.
  */
 export const TOPUP_STATES = ["pending", "paid", "refunded", "abandoned"] as const;
@@ -131,3 +129,11 @@ export const TOPUP_REFUND_BLOCKS = [
 ] as const;
 
 export type TopupRefundBlock = (typeof TOPUP_REFUND_BLOCKS)[number];
+
+/**
+ * Why a top-up amount is refused. The API works it out and answers with the
+ * reason; no column stores it. The dashboard reads the bounds themselves.
+ */
+export const TOPUP_AMOUNT_BLOCKS = ["below-minimum", "above-maximum"] as const;
+
+export type TopupAmountBlock = (typeof TOPUP_AMOUNT_BLOCKS)[number];

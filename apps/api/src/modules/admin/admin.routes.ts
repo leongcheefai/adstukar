@@ -4,7 +4,6 @@ import {
   moderateDeviceOutput,
   moderateListingOutput,
   moderationQueueOutput,
-  payPayoutInput,
   payoutQueueOutput,
   refundTopupOutput,
   rejectInput,
@@ -69,10 +68,11 @@ adminRouter.get("/payouts", async (c) => {
   return c.json(payoutQueueOutput.parse(queue satisfies z.input<typeof payoutQueueOutput>));
 });
 
-adminRouter.post("/payouts/:id/pay", zValidator("json", payPayoutInput), async (c) => {
+/** Approval sends the money: a Stripe Transfer to the member's connected account. */
+adminRouter.post("/payouts/:id/pay", async (c) => {
   const admin = c.get("user");
   if (!admin) throw new HTTPException(401, { message: "Unauthorized" });
-  const row = await payPayout(c.req.param("id"), admin.id, c.req.valid("json").reference);
+  const row = await payPayout(c.req.param("id"), admin.id);
   return c.json(reviewPayoutOutput.parse(row satisfies z.input<typeof reviewPayoutOutput>));
 });
 
@@ -86,7 +86,7 @@ adminRouter.post("/payouts/:id/reject", zValidator("json", rejectInput), async (
 /**
  * The refund desk. A member never refunds their own top-up: they ask, and an
  * admin gives the unspent part back from here. The rules that decide what may
- * go back are the same pure ones the member's table reads (`topups/packs.ts`).
+ * go back are the same pure ones the member's table reads (`topups/amounts.ts`).
  */
 adminRouter.get("/topups", async (c) => {
   const queue = await listTopupQueue();

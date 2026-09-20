@@ -6,7 +6,7 @@ export * from "./entities/device";
 export * from "./entities/placement";
 export * from "./entities/play";
 export * from "./entities/ledger-entry";
-export * from "./entities/payout-account";
+export * from "./entities/stripe-account";
 export * from "./entities/payout-request";
 export * from "./entities/topup";
 export * from "./inputs/feedback";

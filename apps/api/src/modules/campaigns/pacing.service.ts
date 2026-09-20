@@ -5,7 +5,7 @@ import { serverEnv } from "@repo/env";
 import { and, eq, inArray, isNotNull, or } from "drizzle-orm";
 import { log } from "../../lib/logger";
 import { type Tx, getLotBalances, spendable, spendableByUser } from "../ledger/ledger.service";
-import { outOfBudget, outOfPoints, readyToResume } from "./pacing";
+import { outOfBudget, outOfFunds, readyToResume } from "./pacing";
 
 /**
  * The database side of pacing. A campaign stops itself when its daily budget is
@@ -52,7 +52,7 @@ export interface PacingResult {
 /**
  * Reads what one charge left behind, and stops what can no longer run. It goes in
  * the same transaction as the charge, so a campaign is never shown as running
- * against points it has already spent.
+ * against money it has already spent.
  */
 export async function applyPacing(
   tx: Tx,
@@ -69,14 +69,14 @@ export async function applyPacing(
   }
 
   const purse = spendable(await getLotBalances(tx, input.advertiserId));
-  if (!outOfPoints(purse)) return { pausedForBalance: false };
+  if (!outOfFunds(purse)) return { pausedForBalance: false };
 
   const stopped = await pauseForBalance(tx, input.advertiserId, input.now);
   return { pausedForBalance: stopped > 0 };
 }
 
 /**
- * Tells the member their points ran out. It is sent after the charge commits and
+ * Tells the member their balance ran out. It is sent after the charge commits and
  * never awaited: a mail server must not be able to roll back a play.
  */
 export function notifyLowBalance(userId: string): void {
@@ -122,17 +122,17 @@ async function pacedCampaigns(): Promise<PacedCampaign[]> {
 }
 
 export interface PacingSweep {
-  /** Members whose campaigns stopped because their points ran out. */
+  /** Members whose campaigns stopped because their balance ran out. */
   stopped: number;
   /** Campaigns started again because the reason they stopped has gone. */
   resumed: number;
 }
 
 /**
- * Keeps every campaign in step with the points behind it.
+ * Keeps every campaign in step with the money behind it.
  *
- * A charge stops a campaign the moment it empties the purse, but points also
- * leave through expiry and through a payout, and neither of those touches a
+ * A charge stops a campaign the moment it empties the purse, but money also
+ * leaves through expiry and through a payout, and neither of those touches a
  * campaign. This sweep is what catches those: it stops what can no longer pay,
  * and starts what can pay again.
  */
@@ -145,7 +145,7 @@ export async function paceCampaigns(now: Date = new Date()): Promise<PacingSweep
 
   // One member at a time, so the mail says "your campaigns stopped" once.
   const broke = new Set(
-    campaigns.filter((row) => outOfPoints(purseOf(row.userId))).map((row) => row.userId),
+    campaigns.filter((row) => outOfFunds(purseOf(row.userId))).map((row) => row.userId),
   );
   let stopped = 0;
   for (const userId of broke) {

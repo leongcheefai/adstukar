@@ -20,7 +20,6 @@ import {
   LEDGER_REASONS,
   LEDGER_STATES,
   LISTING_STATES,
-  PAYOUT_METHODS,
   PAYOUT_STATES,
   PLACEMENT_FORMATS,
   PLACEMENT_SIZES,
@@ -42,7 +41,6 @@ export const ledgerStateEnum = pgEnum("ledger_state", LEDGER_STATES);
 export const ledgerReasonEnum = pgEnum("ledger_reason", LEDGER_REASONS);
 export const ledgerLotEnum = pgEnum("ledger_lot", LEDGER_LOTS);
 export const payoutStateEnum = pgEnum("payout_state", PAYOUT_STATES);
-export const payoutMethodEnum = pgEnum("payout_method", PAYOUT_METHODS);
 export const topupStateEnum = pgEnum("topup_state", TOPUP_STATES);
 
 /**
@@ -66,7 +64,7 @@ export const campaign = pgTable(
      */
     pauseReason: campaignPauseReasonEnum("pause_reason"),
     pausedAt: timestamp("paused_at"),
-    /** Points this campaign may spend in one day. */
+    /** The most this campaign may spend in one day, as an amount. */
     dailyBudget: integer("daily_budget").notNull(),
     verificationToken: text("verification_token").notNull(),
     verifiedAt: timestamp("verified_at"),
@@ -122,7 +120,7 @@ export const device = pgTable(
     photoUrl: text("photo_url"),
     /**
      * The distributor's own promotion. It plays free whenever nothing paid is
-     * eligible, so it moves no points and carries no rate.
+     * eligible, so it moves no money and carries no rate.
      */
     promotionName: text("promotion_name"),
     promotionTagline: text("promotion_tagline"),
@@ -221,7 +219,7 @@ export const vetoedListing = pgTable(
     deviceId: text("device_id")
       .notNull()
       .references(() => device.id, { onDelete: "cascade" }),
-    // Cascade, not restrict: a veto holds no points, so it may go with the
+    // Cascade, not restrict: a veto holds no money, so it may go with the
     // listing it refuses.
     listingId: text("listing_id")
       .notNull()
@@ -234,18 +232,18 @@ export const vetoedListing = pgTable(
   ],
 );
 
-/** One listing shown in one placement for its dwell. The event that moves points. */
+/** One listing shown in one placement for its dwell. The event that moves money. */
 export const play = pgTable(
   "play",
   {
     id: text("id").primaryKey(),
-    // Restrict, not cascade: a play is where points came from, so dropping a
+    // Restrict, not cascade: a play is where money came from, so dropping a
     // placement must never quietly take the record of its plays with it.
     placementId: text("placement_id")
       .notNull()
       .references(() => placement.id, { onDelete: "restrict" }),
     listingId: text("listing_id").references(() => listing.id, { onDelete: "set null" }),
-    /** A house card. It moves no points. */
+    /** A house card. It moves no money. */
     house: boolean("house").notNull().default(false),
     state: playStateEnum("state").notNull().default("open"),
     scanned: boolean("scanned").notNull().default(false),
@@ -294,39 +292,39 @@ export const ledgerEntry = pgTable(
 );
 
 /**
- * Where a distributor's money goes. Identity is on file before the first payout,
- * not at signup, so this row appears the day a member asks to cash out.
+ * The Stripe account a distributor's money goes to. Stripe holds the identity
+ * and the bank details; this row holds only what the API needs to pay and to
+ * know whether it may (docs/adr/0008).
  *
- * The destination is what a person reads to send the money by hand: an account
- * number, an IBAN, or a PayPal address. It is the member's own data and it never
- * leaves the payout review, so no contract that is not an admin one picks it.
+ * `payoutsEnabled` is Stripe's word that money may go there. It is the only
+ * flag that gates a request. `country` is fixed at creation, so it is chosen
+ * before the account exists.
  */
-export const payoutAccount = pgTable("payout_account", {
+export const stripeAccount = pgTable("stripe_account", {
   id: text("id").primaryKey(),
   userId: text("user_id")
     .notNull()
     .unique()
     .references(() => user.id, { onDelete: "cascade" }),
-  /** The name on the account. It must be the name we pay. */
-  legalName: text("legal_name").notNull(),
-  /** ISO 3166-1 alpha-2. It decides which rails an admin can use. */
+  stripeAccountId: text("stripe_account_id").notNull().unique(),
+  /** ISO 3166-1 alpha-2. */
   country: text("country").notNull(),
-  method: payoutMethodEnum("method").notNull(),
-  destination: text("destination").notNull(),
+  detailsSubmitted: boolean("details_submitted").notNull().default(false),
+  payoutsEnabled: boolean("payouts_enabled").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 /**
- * One distributor's request to turn earned points into money.
+ * One distributor's request to turn earned money into a payment.
  *
- * The points leave the account the moment the request is made, as a `payout`
+ * The amount leaves the account the moment the request is made, as a `payout`
  * ledger entry on the `earned` lot. Holding them anywhere else would let one
  * balance answer two requests. A refusal posts the compensating row and the
- * points come back; it never edits the debit.
+ * amount comes back; it never edits the debit.
  *
  * `usdCents` is stored rather than derived, so a change to the peg never rewrites
- * what we already paid.
+ * what we already paid. It is also the amount the Stripe Transfer carries.
  */
 export const payoutRequest = pgTable(
   "payout_request",
@@ -335,16 +333,18 @@ export const payoutRequest = pgTable(
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
-    /** Points this request takes. Always positive. */
-    points: integer("points").notNull(),
+    /** The amount this request takes. Always positive. */
+    amount: integer("amount").notNull(),
     usdCents: integer("usd_cents").notNull(),
     state: payoutStateEnum("state").notNull().default("requested"),
-    /** The `payout` entry that took the points. It is what a refusal reverses. */
+    /** The `payout` entry that took the amount. It is what a refusal reverses. */
     ledgerEntryId: text("ledger_entry_id").references(() => ledgerEntry.id, {
       onDelete: "restrict",
     }),
-    /** What the admin typed after sending the money: a transfer reference. */
+    /** How the payment is traced: the Stripe transfer id, or what an admin typed before Stripe. */
     reference: text("reference"),
+    /** The Stripe Transfer that paid this request. `reference` carries it too. */
+    stripeTransferId: text("stripe_transfer_id").unique(),
     rejectionReason: text("rejection_reason"),
     reviewedBy: text("reviewed_by").references(() => user.id, { onDelete: "set null" }),
     reviewedAt: timestamp("reviewed_at"),
@@ -362,12 +362,12 @@ export const payoutRequest = pgTable(
 );
 
 /**
- * One advertiser's purchase of points with money.
+ * One advertiser's top-up.
  *
- * The row opens when the member picks a pack, so a checkout that nobody
- * finishes is visible rather than lost. `points` and `usdCents` are stamped
- * here from the pack the server picked, never read back off Stripe: the price
- * a member paid must not move when the peg or a pack does.
+ * The row opens when the member names an amount, so a checkout that nobody
+ * finishes is visible rather than lost. `amount` and `usdCents` are stamped
+ * here from what the server checked, never read back off Stripe: the price
+ * a member paid must not move when the peg or the bounds do.
  *
  * A refund takes the unspent part back at the peg, less what the processor
  * kept, and posts a `refund` entry against the `bought` lot. It never edits the
@@ -380,8 +380,8 @@ export const topup = pgTable(
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
-    /** Points this top-up buys. Always positive. */
-    points: integer("points").notNull(),
+    /** The amount this top-up puts in. Always positive. */
+    amount: integer("amount").notNull(),
     /** What the member paid, in US cents. */
     usdCents: integer("usd_cents").notNull(),
     state: topupStateEnum("state").notNull().default("pending"),
@@ -395,12 +395,12 @@ export const topup = pgTable(
      * refund sends the money back to.
      */
     stripePaymentIntentId: text("stripe_payment_intent_id").unique(),
-    /** The `topup` entry that put the points in. */
+    /** The `topup` entry that put the money in. */
     ledgerEntryId: text("ledger_entry_id").references(() => ledgerEntry.id, {
       onDelete: "restrict",
     }),
-    /** Points the refund took back, and the money it returned after the fee. */
-    refundedPoints: integer("refunded_points"),
+    /** The amount the refund took back, and the money it returned after the fee. */
+    refunded: integer("refunded_amount"),
     refundUsdCents: integer("refund_usd_cents"),
     refundLedgerEntryId: text("refund_ledger_entry_id").references(() => ledgerEntry.id, {
       onDelete: "restrict",

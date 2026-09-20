@@ -1,4 +1,5 @@
 import { type DeviceTierRate, economy, playRateRange, rateTable } from "@repo/config/economy";
+import { perThousandPlaysRange, usd, usdPerThousand } from "@repo/config/money";
 import { project } from "@repo/config/project";
 import { Container, Logo, Section, SectionHeader } from "@repo/ui";
 import type { CSSProperties, ReactNode } from "react";
@@ -21,9 +22,7 @@ export interface LandingProps {
   ticker?: ReactNode;
 }
 
-const POINTS = project.pointsName;
 const { lowest: LOWEST_RATE, highest: HIGHEST_RATE } = playRateRange();
-const PEG = economy.pointsPerUsd.toLocaleString("en-US");
 
 type Tone = "slab" | "light" | "dark";
 
@@ -118,7 +117,7 @@ const STEPS = [
   },
   {
     title: "Earn",
-    body: `Listings crawl in one line along the foot. Each play earns ${POINTS}, and a scan pays a bonus on top.`,
+    body: "Listings crawl in one line along the foot. Each play earns money, and a scan pays a bonus on top.",
   },
 ] as const;
 
@@ -177,10 +176,10 @@ const TIER_LABEL: Record<DeviceTierRate, string> = {
 const RATE_ROWS = rateTable().map((row) => ({
   tier: row.tier,
   label: TIER_LABEL[row.tier],
-  play: `${row.play.lowest}–${row.play.highest}`,
-  playKeeps: `${row.playKeeps.lowest}–${row.playKeeps.highest}`,
-  scan: row.scan.toLocaleString("en-US"),
-  scanKeeps: row.scanKeeps.toLocaleString("en-US"),
+  play: `${usdPerThousand(row.play.lowest)}–${usdPerThousand(row.play.highest)}`,
+  playKeeps: `${usdPerThousand(row.playKeeps.lowest)}–${usdPerThousand(row.playKeeps.highest)}`,
+  scan: usd(row.scan),
+  scanKeeps: usd(row.scanKeeps),
 }));
 
 function Rates({ spacing, className }: { spacing: LandingConfig["density"]; className?: string }) {
@@ -200,10 +199,10 @@ function Rates({ spacing, className }: { spacing: LandingConfig["density"]; clas
               <tr>
                 <th scope="col">Screen tier</th>
                 <th scope="col" className="rates-num">
-                  A play <span>advertiser pays</span>
+                  A play, per 1,000 <span>advertiser pays</span>
                 </th>
                 <th scope="col" className="rates-num">
-                  A play <span>you keep</span>
+                  A play, per 1,000 <span>you keep</span>
                 </th>
                 <th scope="col" className="rates-num">
                   A scan <span>advertiser pays</span>
@@ -227,19 +226,18 @@ function Rates({ spacing, className }: { spacing: LandingConfig["density"]; clas
           </table>
         </div>
         <p className="mx-auto mt-6 max-w-2xl text-center text-pretty text-sm text-muted-foreground">
-          In {POINTS}. {PEG} {POINTS} are US$1. A person stamps the tier when the screen is
-          approved, and a screen is paid for up to{" "}
-          {economy.caps.dailyPlaysPerDevice.toLocaleString("en-US")} plays a day.
+          In US dollars. A person stamps the tier when the screen is approved, and a screen is paid
+          for up to {economy.caps.dailyPlaysPerDevice.toLocaleString("en-US")} plays a day.
         </p>
       </Container>
     </Section>
   );
 }
 
-const ADVERTISER_POINTS = [
+const ADVERTISER_CLAIMS = [
   {
-    title: "Pay per play, at the peg",
-    body: `${LOWEST_RATE}–${HIGHEST_RATE} ${POINTS} a play, by the tier of the screen. Set a daily budget from ${economy.caps.minDailyBudget.toLocaleString("en-US")} ${POINTS}; the campaign stops when it is spent and starts again tomorrow.`,
+    title: "Pay per play",
+    body: `${perThousandPlaysRange(LOWEST_RATE, HIGHEST_RATE)}, by the tier of the screen. Set a daily budget from ${usd(economy.caps.minDailyBudget)}; the campaign stops when it is spent and starts again tomorrow.`,
   },
   {
     title: "One verified domain",
@@ -352,10 +350,8 @@ function SampleCard({ sample }: { sample: LandingSample }) {
           <dd className="mt-1 font-mono text-lg tabular-nums">{rate.toFixed(1)}%</dd>
         </div>
         <div>
-          <dt className="text-xs text-muted-foreground">{POINTS} spent</dt>
-          <dd className="mt-1 font-mono text-lg tabular-nums">
-            {sample.spent.toLocaleString("en-US")}
-          </dd>
+          <dt className="text-xs text-muted-foreground">Spent</dt>
+          <dd className="mt-1 font-mono text-lg tabular-nums">{usd(sample.spent)}</dd>
         </div>
       </dl>
     </div>
@@ -380,11 +376,11 @@ function Advertisers({
             Be on the screens people already look at
           </h2>
           <ul className="grid gap-6 sm:grid-cols-3 lg:grid-cols-1">
-            {ADVERTISER_POINTS.map((point) => (
-              <li key={point.title} className="border-l-2 border-primary/30 pl-4">
-                <h3 className="text-base font-medium tracking-tight">{point.title}</h3>
+            {ADVERTISER_CLAIMS.map((claim) => (
+              <li key={claim.title} className="border-l-2 border-primary/30 pl-4">
+                <h3 className="text-base font-medium tracking-tight">{claim.title}</h3>
                 <p className="mt-1.5 text-pretty text-sm leading-relaxed text-muted-foreground">
-                  {point.body}
+                  {claim.body}
                 </p>
               </li>
             ))}

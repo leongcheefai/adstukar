@@ -7,6 +7,7 @@ import {
   UploadSimple,
 } from "@phosphor-icons/react";
 import { economy } from "@repo/config/economy";
+import { usd, usdCents } from "@repo/config/money";
 import { project } from "@repo/config/project";
 import type { Campaign } from "@repo/contracts/types";
 import {
@@ -30,11 +31,10 @@ import {
   useUpdateCampaign,
   useUpdateListing,
 } from "../../lib/campaigns";
-import { pointsUsd, usd } from "../../lib/money";
 import { lookUpSite } from "../../lib/site-lookup";
 import {
   type LoopBand,
-  SLOT_PRICE_POINTS,
+  SLOT_PRICE,
   type Slot,
   type SlotPosition,
   firstOpenPosition,
@@ -227,7 +227,7 @@ export function SlotForm({
   const pickIsOpen = position !== null && bands[position - 1]?.kind === "open";
   const bookedPosition = pickIsOpen ? position : firstOpenPosition(bands);
 
-  const short = !editing && balance !== undefined && balance < SLOT_PRICE_POINTS;
+  const short = !editing && balance !== undefined && balance < SLOT_PRICE;
   const valid =
     name.trim().length > 0 &&
     name.length <= NAME_MAX &&
@@ -299,7 +299,7 @@ export function SlotForm({
     }
   }
 
-  const price = usd(economy.slot.priceUsdCents);
+  const price = usdCents(economy.slot.priceUsdCents);
   const term = `${economy.slot.termDays} days`;
 
   const message = domainTaken
@@ -553,7 +553,7 @@ export function SlotForm({
                   <p
                     className={`flex h-9 min-w-0 flex-1 items-center rounded-lg border bg-muted/40 px-3 text-sm font-medium tabular-nums ${short ? "text-[color:var(--on-air)]" : ""}`}
                   >
-                    {balance === undefined ? "…" : pointsUsd(balance)}
+                    {balance === undefined ? "…" : usd(balance)}
                   </p>
                   <AddFundsButton onClick={onAddFunds} />
                 </div>

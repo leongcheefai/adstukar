@@ -1,4 +1,3 @@
-import { project } from "@repo/config/project";
 import { CoachTip } from "./coach-tip";
 
 /** Where the tip sends people. The ledger page opens the buy panel on this flag. */
@@ -6,8 +5,8 @@ export const STRIPE_SETUP_PATH = "/dashboard/wallet?buy=1";
 
 /**
  * First-run tip for Stripe. Money enters the product through a top-up, and
- * Stripe takes the card, so "set up Stripe" means buying the first pack. The
- * tip points at the Wallet control and hands off to the buy panel.
+ * Stripe takes the card, so "set up Stripe" means the first top-up. The
+ * tip points at the Wallet control and hands off to the top-up panel.
  *
  * Got it, a click elsewhere, and Escape are all an ignore: the tip goes and a
  * red dot stays on the control until it is clicked. Only the control itself

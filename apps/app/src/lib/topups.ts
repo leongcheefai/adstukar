@@ -13,7 +13,7 @@ export function useTopups() {
 }
 
 /**
- * A top-up moves points, so the balance above the panel and the ledger below it
+ * A top-up moves money, so the balance above the panel and the ledger below it
  * go stale with it. Refresh all three together.
  */
 export function useRefreshMoney() {
@@ -26,14 +26,14 @@ export function useRefreshMoney() {
   };
 }
 
-/** Opens the Stripe checkout for one pack. The points arrive through the webhook. */
-export function useBuyPoints() {
+/** Opens the Stripe checkout for one amount, in cents. The money arrives through the webhook. */
+export function useTopUp() {
   return useMutation({
-    mutationFn: (points: number) =>
+    mutationFn: (usdCents: number) =>
       apiFetch<TopupCheckoutResponse>("/topups/checkout", {
         method: "POST",
         body: {
-          points,
+          usdCents,
           successUrl: `${window.location.origin}/dashboard/wallet?topup=paid`,
           cancelUrl: `${window.location.origin}/dashboard/wallet?topup=cancelled`,
         },

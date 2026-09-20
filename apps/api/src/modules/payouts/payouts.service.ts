@@ -1,11 +1,15 @@
 import { DAY_MS, economy } from "@repo/config/economy";
-import type { SavePayoutAccountInput } from "@repo/contracts";
+import { usd } from "@repo/config/money";
+import type { ConnectStripeInput } from "@repo/contracts";
 import { db, schema } from "@repo/db";
 import type { PayoutBlock } from "@repo/db/enums";
 import { and, count, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { HTTPException } from "hono/http-exception";
+import type Stripe from "stripe";
+import { stripe } from "../../lib/stripe";
 import { type Tx, lockMember, postEntry, voidEntry } from "../ledger/ledger.service";
+import { accountFlags, accountParams, connectEventChange } from "./connect";
 import { holdCutoff, payoutAmount, payoutBlock, withdrawable } from "./eligibility";
 import {
   type DeviceFlags,
@@ -16,19 +20,20 @@ import {
 } from "./review";
 
 /**
- * The database side of a payout. A distributor asks, an admin reads the history
- * behind the request, and either the money leaves or the points come back. The
- * rules themselves are pure and live in `eligibility.ts` and `review.ts`.
+ * The database side of a payout. A distributor connects a Stripe account, asks,
+ * and an admin reads the history behind the request. Approval sends the money
+ * as a Stripe Transfer; refusal gives the amount back. The rules themselves are
+ * pure and live in `eligibility.ts`, `connect.ts` and `review.ts`.
  *
- * Payout is manual for the MVP: an admin pays by hand in one monthly session and
- * types the reference back in. See docs/adr/0005.
+ * See docs/adr/0005 for the review and docs/adr/0008 for the transfer.
  */
 
 /** What a member is told when their request cannot go ahead. */
 const BLOCK_MESSAGE: Record<PayoutBlock, string> = {
   "open-request": "A payout is already under review.",
-  identity: "Add your payout details before you cash out.",
-  "below-minimum": `A payout takes at least ${economy.payout.minimumPoints.toLocaleString()} CapyPoints.`,
+  stripe: "Connect a Stripe account before you cash out.",
+  "stripe-pending": "Stripe is still checking your details. Try again once they clear.",
+  "below-minimum": `A payout takes at least ${usd(economy.payout.minimum)}.`,
 };
 
 /**
@@ -40,7 +45,7 @@ const BLOCK_MESSAGE: Record<PayoutBlock, string> = {
  * a second hold before it counted would let one balance answer two requests.
  *
  * The reversal of a payout is the one credit that counts before the cutoff. It
- * gives back points that already served the hold once, and a second hold on them
+ * gives back money that already served the hold once, and a second hold on them
  * would punish a member for a refusal that was not theirs. The exemption is
  * narrow on purpose: the reversal of anything else — a voided fee, say — serves
  * the hold like any other credit.
@@ -79,11 +84,11 @@ export async function getWithdrawable(
   return withdrawable(row?.matured ?? 0, row?.debits ?? 0);
 }
 
-async function findAccount(tx: Tx, userId: string) {
+async function findStripeAccount(tx: Tx, userId: string) {
   const [row] = await tx
     .select()
-    .from(schema.payoutAccount)
-    .where(eq(schema.payoutAccount.userId, userId))
+    .from(schema.stripeAccount)
+    .where(eq(schema.stripeAccount.userId, userId))
     .limit(1);
   return row ?? null;
 }
@@ -110,20 +115,21 @@ async function listRequests(tx: Tx, userId: string) {
 /** Everything the cash-out panel needs: what may leave, and what already asked to. */
 export async function getPayoutOverview(userId: string, now: Date = new Date()) {
   const [account, available, open, requests] = await Promise.all([
-    findAccount(db, userId),
+    findStripeAccount(db, userId),
     getWithdrawable(db, userId, now),
     countOpenRequests(db, userId),
     listRequests(db, userId),
   ]);
 
   return {
-    account,
+    stripeAccount: account,
     withdrawable: available,
-    minimumPoints: economy.payout.minimumPoints,
+    minimum: economy.payout.minimum,
     holdDays: economy.payout.holdDays,
     block: payoutBlock({
       withdrawable: available,
-      hasAccount: account !== null,
+      hasStripeAccount: account !== null,
+      payoutsEnabled: account?.payoutsEnabled ?? false,
       hasOpenRequest: open > 0,
     }),
     requests,
@@ -131,41 +137,110 @@ export async function getPayoutOverview(userId: string, now: Date = new Date()) 
 }
 
 /**
- * Identity on file. One account per member, replaced rather than versioned.
+ * Opens Stripe's onboarding for a member. The first call creates the connected
+ * account and the row; every call returns a fresh link, because a link lives
+ * for minutes and the dashboard never keeps one.
  *
- * It is frozen while a request is under review. An admin reads the destination
- * off the queue and then sends the money by hand, so a change between the two
- * would send it to an account nobody reviewed.
+ * The account is created and the row committed in one transaction, as the
+ * top-up does: if Stripe throws, no row is left behind that names an account
+ * Stripe never made. The link comes after the commit, on purpose. A link can
+ * fail for a reason the account did not — Stripe's hosted onboarding does not
+ * serve every country the account API does — and a rollback then would leave
+ * an account on Stripe that no row names, and the next press would make another.
+ *
+ * It is refused while a request is under review. The admin's approval pays the
+ * account on the row, so the row must not change under them.
  */
-export async function savePayoutAccount(
+export async function connectStripe(
   userId: string,
-  input: SavePayoutAccountInput,
+  email: string,
+  input: ConnectStripeInput,
   now: Date = new Date(),
 ) {
-  return db.transaction(async (tx) => {
+  const row = await db.transaction(async (tx) => {
     await lockMember(tx, userId);
     if ((await countOpenRequests(tx, userId)) > 0) {
       throw new HTTPException(409, {
-        message: "A payout is under review. Wait for it before you change these details.",
+        message: "A payout is under review. Wait for it before you change your Stripe account.",
       });
     }
 
-    const [row] = await tx
-      .insert(schema.payoutAccount)
-      .values({ id: crypto.randomUUID(), userId, ...input, createdAt: now, updatedAt: now })
-      .onConflictDoUpdate({
-        target: schema.payoutAccount.userId,
-        set: { ...input, updatedAt: now },
+    const existing = await findStripeAccount(tx, userId);
+    if (existing) return existing;
+
+    const account = await stripe.accounts.create(
+      accountParams({ country: input.country, email, userId }),
+    );
+    const [inserted] = await tx
+      .insert(schema.stripeAccount)
+      .values({
+        id: crypto.randomUUID(),
+        userId,
+        stripeAccountId: account.id,
+        country: input.country,
+        ...accountFlags(account),
+        createdAt: now,
+        updatedAt: now,
       })
       .returning();
-    if (!row) throw new HTTPException(500, { message: "Could not save the payout details" });
-    return row;
+    if (!inserted) throw new HTTPException(500, { message: "Could not save the Stripe account" });
+    return inserted;
   });
+
+  const link = await stripe.accountLinks.create({
+    account: row.stripeAccountId,
+    type: "account_onboarding",
+    return_url: input.returnUrl,
+    refresh_url: input.refreshUrl,
+  });
+  return { url: link.url };
+}
+
+/**
+ * Reads the account from Stripe and stores the flags. The dashboard calls it
+ * when the member comes back from Stripe, so the panel is right before the
+ * webhook lands.
+ */
+export async function refreshStripeAccount(userId: string, now: Date = new Date()) {
+  const row = await findStripeAccount(db, userId);
+  if (!row) throw new HTTPException(404, { message: "No Stripe account yet" });
+  const account = await stripe.accounts.retrieve(row.stripeAccountId);
+  const [updated] = await db
+    .update(schema.stripeAccount)
+    .set({ ...accountFlags(account), updatedAt: now })
+    .where(eq(schema.stripeAccount.id, row.id))
+    .returning();
+  if (!updated) throw new HTTPException(500, { message: "Could not save the Stripe account" });
+  return updated;
+}
+
+/**
+ * Stripe's word on a connected account, from the Connect webhook. The flags
+ * come from a fresh read of the account, not from the event: Stripe may
+ * deliver an old event after a newer one, and the payload would then put back
+ * a state the account has left. An event for an account no row names is not
+ * an error: Stripe may send one for an account the transaction in
+ * `connectStripe` rolled back.
+ */
+export async function applyConnectEvent(event: Stripe.Event, now: Date = new Date()) {
+  const change = connectEventChange(event);
+  if (!change) return;
+  const [row] = await db
+    .select({ id: schema.stripeAccount.id })
+    .from(schema.stripeAccount)
+    .where(eq(schema.stripeAccount.stripeAccountId, change.stripeAccountId))
+    .limit(1);
+  if (!row) return;
+  const account = await stripe.accounts.retrieve(change.stripeAccountId);
+  await db
+    .update(schema.stripeAccount)
+    .set({ ...accountFlags(account), updatedAt: now })
+    .where(eq(schema.stripeAccount.id, row.id));
 }
 
 /**
  * Opens a request for what the withdrawable balance is worth in whole cents, and
- * takes those points out of the account at once. The points leave now rather
+ * takes that amount out of the account at once. It leaves now rather
  * than at payment: a balance left in place would answer a second request, and it
  * would expire while an admin reviewed it.
  *
@@ -176,23 +251,24 @@ export async function requestPayout(userId: string, now: Date = new Date()) {
   return db.transaction(async (tx) => {
     await lockMember(tx, userId);
 
-    const account = await findAccount(tx, userId);
+    const account = await findStripeAccount(tx, userId);
     const available = await getWithdrawable(tx, userId, now);
     const open = await countOpenRequests(tx, userId);
     const block = payoutBlock({
       withdrawable: available,
-      hasAccount: account !== null,
+      hasStripeAccount: account !== null,
+      payoutsEnabled: account?.payoutsEnabled ?? false,
       hasOpenRequest: open > 0,
     });
     if (block) throw new HTTPException(409, { message: BLOCK_MESSAGE[block] });
 
-    const { points, usdCents } = payoutAmount(available);
+    const { amount, usdCents } = payoutAmount(available);
     const id = crypto.randomUUID();
     // The debit is posted before the row that names it, so a request can never
-    // exist without the entry that took its points.
+    // exist without the entry that took its amount.
     const entry = await postEntry(tx, {
       userId,
-      delta: -points,
+      delta: -amount,
       reason: "payout",
       lot: "earned",
       state: "settled",
@@ -202,14 +278,14 @@ export async function requestPayout(userId: string, now: Date = new Date()) {
     // The key carries a fresh id, so nothing can already hold it. If that ever
     // stops being true, the request must not open without the debit behind it:
     // a refusal reverses the entry this row names.
-    if (!entry.id) throw new HTTPException(500, { message: "Could not take the CapyPoints" });
+    if (!entry.id) throw new HTTPException(500, { message: "Could not take the money" });
 
     const [row] = await tx
       .insert(schema.payoutRequest)
       .values({
         id,
         userId,
-        points,
+        amount,
         usdCents,
         state: "requested",
         ledgerEntryId: entry.id,
@@ -333,11 +409,11 @@ export async function listPayoutQueue(now: Date = new Date()) {
     .select({
       request: schema.payoutRequest,
       owner: { id: schema.user.id, name: schema.user.name, email: schema.user.email },
-      account: schema.payoutAccount,
+      stripeAccount: schema.stripeAccount,
     })
     .from(schema.payoutRequest)
     .innerJoin(schema.user, eq(schema.user.id, schema.payoutRequest.userId))
-    .leftJoin(schema.payoutAccount, eq(schema.payoutAccount.userId, schema.payoutRequest.userId))
+    .leftJoin(schema.stripeAccount, eq(schema.stripeAccount.userId, schema.payoutRequest.userId))
     .where(eq(schema.payoutRequest.state, "requested"))
     .orderBy(schema.payoutRequest.createdAt);
 
@@ -360,7 +436,7 @@ export async function listPayoutQueue(now: Date = new Date()) {
     items: rows.map((row) => ({
       request: row.request,
       owner: { name: row.owner.name, email: row.owner.email },
-      account: row.account,
+      stripeAccount: row.stripeAccount,
       devices: byOwner.get(row.owner.id) ?? [],
     })),
   };
@@ -380,26 +456,72 @@ async function takeOpenRequest(tx: Tx, id: string) {
   return row;
 }
 
-/** Records one admin's decision on an open request. Both decisions close it. */
-async function decide(
-  id: string,
-  adminId: string,
-  now: Date,
-  decision: { state: "paid"; reference: string } | { state: "rejected"; rejectionReason: string },
-) {
+/**
+ * Every transfer carries its request id as its group, so a request's transfer
+ * can be found again without a row that names it. That is the guard against
+ * the one gap the transaction cannot close: a transfer that went out, and a
+ * row update that failed after it.
+ */
+function transferGroup(requestId: string): string {
+  return `payout:${requestId}`;
+}
+
+/** The transfer Stripe already made for this request, if one exists. */
+async function findTransfer(requestId: string): Promise<Stripe.Transfer | null> {
+  const page = await stripe.transfers.list({ transfer_group: transferGroup(requestId), limit: 1 });
+  return page.data[0] ?? null;
+}
+
+/**
+ * The money leaves. The amount already did, at the request, so nothing moves on
+ * the ledger here: this sends the Stripe Transfer and records it.
+ *
+ * The transfer runs inside the transaction, before the row changes. If Stripe
+ * throws, the row stays `requested` and the admin tries again. If the update
+ * fails after the transfer, the row still says `requested`, so the retry looks
+ * for a transfer in the request's group first and records the one it finds.
+ *
+ * The idempotency key is fresh on every attempt. Stripe keeps the first result
+ * under a key, a failure included, so a key made from the request id would
+ * hand back the first refusal for a day and no retry could ever pay. The key
+ * therefore covers only the SDK's own retries of one attempt; the group lookup
+ * is what stops a second payment. Neither path pays twice.
+ */
+export async function payPayout(id: string, adminId: string, now: Date = new Date()) {
   return db.transaction(async (tx) => {
     const request = await takeOpenRequest(tx, id);
-
-    // A refusal hands the points back. It reverses the debit with a compensating
-    // row and never edits it: the ledger is append-only, and a member who was
-    // refused must be able to read why their points came back.
-    if (decision.state === "rejected" && request.ledgerEntryId) {
-      await voidEntry(request.ledgerEntryId, now, tx);
+    const account = await findStripeAccount(tx, request.userId);
+    if (!account) {
+      throw new HTTPException(409, { message: "This member has no Stripe account" });
     }
+    if (!account.payoutsEnabled) {
+      throw new HTTPException(409, {
+        message: "Stripe has not cleared this account to receive money",
+      });
+    }
+
+    const transfer =
+      (await findTransfer(request.id)) ??
+      (await stripe.transfers.create(
+        {
+          amount: request.usdCents,
+          currency: "usd",
+          destination: account.stripeAccountId,
+          transfer_group: transferGroup(request.id),
+          metadata: { payoutRequestId: request.id, userId: request.userId },
+        },
+        { idempotencyKey: `${transferGroup(request.id)}:${crypto.randomUUID()}` },
+      ));
 
     const [row] = await tx
       .update(schema.payoutRequest)
-      .set({ ...decision, reviewedBy: adminId, reviewedAt: now })
+      .set({
+        state: "paid",
+        stripeTransferId: transfer.id,
+        reference: transfer.id,
+        reviewedBy: adminId,
+        reviewedAt: now,
+      })
       .where(eq(schema.payoutRequest.id, id))
       .returning();
     if (!row) throw new HTTPException(404, { message: "Payout not found" });
@@ -408,24 +530,36 @@ async function decide(
 }
 
 /**
- * The money left. The points already did, at the request, so nothing moves on
- * the ledger here: this records that the transfer went out and how to trace it.
+ * The admin refused the request, so the amount goes back. It reverses the debit
+ * with a compensating row and never edits it: the ledger is append-only, and a
+ * member who was refused must be able to read why their money came back.
+ *
+ * A request Stripe already paid cannot be refused: giving the amount back on
+ * top of the transfer would pay the member twice. The row says `requested`
+ * only when the update after the transfer failed, so the group lookup is what
+ * tells the two apart.
  */
-export async function payPayout(
-  id: string,
-  adminId: string,
-  reference: string,
-  now: Date = new Date(),
-) {
-  return decide(id, adminId, now, { state: "paid", reference });
-}
-
-/** The admin refused the request, so the points go back. */
 export async function rejectPayout(
   id: string,
   adminId: string,
   reason: string,
   now: Date = new Date(),
 ) {
-  return decide(id, adminId, now, { state: "rejected", rejectionReason: reason });
+  return db.transaction(async (tx) => {
+    const request = await takeOpenRequest(tx, id);
+    if (await findTransfer(request.id)) {
+      throw new HTTPException(409, {
+        message: "Stripe already paid this request. Press Pay to record the transfer.",
+      });
+    }
+    if (request.ledgerEntryId) await voidEntry(request.ledgerEntryId, now, tx);
+
+    const [row] = await tx
+      .update(schema.payoutRequest)
+      .set({ state: "rejected", rejectionReason: reason, reviewedBy: adminId, reviewedAt: now })
+      .where(eq(schema.payoutRequest.id, id))
+      .returning();
+    if (!row) throw new HTTPException(404, { message: "Payout not found" });
+    return row;
+  });
 }

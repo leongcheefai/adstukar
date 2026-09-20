@@ -1,14 +1,14 @@
+import { usd } from "@repo/config/money";
 import { Button, Card } from "@repo/ui";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
-import { pointsUsd } from "../../lib/money";
 import { usePayouts } from "../../lib/payouts";
 import { useStats } from "../../lib/stats";
 import { useTopups } from "../../lib/topups";
 import { CashOutDialog } from "../payouts/cash-out-dialog";
 import { StripeSetup } from "../payouts/stripe-setup";
 import { AddFundsButton } from "../topups/add-funds-button";
-import { BuyPointsDialog } from "../topups/buy-points-dialog";
+import { TopUpDialog } from "../topups/topup-dialog";
 
 /**
  * The two things a member wants from this page before the list itself: what
@@ -17,7 +17,7 @@ import { BuyPointsDialog } from "../topups/buy-points-dialog";
  * There is no referral cell. Referral is deferred past the MVP (GitHub #9), and
  * a link the API does not honour is a promise the page cannot keep.
  */
-export function PointsSummary() {
+export function WalletSummary() {
   const { data: stats } = useStats();
   const { data: payouts } = usePayouts();
   const { data: topups } = useTopups();
@@ -25,9 +25,10 @@ export function PointsSummary() {
   const [buyOpen, setBuyOpen] = useState(false);
   const [params, setParams] = useSearchParams();
   const wantsBuy = params.get("buy") === "1";
+  const wantsCashOut = params.get("cashout") === "1";
 
   // The Stripe onboarding tip lands here with ?buy=1, so the buy panel opens
-  // by itself once the packs are known. The flag leaves the URL at once: a
+  // by itself once the bounds are known. The flag leaves the URL at once: a
   // reload, or a saved link, must not reopen a payment panel.
   useEffect(() => {
     if (!wantsBuy || !topups) return;
@@ -41,9 +42,24 @@ export function PointsSummary() {
     );
   }, [wantsBuy, topups, setParams]);
 
+  // The return from Stripe lands with ?cashout=1, so the cash-out panel opens
+  // by itself once the overview is known. The flag leaves the URL at once.
+  useEffect(() => {
+    if (!wantsCashOut || !payouts) return;
+    setCashOutOpen(true);
+    setParams(
+      (prev) => {
+        prev.delete("cashout");
+        return prev;
+      },
+      { replace: true },
+    );
+  }, [wantsCashOut, payouts, setParams]);
+
   const settled = stats?.balance.settled ?? 0;
   const pending = stats?.balance.pending ?? 0;
-  const connected = Boolean(payouts?.account);
+  // Stripe has cleared the account. Before that the cell is the way to set it up.
+  const connected = Boolean(payouts?.stripeAccount?.payoutsEnabled);
 
   return (
     <>
@@ -54,7 +70,7 @@ export function PointsSummary() {
           <p data-slot="label" className="text-muted-foreground">
             Balance
           </p>
-          <p className="text-4xl font-normal tracking-tight tabular-nums">{pointsUsd(settled)}</p>
+          <p className="text-4xl font-normal tracking-tight tabular-nums">{usd(settled)}</p>
           {/* The way to grow the number sits under the number it grows. */}
           <AddFundsButton size="sm" onClick={() => setBuyOpen(true)} disabled={!topups} />
         </div>
@@ -67,7 +83,7 @@ export function PointsSummary() {
             Total earning
           </p>
           <p className="text-4xl font-normal tracking-tight tabular-nums">
-            {pointsUsd(settled + pending)}
+            {usd(settled + pending)}
           </p>
           {/* Holds the row the button takes in the first cell. */}
           <span className="h-8" aria-hidden="true" />
@@ -95,7 +111,7 @@ export function PointsSummary() {
         <CashOutDialog overview={payouts} open={cashOutOpen} onOpenChange={setCashOutOpen} />
       )}
 
-      {topups && <BuyPointsDialog overview={topups} open={buyOpen} onOpenChange={setBuyOpen} />}
+      {topups && <TopUpDialog overview={topups} open={buyOpen} onOpenChange={setBuyOpen} />}
     </>
   );
 }

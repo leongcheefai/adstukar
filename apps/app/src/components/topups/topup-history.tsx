@@ -1,7 +1,6 @@
-import { project } from "@repo/config/project";
+import { usdCents } from "@repo/config/money";
 import type { TopupHistoryItem, TopupState } from "@repo/contracts/types";
 import { Badge, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@repo/ui";
-import { usd } from "../../lib/money";
 
 const STATE_LABEL: Record<TopupState, string> = {
   pending: "Waiting for payment",
@@ -44,12 +43,12 @@ export function TopupHistory({ items }: { items: TopupHistoryItem[] }) {
                 <TableCell className="whitespace-nowrap">
                   {new Date(topup.createdAt).toLocaleDateString()}
                 </TableCell>
-                <TableCell className="tabular-nums">{usd(topup.usdCents)}</TableCell>
+                <TableCell className="tabular-nums">{usdCents(topup.usdCents)}</TableCell>
                 <TableCell>
                   <Badge variant={STATE_VARIANT[topup.state]}>{STATE_LABEL[topup.state]}</Badge>
                 </TableCell>
                 <TableCell className="text-muted-foreground tabular-nums">
-                  {topup.state === "refunded" ? `${usd(topup.refundUsdCents ?? 0)} back` : "—"}
+                  {topup.state === "refunded" ? `${usdCents(topup.refundUsdCents ?? 0)} back` : "—"}
                 </TableCell>
               </TableRow>
             ))}

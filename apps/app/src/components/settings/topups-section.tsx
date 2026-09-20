@@ -1,5 +1,5 @@
 import { Receipt } from "@phosphor-icons/react";
-import { project } from "@repo/config/project";
+import { usd, usdCents } from "@repo/config/money";
 import type { TopupRefundBlock, TopupReview, TopupState } from "@repo/contracts/types";
 import {
   AlertDialog,
@@ -26,8 +26,6 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 import { useRefundTopup, useTopupQueue } from "../../lib/admin";
-import { usd } from "../../lib/money";
-import { pointsUsd } from "../../lib/money";
 
 const STATE_LABEL: Record<TopupState, string> = {
   pending: "Waiting for payment",
@@ -73,7 +71,7 @@ function TopupReviewRow({
           {owner.email}
         </p>
       </TableCell>
-      <TableCell className="tabular-nums">{usd(topup.usdCents)}</TableCell>
+      <TableCell className="tabular-nums">{usdCents(topup.usdCents)}</TableCell>
       <TableCell>
         <Badge variant={topup.state === "paid" ? "success" : "neutral"}>
           {STATE_LABEL[topup.state]}
@@ -82,12 +80,12 @@ function TopupReviewRow({
       <TableCell>
         {topup.state === "refunded" && (
           <span className="text-muted-foreground tabular-nums">
-            {usd(topup.refundUsdCents ?? 0)} back
+            {usdCents(topup.refundUsdCents ?? 0)} back
           </span>
         )}
         {topup.state !== "refunded" && block === null && (
           <Button variant="outline" size="sm" onClick={() => onRefund(item)}>
-            Refund {pointsUsd(item.refundablePoints)} · {usd(item.refundNetCents)} back
+            Refund {usd(item.refundable)} · {usdCents(item.refundNetCents)} back
           </Button>
         )}
         {topup.state !== "refunded" && block !== null && (
@@ -116,7 +114,7 @@ export function TopupsSection() {
     refund.mutate(target.topup.id, {
       onSuccess: (row) => {
         toast.success(
-          `Refunded ${usd(row.refundUsdCents ?? 0)} for ${pointsUsd(row.refundedPoints ?? 0)} of unspent funds`,
+          `Refunded ${usdCents(row.refundUsdCents ?? 0)} of a ${usdCents(row.usdCents)} top-up`,
         );
         setTarget(null);
       },
@@ -132,7 +130,7 @@ export function TopupsSection() {
         <EmptyState
           icon={<Receipt />}
           title="No top-ups yet"
-          description="A purchase appears here once a member pays for a pack."
+          description="A top-up appears here once a member pays."
         />
       )}
 
@@ -168,7 +166,7 @@ export function TopupsSection() {
             <AlertDialogTitle>Refund this top-up?</AlertDialogTitle>
             <AlertDialogDescription>
               {target &&
-                `${target.owner.name} gets ${usd(target.refundNetCents)} back through Stripe, and ${pointsUsd(target.refundablePoints)} leaves their wallet. This cannot be undone.`}
+                `${target.owner.name} gets ${usdCents(target.refundNetCents)} back through Stripe, and ${usd(target.refundable)} leaves their wallet. This cannot be undone.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

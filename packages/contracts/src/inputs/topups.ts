@@ -1,11 +1,14 @@
+import { economy } from "@repo/config/economy";
 import * as z from "zod/v4";
 
 /**
- * A member picks a pack by its point amount, never by a price. The server looks
- * the pack up and stamps the price, so a browser can never name its own.
+ * A member names the amount in cents, never in a float dollar, so what Stripe
+ * charges and what the ledger records are the same integer. The bounds are on
+ * the schema, so a bad amount never reaches the service; the service checks
+ * them again to name the reason.
  */
 export const createTopupInput = z.object({
-  points: z.number().int().positive(),
+  usdCents: z.number().int().min(economy.topup.amount.minCents).max(economy.topup.amount.maxCents),
   successUrl: z.string().url(),
   cancelUrl: z.string().url(),
 });

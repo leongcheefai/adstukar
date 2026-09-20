@@ -1,4 +1,4 @@
-import { pointsUsd } from "../../lib/money";
+import { usd, usdSigned } from "@repo/config/money";
 import { useStats } from "../../lib/stats";
 import { DeltaBadge } from "../delta-badge";
 import { StatCard, StatCardSkeleton } from "../stat-card";
@@ -61,13 +61,9 @@ export function CampaignSummary({
         <>
           <StatCard
             label={LABELS.points}
-            value={pointsUsd(stats.balance.settled)}
+            value={usd(stats.balance.settled)}
             action={<AddFundsButton size="sm" onClick={onAddFunds} disabled={!onAddFunds} />}
-            meta={
-              pending !== 0
-                ? `${pending > 0 ? "+" : "−"}${pointsUsd(Math.abs(pending))} pending`
-                : undefined
-            }
+            meta={pending !== 0 ? `${usdSigned(pending)} pending` : undefined}
           />
           <StatCard
             label={LABELS.impressions}

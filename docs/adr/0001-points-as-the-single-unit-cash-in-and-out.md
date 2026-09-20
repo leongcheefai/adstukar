@@ -20,3 +20,8 @@ stays an integer and money touches only the two boundaries.
 - A spend consumes granted points first, then bought points, oldest first.
 - Any free-point mechanic (welcome grant, referral reward, barter credit) is a
   cash faucet if it is withdrawable. Grants must stay non-withdrawable.
+
+## Superseded in part
+
+The member-facing name "point" is gone (docs/adr/0007). The unit, the peg, and
+the lot rules above still hold; the code now calls the unit an amount.

@@ -1,10 +1,9 @@
-import { economy } from "@repo/config/economy";
+import { usd } from "@repo/config/money";
 import type { StatsDay } from "@repo/contracts/types";
 import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@repo/ui";
 import { useId } from "react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { shortDay } from "../../lib/day-label";
-import { pointsUsd } from "../../lib/money";
 import {
   CHART_HEIGHT,
   ChartBodySkeleton,
@@ -13,43 +12,41 @@ import {
   ChartCardFigureSkeleton,
 } from "./chart-card";
 
-/** Days of history the card reports. Short enough that every point gets a dot. */
+/** Days of history the card reports. Short enough that every day gets a dot. */
 const WINDOW_DAYS = 14;
 
 const TITLE = "Earnings history";
 const DESCRIPTION = `Daily earnings from the past ${WINDOW_DAYS} days`;
 
 const chartConfig = {
-  usd: { label: "Earned (USD)", color: "var(--chart-1)" },
+  earned: { label: "Earned", color: "var(--chart-1)" },
 } satisfies ChartConfig;
 
 interface PayoutDay {
   label: string;
-  points: number;
-  /** The same sum in dollars. The chart draws this one. */
-  usd: number;
+  earned: number;
 }
 
 /**
- * A day of plays turned into the points it paid.
+ * A day of plays turned into the money it paid.
  *
  * The API already nets the fee off the earn, so this reads one field rather than
  * multiplying by a rate. A rate would be wrong anyway: it is tier by format now,
  * and one member may hold devices in several tiers.
  */
 function toPayout(day: StatsDay): PayoutDay {
-  return { label: shortDay(day.day), points: day.earned, usd: day.earned / economy.pointsPerUsd };
+  return { label: shortDay(day.day), earned: day.earned };
 }
 
 /**
- * Daily money paid for the plays a member's devices ran.
+ * Daily earnings for the plays a member's devices ran.
  *
  * One series, so it takes an area rather than a line: the fill carries the
  * total the header states, and a single line would leave that quantity unread.
  */
 export function PayoutHistory({ data }: { data: StatsDay[] }) {
   const rows = data.slice(-WINDOW_DAYS).map(toPayout);
-  const total = rows.reduce((sum, row) => sum + row.points, 0);
+  const total = rows.reduce((sum, row) => sum + row.earned, 0);
   // useId returns colons, which are not valid in a CSS url() reference.
   const fillId = `payout-fill-${useId().replace(/:/g, "")}`;
 
@@ -63,7 +60,7 @@ export function PayoutHistory({ data }: { data: StatsDay[] }) {
     <ChartCard
       title={TITLE}
       description={DESCRIPTION}
-      meta={<ChartCardFigure>{pointsUsd(total)}</ChartCardFigure>}
+      meta={<ChartCardFigure>{usd(total)}</ChartCardFigure>}
     >
       <ChartContainer
         config={chartConfig}
@@ -94,15 +91,17 @@ export function PayoutHistory({ data }: { data: StatsDay[] }) {
             axisLine={false}
             tickMargin={4}
             tickCount={3}
-            tickFormatter={(value: number) => `$${value}`}
-            width={52}
+            tickFormatter={usd}
+            width={56}
           />
-          <ChartTooltip content={<ChartTooltipContent />} />
-          {/* Linear, not monotone: a spline invents points between two days
+          <ChartTooltip
+            content={<ChartTooltipContent formatter={(value) => usd(Number(value))} />}
+          />
+          {/* Linear, not monotone: a spline invents values between two days
               that no play was counted on. */}
           <Area
             type="linear"
-            dataKey="usd"
+            dataKey="earned"
             stroke="var(--chart-1)"
             strokeWidth={2}
             fill={`url(#${fillId})`}

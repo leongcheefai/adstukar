@@ -1,5 +1,8 @@
 # A payout is manual, and an admin reviews the history before the money leaves
 
+> Status: the payment step and the account form are superseded by
+> docs/adr/0008. The review and the ledger rules below still stand.
+
 A distributor turns earned points into money. We pay by hand for the MVP: a
 distributor asks, an admin reads the history behind the request, sends the money
 through a bank transfer or PayPal, and types the reference back in. Move to

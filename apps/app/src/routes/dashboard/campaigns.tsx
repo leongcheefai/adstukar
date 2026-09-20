@@ -13,7 +13,7 @@ import { Navigate, useNavigate, useSearchParams } from "react-router";
 import { CampaignSummary } from "../../components/campaigns/campaign-summary";
 import { SlotRow } from "../../components/campaigns/slot-row";
 import { SlotTicker } from "../../components/campaigns/slot-ticker";
-import { BuyPointsDialog } from "../../components/topups/buy-points-dialog";
+import { TopUpDialog } from "../../components/topups/topup-dialog";
 import { useCampaigns } from "../../lib/campaigns";
 import {
   type SlotPosition,
@@ -156,7 +156,7 @@ export function CampaignsPage() {
         )}
       </Card>
 
-      {topups && <BuyPointsDialog overview={topups} open={buyOpen} onOpenChange={setBuyOpen} />}
+      {topups && <TopUpDialog overview={topups} open={buyOpen} onOpenChange={setBuyOpen} />}
     </div>
   );
 }

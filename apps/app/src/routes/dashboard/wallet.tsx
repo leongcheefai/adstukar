@@ -1,5 +1,4 @@
 import { Coins } from "@phosphor-icons/react";
-import { project } from "@repo/config/project";
 import type { LedgerLot, LedgerReason, LedgerState } from "@repo/contracts/types";
 import {
   Badge,
@@ -21,11 +20,11 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { LedgerRow } from "../../components/ledger/ledger-row";
-import { PointsSummary } from "../../components/ledger/points-summary";
+import { WalletSummary } from "../../components/ledger/wallet-summary";
 import { PayoutRequests } from "../../components/payouts/payout-requests";
 import { TopupHistory } from "../../components/topups/topup-history";
 import { useLedger } from "../../lib/ledger";
-import { usePayouts } from "../../lib/payouts";
+import { usePayouts, useRefreshStripeAccount } from "../../lib/payouts";
 import { useRefreshMoney, useTopups } from "../../lib/topups";
 
 const REASONS: { value: LedgerReason | "all"; label: string }[] = [
@@ -41,7 +40,7 @@ const REASONS: { value: LedgerReason | "all"; label: string }[] = [
   { value: "void", label: "Void" },
 ];
 
-/** The lot decides what a point may do, so it filters beside the reason. */
+/** The lot decides what the money may do, so it filters beside the reason. */
 const LOTS: { value: LedgerLot | "all"; label: string }[] = [
   { value: "all", label: "All lots" },
   { value: "bought", label: "Bought" },
@@ -57,7 +56,7 @@ const STATES: { value: LedgerState | "all"; label: string }[] = [
 ];
 
 /**
- * Stripe sends the member back here after a checkout. The points arrive through
+ * Stripe sends the member back here after a checkout. The money arrives through
  * the webhook, not through this redirect, so the page says the payment landed
  * and asks for the balance again rather than claiming a number it cannot know.
  */
@@ -80,10 +79,47 @@ function useTopupReturn() {
   }, [outcome, params, setParams, refresh]);
 }
 
+/**
+ * Stripe sends the member back here after onboarding. `return` means the form
+ * is done, and `refresh` means the link expired. Either way the panel reopens,
+ * with `?cashout=1`, and the flags come from Stripe rather than from the
+ * webhook, which may not have landed yet.
+ */
+function useStripeReturn() {
+  const [params, setParams] = useSearchParams();
+  const refresh = useRefreshStripeAccount();
+  const outcome = params.get("stripe");
+
+  // `refresh` is a fresh mutation object each render; naming it would loop.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: refresh.mutate is stable across renders
+  useEffect(() => {
+    if (!outcome) return;
+    if (outcome === "return") {
+      refresh.mutate(undefined, {
+        onSuccess: (account) =>
+          toast.success(
+            account.payoutsEnabled
+              ? "Stripe account ready. You may ask for a payout."
+              : "Stripe is checking your details. It usually takes a few minutes.",
+          ),
+        onError: (err) => toast.error(err.message),
+      });
+    }
+    if (outcome === "refresh") toast.info("The Stripe link expired. Try again.");
+    // The message belongs to the return, not to the page: leaving it in the URL
+    // would repeat it on every reload. The panel opens itself off the flag it
+    // leaves behind.
+    params.delete("stripe");
+    params.set("cashout", "1");
+    setParams(params, { replace: true });
+  }, [outcome, params, setParams]);
+}
+
 export function LedgerPage() {
   const { data: payouts } = usePayouts();
   const { data: topups } = useTopups();
   useTopupReturn();
+  useStripeReturn();
   const [reason, setReason] = useState<LedgerReason | "all">("all");
   const [state, setState] = useState<LedgerState | "all">("all");
   const [lot, setLot] = useState<LedgerLot | "all">("all");
@@ -101,7 +137,7 @@ export function LedgerPage() {
         <Coins size={24} weight="fill" aria-hidden="true" className="text-primary" />
       </h1>
 
-      <PointsSummary />
+      <WalletSummary />
 
       <PayoutRequests requests={payouts?.requests ?? []} />
 

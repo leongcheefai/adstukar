@@ -1,56 +1,61 @@
-import { economy } from "@repo/config/economy";
+import { centsToAmount, economy } from "@repo/config/economy";
+import { usdCents } from "@repo/config/money";
 import { project } from "@repo/config/project";
 import type { CreateTopupInput } from "@repo/contracts";
 import { db, schema } from "@repo/db";
-import type { TopupRefundBlock } from "@repo/db/enums";
+import type { TopupAmountBlock, TopupRefundBlock } from "@repo/db/enums";
 import { and, desc, eq, inArray, isNotNull } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import { stripe } from "../../lib/stripe";
 import { type Tx, getLotBalances, lockMember, postEntry } from "../ledger/ledger.service";
-import { findPack, refundAmount, refundBlock, unspentByTopup } from "./packs";
+import { refundAmount, refundBlock, topupAmountBlock, unspentByTopup } from "./amounts";
 
 /**
- * The database side of a top-up. An advertiser picks a pack, pays Stripe, and
- * the webhook posts the points against the `bought` lot. A refund inside the
+ * The database side of a top-up. An advertiser names an amount, pays Stripe, and
+ * the webhook posts the amount against the `bought` lot. A refund inside the
  * window takes the unspent part back at the peg, less what the processor kept.
  *
- * The rules themselves are pure and live in `packs.ts`.
+ * The rules themselves are pure and live in `amounts.ts`.
  */
 
 /** What a member is told when a refund cannot go ahead. */
 const BLOCK_MESSAGE: Record<TopupRefundBlock, string> = {
   "not-paid": "This top-up has no money to give back.",
   "window-closed": `A refund runs for ${economy.topup.refundWindowDays} days after the payment.`,
-  "nothing-left": `Those ${project.pointsName} are spent. Only unspent ${project.pointsName} refund.`,
+  "nothing-left": "That money is spent. Only an unspent top-up refunds.",
   "below-fee": "The card fee is more than this refund is worth.",
 };
 
+/** What a member is told when the amount is out of bounds. */
+const AMOUNT_MESSAGE: Record<TopupAmountBlock, string> = {
+  "below-minimum": `A top-up is at least ${usdCents(economy.topup.amount.minCents)}.`,
+  "above-maximum": `A top-up is at most ${usdCents(economy.topup.amount.maxCents)}.`,
+};
+
 /**
- * Opens a checkout for one pack.
+ * Opens a checkout for one amount.
  *
  * The row goes in before the Stripe call, so a session can never exist without
  * the row the webhook looks for. The Stripe call then runs inside the same
  * transaction: if it throws, the row rolls back with it and no dead pending
  * top-up is left behind.
  *
- * The price comes from the pack, never from the request. A browser names an
- * amount of points and nothing else.
+ * The price is the amount the member named, inside the bounds the config sets.
+ * The ledger amount derives from it at the peg, so the two can never disagree.
  */
 export async function createTopupCheckout(userId: string, input: CreateTopupInput) {
-  const pack = findPack(input.points);
-  if (!pack) {
-    throw new HTTPException(400, {
-      message: `That is not a ${project.pointsName} pack we sell`,
-    });
-  }
+  const block = topupAmountBlock(input.usdCents);
+  if (block) throw new HTTPException(400, { message: AMOUNT_MESSAGE[block] });
+  const usdCentsPaid = input.usdCents;
+  const amount = centsToAmount(usdCentsPaid);
 
   return db.transaction(async (tx) => {
     const id = crypto.randomUUID();
     await tx.insert(schema.topup).values({
       id,
       userId,
-      points: pack.points,
-      usdCents: pack.usdCents,
+      amount,
+      usdCents: usdCentsPaid,
       state: "pending",
     });
 
@@ -61,10 +66,10 @@ export async function createTopupCheckout(userId: string, input: CreateTopupInpu
           quantity: 1,
           price_data: {
             currency: "usd",
-            unit_amount: pack.usdCents,
+            unit_amount: usdCentsPaid,
             product_data: {
-              name: `${pack.points.toLocaleString()} ${project.pointsName}`,
-              description: `${project.name} advertising credit`,
+              name: `${usdCents(usdCentsPaid)} advertising credit`,
+              description: project.name,
             },
           },
         },
@@ -88,11 +93,11 @@ export async function createTopupCheckout(userId: string, input: CreateTopupInpu
 }
 
 /**
- * Puts the points in, once the money is in. Called from the Stripe webhook.
+ * Puts the money in, once Stripe has it. Called from the Stripe webhook.
  *
  * The ledger entry is keyed on the payment, so a webhook Stripe sends twice
- * posts the points once. The row moves to `paid` in the same transaction, so
- * the points and the record of the sale can never disagree.
+ * posts the amount once. The row moves to `paid` in the same transaction, so
+ * the ledger and the record of the sale can never disagree.
  */
 export async function recordPaidTopup(
   input: { topupId: string; paymentIntentId: string; sessionId: string },
@@ -107,14 +112,14 @@ export async function recordPaidTopup(
       .for("update");
     if (!row) return null;
     // A session that expired and then paid is rare but possible, and the money
-    // decides. Only a top-up whose points already went in is left alone.
+    // decides. Only a top-up whose money already went in is left alone.
     if (row.state === "paid" || row.state === "refunded") return row;
 
     await lockMember(tx, row.userId);
     const key = `topup:${input.paymentIntentId}`;
     const entry = await postEntry(tx, {
       userId: row.userId,
-      delta: row.points,
+      delta: row.amount,
       reason: "topup",
       lot: "bought",
       state: "settled",
@@ -123,7 +128,7 @@ export async function recordPaidTopup(
     });
 
     // A repeat of the same payment posts nothing and returns no id. The entry is
-    // still the one that holds these points, and the refund reverses it by name,
+    // still the one that holds this money, and the refund reverses it by name,
     // so read it back rather than leaving the row without its entry.
     const ledgerEntryId = entry.id ?? (await findEntryIdByKey(tx, key));
 
@@ -163,26 +168,26 @@ export async function abandonTopup(topupId: string) {
 /** One top-up, with what it may still give back today. */
 export interface TopupHistoryItem {
   topup: typeof schema.topup.$inferSelect;
-  refundablePoints: number;
+  refundable: number;
   refundNetCents: number;
   block: TopupRefundBlock | null;
 }
 
 /**
- * The unspent points of every top-up this member ever paid for, keyed by id.
+ * The unspent part of every top-up this member ever paid for, keyed by id.
  *
  * It reads every paid top-up, never a page of them: the allocation walks the
  * whole history from the oldest purchase, and a truncated list would hand the
  * balance to the wrong rows. `paidAt` is the test, because a row that never took
- * money put no points in.
+ * money put nothing in.
  */
 async function unspentByTopupId(tx: Tx, userId: string): Promise<Map<string, number>> {
   const [rows, balances] = await Promise.all([
     tx
       .select({
         id: schema.topup.id,
-        points: schema.topup.points,
-        refundedPoints: schema.topup.refundedPoints,
+        amount: schema.topup.amount,
+        refunded: schema.topup.refunded,
       })
       .from(schema.topup)
       .where(and(eq(schema.topup.userId, userId), isNotNull(schema.topup.paidAt)))
@@ -191,7 +196,7 @@ async function unspentByTopupId(tx: Tx, userId: string): Promise<Map<string, num
   ]);
 
   const unspent = unspentByTopup(
-    rows.map((row) => ({ points: row.points, refunded: row.refundedPoints ?? 0 })),
+    rows.map((row) => ({ amount: row.amount, refunded: row.refunded ?? 0 })),
     balances.bought,
   );
   return new Map(rows.map((row, i) => [row.id, unspent[i] ?? 0]));
@@ -206,12 +211,12 @@ function toHistoryItem(
   const money = refundAmount(unspent, row);
   return {
     topup: row,
-    refundablePoints: money.points,
+    refundable: money.amount,
     refundNetCents: money.netCents,
     block: refundBlock({
       state: row.state,
       paidAt: row.paidAt,
-      refundablePoints: money.points,
+      refundable: money.amount,
       netCents: money.netCents,
       now,
     }),
@@ -231,7 +236,7 @@ export async function getTopupOverview(userId: string, now: Date = new Date()) {
   ]);
 
   return {
-    packs: economy.topup.packs.map((pack) => ({ ...pack })),
+    amount: { ...economy.topup.amount, presetsCents: [...economy.topup.amount.presetsCents] },
     refundWindowDays: economy.topup.refundWindowDays,
     items: rows.map((row) => toHistoryItem(row, unspent.get(row.id) ?? 0, now)),
   };
@@ -259,7 +264,7 @@ export async function listTopupQueue(now: Date = new Date()) {
   const owners = [...new Set(rows.map((row) => row.owner.id))];
   const unspent = new Map<string, number>();
   for (const perOwner of await Promise.all(owners.map((id) => unspentByTopupId(db, id)))) {
-    for (const [id, points] of perOwner) unspent.set(id, points);
+    for (const [id, amount] of perOwner) unspent.set(id, amount);
   }
 
   return {
@@ -276,12 +281,12 @@ export async function listTopupQueue(now: Date = new Date()) {
  * asks, and the route that calls this sits behind the admin guard.
  *
  * It runs in two steps, and the order is the whole point. The transaction takes
- * the points and records the refund, and only then does the money go out. The
+ * the amount and records the refund, and only then does the money go out. The
  * reverse order — paying inside the transaction — loses the money outright if
  * the commit then fails: the debit rolls back, and the member keeps both the
- * points and the cash.
+ * balance and the cash.
  *
- * So a refund can rest, briefly, in a state where the points are gone and the
+ * So a refund can rest, briefly, in a state where the balance is gone and the
  * money has not left. That state is visible (`refunded` with no
  * `stripeRefundId`) and it is retried by asking again: Stripe carries the
  * top-up id as its idempotency key, so a second try either finishes the first
@@ -296,7 +301,7 @@ export async function refundTopup(topupId: string, now: Date = new Date()) {
 }
 
 /**
- * Takes the points and records the refund, under the member's lock. No network
+ * Takes the amount and records the refund, under the member's lock. No network
  * call happens here: the lock is the one every movement on this purse queues
  * behind, and holding it across a call to Stripe would stall a screen's report.
  */
@@ -321,16 +326,12 @@ async function openRefund(topupId: string, now: Date) {
       .for("update");
     if (!row) throw new HTTPException(404, { message: "Top-up not found" });
 
-    // The points already left on an earlier try and only the money is owed.
+    // The amount already left on an earlier try and only the money is owed.
     // Nothing more to take, so go straight on to sending it.
     if (row.state === "refunded" && !row.stripeRefundId) return row;
 
     const unspent = await unspentByTopupId(tx, userId);
-    const { refundablePoints, refundNetCents, block } = toHistoryItem(
-      row,
-      unspent.get(row.id) ?? 0,
-      now,
-    );
+    const { refundable, refundNetCents, block } = toHistoryItem(row, unspent.get(row.id) ?? 0, now);
     if (block) throw new HTTPException(409, { message: BLOCK_MESSAGE[block] });
     if (!row.stripePaymentIntentId) {
       throw new HTTPException(409, { message: "This top-up has no payment to refund" });
@@ -338,7 +339,7 @@ async function openRefund(topupId: string, now: Date) {
 
     const entry = await postEntry(tx, {
       userId,
-      delta: -refundablePoints,
+      delta: -refundable,
       reason: "refund",
       lot: "bought",
       state: "settled",
@@ -350,7 +351,7 @@ async function openRefund(topupId: string, now: Date) {
     // already hold it. If that ever stops being true, the money must not go out
     // without the debit behind it.
     if (!entry.id) {
-      throw new HTTPException(500, { message: `Could not take the ${project.pointsName} back` });
+      throw new HTTPException(500, { message: "Could not take the money back" });
     }
 
     // The whole unspent part goes at once, so the row closes here. What the
@@ -359,7 +360,7 @@ async function openRefund(topupId: string, now: Date) {
       .update(schema.topup)
       .set({
         state: "refunded",
-        refundedPoints: refundablePoints,
+        refunded: refundable,
         refundUsdCents: refundNetCents,
         refundLedgerEntryId: entry.id,
         refundedAt: now,
@@ -372,7 +373,7 @@ async function openRefund(topupId: string, now: Date) {
 }
 
 /**
- * Sends the money for a refund the ledger has already taken the points for, and
+ * Sends the money for a refund the ledger has already taken the amount for, and
  * stamps the reference. The Stripe idempotency key is the top-up id, so a retry
  * after a failure here returns the first payment rather than sending a second.
  */

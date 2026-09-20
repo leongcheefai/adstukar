@@ -1,4 +1,4 @@
-import { economy } from "@repo/config/economy";
+import { centsToAmount, economy } from "@repo/config/economy";
 import type { CampaignWithListings, Listing } from "@repo/contracts/types";
 import { TICKER_ADS } from "../components/capychannel/ads";
 
@@ -28,8 +28,8 @@ export function clipCopy(text: string, max: number): string {
         .trimEnd()}…`;
 }
 
-/** The flat price of one term, in points at the peg. */
-export const SLOT_PRICE_POINTS = (economy.slot.priceUsdCents * economy.pointsPerUsd) / 100;
+/** The flat price of one term, as a ledger amount. */
+export const SLOT_PRICE = centsToAmount(economy.slot.priceUsdCents);
 
 export type SlotStatus =
   /** On the ticker now. */

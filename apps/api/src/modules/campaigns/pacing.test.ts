@@ -3,7 +3,7 @@ import {
   cheapestPlay,
   listingBudgets,
   outOfBudget,
-  outOfPoints,
+  outOfFunds,
   readyToResume,
   shareByListing,
   splitBudget,
@@ -84,17 +84,17 @@ describe("outOfBudget", () => {
   });
 });
 
-describe("outOfPoints", () => {
+describe("outOfFunds", () => {
   it("says yes on an empty purse", () => {
-    expect(outOfPoints(0)).toBe(true);
+    expect(outOfFunds(0)).toBe(true);
   });
 
   it("says yes on a purse that holds less than one play", () => {
-    expect(outOfPoints(cheapestPlay() - 1)).toBe(true);
+    expect(outOfFunds(cheapestPlay() - 1)).toBe(true);
   });
 
   it("says no once the purse covers one play", () => {
-    expect(outOfPoints(cheapestPlay())).toBe(false);
+    expect(outOfFunds(cheapestPlay())).toBe(false);
   });
 });
 

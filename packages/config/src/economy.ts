@@ -1,13 +1,17 @@
 /**
  * Every economy number lives here. Routes, services, jobs, and the dashboard
- * read these values; none of them hardcodes a point amount or a cap.
+ * read these values; none of them hardcodes an amount or a cap.
  *
- * A point is the only unit inside the system. Money crosses the boundary twice:
- * a top-up buys points, and a payout sells them back. See docs/adr/0001.
+ * The ledger holds one integer unit: one thousandth of a US dollar. Money
+ * crosses the boundary twice: a top-up puts it in, and a payout takes it out.
+ * See docs/adr/0001 and docs/adr/0007.
  */
 export const economy = {
-  /** Points in one US dollar. The peg is fixed, so `delta` stays an integer. */
-  pointsPerUsd: 1000,
+  /**
+   * The ledger unit. `perUsd` units make one US dollar, so `delta` stays an
+   * integer and a play rate below one cent is still a whole number.
+   */
+  unit: { perUsd: 1000 },
 
   /**
    * What an advertiser pays for one play, by device tier and placement format.
@@ -41,7 +45,7 @@ export const economy = {
   caps: {
     /** Plays one device may be paid for in one day. */
     dailyPlaysPerDevice: 500,
-    /** Points one campaign may spend in one day, unless the advertiser sets less. */
+    /** The most one campaign may spend in one day, unless the advertiser sets less. */
     defaultDailyBudget: 20_000,
     /** The least a campaign may set as its daily budget. */
     minDailyBudget: 1_000,
@@ -51,10 +55,24 @@ export const economy = {
   settlementDelayHours: 24,
 
   payout: {
-    /** Days after settlement before earned points may leave as a payout. */
+    /** Days after settlement before earned money may leave as a payout. */
     holdDays: 30,
-    /** The fewest points one payout may take. */
-    minimumPoints: 10_000,
+    /** The least one payout may take, as an amount. */
+    minimum: 10_000,
+    /**
+     * The country of the CapyAds Stripe platform account. A connected account
+     * in the same country may hold the `transfers` capability alone; one in any
+     * other country must hold `card_payments` too, and Stripe then collects the
+     * merchant requirements. Set it to what the live Stripe account says.
+     */
+    platformCountry: "SG",
+    /**
+     * Where a connected Stripe account may live, ISO 3166-1 alpha-2. Stripe
+     * limits the list per platform country, so the select offers only these,
+     * and the first is the default. Probed against the sandbox on 2026-09-19:
+     * ID, PH, VN and IN are refused. Probe again before launch.
+     */
+    countries: ["MY", "SG", "TH", "US", "GB", "AU", "JP", "HK"],
     /**
      * Days of device history the fraud review reads before an admin pays. It
      * matches the hold, so the window an admin looks at is the window the hold
@@ -77,23 +95,23 @@ export const economy = {
 
   /**
    * Months after settlement when an earned or granted entry expires. Bought
-   * points never expire: somebody paid money for them.
+   * money never expires: somebody paid for it.
    */
   expiryMonths: 12,
 
   topup: {
     /**
-     * What a top-up sells. Every price follows the peg exactly, and no pack
-     * carries a bonus: a bonus point is not a bought point, so a refund of it
-     * would have no honest rate (docs/adr/0001).
+     * What a top-up may be. Any whole-cent amount between the bounds, and the
+     * presets are the quick buttons. Every amount is at the peg and none carries
+     * a bonus: a bonus is not bought money, so a refund of it would have no
+     * honest rate (docs/adr/0001).
      */
-    packs: [
-      { points: 10_000, usdCents: 1_000 },
-      { points: 25_000, usdCents: 2_500 },
-      { points: 100_000, usdCents: 10_000 },
-      { points: 250_000, usdCents: 25_000 },
-    ],
-    /** Days after payment in which unspent bought points may go back as money. */
+    amount: {
+      minCents: 1_000,
+      maxCents: 100_000,
+      presetsCents: [1_000, 2_500, 10_000, 25_000],
+    },
+    /** Days after payment in which the unspent part of a top-up may go back as money. */
     refundWindowDays: 30,
     /**
      * What the card processor keeps on a sale, in basis points and whole cents.
@@ -172,7 +190,7 @@ export const economy = {
 
   /**
    * The distributor's own promotion, played free when nothing paid is eligible.
-   * It moves no points, so it carries no rate — only what fits on the overlay.
+   * It moves no money, so it carries no rate — only what fits on the overlay.
    */
   promotion: {
     taglineMaxLength: 60,
@@ -194,6 +212,7 @@ export const DAY_MS = 86_400_000;
 export type Economy = typeof economy;
 export type DeviceTierRate = keyof typeof economy.playRate;
 export type PlacementFormatRate = keyof (typeof economy.playRate)["standard"];
+export type PayoutCountry = (typeof economy.payout.countries)[number];
 
 /** The advertiser's cost for one play. */
 export function playCost(tier: DeviceTierRate, format: PlacementFormatRate): number {
@@ -206,8 +225,8 @@ export function scanCost(tier: DeviceTierRate): number {
 }
 
 /**
- * The points CapyAds keeps from one movement. Rounded down, so the distributor
- * never loses a point to rounding and the two sides always add up.
+ * The amount CapyAds keeps from one movement. Rounded down, so the distributor
+ * never loses a unit to rounding and the two sides always add up.
  */
 export function feeOn(amount: number): number {
   return Math.floor((amount * economy.feePercent) / 100);
@@ -228,15 +247,15 @@ export function distributorPercent(): number {
 }
 
 /**
- * The points the distributor keeps from one movement: the amount less the fee.
+ * The amount the distributor keeps from one movement: the amount less the fee.
  * The fee rounds down, so this rounds up, and the two always add to the amount.
  */
 export function distributorKeeps(amount: number): number {
   return amount - feeOn(amount);
 }
 
-/** A range of points, lowest to highest. */
-export interface PointRange {
+/** A range of amounts, lowest to highest. */
+export interface AmountRange {
   lowest: number;
   highest: number;
 }
@@ -248,8 +267,8 @@ export interface PointRange {
  */
 export interface RateRow {
   tier: DeviceTierRate;
-  play: PointRange;
-  playKeeps: PointRange;
+  play: AmountRange;
+  playKeeps: AmountRange;
   scan: number;
   scanKeeps: number;
 }
@@ -276,18 +295,18 @@ export function rateTable(): RateRow[] {
 }
 
 /**
- * The money a number of points is worth, in US cents. It rounds down, so a part
- * of a cent never becomes money we cannot pay.
+ * The money an amount is worth, in US cents. It rounds down, so a part of a
+ * cent never becomes money we cannot pay.
  */
-export function pointsToUsdCents(points: number): number {
-  return Math.floor((points * 100) / economy.pointsPerUsd);
+export function amountToCents(amount: number): number {
+  return Math.floor((amount * 100) / economy.unit.perUsd);
 }
 
 /**
- * The points a number of US cents is worth. A payout takes this rather than the
- * whole balance, so the part of a cent that `pointsToUsdCents` rounded away
+ * The amount a number of US cents is worth. A payout takes this rather than
+ * the whole balance, so the part of a cent that `amountToCents` rounded away
  * stays in the member's account and rolls over to the next payout.
  */
-export function usdCentsToPoints(cents: number): number {
-  return (cents * economy.pointsPerUsd) / 100;
+export function centsToAmount(cents: number): number {
+  return (cents * economy.unit.perUsd) / 100;
 }

@@ -12,9 +12,9 @@ const POINTS = [
  * The way to a payout account, in the cell the money leaves from. It stands in
  * the place of the cash-out button until the member has somewhere to be paid.
  *
- * Design only for now. The API has no Stripe Connect route, and a payout is
- * still paid by hand (docs/adr/0005). So "connected" reads the payout account
- * on file, and the button opens the dialog that takes those details.
+ * The button opens the cash-out panel, which sends the member to Stripe's
+ * hosted onboarding (docs/adr/0008). The cell changes to the cash-out button
+ * once Stripe says the account may take payouts.
  */
 export function StripeSetup({ onSetUp, disabled }: { onSetUp: () => void; disabled: boolean }) {
   return (
