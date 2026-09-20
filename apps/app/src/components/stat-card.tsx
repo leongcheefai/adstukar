@@ -29,6 +29,7 @@ export function StatCard({
   meta,
   delta,
   icon,
+  action,
 }: {
   label: string;
   value: string;
@@ -38,6 +39,8 @@ export function StatCard({
   delta?: React.ReactNode;
   /** Sits left of the figure. Decorative — the label already names the unit. */
   icon?: React.ReactNode;
+  /** A control for the figure, at the right of it. It is a sibling of the figure, never inside it. */
+  action?: React.ReactNode;
 }) {
   return (
     <StatShell
@@ -57,7 +60,7 @@ export function StatCard({
           type, so a centred badge floats halfway up the figure. On the baseline
           the two rows of digits sit on one line. The icon carries no baseline
           to share, so it keeps the centre. */}
-      <p className="flex w-full items-baseline gap-3 text-4xl font-normal tracking-tight tabular-nums">
+      <p className="flex min-w-0 flex-1 items-baseline gap-3 text-4xl font-normal tracking-tight tabular-nums">
         {value}
         {delta}
         {icon && (
@@ -66,6 +69,7 @@ export function StatCard({
           </span>
         )}
       </p>
+      {action && <div className="shrink-0">{action}</div>}
     </StatShell>
   );
 }

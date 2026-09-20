@@ -263,7 +263,9 @@ body {
    outranks the Tailwind utilities the primitives carry.
    ============================================================================= */
 
-[data-slot="label"],
+/* `data-plain` opts a label out: a form a member fills in reads better in the
+   sans face and in sentence case than in the mono eyebrow. */
+[data-slot="label"]:not([data-plain]),
 [data-slot="badge"]:not([data-usertext]) {
   font-family: var(--font-mono);
   font-size: 10px;
@@ -325,7 +327,9 @@ body {
    Greeting
 
    The one place the dashboard speaks to the person rather than about the data,
-   so it gets the display face and the top of the type scale.
+   so it gets the display face and the top of the type scale. It is the one
+   exception to the 24px page title: every other page names a place, and this
+   line greets a person.
    ============================================================================= */
 
 [data-slot="greeting"] {

@@ -32,8 +32,7 @@ export function TopupHistory({ items }: { items: TopupHistoryItem[] }) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Bought</TableHead>
-              <TableHead>{project.pointsName}</TableHead>
+              <TableHead>Added</TableHead>
               <TableHead>Paid</TableHead>
               <TableHead>State</TableHead>
               <TableHead>Refund</TableHead>
@@ -45,7 +44,6 @@ export function TopupHistory({ items }: { items: TopupHistoryItem[] }) {
                 <TableCell className="whitespace-nowrap">
                   {new Date(topup.createdAt).toLocaleDateString()}
                 </TableCell>
-                <TableCell className="tabular-nums">{topup.points.toLocaleString()}</TableCell>
                 <TableCell className="tabular-nums">{usd(topup.usdCents)}</TableCell>
                 <TableCell>
                   <Badge variant={STATE_VARIANT[topup.state]}>{STATE_LABEL[topup.state]}</Badge>

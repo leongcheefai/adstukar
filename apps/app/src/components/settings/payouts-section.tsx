@@ -177,11 +177,7 @@ function PayoutCard({
       <CardContent className="space-y-4 pt-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0 space-y-1">
-            <p className="text-2xl tracking-tight tabular-nums">
-              {request.points.toLocaleString()}{" "}
-              <span className="text-base text-muted-foreground">CapyPoints</span>
-            </p>
-            <p className="text-sm tabular-nums">{usd(request.usdCents)}</p>
+            <p className="text-2xl tracking-tight tabular-nums">{usd(request.usdCents)}</p>
             <p className="text-xs text-muted-foreground">
               {owner.name} · <span className="font-mono">{owner.email}</span> · asked{" "}
               {new Date(request.createdAt).toLocaleDateString()}
@@ -297,8 +293,8 @@ export function PayoutsSection() {
               </DialogTitle>
               <DialogDescription>
                 {action?.kind === "pay"
-                  ? `Send the money first, then record the reference. The points already left ${action?.label}'s account when they asked.`
-                  : `The points go back to ${action?.label}. Say why, because the member reads it.`}
+                  ? `Send the money first, then record the reference. The funds already left ${action?.label}'s wallet when they asked.`
+                  : `The funds go back to ${action?.label}. Say why, because the member reads it.`}
               </DialogDescription>
             </DialogHeader>
 

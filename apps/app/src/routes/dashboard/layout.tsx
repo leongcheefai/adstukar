@@ -1,4 +1,4 @@
-import { Coins, Megaphone, Monitor, Gear as Settings, SquaresFour, X } from "@phosphor-icons/react";
+import { Coins, Megaphone, Gear as Settings, SquaresFour, X } from "@phosphor-icons/react";
 import {
   Button,
   DashboardShell,
@@ -11,14 +11,13 @@ import {
 } from "@repo/ui";
 import { useEffect, useRef, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router";
-import { CapyLockup } from "../../components/capytv/lockup";
-import { clearResume } from "../../components/capytv/resume";
+import { CapyLockup, HomeLink } from "../../components/capychannel/lockup";
+import { clearResume } from "../../components/capychannel/resume";
 import { DashboardSidebarFooter } from "../../components/dashboard-sidebar-footer";
 import { SetupCoach } from "../../components/setup-coach";
 import { StripeCoach } from "../../components/stripe-coach";
 import { signOutThen, useSession } from "../../lib/auth";
 import { useCoach } from "../../lib/coach";
-import { designMode } from "../../lib/design-mode";
 
 function navItems(pathname: string): NavItem[] {
   return [
@@ -31,21 +30,13 @@ function navItems(pathname: string): NavItem[] {
     {
       label: "Campaigns",
       href: "/dashboard/campaigns",
-      active: pathname === "/dashboard/campaigns",
+      active: pathname.startsWith("/dashboard/campaigns"),
       icon: <Megaphone size={16} />,
     },
     {
-      label: "Devices",
-      href: "/dashboard/devices",
-      active: pathname === "/dashboard/devices",
-      icon: <Monitor size={16} />,
-    },
-    {
-      label: "CapyPoints",
-      // The path stays /ledger. It is the append-only record either way, and a
-      // rename here would break every link people already saved.
-      href: "/dashboard/ledger",
-      active: pathname === "/dashboard/ledger",
+      label: "Wallet",
+      href: "/dashboard/wallet",
+      active: pathname === "/dashboard/wallet",
       icon: <Coins size={16} />,
     },
     {
@@ -71,11 +62,11 @@ function DashboardContent({ onClose }: { onClose: () => void }) {
   }, []);
 
   useEffect(() => {
-    if (pathname === "/dashboard/campaigns" || pathname === "/dashboard/ledger") {
+    if (pathname === "/dashboard/campaigns" || pathname === "/dashboard/wallet") {
       dismiss("dashboard");
     }
     // The ledger page holds the buy panel, so reaching it is taking the step.
-    if (pathname === "/dashboard/ledger") dismiss("stripe");
+    if (pathname === "/dashboard/wallet") dismiss("stripe");
   }, [pathname, dismiss]);
 
   // Three tips for a newcomer, one after the other: the account on the
@@ -92,7 +83,7 @@ function DashboardContent({ onClose }: { onClose: () => void }) {
   const items = navItems(pathname);
 
   function renderNavLink({ href, className, label, icon }: NavItem & { className: string }) {
-    const ledger = href === "/dashboard/ledger";
+    const ledger = href === "/dashboard/wallet";
     const setup = href === "/dashboard/campaigns" || ledger;
     return (
       <Link
@@ -110,18 +101,9 @@ function DashboardContent({ onClose }: { onClose: () => void }) {
   }
 
   const brand = (
-    <Link
-      to="/"
-      className="inline-flex items-center"
-      aria-label="CapyTV"
-      onClick={(event) => {
-        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-        event.preventDefault();
-        onClose();
-      }}
-    >
+    <HomeLink className="inline-flex items-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40">
       <CapyLockup variant="off-air" inverted={false} className="h-12 w-auto" />
-    </Link>
+    </HomeLink>
   );
 
   const sidebarFooter = (
@@ -145,7 +127,6 @@ function DashboardContent({ onClose }: { onClose: () => void }) {
           navItems={items}
           renderNavLink={renderNavLink}
           sidebarFooter={sidebarFooter}
-          actions={<DesignModeBadge />}
           trailing={
             <Button
               variant="outline"
@@ -164,20 +145,6 @@ function DashboardContent({ onClose }: { onClose: () => void }) {
       <SetupCoach open={showCoach} onDismiss={() => dismiss("dashboard")} />
       <StripeCoach open={showStripeCoach} onIgnore={() => ignore("stripe")} />
     </DashboardShell>
-  );
-}
-
-/** Dev-only marker. Fixture data must never look like real data. */
-function DesignModeBadge() {
-  if (!designMode) return null;
-  return (
-    <a
-      href="?design=0"
-      className="rounded-full border border-border bg-card px-3 py-1 font-mono text-xs text-muted-foreground transition-colors hover:text-foreground"
-      title="Sample data, no API. Click to leave design mode."
-    >
-      design mode
-    </a>
   );
 }
 
@@ -230,9 +197,7 @@ export function DashboardLayout() {
           never competes with anything on <body>. */}
       <DrawerContent className="overflow-hidden p-0 data-[vaul-drawer-direction=bottom]:mt-0 data-[vaul-drawer-direction=bottom]:h-[calc(100dvh-12px)] data-[vaul-drawer-direction=bottom]:max-h-[calc(100dvh-12px)] data-[vaul-drawer-direction=bottom]:rounded-t-2xl">
         <DrawerTitle className="sr-only">Dashboard</DrawerTitle>
-        <DrawerDescription className="sr-only">
-          Campaigns, devices, points, and settings.
-        </DrawerDescription>
+        <DrawerDescription className="sr-only">Campaigns, wallet, and settings.</DrawerDescription>
         <div className="flex min-h-0 flex-1 flex-col">
           <DashboardContent onClose={() => setOpen(false)} />
         </div>

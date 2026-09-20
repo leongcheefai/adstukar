@@ -1,18 +1,11 @@
-import type {
-  DeviceForAdmin,
-  DeviceTier,
-  Listing,
-  ModerationQueue,
-  Topup,
-  TopupQueue,
-} from "@repo/contracts/types";
+import type { Listing, ModerationQueue, Topup, TopupQueue } from "@repo/contracts/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "./api";
 
 const queueKey = ["admin", "moderation"] as const;
 const topupsKey = ["admin", "topups"] as const;
 
-/** One queue, two kinds of work: listings to read and devices to price. */
+/** The listings that wait for a person to read them. */
 export function useModerationQueue() {
   return useQuery({
     queryKey: queueKey,
@@ -39,25 +32,6 @@ export function useRejectListing() {
   return useMutation({
     mutationFn: ({ id, reason }: { id: string; reason: string }) =>
       apiFetch<Listing>(`/admin/listings/${id}/reject`, { method: "POST", body: { reason } }),
-    onSuccess: invalidate,
-  });
-}
-
-/** Approving a device stamps its tier, and the tier sets the rate it earns. */
-export function useApproveDevice() {
-  const invalidate = useInvalidate();
-  return useMutation({
-    mutationFn: ({ id, tier }: { id: string; tier: DeviceTier }) =>
-      apiFetch<DeviceForAdmin>(`/admin/devices/${id}/approve`, { method: "POST", body: { tier } }),
-    onSuccess: invalidate,
-  });
-}
-
-export function useRejectDevice() {
-  const invalidate = useInvalidate();
-  return useMutation({
-    mutationFn: ({ id, reason }: { id: string; reason: string }) =>
-      apiFetch<DeviceForAdmin>(`/admin/devices/${id}/reject`, { method: "POST", body: { reason } }),
     onSuccess: invalidate,
   });
 }

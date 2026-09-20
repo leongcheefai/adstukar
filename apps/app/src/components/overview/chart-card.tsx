@@ -16,14 +16,11 @@ export const CHART_HEIGHT = "h-[240px]";
 export function ChartCard({
   title,
   description,
-  metaLabel,
   meta,
   children,
 }: {
   title: string;
   description: string;
-  /** Names the period the figure covers. Sits above it. */
-  metaLabel: string;
   /** The one figure the header states, or its skeleton. */
   meta: React.ReactNode;
   children: React.ReactNode;
@@ -34,15 +31,12 @@ export function ChartCard({
           rule between them says which is which. */}
       <CardHeader className="grid-cols-[1fr_auto] items-start gap-3 border-b px-6 py-5">
         <div className="min-w-0 space-y-1">
-          <CardTitle className="text-lg">{title}</CardTitle>
+          <CardTitle className="text-base">{title}</CardTitle>
           <CardDescription>{description}</CardDescription>
         </div>
-        {/* The period sits above the figure it qualifies, so the two read as one
-            statement rather than as a label and a stray number. */}
-        <div className="col-start-2 row-span-2 row-start-1 shrink-0 space-y-1 text-right">
-          <p data-slot="label" className="text-muted-foreground">
-            {metaLabel}
-          </p>
+        {/* The figure alone. The description beside it already names the
+            period, so a label above the figure said it twice. */}
+        <div className="col-start-2 row-span-2 row-start-1 shrink-0 self-center text-right">
           {meta}
         </div>
       </CardHeader>
@@ -53,7 +47,7 @@ export function ChartCard({
 
 /** The header figure. Both cards state their total in this one face and size. */
 export function ChartCardFigure({ children }: { children: React.ReactNode }) {
-  return <p className="text-2xl font-normal tracking-tight tabular-nums">{children}</p>;
+  return <p className="text-4xl font-normal tracking-tight tabular-nums">{children}</p>;
 }
 
 /** Loading twin of ChartCardFigure. Same box, so the header keeps its height. */
@@ -61,7 +55,7 @@ export function ChartCardFigureSkeleton({ label }: { label: string }) {
   return (
     <>
       <span
-        className="ml-auto block h-8 w-16 animate-pulse rounded-md bg-muted"
+        className="ml-auto block h-10 w-24 animate-pulse rounded-md bg-muted"
         aria-hidden="true"
       />
       <span className="sr-only">Loading {label}</span>

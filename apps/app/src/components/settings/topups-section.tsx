@@ -27,6 +27,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useRefundTopup, useTopupQueue } from "../../lib/admin";
 import { usd } from "../../lib/money";
+import { pointsUsd } from "../../lib/money";
 
 const STATE_LABEL: Record<TopupState, string> = {
   pending: "Waiting for payment",
@@ -43,7 +44,7 @@ function blockMessage(block: TopupRefundBlock, refundWindowDays: number): string
     case "window-closed":
       return `A refund runs for ${refundWindowDays} days after the payment.`;
     case "nothing-left":
-      return `Those ${project.pointsName} are spent. Only unspent ${project.pointsName} refund.`;
+      return "Those funds are spent. Only unspent funds refund.";
     case "below-fee":
       return "The card fee is more than this refund is worth.";
   }
@@ -72,7 +73,6 @@ function TopupReviewRow({
           {owner.email}
         </p>
       </TableCell>
-      <TableCell className="tabular-nums">{topup.points.toLocaleString()}</TableCell>
       <TableCell className="tabular-nums">{usd(topup.usdCents)}</TableCell>
       <TableCell>
         <Badge variant={topup.state === "paid" ? "success" : "neutral"}>
@@ -87,7 +87,7 @@ function TopupReviewRow({
         )}
         {topup.state !== "refunded" && block === null && (
           <Button variant="outline" size="sm" onClick={() => onRefund(item)}>
-            Refund {item.refundablePoints.toLocaleString()} · {usd(item.refundNetCents)}
+            Refund {pointsUsd(item.refundablePoints)} · {usd(item.refundNetCents)} back
           </Button>
         )}
         {topup.state !== "refunded" && block !== null && (
@@ -116,7 +116,7 @@ export function TopupsSection() {
     refund.mutate(target.topup.id, {
       onSuccess: (row) => {
         toast.success(
-          `Refunded ${usd(row.refundUsdCents ?? 0)} for ${(row.refundedPoints ?? 0).toLocaleString()} ${project.pointsName}`,
+          `Refunded ${usd(row.refundUsdCents ?? 0)} for ${pointsUsd(row.refundedPoints ?? 0)} of unspent funds`,
         );
         setTarget(null);
       },
@@ -143,7 +143,6 @@ export function TopupsSection() {
               <TableRow>
                 <TableHead>Bought</TableHead>
                 <TableHead>Member</TableHead>
-                <TableHead>{project.pointsName}</TableHead>
                 <TableHead>Paid</TableHead>
                 <TableHead>State</TableHead>
                 <TableHead>Refund</TableHead>
@@ -169,7 +168,7 @@ export function TopupsSection() {
             <AlertDialogTitle>Refund this top-up?</AlertDialogTitle>
             <AlertDialogDescription>
               {target &&
-                `${target.owner.name} gets ${usd(target.refundNetCents)} back through Stripe, and ${target.refundablePoints.toLocaleString()} ${project.pointsName} leave their account. This cannot be undone.`}
+                `${target.owner.name} gets ${usd(target.refundNetCents)} back through Stripe, and ${pointsUsd(target.refundablePoints)} leaves their wallet. This cannot be undone.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

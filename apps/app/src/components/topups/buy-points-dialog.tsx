@@ -50,10 +50,10 @@ export function BuyPointsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Buy {project.pointsName}</DialogTitle>
+          <DialogTitle>Add funds</DialogTitle>
           <DialogDescription>
-            Every pack is at the same rate, and no pack carries a bonus. Unspent{" "}
-            {project.pointsName} refund for {overview.refundWindowDays} days.
+            No pack carries a bonus: you get what you pay. Unspent funds refund for{" "}
+            {overview.refundWindowDays} days.
           </DialogDescription>
         </DialogHeader>
 
@@ -102,10 +102,7 @@ function PackButton({
         selected && "border-primary bg-primary/5",
       )}
     >
-      <span className="text-lg tabular-nums">{pack.points.toLocaleString()}</span>
-      <span className="text-xs font-normal text-muted-foreground tabular-nums">
-        {usd(pack.usdCents)}
-      </span>
+      <span className="text-lg tabular-nums">{usd(pack.usdCents)}</span>
     </Button>
   );
 }

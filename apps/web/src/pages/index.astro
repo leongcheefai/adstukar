@@ -28,3 +28,25 @@ const jsonLd = [orgSchema(site), websiteSchema(site), faqSchema(faqItems)];
     <LiveTicker slot="ticker" variant="hero" client:visible />
   </Landing>
 </BaseLayout>
+
+<script>
+  import { env } from "../lib/env";
+
+  // A member who types the site's address wants their set, not the pitch. The
+  // page is static, so the check runs here: ask the API for the session, and
+  // go to the app when there is one. `from=app` means the app has just sent
+  // the visitor here as signed out, and the two must not trade them for ever.
+  // Any failure leaves the landing page as it is.
+  const url = new URL(window.location.href);
+  if (url.searchParams.has("from")) {
+    url.searchParams.delete("from");
+    window.history.replaceState(null, "", url);
+  } else {
+    fetch(`${env.PUBLIC_API_URL}/api/auth/get-session`, { credentials: "include" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((body) => {
+        if (body?.session) window.location.replace(env.PUBLIC_APP_URL);
+      })
+      .catch(() => {});
+  }
+</script>

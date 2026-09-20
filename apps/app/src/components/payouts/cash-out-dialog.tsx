@@ -19,6 +19,7 @@ import {
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { usd } from "../../lib/money";
+import { pointsUsd } from "../../lib/money";
 import { useRequestPayout, useSavePayoutAccount } from "../../lib/payouts";
 
 const METHOD_LABEL: Record<PayoutMethod, string> = {
@@ -44,7 +45,7 @@ function blockMessage(overview: PayoutOverview, block: PayoutBlock): string {
     case "identity":
       return "Add the name and the account we pay, then ask for the payout.";
     case "below-minimum":
-      return `A payout takes at least ${overview.minimumPoints.toLocaleString()} CapyPoints. Below that, points roll over.`;
+      return `A payout takes at least ${pointsUsd(overview.minimumPoints)}. Below that, your earnings roll over.`;
   }
 }
 
@@ -103,7 +104,7 @@ export function CashOutDialog({
   function submitRequest() {
     request.mutate(undefined, {
       onSuccess: (row) => {
-        toast.success(`Payout of ${row.points.toLocaleString()} CapyPoints requested`);
+        toast.success(`Payout of ${usd(row.usdCents)} requested`);
         onOpenChange(false);
       },
       onError: (err) => toast.error(err.message),
@@ -114,10 +115,10 @@ export function CashOutDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Cash out CapyPoints</DialogTitle>
+          <DialogTitle>Cash out</DialogTitle>
           <DialogDescription>
-            Only earned CapyPoints leave as money, and only {overview.holdDays} days after they
-            settle. An admin reviews each payout and sends the money by hand.
+            Only earned funds leave as money, and only {overview.holdDays} days after they settle.
+            An admin reviews each payout and sends the money by hand.
           </DialogDescription>
         </DialogHeader>
 
@@ -125,10 +126,8 @@ export function CashOutDialog({
           <p data-slot="label" className="text-muted-foreground">
             Ready to cash out
           </p>
-          <p className="text-2xl tabular-nums">{overview.withdrawable.toLocaleString()}</p>
-          <p className="text-sm text-muted-foreground tabular-nums">
-            about {usd(pointsToUsdCents(overview.withdrawable))}
-          </p>
+          {/* Whole cents, because that is what a payout sends. */}
+          <p className="text-2xl tabular-nums">{usd(pointsToUsdCents(overview.withdrawable))}</p>
         </div>
 
         {editing ? (

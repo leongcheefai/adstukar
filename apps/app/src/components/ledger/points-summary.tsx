@@ -1,11 +1,13 @@
-import { project } from "@repo/config/project";
 import { Button, Card } from "@repo/ui";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
+import { pointsUsd } from "../../lib/money";
 import { usePayouts } from "../../lib/payouts";
 import { useStats } from "../../lib/stats";
 import { useTopups } from "../../lib/topups";
 import { CashOutDialog } from "../payouts/cash-out-dialog";
+import { StripeSetup } from "../payouts/stripe-setup";
+import { AddFundsButton } from "../topups/add-funds-button";
 import { BuyPointsDialog } from "../topups/buy-points-dialog";
 
 /**
@@ -40,43 +42,52 @@ export function PointsSummary() {
   }, [wantsBuy, topups, setParams]);
 
   const settled = stats?.balance.settled ?? 0;
-  const withdrawable = payouts?.withdrawable ?? 0;
+  const pending = stats?.balance.pending ?? 0;
+  const connected = Boolean(payouts?.account);
 
   return (
     <>
-      {/* One panel, two cells. Divide-x only from sm: stacked on a phone the
+      {/* One panel, three cells. Divide-x only from lg: stacked on a phone the
           rules would cut across the flow rather than along it. */}
-      <Card className="grid gap-0 divide-y py-0 sm:grid-cols-2 sm:divide-x sm:divide-y-0">
+      <Card className="grid gap-0 divide-y py-0 lg:grid-cols-3 lg:divide-x lg:divide-y-0">
         <div className="flex flex-col justify-between gap-3 p-5">
           <p data-slot="label" className="text-muted-foreground">
-            Total CapyPoints
+            Balance
           </p>
-          <p className="text-3xl font-normal tracking-tight tabular-nums">
-            {settled.toLocaleString()}
-          </p>
+          <p className="text-4xl font-normal tracking-tight tabular-nums">{pointsUsd(settled)}</p>
           {/* The way to grow the number sits under the number it grows. */}
-          <Button size="sm" onClick={() => setBuyOpen(true)} disabled={!topups}>
-            Buy {project.pointsName}
-          </Button>
+          <AddFundsButton size="sm" onClick={() => setBuyOpen(true)} disabled={!topups} />
         </div>
 
+        {/* The same sum the Overview calls by this name: the settled funds and
+            the pending ones. It has no control, so the figure sits where the
+            balance figure sits, and the two read across on one line. */}
         <div className="flex flex-col justify-between gap-3 p-5">
           <p data-slot="label" className="text-muted-foreground">
-            Cash out
+            Total earning
           </p>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setCashOutOpen(true)}
-            disabled={!payouts}
-          >
-            Cash out CapyPoints
-          </Button>
-          {/* The number beside the button is the withdrawable balance, not the
-              settled one: only earned points that served the hold ever leave. */}
-          <p className="text-xs text-muted-foreground tabular-nums">
-            {withdrawable.toLocaleString()} ready to cash out.
+          <p className="text-4xl font-normal tracking-tight tabular-nums">
+            {pointsUsd(settled + pending)}
           </p>
+          {/* Holds the row the button takes in the first cell. */}
+          <span className="h-8" aria-hidden="true" />
+        </div>
+
+        {/* One cell, two states. With nowhere to pay, it is the way to set that
+            up; after that, it is the button that takes the money out. */}
+        <div className="flex flex-col justify-between gap-3 p-5">
+          {connected ? (
+            <>
+              <p data-slot="label" className="text-muted-foreground">
+                Cash out
+              </p>
+              <Button variant="outline" size="sm" onClick={() => setCashOutOpen(true)}>
+                Cash out
+              </Button>
+            </>
+          ) : (
+            <StripeSetup onSetUp={() => setCashOutOpen(true)} disabled={!payouts} />
+          )}
         </div>
       </Card>
 

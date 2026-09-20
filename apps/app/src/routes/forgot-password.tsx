@@ -30,7 +30,7 @@ export function ForgotPasswordPage({ embedded = false }: { embedded?: boolean })
     }
   }
 
-  const signInHref = embedded ? "/" : "/login";
+  const signInHref = embedded ? "/?auth=login" : "/login";
   const errorId = "forgot-error";
   const invalid = Boolean(error);
 

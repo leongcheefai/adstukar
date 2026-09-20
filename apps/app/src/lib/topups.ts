@@ -34,8 +34,8 @@ export function useBuyPoints() {
         method: "POST",
         body: {
           points,
-          successUrl: `${window.location.origin}/dashboard/ledger?topup=paid`,
-          cancelUrl: `${window.location.origin}/dashboard/ledger?topup=cancelled`,
+          successUrl: `${window.location.origin}/dashboard/wallet?topup=paid`,
+          cancelUrl: `${window.location.origin}/dashboard/wallet?topup=cancelled`,
         },
       }),
   });

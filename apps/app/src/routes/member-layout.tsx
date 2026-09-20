@@ -1,7 +1,7 @@
 import { Outlet, useLocation } from "react-router";
 import { CoachProvider } from "../components/coach-provider";
 import { useSession } from "../lib/auth";
-import { CapyTvScreen } from "./capytv/home";
+import { AUTH_PATHS, CapyChannelScreen } from "./capychannel/home";
 
 export function MemberLayout() {
   const { pathname } = useLocation();
@@ -11,9 +11,11 @@ export function MemberLayout() {
   return (
     <CoachProvider>
       <div data-vaul-drawer-wrapper="" className="bg-[#08080a]">
-        <CapyTvScreen dashboardOpen={dashboardOpen} />
+        <CapyChannelScreen dashboardOpen={dashboardOpen} />
       </div>
-      {session ? <Outlet /> : null}
+      {/* The dashboard needs a session. The auth paths need none: each is only a
+          redirect to `?auth=`, and with no outlet it would never run. */}
+      {session || AUTH_PATHS.includes(pathname) ? <Outlet /> : null}
     </CoachProvider>
   );
 }

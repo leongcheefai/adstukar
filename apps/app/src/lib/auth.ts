@@ -1,6 +1,5 @@
 import { adminClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
-import { designMode, designSession } from "./design-mode";
 import { env } from "./env";
 
 export const authClient = createAuthClient({
@@ -19,25 +18,8 @@ export async function signOutThen(after: () => void): Promise<void> {
   try {
     await signOut();
   } catch {
-    // Already on login. A dead API must not keep the member in the app.
+    // Already off the member screens. A dead API must not keep the member in the app.
   }
 }
 
-type SessionResult = ReturnType<typeof authClient.useSession>;
-
-/**
- * In design mode this returns a settled admin session, so ProtectedRoute and
- * AdminRoute both pass with no API. Outside design mode it is better-auth's own
- * hook, unchanged.
- */
-export function useSession(): SessionResult {
-  const real = authClient.useSession();
-  if (!designMode) return real;
-  return {
-    data: designSession,
-    isPending: false,
-    isRefetching: false,
-    error: null,
-    refetch: real.refetch,
-  } as SessionResult;
-}
+export const useSession = authClient.useSession;

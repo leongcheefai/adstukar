@@ -1,16 +1,17 @@
 import { economy } from "@repo/config/economy";
 import type { LedgerEntry, LedgerLot, LedgerReason, LedgerState } from "@repo/contracts/types";
 import { Badge, TableCell, TableRow, Tooltip, TooltipContent, TooltipTrigger } from "@repo/ui";
+import { pointsUsd } from "../../lib/money";
 
-/** Shared by the CapyPoints page and the Overview summary, so the two cannot drift. */
+/** Shared by the Wallet page and the Overview summary, so the two cannot drift. */
 export const REASON_TEXT: Record<LedgerReason, string> = {
   earn: "A listing played on your screen",
   spend: "Your listing played on a screen",
   fee: "The CapyAds fee on that play",
   grant: "Grant",
-  topup: "Points you bought",
-  payout: "Points you cashed out",
-  refund: "Money returned for bought points",
+  topup: "Funds you added",
+  payout: "Funds you cashed out",
+  refund: "Money returned for unspent funds",
   expiry: `Expired after ${economy.expiryMonths} months`,
   void: "Voided by an admin",
 };
@@ -35,7 +36,8 @@ export function LedgerAmount({ delta }: { delta: number }) {
     <span
       className={`font-mono tabular-nums ${delta > 0 ? "text-[color:var(--success-500)]" : ""}`}
     >
-      {delta > 0 ? `+${delta}` : delta}
+      {delta > 0 ? "+" : delta < 0 ? "−" : ""}
+      {pointsUsd(Math.abs(delta))}
     </span>
   );
 }

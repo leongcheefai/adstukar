@@ -31,8 +31,7 @@ export function PayoutRequests({ requests }: { requests: PayoutRequest[] }) {
           <TableHeader>
             <TableRow>
               <TableHead>Asked</TableHead>
-              <TableHead>CapyPoints</TableHead>
-              <TableHead>Money</TableHead>
+              <TableHead>Amount</TableHead>
               <TableHead>State</TableHead>
               <TableHead>Note</TableHead>
             </TableRow>
@@ -43,7 +42,6 @@ export function PayoutRequests({ requests }: { requests: PayoutRequest[] }) {
                 <TableCell className="whitespace-nowrap">
                   {new Date(row.createdAt).toLocaleDateString()}
                 </TableCell>
-                <TableCell className="tabular-nums">{row.points.toLocaleString()}</TableCell>
                 <TableCell className="tabular-nums">{usd(row.usdCents)}</TableCell>
                 <TableCell>
                   <Badge variant={STATE_VARIANT[row.state]}>{STATE_LABEL[row.state]}</Badge>

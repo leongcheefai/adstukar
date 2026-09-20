@@ -1,9 +1,9 @@
 import { Button, Input, Label, Separator } from "@repo/ui";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
-import { signIn, signUp } from "../../lib/auth";
-import "../../styles/capytv.css";
-import { CapyLockup } from "../capytv/lockup";
+import { signIn, signUp, useSession } from "../../lib/auth";
+import "../../styles/capychannel.css";
+import { CapyLockup } from "../capychannel/lockup";
 
 /** The four-colour Google mark. Inline, so the button needs no network request. */
 function GoogleIcon() {
@@ -49,7 +49,7 @@ const COPY = {
   },
   signup: {
     title: "Create account",
-    subtitle: "Free to join. Pick a source and start CapyTV.",
+    subtitle: "Free to join. Pick a channel and start CapyTV.",
     google: "Sign up with Google",
     submit: "Create account",
     submitting: "Creating account…",
@@ -74,11 +74,14 @@ export function AuthPage({
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const { data: session, refetch } = useSession();
+  /** The API accepted the credentials. The session hook has not caught up yet. */
+  const [accepted, setAccepted] = useState(false);
 
   const isSignup = mode === "signup";
   const copy = COPY[mode];
   const signupHref = embedded ? "/?auth=signup" : "/signup";
-  const loginHref = embedded ? "/" : "/login";
+  const loginHref = embedded ? "/?auth=login" : "/login";
   const forgotHref = embedded ? "/?auth=forgot" : "/forgot-password";
   const errorId = "auth-error";
   const invalid = Boolean(error);
@@ -87,12 +90,16 @@ export function AuthPage({
     if (error) setError("");
   }
 
-  function redirectAfterAuth() {
+  // The move to `/` waits for the session to reach the hook. `/` with no
+  // `?auth=` and no session is the front door's cue to send a visitor to the
+  // landing page, so a move made too soon throws a new member off their set.
+  useEffect(() => {
+    if (!accepted || !session) return;
     const params = new URLSearchParams(search);
     const redirectTo = params.get("redirect");
     const safe = redirectTo?.startsWith("/") && !redirectTo.startsWith("//") ? redirectTo : "/";
     navigate(safe, { replace: true });
-  }
+  }, [accepted, session, search, navigate]);
 
   async function handleGoogle() {
     setError("");
@@ -119,7 +126,8 @@ export function AuthPage({
         setError(result.error.message ?? copy.failed);
         return;
       }
-      redirectAfterAuth();
+      setAccepted(true);
+      refetch();
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
@@ -266,8 +274,8 @@ export function AuthPage({
           {error || (embedded ? "\u00a0" : null)}
         </p>
 
-        <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? copy.submitting : copy.submit}
+        <Button type="submit" className="w-full" disabled={loading || accepted}>
+          {loading || accepted ? copy.submitting : copy.submit}
         </Button>
       </form>
     </>
