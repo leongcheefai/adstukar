@@ -1,10 +1,31 @@
 import type { TopupCheckoutResponse, TopupOverview } from "@repo/contracts/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { apiFetch } from "./api";
 
 const topupsKey = ["topups"] as const;
 
 /** What we sell, and every top-up this member already made. */
+/**
+ * What a press does on a button whose panel waits for a query. The button is
+ * never disabled: a slow read opens the panel as soon as it lands, and a read
+ * that failed says so and runs again. A dead button says nothing.
+ */
+export function openWhenReady(
+  query: { isError: boolean; refetch: () => unknown },
+  open: () => void,
+  failed: string,
+) {
+  // A failed read does not open the panel. The panel would then appear by
+  // itself, long after the press, when a later read lands.
+  if (query.isError) {
+    toast.error(failed);
+    void query.refetch();
+    return;
+  }
+  open();
+}
+
 export function useTopups() {
   return useQuery({
     queryKey: topupsKey,

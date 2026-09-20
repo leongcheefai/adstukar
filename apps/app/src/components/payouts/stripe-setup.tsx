@@ -16,7 +16,7 @@ const POINTS = [
  * hosted onboarding (docs/adr/0008). The cell changes to the cash-out button
  * once Stripe says the account may take payouts.
  */
-export function StripeSetup({ onSetUp, disabled }: { onSetUp: () => void; disabled: boolean }) {
+export function StripeSetup({ onSetUp }: { onSetUp: () => void }) {
   return (
     <div className="flex h-full flex-col justify-between gap-5">
       <div className="flex items-center gap-4">
@@ -40,7 +40,6 @@ export function StripeSetup({ onSetUp, disabled }: { onSetUp: () => void; disabl
 
       <Button
         onClick={onSetUp}
-        disabled={disabled}
         className="bg-[color:var(--on-air)] text-[color:var(--on-air-foreground)] hover:bg-[color:var(--on-air)]/90"
       >
         Set up Stripe

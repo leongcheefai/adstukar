@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
 import { usePayouts } from "../../lib/payouts";
 import { useStats } from "../../lib/stats";
-import { useTopups } from "../../lib/topups";
+import { openWhenReady, useTopups } from "../../lib/topups";
 import { CashOutDialog } from "../payouts/cash-out-dialog";
 import { StripeSetup } from "../payouts/stripe-setup";
 import { AddFundsButton } from "../topups/add-funds-button";
@@ -19,8 +19,10 @@ import { TopUpDialog } from "../topups/topup-dialog";
  */
 export function WalletSummary() {
   const { data: stats } = useStats();
-  const { data: payouts } = usePayouts();
-  const { data: topups } = useTopups();
+  const payoutsQuery = usePayouts();
+  const topupsQuery = useTopups();
+  const payouts = payoutsQuery.data;
+  const topups = topupsQuery.data;
   const [cashOutOpen, setCashOutOpen] = useState(false);
   const [buyOpen, setBuyOpen] = useState(false);
   const [params, setParams] = useSearchParams();
@@ -72,7 +74,16 @@ export function WalletSummary() {
           </p>
           <p className="text-4xl font-normal tracking-tight tabular-nums">{usd(settled)}</p>
           {/* The way to grow the number sits under the number it grows. */}
-          <AddFundsButton size="sm" onClick={() => setBuyOpen(true)} disabled={!topups} />
+          <AddFundsButton
+            size="sm"
+            onClick={() =>
+              openWhenReady(
+                topupsQuery,
+                () => setBuyOpen(true),
+                "We could not load the top-up options. Try again in a moment.",
+              )
+            }
+          />
         </div>
 
         {/* The same sum the Overview calls by this name: the settled funds and
@@ -102,7 +113,15 @@ export function WalletSummary() {
               </Button>
             </>
           ) : (
-            <StripeSetup onSetUp={() => setCashOutOpen(true)} disabled={!payouts} />
+            <StripeSetup
+              onSetUp={() =>
+                openWhenReady(
+                  payoutsQuery,
+                  () => setCashOutOpen(true),
+                  "We could not load your payout details. Try again in a moment.",
+                )
+              }
+            />
           )}
         </div>
       </Card>

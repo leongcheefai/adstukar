@@ -14,7 +14,7 @@ import {
   writeSlotPosition,
 } from "../../lib/slots";
 import { useStats } from "../../lib/stats";
-import { useTopups } from "../../lib/topups";
+import { openWhenReady, useTopups } from "../../lib/topups";
 
 const CAMPAIGNS = "/dashboard/campaigns";
 
@@ -35,7 +35,8 @@ export function SlotBookPage() {
   const navigate = useNavigate();
   const { data, isLoading } = useCampaigns();
   const { data: stats } = useStats();
-  const { data: topups } = useTopups();
+  const topupsQuery = useTopups();
+  const topups = topupsQuery.data;
   const [buyOpen, setBuyOpen] = useState(false);
   const [picks, setPicks] = useState(readSlotPositions);
 
@@ -77,7 +78,13 @@ export function SlotBookPage() {
             .map((slot) => slot.item.campaign.domain)}
           balance={stats?.balance.settled}
           slotsOpen={slotAvailability(slots).left > 0}
-          onAddFunds={() => setBuyOpen(true)}
+          onAddFunds={() =>
+            openWhenReady(
+              topupsQuery,
+              () => setBuyOpen(true),
+              "We could not load the top-up options. Try again in a moment.",
+            )
+          }
         />
       )}
 

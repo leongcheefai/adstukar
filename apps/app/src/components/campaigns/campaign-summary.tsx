@@ -39,8 +39,8 @@ const PERIOD = "All time";
 export function CampaignSummary({
   onAddFunds,
 }: {
-  /** Opens the top-up dialog. Undefined while the packs load, and the button waits. */
-  onAddFunds: (() => void) | undefined;
+  /** Opens the top-up dialog. */
+  onAddFunds: () => void;
 }) {
   const { data: stats } = useStats();
 
@@ -62,7 +62,7 @@ export function CampaignSummary({
           <StatCard
             label={LABELS.points}
             value={usd(stats.balance.settled)}
-            action={<AddFundsButton size="sm" onClick={onAddFunds} disabled={!onAddFunds} />}
+            action={<AddFundsButton size="sm" onClick={onAddFunds} />}
             meta={pending !== 0 ? `${usdSigned(pending)} pending` : undefined}
           />
           <StatCard

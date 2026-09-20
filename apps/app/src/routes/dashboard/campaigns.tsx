@@ -23,7 +23,7 @@ import {
   slotAvailability,
   slotOf,
 } from "../../lib/slots";
-import { useTopups } from "../../lib/topups";
+import { openWhenReady, useTopups } from "../../lib/topups";
 
 const BOOK = "/dashboard/campaigns/book";
 
@@ -43,7 +43,8 @@ const FILTERS: { key: Filter; label: string; holds: SlotStatus[] | null }[] = [
 
 export function CampaignsPage() {
   const { data, isLoading } = useCampaigns();
-  const { data: topups } = useTopups();
+  const topupsQuery = useTopups();
+  const topups = topupsQuery.data;
   const [buyOpen, setBuyOpen] = useState(false);
   const [filter, setFilter] = useState<Filter>("all");
   const [picks] = useState(readSlotPositions);
@@ -97,7 +98,15 @@ export function CampaignsPage() {
         <SlotTicker bands={bands} onPick={book} />
       </section>
 
-      <CampaignSummary onAddFunds={topups ? () => setBuyOpen(true) : undefined} />
+      <CampaignSummary
+        onAddFunds={() =>
+          openWhenReady(
+            topupsQuery,
+            () => setBuyOpen(true),
+            "We could not load the top-up options. Try again in a moment.",
+          )
+        }
+      />
 
       <Card className="gap-0 overflow-hidden p-0">
         <header className="flex items-center justify-between gap-3 border-b px-6 py-4">

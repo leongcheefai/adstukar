@@ -60,10 +60,13 @@ function Figure({
 export function BalanceCard({
   stats,
   payouts,
+  payoutsLoading,
 }: {
   stats: StatsOverview;
   /** Loads apart from the stats. The figures that need it wait for it. */
   payouts: PayoutOverview | undefined;
+  /** True while the first payout read is on its way. */
+  payoutsLoading: boolean;
 }) {
   const total = stats.balance.settled + stats.balance.pending;
   const minimum = payouts?.minimum ?? economy.payout.minimum;
@@ -78,9 +81,11 @@ export function BalanceCard({
           it, and the same as the card beside it. */}
       <CardHeader className="flex h-16 flex-row items-center justify-between gap-3 border-b px-6 py-0 [.border-b]:pb-0">
         <CardTitle className="text-base">Balance</CardTitle>
-        {/* Only while there is nowhere to pay. Once the details are on file the
-            button goes, and the Wallet owns the cash-out. */}
-        {payouts && !payouts.stripeAccount?.payoutsEnabled && (
+        {/* Only while there is nowhere to pay. Once Stripe clears the account
+            the button goes, and the Wallet owns the cash-out. It waits for the
+            read to end, so it does not flash for a member who is set up. A read
+            that failed still shows it: the Wallet page says what went wrong. */}
+        {!payoutsLoading && !payouts?.stripeAccount?.payoutsEnabled && (
           <Button
             asChild
             size="sm"
@@ -95,10 +100,10 @@ export function BalanceCard({
       </CardHeader>
       <CardContent className="grid flex-1 gap-0 divide-y p-0 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
         <Figure label="Total earning" value={usd(total)} note="Pending plus settled funds" />
-        <Figure label="Available" value={payouts ? usd(available) : "—"} note="Ready to cash out" />
+        <Figure label="Available" value={usd(available)} note="Ready to cash out" />
         <Figure
           label="Cash out"
-          value={payouts ? usdCents(paidCents) : "—"}
+          value={usdCents(paidCents)}
           note={`Minimum payout ${usd(minimum)}`}
         />
       </CardContent>

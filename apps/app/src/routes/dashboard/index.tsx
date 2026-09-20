@@ -23,7 +23,7 @@ function CardSkeleton({ className }: { className: string }) {
 export function DashboardHome() {
   const { data: session } = useSession();
   const { data: stats, isError, isFetching, refetch } = useStats();
-  const { data: payouts } = usePayouts();
+  const { data: payouts, isPending: payoutsLoading } = usePayouts();
 
   return (
     <div className="space-y-4">
@@ -61,7 +61,7 @@ export function DashboardHome() {
           <div className="grid gap-3 xl:grid-cols-3">
             <div className="xl:col-span-2">
               {stats ? (
-                <BalanceCard stats={stats} payouts={payouts} />
+                <BalanceCard stats={stats} payouts={payouts} payoutsLoading={payoutsLoading} />
               ) : (
                 <CardSkeleton className="h-72" />
               )}
