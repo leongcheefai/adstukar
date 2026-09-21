@@ -125,31 +125,6 @@ export function spendable(balances: LotBalances): number {
   return SPEND_ORDER.reduce((sum, lot) => sum + Math.max(0, balances[lot]), 0);
 }
 
-/**
- * Spendable balance for every member at once, for the serve path's candidate scan.
- * It lives here rather than in the serve module so `SPEND_ORDER` stays the one
- * place that decides which lots a spend may draw on.
- */
-export async function spendableByUser(): Promise<Map<string, number>> {
-  const rows = await db
-    .select({
-      userId: schema.ledgerEntry.userId,
-      lot: schema.ledgerEntry.lot,
-      total: sql<number>`coalesce(sum(${schema.ledgerEntry.delta}), 0)::int`,
-    })
-    .from(schema.ledgerEntry)
-    .where(eq(schema.ledgerEntry.state, "settled"))
-    .groupBy(schema.ledgerEntry.userId, schema.ledgerEntry.lot);
-
-  const spendableLots = new Set<LedgerLot>(SPEND_ORDER);
-  const totals = new Map<string, number>();
-  for (const row of rows) {
-    if (!spendableLots.has(row.lot)) continue;
-    totals.set(row.userId, (totals.get(row.userId) ?? 0) + Math.max(0, row.total));
-  }
-  return totals;
-}
-
 export interface PostSpendInput {
   userId: string;
   /** The amount to take. Always positive. */

@@ -1,5 +1,4 @@
 import { log } from "../../lib/logger";
-import { paceCampaigns } from "../campaigns/pacing.service";
 import { expireDue, settleDue } from "../ledger/ledger.service";
 import { voidStalePlays } from "../serve/serve.service";
 import { endDueSlots } from "../slots/term";
@@ -23,18 +22,6 @@ export async function runPlayCleanup(now: Date = new Date()) {
   return voided;
 }
 
-/**
- * Keeps every campaign in step with the money behind it. It stops what can no
- * longer pay — money leaves through expiry and through a payout, and neither of
- * those touches a campaign — and starts what can pay again.
- */
-export async function runCampaignPacing(now: Date = new Date()) {
-  const sweep = await paceCampaigns(now);
-  if (sweep.stopped > 0) log("info", "campaigns_stopped", { members: sweep.stopped });
-  if (sweep.resumed > 0) log("info", "campaigns_resumed", { resumed: sweep.resumed });
-  return sweep;
-}
-
 /** A term is over when its clock says so. The position opens for the next member. */
 export async function runSlotEnd(now: Date = new Date()) {
   const ended = await endDueSlots(now);
@@ -47,7 +34,6 @@ export async function runAllJobs(now: Date = new Date()) {
     settled: await runSettlement(now),
     expired: await runExpiry(now),
     voided: await runPlayCleanup(now),
-    paced: await runCampaignPacing(now),
     slotsEnded: await runSlotEnd(now),
   };
 }
