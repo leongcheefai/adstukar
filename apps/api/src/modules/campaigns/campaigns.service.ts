@@ -5,6 +5,8 @@ import { db, schema } from "@repo/db";
 import { and, asc, desc, eq, inArray, isNotNull, ne } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import { domainFromUrl } from "../../lib/domain";
+import type { Tx } from "../ledger/ledger.service";
+import { closeSlot, startSlot } from "../slots/term";
 import { spentTodayByCampaign } from "./spend";
 import { verifyDomain } from "./verification";
 
@@ -15,7 +17,8 @@ type ListingRow = typeof schema.listing.$inferSelect;
 const LIVE_CAMPAIGN = ne(schema.campaign.state, "archived");
 const LIVE_LISTING = ne(schema.listing.state, "archived");
 
-async function listingsFor(campaignIds: string[]): Promise<Map<string, ListingRow[]>> {
+/** The live listings under each campaign, oldest first. The slot service reads it too. */
+export async function listingsFor(campaignIds: string[]): Promise<Map<string, ListingRow[]>> {
   const map = new Map<string, ListingRow[]>();
   if (campaignIds.length === 0) return map;
   const rows = await db
@@ -94,8 +97,8 @@ function requireDomain(url: string): string {
  * domain they already verified starts running at once. It is never read across
  * members: one member's proof says nothing about another.
  */
-async function domainVerifiedAt(userId: string, domain: string): Promise<Date | null> {
-  const [row] = await db
+async function domainVerifiedAt(tx: Tx, userId: string, domain: string): Promise<Date | null> {
+  const [row] = await tx
     .select({ verifiedAt: schema.campaign.verifiedAt })
     .from(schema.campaign)
     .where(
@@ -111,11 +114,19 @@ async function domainVerifiedAt(userId: string, domain: string): Promise<Date | 
   return row?.verifiedAt ?? null;
 }
 
-export async function createCampaign(userId: string, input: CreateCampaignInput) {
+/**
+ * The one insert behind a campaign. A booking runs it inside the transaction
+ * that also charges the slot, so a short balance leaves no campaign behind.
+ */
+export async function insertCampaign(
+  tx: Tx,
+  userId: string,
+  input: CreateCampaignInput,
+  now: Date,
+): Promise<CampaignRow> {
   const domain = requireDomain(input.url);
-  const now = new Date();
-  const verifiedAt = await domainVerifiedAt(userId, domain);
-  const [row] = await db
+  const verifiedAt = await domainVerifiedAt(tx, userId, domain);
+  const [row] = await tx
     .insert(schema.campaign)
     .values({
       id: crypto.randomUUID(),
@@ -133,6 +144,11 @@ export async function createCampaign(userId: string, input: CreateCampaignInput)
     })
     .returning();
   if (!row) throw new HTTPException(500, { message: "Insert failed" });
+  return row;
+}
+
+export async function createCampaign(userId: string, input: CreateCampaignInput) {
+  const row = await insertCampaign(db, userId, input, new Date());
   return single(row);
 }
 
@@ -155,7 +171,7 @@ export async function updateCampaign(
     if (domain !== existing.domain) {
       // A new domain needs new proof of ownership, so the campaign stops running.
       // A member who already proved the new domain keeps that proof.
-      const verifiedAt = await domainVerifiedAt(userId, domain);
+      const verifiedAt = await domainVerifiedAt(db, userId, domain);
       patch.domain = domain;
       patch.verifiedAt = verifiedAt;
       // Proof of the new domain leaves the campaign where it was; a campaign the
@@ -185,12 +201,18 @@ export async function updateCampaign(
     patch.pausedAt = null;
   }
 
-  const [row] = await db
-    .update(schema.campaign)
-    .set(patch)
-    .where(eq(schema.campaign.id, campaignId))
-    .returning();
-  if (!row) throw new HTTPException(404, { message: "Campaign not found" });
+  const row = await db.transaction(async (tx) => {
+    const [updated] = await tx
+      .update(schema.campaign)
+      .set(patch)
+      .where(eq(schema.campaign.id, campaignId))
+      .returning();
+    if (!updated) throw new HTTPException(404, { message: "Campaign not found" });
+    // A move to a domain this member already proved is a verification too, so
+    // a booked slot whose creative is approved starts its term here.
+    if (patch.verifiedAt) await startSlot(tx, campaignId, patch.updatedAt ?? new Date());
+    return updated;
+  });
   return single(row);
 }
 
@@ -210,6 +232,8 @@ export async function archiveCampaign(userId: string, campaignId: string) {
       .update(schema.listing)
       .set({ state: "archived", updatedAt: now })
       .where(eq(schema.listing.campaignId, campaignId));
+    // A booking that never ran gives its charge back; a running one ends.
+    await closeSlot(tx, campaignId, now);
   });
   return { id: campaignId };
 }
@@ -219,16 +243,21 @@ export async function verifyCampaign(userId: string, campaignId: string) {
   const result = await verifyDomain(existing.domain, existing.verificationToken);
   if (result.verified) {
     const now = new Date();
-    await db
-      .update(schema.campaign)
-      .set({
-        verifiedAt: now,
-        // A verified draft starts running. The advertiser asked for that when
-        // they created it; the check was the only thing holding it.
-        state: existing.state === "draft" ? "active" : existing.state,
-        updatedAt: now,
-      })
-      .where(eq(schema.campaign.id, campaignId));
+    await db.transaction(async (tx) => {
+      await tx
+        .update(schema.campaign)
+        .set({
+          verifiedAt: now,
+          // A verified draft starts running. The advertiser asked for that when
+          // they created it; the check was the only thing holding it.
+          state: existing.state === "draft" ? "active" : existing.state,
+          updatedAt: now,
+        })
+        .where(eq(schema.campaign.id, campaignId));
+      // The domain was the last gate, or the review still is; either way the
+      // slot's term starts only when both are open.
+      await startSlot(tx, campaignId, now);
+    });
   }
   return result;
 }

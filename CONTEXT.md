@@ -34,11 +34,24 @@ compare them.
 _Avoid_: Ad, creative, variant, banner
 
 **Slot**:
-One band of the ticker loop, booked by one advertiser for one term at one flat
-price. The loop holds a fixed count of slots. The numbers live in `economy.slot`.
-The API does not model a slot yet; the dashboard reads one campaign with one
-listing as one slot.
-_Avoid_: spot, position
+One position on the ticker ring, booked by one advertiser for one term at one
+flat price. The ring holds a fixed count of slots. The numbers live in
+`economy.slot`. The charge lands at booking and the term starts when the
+campaign is verified and its creative approved. A term ends and does not renew.
+A slot that never ran gives its charge back through a `void` row, because no
+money leaves Stripe; a top-up refund is a different act (see Refund).
+_Avoid_: spot. "Position" is the number on the ring, not the booking.
+
+**Ring**:
+The fixed count of positions the CapyTV ticker prints, `GET /slots/loop` on
+the wire. Every screen prints the same ring. Not the Loop: that is the batch
+of plays a venue screen caches.
+_Avoid_: loop (for the ring), carousel
+
+**Band**:
+One position of the ring as a screen prints it. A band is `open` (nobody holds
+it), `held` (paid for, and waiting for the domain check or the review), or
+`brand` (a running slot with an approved creative).
 
 **Verified domain**:
 A campaign's domain, proved by a token the advertiser publishes on that domain.

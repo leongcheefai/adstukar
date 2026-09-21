@@ -1,7 +1,8 @@
 import { Plus } from "@phosphor-icons/react";
 import { economy } from "@repo/config/economy";
+import type { LoopBand } from "@repo/contracts/types";
 import { cn } from "@repo/ui";
-import { type LoopBand, type SlotPosition, clipCopy } from "../../lib/slots";
+import { type SlotPosition, clipCopy } from "../../lib/slots";
 
 /** What the member types in the dialog, drawn on the position they picked. */
 export interface SlotDraft {
@@ -98,6 +99,8 @@ function OpenBand({
 /** Rows the loop takes on a wide page. Fewer rows make each band smaller. */
 const ROWS = 4;
 
+const EMPTY: ReadonlySet<number> = new Set();
+
 /**
  * The loop, laid flat in four rows: every band in its position, from 1 to the
  * last. It does not crawl, because a band that moves is hard to press. A press
@@ -106,11 +109,14 @@ const ROWS = 4;
  */
 export function SlotTicker({
   bands,
+  minePositions = EMPTY,
   draft = null,
   onPick,
   className,
 }: {
   bands: LoopBand[];
+  /** The positions this member's live slots hold, so their bands read as theirs. */
+  minePositions?: ReadonlySet<number>;
   draft?: SlotDraft | null;
   /** Absent when the loop is only shown and nothing can be picked. */
   onPick?: (position: SlotPosition) => void;
@@ -143,6 +149,20 @@ export function SlotTicker({
         if (band.kind === "open") {
           return <OpenBand key={band.position} position={band.position} onPick={onPick} />;
         }
+        const tone = minePositions.has(band.position) ? "mine" : "other";
+        // A held band is paid for and waits for review, so nobody else may pick it.
+        if (band.kind === "held") {
+          return (
+            <BrandBand
+              key={band.position}
+              position={band.position}
+              name="Booked"
+              tagline="In review"
+              logoUrl={null}
+              tone={tone}
+            />
+          );
+        }
         return (
           <BrandBand
             key={band.position}
@@ -150,7 +170,7 @@ export function SlotTicker({
             name={band.name}
             tagline={band.tagline}
             logoUrl={band.logoUrl}
-            tone={band.campaignId ? "mine" : "other"}
+            tone={tone}
           />
         );
       })}

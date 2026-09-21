@@ -302,21 +302,15 @@
      who has not give the ticker the same shaped ad. */
   width: var(--ad-mark);
   height: var(--ad-mark);
-  background: radial-gradient(
-    78% 78% at 32% 26%,
-    color-mix(in oklab, var(--brand) 82%, #fff),
-    var(--brand)
-  );
+  /* The first letter of the brand, on a neutral disc: the brand's own colour
+     comes only with a logo, so the bar never guesses one. */
+  background: rgb(255 255 255 / 0.92);
+  color: #0b0c10;
+  font-weight: 700;
+  font-size: calc(0.55 * var(--ad-mark));
+  line-height: 1;
+  text-transform: uppercase;
   box-shadow: 0 0 0 calc(0.25 * var(--u)) rgb(255 255 255 / 0.18);
-}
-.ad-avatar svg {
-  width: 66%;
-  height: 66%;
-  fill: none;
-  stroke: #0b0c10;
-  stroke-width: 1.9;
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }
 
 .ad-copy {

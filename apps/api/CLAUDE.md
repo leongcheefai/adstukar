@@ -15,8 +15,9 @@ Hono API server on Node.js. Handles auth (Better Auth), the CapyAds exchange (ca
 | `ledger` | `GET /ledger?reason&state&lot&cursor&limit` | member |
 | `payouts` | `GET /payouts`, `POST /payouts/stripe/connect`, `POST /payouts/stripe/refresh`, `POST /payouts` | member |
 | `topups` | `GET /topups`, `POST /topups/checkout`, `POST /topups/:id/refund` | member |
+| `slots` | `GET /slots`, `POST /slots` (member); `GET /slots/loop` needs no session, same-origin only | member |
 | `admin` | `GET /admin/moderation`, `POST /admin/listings/:id/approve\|reject`, `POST /admin/devices/:id/approve\|reject`, `GET /admin/payouts`, `POST /admin/payouts/:id/pay\|reject` | admin |
-| `jobs` | `startJobs()` from `index.ts`; `pnpm jobs:run` one-shot. Settlement, expiry, stale plays, and campaign pacing | — |
+| `jobs` | `startJobs()` from `index.ts`; `pnpm jobs:run` one-shot. Settlement, expiry, stale plays, campaign pacing, and the end of a slot's term | — |
 | `uploads` | `POST /uploads/logo/presign`, `POST /uploads/device-photo/presign` (S3, optional) | member |
 
 A `DELETE` on a campaign, a listing, or a device is an **archive**: the row stays,

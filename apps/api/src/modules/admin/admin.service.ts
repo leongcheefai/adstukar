@@ -4,6 +4,7 @@ import { and, asc, count, eq, ne } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import { generateApiKey } from "../devices/keys";
 import { postEntry } from "../ledger/ledger.service";
+import { refundSlot, startSlot } from "../slots/term";
 
 type DeviceTier = (typeof schema.DEVICE_TIERS)[number];
 
@@ -83,18 +84,25 @@ export async function approveListing(listingId: string, now: Date = new Date()) 
         now,
       });
     }
+    // The review was the last gate, or the domain check still is; either way
+    // the slot's term starts only when both are open.
+    await startSlot(tx, found.campaign.id, now);
     return row;
   });
 }
 
 export async function rejectListing(listingId: string, reason: string, now: Date = new Date()) {
-  const [row] = await db
-    .update(schema.listing)
-    .set({ state: "rejected", rejectionReason: reason, updatedAt: now })
-    .where(and(eq(schema.listing.id, listingId), ne(schema.listing.state, "archived")))
-    .returning();
-  if (!row) throw new HTTPException(404, { message: "Listing not found" });
-  return row;
+  return db.transaction(async (tx) => {
+    const [row] = await tx
+      .update(schema.listing)
+      .set({ state: "rejected", rejectionReason: reason, updatedAt: now })
+      .where(and(eq(schema.listing.id, listingId), ne(schema.listing.state, "archived")))
+      .returning();
+    if (!row) throw new HTTPException(404, { message: "Listing not found" });
+    // A refused creative on a booking that never ran gives the charge back.
+    await refundSlot(tx, row.campaignId, now);
+    return row;
+  });
 }
 
 /**

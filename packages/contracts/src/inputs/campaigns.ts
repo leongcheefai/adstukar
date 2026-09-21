@@ -10,8 +10,11 @@ export const httpUrl = z
 
 const dailyBudget = z.number().int().min(economy.caps.minDailyBudget);
 
+/** What a campaign is called. A slot booking names one too, so the rule lives once. */
+export const campaignName = z.string().trim().min(1).max(60);
+
 export const createCampaignInput = z.object({
-  name: z.string().trim().min(1).max(60),
+  name: campaignName,
   url: httpUrl,
   dailyBudget: dailyBudget.optional(),
 });
@@ -19,7 +22,7 @@ export const createCampaignInput = z.object({
 // `state` takes only the two an advertiser owns. `draft` is where a campaign
 // starts and `archived` is what the delete route writes, so neither is offered.
 export const updateCampaignInput = z.object({
-  name: z.string().trim().min(1).max(60).optional(),
+  name: campaignName.optional(),
   url: httpUrl.optional(),
   dailyBudget: dailyBudget.optional(),
   state: z.enum(["active", "paused"]).optional(),
