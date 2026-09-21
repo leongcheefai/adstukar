@@ -3,6 +3,7 @@ import { createSelectSchema } from "drizzle-zod";
 import { describe, expect, it } from "vitest";
 import { feedbackContract } from "./feedback";
 import { releaseContract } from "./release";
+import { slotContract } from "./slot";
 
 describe("derived entity contracts", () => {
   it("serializes release Dates to ISO strings", () => {
@@ -43,6 +44,35 @@ describe("derived entity contracts", () => {
       message: "The clock is one hour behind.",
       createdAt: "2026-09-21T01:02:03.000Z",
       resolvedAt: null,
+    });
+    expect(result).not.toHaveProperty("userId");
+  });
+
+  it("serializes every slot timestamp to an ISO string and keeps nulls", () => {
+    const result = slotContract.parse({
+      id: "s1",
+      userId: "u1",
+      campaignId: "c1",
+      position: 7,
+      state: "booked",
+      amount: 20_000,
+      bookedAt: new Date("2026-09-21T01:00:00.000Z"),
+      startsAt: null,
+      endsAt: null,
+      endedAt: null,
+      createdAt: new Date("2026-09-21T01:00:00.000Z"),
+    });
+    expect(result).toEqual({
+      id: "s1",
+      campaignId: "c1",
+      position: 7,
+      state: "booked",
+      amount: 20_000,
+      bookedAt: "2026-09-21T01:00:00.000Z",
+      startsAt: null,
+      endsAt: null,
+      endedAt: null,
+      createdAt: "2026-09-21T01:00:00.000Z",
     });
     expect(result).not.toHaveProperty("userId");
   });
