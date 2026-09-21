@@ -4,7 +4,7 @@
  *
  * The ledger holds one integer unit: one thousandth of a US dollar. Money
  * crosses the boundary twice: a top-up puts it in, and a payout takes it out.
- * See docs/adr/0001 and docs/adr/0007.
+ * See docs/adr/0001, docs/adr/0007, and docs/adr/0010.
  */
 export const economy = {
   /**
@@ -14,41 +14,20 @@ export const economy = {
   unit: { perUsd: 1000 },
 
   /**
-   * What an advertiser pays for one play, by device tier and placement format.
-   * The tier is what an admin stamps at approval; the format is the region.
+   * What a venue screen earns for one play. The platform pays it from slot
+   * revenue (docs/adr/0010), so the number a distributor reads is the number
+   * they keep. There is no fee row.
    */
-  playRate: {
-    standard: { band: 4, float: 6, ticker: 3 },
-    premium: { band: 8, float: 12, ticker: 6 },
-    flagship: { band: 16, float: 24, ticker: 12 },
-  },
-
-  /** What an advertiser pays on top when a viewer scans the code on a play. */
-  scanRate: {
-    standard: 40,
-    premium: 80,
-    flagship: 160,
-  },
-
-  /**
-   * Percent of every play and every scan that CapyAds keeps. It is posted as an
-   * explicit `fee` entry against the distributor, never as a hidden spread, so
-   * the earn and the spend a member compares are the same published number.
-   */
-  feePercent: 30,
-
-  grants: {
-    /** Granted once, when a member's first listing is approved. */
-    firstListingApproval: 2_000,
+  earn: {
+    /** Per 1,000 plays on a standard screen, as an amount ($2.00). */
+    perThousandPlays: 2_000,
+    /** What the admin stamps at approval. A new device starts at standard. */
+    tierMultiplier: { standard: 1, premium: 1.5, flagship: 2 },
   },
 
   caps: {
     /** Plays one device may be paid for in one day. */
     dailyPlaysPerDevice: 500,
-    /** The most one campaign may spend in one day, unless the advertiser sets less. */
-    defaultDailyBudget: 20_000,
-    /** The least a campaign may set as its daily budget. */
-    minDailyBudget: 1_000,
   },
 
   /** Hours before a pending earn entry settles. */
@@ -210,88 +189,32 @@ export const economy = {
 export const DAY_MS = 86_400_000;
 
 export type Economy = typeof economy;
-export type DeviceTierRate = keyof typeof economy.playRate;
-export type PlacementFormatRate = keyof (typeof economy.playRate)["standard"];
+export type DeviceTierRate = keyof typeof economy.earn.tierMultiplier;
 export type PayoutCountry = (typeof economy.payout.countries)[number];
 
-/** The advertiser's cost for one play. */
-export function playCost(tier: DeviceTierRate, format: PlacementFormatRate): number {
-  return economy.playRate[tier][format];
-}
-
-/** The advertiser's extra cost when that play is scanned. */
-export function scanCost(tier: DeviceTierRate): number {
-  return economy.scanRate[tier];
-}
-
 /**
- * The amount CapyAds keeps from one movement. Rounded down, so the distributor
- * never loses a unit to rounding and the two sides always add up.
+ * What a screen of this tier earns for one play. Rounded down, so the ledger
+ * never holds a part of a unit.
  */
-export function feeOn(amount: number): number {
-  return Math.floor((amount * economy.feePercent) / 100);
+export function earnPerPlay(tier: DeviceTierRate): number {
+  return Math.floor((economy.earn.perThousandPlays * economy.earn.tierMultiplier[tier]) / 1000);
 }
 
-/**
- * The play rate is tier by format, so no single number describes it. Copy that
- * quotes a rate quotes this range, and derives it here rather than in each page.
- */
-export function playRateRange(): { lowest: number; highest: number } {
-  const rates = Object.values(economy.playRate).flatMap((byFormat) => Object.values(byFormat));
-  return { lowest: Math.min(...rates), highest: Math.max(...rates) };
-}
-
-/** The percent of a play or a scan the distributor keeps, after the fee. */
-export function distributorPercent(): number {
-  return 100 - economy.feePercent;
-}
-
-/**
- * The amount the distributor keeps from one movement: the amount less the fee.
- * The fee rounds down, so this rounds up, and the two always add to the amount.
- */
-export function distributorKeeps(amount: number): number {
-  return amount - feeOn(amount);
-}
-
-/** A range of amounts, lowest to highest. */
-export interface AmountRange {
-  lowest: number;
-  highest: number;
-}
-
-/**
- * One row of the published rate table: what an advertiser pays on a screen of
- * this tier, and what the screen keeps. The play is a range, because the rate
- * depends on the region format too; a scan is one number per tier.
- */
+/** One row of the published rate table: the tier, and what one play earns. */
 export interface RateRow {
   tier: DeviceTierRate;
-  play: AmountRange;
-  playKeeps: AmountRange;
-  scan: number;
-  scanKeeps: number;
+  perPlay: number;
 }
 
 /**
- * The rate table every page shows. The landing page and both sides of the
- * dashboard read this one derivation, so the number an advertiser sees is the
- * number a distributor sees, and neither page carries its own arithmetic.
+ * The rate table every page shows. The landing page and the dashboard read
+ * this one derivation, so neither carries its own arithmetic.
  */
 export function rateTable(): RateRow[] {
-  return (Object.keys(economy.playRate) as DeviceTierRate[]).map((tier) => {
-    const rates = Object.values(economy.playRate[tier]);
-    const lowest = Math.min(...rates);
-    const highest = Math.max(...rates);
-    const scan = economy.scanRate[tier];
-    return {
-      tier,
-      play: { lowest, highest },
-      playKeeps: { lowest: distributorKeeps(lowest), highest: distributorKeeps(highest) },
-      scan,
-      scanKeeps: distributorKeeps(scan),
-    };
-  });
+  return (Object.keys(economy.earn.tierMultiplier) as DeviceTierRate[]).map((tier) => ({
+    tier,
+    perPlay: earnPerPlay(tier),
+  }));
 }
 
 /**

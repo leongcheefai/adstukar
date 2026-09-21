@@ -63,11 +63,6 @@ export function perThousandPlays(rate: number): string {
   return `${usdPerThousand(rate)} per 1,000 plays`;
 }
 
-/** A range of play rates in a sentence. */
-export function perThousandPlaysRange(lowest: number, highest: number): string {
-  return `${usdPerThousand(lowest)} to ${perThousandPlays(highest)}`;
-}
-
 /**
  * What a member typed, as an amount. It takes an optional dollar sign, thousands
  * commas, and up to two decimals. Anything else, and a negative figure, is null.
