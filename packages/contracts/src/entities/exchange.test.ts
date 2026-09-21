@@ -16,9 +16,6 @@ describe("exchange entity contracts", () => {
       url: "https://acme.test",
       domain: "acme.test",
       state: "draft",
-      pauseReason: null,
-      pausedAt: null,
-      dailyBudget: 20_000,
       verificationToken: "tok",
       verifiedAt: null,
       createdAt: new Date("2026-08-01T00:00:00.000Z"),
@@ -27,7 +24,7 @@ describe("exchange entity contracts", () => {
     expect(result).not.toHaveProperty("userId");
     expect(result.createdAt).toBe("2026-08-01T00:00:00.000Z");
     expect(result.state).toBe("draft");
-    expect(result.pauseReason).toBeNull();
+    expect(result).not.toHaveProperty("dailyBudget");
   });
 
   it("keeps the listing under its campaign and carries no name of its own", () => {

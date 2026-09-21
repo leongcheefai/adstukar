@@ -2,14 +2,11 @@ import * as z from "zod/v4";
 import { campaignContract } from "../entities/campaign";
 import { listingContract } from "../entities/listing";
 
-// A campaign always travels with its listings and with what it has spent today:
-// the dashboard draws one section per campaign, and a daily budget with no spend
-// beside it says nothing about how the campaign is pacing.
+// A campaign always travels with its listings: the dashboard draws one section
+// per campaign, and a listing is what a slot shows.
 export const campaignWithListingsOutput = z.object({
   campaign: campaignContract,
   listings: z.array(listingContract),
-  /** The amount this campaign has spent since the start of the UTC day. */
-  spentToday: z.number().int(),
 });
 
 export const listCampaignsOutput = z.array(campaignWithListingsOutput);

@@ -16,8 +16,8 @@ Hono API server on Node.js. Handles auth (Better Auth), the CapyAds exchange (ca
 | `payouts` | `GET /payouts`, `POST /payouts/stripe/connect`, `POST /payouts/stripe/refresh`, `POST /payouts` | member |
 | `topups` | `GET /topups`, `POST /topups/checkout`, `POST /topups/:id/refund` | member |
 | `slots` | `GET /slots`, `POST /slots` (member); `GET /slots/loop` needs no session, same-origin only | member |
-| `admin` | `GET /admin/moderation`, `POST /admin/listings/:id/approve\|reject`, `POST /admin/devices/:id/approve\|reject`, `GET /admin/payouts`, `POST /admin/payouts/:id/pay\|reject` | admin |
-| `jobs` | `startJobs()` from `index.ts`; `pnpm jobs:run` one-shot. Settlement, expiry, stale plays, campaign pacing, and the end of a slot's term | — |
+| `admin` | `GET /admin/moderation`, `POST /admin/listings/:id/approve\|reject`, `POST /admin/devices/:id/approve\|reject`, `GET /admin/pool`, `GET /admin/payouts`, `POST /admin/payouts/:id/pay\|reject` | admin |
+| `jobs` | `startJobs()` from `index.ts`; `pnpm jobs:run` one-shot. Settlement, expiry, stale plays, and the end of a slot's term | — |
 | `uploads` | `POST /uploads/logo/presign`, `POST /uploads/device-photo/presign` (S3, optional) | member |
 
 A `DELETE` on a campaign, a listing, or a device is an **archive**: the row stays,
@@ -25,7 +25,7 @@ because the ledger reaches it through the plays it earned. Only a placement that
 has never played is really deleted.
 
 `GET /loop` cuts a whole batch of plays for a screen with a shaky network. Nothing
-is charged when the batch is cut: the daily cap and the campaign budget are read
+is paid when the batch is cut: the daily cap and the state of the slot are read
 again at report time, so a batch is an offer of plays and never a promise that
 every one of them pays. Each play carries its own `expires_at` — minutes from a
 live `/serve`, hours from a `/loop` — and `POST /report` accepts a `playedAt` it
@@ -44,20 +44,19 @@ survives a re-review, which is what stops a second approval from minting a new
 key and blacking out a screen somebody has already paired. A rejection clears it,
 so approving a refused screen later does issue a fresh key.
 
-The daily play cap and the state of the campaign and the listing are read when
-the money moves, never when the play was served. Above the cap, or on a listing
-an admin rejected after the batch was cut, the play still counts and simply pays
-nothing — "plays above the cap still show, and pay nothing" (issue #7).
+The daily play cap and the state of the slot, the campaign, and the listing are
+read when the money moves, never when the play was served. Above the cap, or on
+a slot that ended after the batch was cut, the play still counts and simply pays
+nothing — "plays above the cap still show, and pay nothing" (issue #7). The pure
+rule is `src/modules/serve/payable.ts`.
 
-A scan can reach the API while the screen is still offline, because the viewer's
-phone has its own network. `recordScan` then marks the play scanned and pays
-nothing; `recordReport` settles the bonus when the screen reports the play.
+A paid play posts one `earn` row at the device's tier rate (`economy.earn`),
+and nothing else. The platform pays it from slot revenue, so there is no
+advertiser to debit and no fee row (docs/adr/0010). `GET /admin/pool` shows the
+week's slot revenue beside the week's earn.
 
-A campaign paces itself. The listings under it split the daily budget evenly. The
-campaign stops when the budget is spent, or when the owner's balance runs out. The
-pacing job starts it again when the reason has gone. See
-`src/modules/campaigns/pacing.ts` for the rules and `pacing.service.ts` for the
-writes.
+A scan marks the play scanned and redirects. It moves no money; the
+scan-to-play ratio is what the payout review reads.
 
 A payout takes earned money that has served the hold, and nothing else. The
 request debits the account at once, so no balance can answer two requests; a
@@ -153,6 +152,10 @@ retry changes nothing.
 Open the dashboard, top up the smallest amount with a Stripe test card, and watch the
 CLI forward `checkout.session.completed`. The ledger then shows one `topup` row
 against the `bought` lot.
+
+## Tests
+- `pnpm --filter @repo/api test`: the pure tests (`*.test.ts`), no database. Part of `pnpm verify`.
+- `pnpm --filter @repo/api test:db`: the database tests (`*.db.test.ts`), one file at a time, against `TEST_DATABASE_URL`. `src/test/global-setup.ts` creates the `_test` database and runs the migrations; `src/test/fixtures.ts` builds members, screens, and slots, and `truncateAll()` empties every table before each test. Write a database test when the thing under test is a query or a transaction, and a pure test for everything else.
 
 ## Gotchas
 - `POST /report` reads a **text/plain** body (`navigator.sendBeacon` cannot send JSON content types) and parses it by hand — do not add `zValidator("json")` there

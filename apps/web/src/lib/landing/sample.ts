@@ -1,4 +1,4 @@
-import { type DeviceTierRate, distributorKeeps, economy } from "@repo/config/economy";
+import { type DeviceTierRate, earnPerPlay, economy, slotPrice } from "@repo/config/economy";
 import { project } from "@repo/config/project";
 import type { LandingConfig } from "./config";
 import { rng } from "./prng";
@@ -58,7 +58,7 @@ const NOW_PLAYING: readonly SampleNowPlaying[] = [
   { source: "Firepit", title: "Evening fire", by: project.name },
 ];
 
-const TIERS = Object.keys(economy.playRate) as DeviceTierRate[];
+const TIERS = Object.keys(economy.earn.tierMultiplier) as DeviceTierRate[];
 const DAYS = 30;
 
 export interface LandingSample {
@@ -74,9 +74,9 @@ export interface LandingSample {
   scanSeries: number[];
   plays: number;
   scans: number;
-  /** What the advertiser paid, gross, at the crawl rate for the tier. */
+  /** What the advertiser paid: one slot per term, over the window. */
   spent: number;
-  /** What the venue kept, net of the fee, at the crawl rate for its tier. */
+  /** What the venue kept, at the rate for its tier. */
   earned: number;
 }
 
@@ -112,10 +112,9 @@ export function sampleLanding(config: LandingConfig): LandingSample {
   const scanRatio = r.float(0.03, 0.06);
   const scanSeries = series.map((n) => Math.round(n * scanRatio * (0.6 + r.next() * 0.8)));
   const scans = scanSeries.reduce((sum, n) => sum + n, 0);
-  const playRate = economy.playRate[tier].ticker;
-  const scanRate = economy.scanRate[tier];
-  const spent = plays * playRate + scans * scanRate;
-  const earned = plays * distributorKeeps(playRate) + scans * distributorKeeps(scanRate);
+  const terms = Math.ceil(DAYS / economy.slot.termDays);
+  const spent = terms * slotPrice();
+  const earned = plays * earnPerPlay(tier);
 
   return { ads, venue, nowPlaying, online, tier, series, scanSeries, plays, scans, spent, earned };
 }

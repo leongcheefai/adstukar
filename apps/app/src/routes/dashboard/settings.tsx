@@ -53,7 +53,7 @@ const ADMIN_SECTIONS: SettingsSection[] = [
     label: "Moderation",
     title: "Moderation",
     description:
-      "Listings waiting for review, oldest first. A first approved listing grants the trial credit.",
+      "Listings waiting for review, oldest first. Approval is one of the two gates on a slot's term.",
     group: "Admin",
   },
   {

@@ -13,7 +13,7 @@ Vite + React 19 SPA. CapyTV is the member app: boot mark, then a session check, 
 - Query hooks live in `src/lib/{campaigns,slots-api,stats,ledger,admin,payouts}.ts` on top of `src/lib/api.ts` (`apiFetch`). `campaigns.ts` owns listings too, because a listing only ever appears inside its campaign
 
 ## No device UI
-The dashboard has no device UI. A member does not register a screen, and Moderation reviews listings only. The API still has the device routes. The admin payout review still shows the screen signals that the API sends.
+The dashboard has no device UI. A member does not register a screen, and Moderation reviews listings only. The pool card at the top of Moderation reads `GET /admin/pool`: the week's slot revenue beside the week's earn (docs/adr/0010). The API still has the device routes. The admin payout review still shows the screen signals that the API sends.
 
 ## Conventions
 - All env access through `src/lib/env.ts` (validated via `@t3-oss/env-core`) — never `import.meta.env.VITE_*` directly

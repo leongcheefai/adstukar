@@ -133,3 +133,22 @@ export const resolveFeedbackOutput = feedbackContract;
 
 export type FeedbackReview = z.output<typeof feedbackReviewContract>;
 export type FeedbackQueue = z.output<typeof feedbackQueueOutput>;
+
+/**
+ * What the week's slot revenue is against what the week's plays posted. It is
+ * the one number that says when to move a lever: the slot price, the pace of
+ * approval, or the pace of tier promotion (docs/adr/0010). Hand-authored: no
+ * table owns a sum over a week.
+ */
+export const poolOutput = toWire(
+  z.object({
+    /** The Monday the week starts on, UTC. */
+    weekStart: z.date(),
+    /** `slot.amount` summed over bookings made this week that were not refunded. */
+    slotRevenue: z.number().int(),
+    /** `earn` rows summed over this week, less the ones the void job closed. */
+    earnPosted: z.number().int(),
+  }),
+);
+
+export type Pool = z.output<typeof poolOutput>;

@@ -1,9 +1,8 @@
 import { economy } from "@repo/config/economy";
 import { db, schema } from "@repo/db";
-import { and, asc, count, eq, ne } from "drizzle-orm";
+import { and, asc, eq, ne } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import { generateApiKey } from "../devices/keys";
-import { postEntry } from "../ledger/ledger.service";
 import { refundSlot, startSlot } from "../slots/term";
 
 type DeviceTier = (typeof schema.DEVICE_TIERS)[number];
@@ -42,8 +41,8 @@ export async function listModerationQueue() {
 }
 
 /**
- * Approving a member's first listing pays the welcome grant. The grant lot
- * neither refunds nor withdraws, so free money can never leave as cash.
+ * Approval is one of the two gates on a slot's term; the domain check is the
+ * other. Whichever opens last starts the term.
  */
 export async function approveListing(listingId: string, now: Date = new Date()) {
   return db.transaction(async (tx) => {
@@ -66,24 +65,6 @@ export async function approveListing(listingId: string, now: Date = new Date()) 
       .returning();
     if (!row) throw new HTTPException(404, { message: "Listing not found" });
 
-    const ownerId = found.campaign.userId;
-    const [approved] = await tx
-      .select({ n: count() })
-      .from(schema.listing)
-      .innerJoin(schema.campaign, eq(schema.campaign.id, schema.listing.campaignId))
-      .where(and(eq(schema.campaign.userId, ownerId), eq(schema.listing.state, "approved")));
-
-    if ((approved?.n ?? 0) === 1) {
-      await postEntry(tx, {
-        userId: ownerId,
-        delta: economy.grants.firstListingApproval,
-        reason: "grant",
-        lot: "granted",
-        state: "settled",
-        idempotencyKey: `grant:first-listing:${ownerId}`,
-        now,
-      });
-    }
     // The review was the last gate, or the domain check still is; either way
     // the slot's term starts only when both are open.
     await startSlot(tx, found.campaign.id, now);

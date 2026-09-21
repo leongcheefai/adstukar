@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   parseUsd,
   perThousandPlays,
-  perThousandPlaysRange,
+  slotOffer,
   usd,
   usdCents,
   usdInput,
@@ -63,13 +63,13 @@ describe("usdCents", () => {
 });
 
 describe("rates", () => {
+  it("shows the slot offer as one sentence", () => {
+    expect(slotOffer()).toBe("$20.00 for 7 days");
+  });
+
   it("shows a play rate per thousand plays", () => {
     expect(usdPerThousand(4)).toBe("$4.00");
     expect(perThousandPlays(4)).toBe("$4.00 per 1,000 plays");
-  });
-
-  it("shows a range of play rates as one sentence", () => {
-    expect(perThousandPlaysRange(3, 6)).toBe("$3.00 to $6.00 per 1,000 plays");
   });
 });
 

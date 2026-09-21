@@ -6,6 +6,7 @@ import {
   moderateListingOutput,
   moderationQueueOutput,
   payoutQueueOutput,
+  poolOutput,
   refundTopupOutput,
   rejectInput,
   resolveFeedbackOutput,
@@ -26,6 +27,7 @@ import {
   rejectDevice,
   rejectListing,
 } from "./admin.service";
+import { weekPool } from "./pool.service";
 
 export const adminRouter = new Hono<{ Variables: AppVariables }>();
 
@@ -59,6 +61,12 @@ adminRouter.post("/devices/:id/approve", zValidator("json", approveDeviceInput),
 adminRouter.post("/devices/:id/reject", zValidator("json", rejectInput), async (c) => {
   const row = await rejectDevice(c.req.param("id"), c.req.valid("json").reason);
   return c.json(moderateDeviceOutput.parse(row satisfies z.input<typeof moderateDeviceOutput>));
+});
+
+/** The week's slot revenue beside the week's earn: the one number that says when to move a lever. */
+adminRouter.get("/pool", async (c) => {
+  const pool = await weekPool();
+  return c.json(poolOutput.parse(pool satisfies z.input<typeof poolOutput>));
 });
 
 /**

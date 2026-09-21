@@ -25,7 +25,7 @@ A member who reviews listings and devices, and who pays out.
 
 **Campaign**:
 One destination site and every listing that points at it. Holds the name, the
-URL, the verified domain, the state, and the daily budget.
+URL, the verified domain, and the state.
 _Avoid_: Product, project, group
 
 **Listing**:
@@ -37,8 +37,9 @@ _Avoid_: Ad, creative, variant, banner
 One position on the ticker ring, booked by one advertiser for one term at one
 flat price. The ring holds a fixed count of slots. The numbers live in
 `economy.slot`. The charge lands at booking and the term starts when the
-campaign is verified and its creative approved. A term ends and does not renew.
-A slot that never ran gives its charge back through a `void` row, because no
+campaign is verified and its creative approved. While the term runs, every
+venue screen plays it, and the platform pays each screen its rate
+(docs/adr/0010). A term ends and does not renew. A slot that never ran gives its charge back through a `void` row, because no
 money leaves Stripe; a top-up refund is a different act (see Refund).
 _Avoid_: spot. "Position" is the number on the ring, not the booking.
 
@@ -83,8 +84,13 @@ How long one listing stays on a placement.
 The quiet time between two plays on a device.
 
 **Tier**:
-The quality class an admin stamps on a device at approval. The tier sets the
-rate the device earns and the advertiser pays.
+The class an admin stamps on a device at approval. It multiplies the rate the
+device earns: standard 1×, premium 1.5×, flagship 2×. A new device starts at
+standard and moves up after a clean payout review. The admin reads the photo
+and the venue: standard is a steady but small crowd (under 5 viewers per
+play); premium is a queue or a seated crowd for most of the open hours (5 to
+15); flagship is a large screen in a high-traffic public space, or a venue the
+platform wants for its name (above 15). See docs/adr/0010.
 
 **Loop**:
 The batch of plays CapyTV takes at once and holds on the device. The screen plays
@@ -107,11 +113,13 @@ A phrase that stops any listing whose name or tagline contains it.
 
 **Play**:
 One listing shown in one placement for its full dwell. The play is the event
-that moves money.
+that moves money: the platform pays the screen a fixed rate for it
+(docs/adr/0010).
 _Avoid_: Impression, view, showing
 
 **Scan**:
-A viewer who scans the code on a played listing. A scan pays a bonus.
+A viewer who scans the code on a played listing. It is counted and not paid;
+the scan-to-play ratio is a fraud signal.
 _Avoid_: Click, tap, conversion
 
 **Open hours**:
@@ -121,22 +129,11 @@ venue's own time. The payout review counts the plays that fall outside them.
 **Daily play cap**:
 The largest number of plays one device may be paid for in one day.
 
-**Daily budget**:
-The most money one campaign may spend in one day. The listings
-under the campaign split it evenly, so one creative cannot take the whole day.
-
-**Pause reason**:
-Why the system stopped a campaign: `budget` when the daily budget is spent, or
-`balance` when the owner's balance ran out. A campaign a person paused carries no
-reason. A budget pause lifts on the next day; a balance pause lifts when the
-balance comes back.
-_Avoid_: Auto-pause, throttle
-
 ## Money
 
 **Wallet**:
-A member's balance in US dollars. Money enters as a top-up, moves with each
-play, and leaves as a payout.
+A member's balance in US dollars. Money enters as a top-up or as an earn, and
+leaves as a payout.
 _Avoid_: Points, credits, coins, tokens
 
 **Amount**:
@@ -174,9 +171,10 @@ _Avoid_: Payout account, payout details
 The earned money that has served the hold, less what already left. It is what
 one payout may take, and it is never the same number as the balance.
 
-**Fee**:
-The share CapyAds keeps from each play and each scan.
-_Avoid_: Commission, margin, spread
+**Rate**:
+What a screen earns for one play, by tier. It lives in `economy.earn` and no
+fee comes off it.
+_Avoid_: Fee, commission, margin, spread, CPM
 
 **Refund**:
 Money returned for a top-up that a member did not spend. It runs for a window
@@ -205,6 +203,6 @@ is the window in which a dead screen is caught before cash leaves.
 The moment granted or earned money loses its value. Bought money never expires.
 
 **Trial credit**:
-Money the system grants. A new advertiser gets it at the first approved
-listing. It is the `granted` lot on screen.
+Money the system granted, on screen the `granted` lot. Nothing grants it any
+more (docs/adr/0010); the word stays for the rows that hold it.
 _Avoid_: Grant, welcome points, bonus

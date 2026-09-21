@@ -1,5 +1,4 @@
 import { randomBytes } from "node:crypto";
-import { economy } from "@repo/config/economy";
 import type { CreateCampaignInput, UpdateCampaignInput } from "@repo/contracts";
 import { db, schema } from "@repo/db";
 import { and, asc, desc, eq, inArray, isNotNull, ne } from "drizzle-orm";
@@ -7,7 +6,6 @@ import { HTTPException } from "hono/http-exception";
 import { domainFromUrl } from "../../lib/domain";
 import type { Tx } from "../ledger/ledger.service";
 import { closeSlot, startSlot } from "../slots/term";
-import { spentTodayByCampaign } from "./spend";
 import { verifyDomain } from "./verification";
 
 type CampaignRow = typeof schema.campaign.$inferSelect;
@@ -34,20 +32,11 @@ export async function listingsFor(campaignIds: string[]): Promise<Map<string, Li
   return map;
 }
 
-/**
- * A campaign travels with its listings and with what it has spent today, because
- * a budget nobody can see against the spend says nothing about how a campaign is
- * pacing.
- */
-function withListings(
-  rows: CampaignRow[],
-  listings: Map<string, ListingRow[]>,
-  spend: Map<string, number>,
-) {
+/** A campaign travels with its listings, because a listing is what a slot shows. */
+function withListings(rows: CampaignRow[], listings: Map<string, ListingRow[]>) {
   return rows.map((campaign) => ({
     campaign,
     listings: listings.get(campaign.id) ?? [],
-    spentToday: spend.get(campaign.id) ?? 0,
   }));
 }
 
@@ -57,11 +46,8 @@ export async function listCampaigns(userId: string) {
     .from(schema.campaign)
     .where(and(eq(schema.campaign.userId, userId), LIVE_CAMPAIGN))
     .orderBy(desc(schema.campaign.createdAt));
-  const [listings, spend] = await Promise.all([
-    listingsFor(rows.map((c) => c.id)),
-    spentTodayByCampaign(db, new Date()),
-  ]);
-  return withListings(rows, listings, spend);
+  const listings = await listingsFor(rows.map((c) => c.id));
+  return withListings(rows, listings);
 }
 
 export async function getOwnedCampaign(userId: string, campaignId: string) {
@@ -75,12 +61,8 @@ export async function getOwnedCampaign(userId: string, campaignId: string) {
 }
 
 async function single(campaign: CampaignRow) {
-  const now = new Date();
-  const [listings, spend] = await Promise.all([
-    listingsFor([campaign.id]),
-    spentTodayByCampaign(db, now, campaign.id),
-  ]);
-  const [item] = withListings([campaign], listings, spend);
+  const listings = await listingsFor([campaign.id]);
+  const [item] = withListings([campaign], listings);
   if (!item) throw new HTTPException(500, { message: "Campaign vanished" });
   return item;
 }
@@ -137,7 +119,6 @@ export async function insertCampaign(
       // A verified domain needs no second check, so the campaign starts running.
       state: verifiedAt ? "active" : "draft",
       verifiedAt,
-      dailyBudget: input.dailyBudget ?? economy.caps.defaultDailyBudget,
       verificationToken: randomBytes(16).toString("hex"),
       createdAt: now,
       updatedAt: now,
@@ -164,7 +145,6 @@ export async function updateCampaign(
 
   const patch: Partial<typeof schema.campaign.$inferInsert> = { updatedAt: new Date() };
   if (input.name !== undefined) patch.name = input.name;
-  if (input.dailyBudget !== undefined) patch.dailyBudget = input.dailyBudget;
   if (input.url !== undefined) {
     const domain = requireDomain(input.url);
     patch.url = input.url;
@@ -176,14 +156,8 @@ export async function updateCampaign(
       patch.verifiedAt = verifiedAt;
       // Proof of the new domain leaves the campaign where it was; a campaign the
       // advertiser had paused stays paused. No proof sends it back to draft.
-      //
-      // A campaign the system stopped starts again, because the reason it was
-      // stopped goes with the patch below. The pacing sweep stops it once more,
-      // within minutes, if the money is still not there.
       if (!verifiedAt) patch.state = "draft";
-      else if (existing.state === "draft" || existing.pauseReason !== null) patch.state = "active";
-      patch.pauseReason = null;
-      patch.pausedAt = null;
+      else if (existing.state === "draft") patch.state = "active";
     }
   }
   if (input.state !== undefined) {
@@ -195,10 +169,6 @@ export async function updateCampaign(
       throw new HTTPException(409, { message: "Verify the domain before you run the campaign" });
     }
     patch.state = input.state;
-    // A person moved this campaign, so the system's reason for stopping it is
-    // gone. The resume job leaves a campaign with no reason alone.
-    patch.pauseReason = null;
-    patch.pausedAt = null;
   }
 
   const row = await db.transaction(async (tx) => {
