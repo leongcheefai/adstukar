@@ -2,6 +2,7 @@ import { CaretRight } from "@phosphor-icons/react";
 import { cn } from "@repo/ui";
 import { useSearchParams } from "react-router";
 import { DangerSection } from "../../components/settings/danger-section";
+import { FeedbackSection } from "../../components/settings/feedback-section";
 import { ModerationSection } from "../../components/settings/moderation-section";
 import { PayoutsSection } from "../../components/settings/payouts-section";
 import { ProfileSection } from "../../components/settings/profile-section";
@@ -70,6 +71,12 @@ const ADMIN_SECTIONS: SettingsSection[] = [
       "Every top-up a member paid for, newest first. A member asks for a refund; you give the unspent part back from here.",
   },
   {
+    id: "feedback",
+    label: "Feedback",
+    title: "Feedback",
+    description: "What members sent from the account menu, newest first.",
+  },
+  {
     id: "releases",
     label: "Releases",
     title: "Releases",
@@ -85,6 +92,8 @@ function SectionBody({ id }: { id: string }) {
       return <PayoutsSection />;
     case "topups":
       return <TopupsSection />;
+    case "feedback":
+      return <FeedbackSection />;
     case "releases":
       return <ReleasesSection />;
     case "sessions":

@@ -1,9 +1,16 @@
-import type { Listing, ModerationQueue, Topup, TopupQueue } from "@repo/contracts/types";
+import type {
+  FeedbackQueue,
+  Listing,
+  ModerationQueue,
+  Topup,
+  TopupQueue,
+} from "@repo/contracts/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "./api";
 
 const queueKey = ["admin", "moderation"] as const;
 const topupsKey = ["admin", "topups"] as const;
+const feedbackKey = ["admin", "feedback"] as const;
 
 /** The listings that wait for a person to read them. */
 export function useModerationQueue() {
@@ -50,5 +57,13 @@ export function useRefundTopup() {
   return useMutation({
     mutationFn: (id: string) => apiFetch<Topup>(`/admin/topups/${id}/refund`, { method: "POST" }),
     onSuccess: () => qc.invalidateQueries({ queryKey: topupsKey }),
+  });
+}
+
+/** Every piece of feedback a member sent, newest first. Read only. */
+export function useFeedbackQueue() {
+  return useQuery({
+    queryKey: feedbackKey,
+    queryFn: () => apiFetch<FeedbackQueue>("/admin/feedback"),
   });
 }

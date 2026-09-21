@@ -1,6 +1,7 @@
 import { zValidator } from "@hono/zod-validator";
 import {
   approveDeviceInput,
+  feedbackQueueOutput,
   moderateDeviceOutput,
   moderateListingOutput,
   moderationQueueOutput,
@@ -14,6 +15,7 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import type * as z from "zod/v4";
 import type { AppVariables } from "../../lib/context";
+import { listFeedbackQueue } from "../feedback/feedback.service";
 import { listPayoutQueue, payPayout, rejectPayout } from "../payouts/payouts.service";
 import { listTopupQueue, refundTopup } from "../topups/topups.service";
 import {
@@ -96,4 +98,10 @@ adminRouter.get("/topups", async (c) => {
 adminRouter.post("/topups/:id/refund", async (c) => {
   const row = await refundTopup(c.req.param("id"));
   return c.json(refundTopupOutput.parse(row satisfies z.input<typeof refundTopupOutput>));
+});
+
+/** The feedback desk. A member sends it from the account menu; an admin reads it here. */
+adminRouter.get("/feedback", async (c) => {
+  const queue = await listFeedbackQueue();
+  return c.json(feedbackQueueOutput.parse(queue satisfies z.input<typeof feedbackQueueOutput>));
 });
