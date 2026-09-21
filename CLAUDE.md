@@ -14,7 +14,7 @@ per-play advertiser bill on venue screens (`docs/adr/0010`). Do not restore eith
 
 | Term | What it is |
 |---|---|
-| `campaign` | one destination site, its verified domain, its state, its daily budget |
+| `campaign` | one destination site, its verified domain, its state |
 | `listing` | one creative under a campaign, up to four |
 | `device` | one screen running CapyTV; owner, venue, tier, location, daily play cap |
 | `placement` | one overlay region on a device (`band` / `float` / `ticker`) |
@@ -102,7 +102,7 @@ Single source of truth for every type crossing the API boundary. Hand-copying a 
 - **zod dialect split**: `packages/contracts` uses `zod/v4` (`import * as z from "zod/v4"`) because drizzle-zod emits v4 instances. Rest of repo uses v3 (bare `zod`). Both ship inside zod 3.25.76. Bare `zod` in contracts = classes silently don't match. `ZodError` in `apps/api/src/middleware/error.ts` must come from `zod/v4` or the branch never fires. v4 has no `z.AnyZodObject`; `ZodType` is `<Output, Input, Internals>`.
 - `toWire` **throws** on schema types outside its allowlist (`.default()`, unions, records, `.refine()`, tuples). Deliberate — silent passthrough would leak a raw `Date` while the type claims `string`. Don't weaken the schema to dodge it.
 - A renamed/dropped column makes `.pick()` throw `Unrecognized key` **at module load, not compile time** — TS's excess-property check only fires when every mask key is invalid. Phase 0 renames many columns, so expect this one.
-- `pgEnum` without `.notNull()` derives as **nullable** (e.g. `campaign.pauseReason`). That's correct; handle the null.
+- `pgEnum` without `.notNull()` derives as **nullable**. That's correct; handle the null.
 - **A delete is an archive.** Once money has moved, the row stays, because the ledger references it. A campaign, a listing, and a device all archive.
 - **A refund posts a `refund` entry.** It never deletes a row and never edits one.
 - **`voidEntry` treats a pending row and a settled row differently.** A pending row never reached the balance, so it is marked `void` and nothing is posted. A settled row stays settled and takes a compensating row beside it. Doing both would give the money back twice, because balances sum settled rows only.

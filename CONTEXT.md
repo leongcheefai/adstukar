@@ -25,7 +25,7 @@ A member who reviews listings and devices, and who pays out.
 
 **Campaign**:
 One destination site and every listing that points at it. Holds the name, the
-URL, the verified domain, the state, and the daily budget.
+URL, the verified domain, and the state.
 _Avoid_: Product, project, group
 
 **Listing**:
@@ -203,6 +203,6 @@ is the window in which a dead screen is caught before cash leaves.
 The moment granted or earned money loses its value. Bought money never expires.
 
 **Trial credit**:
-Money the system grants. A new advertiser gets it at the first approved
-listing. It is the `granted` lot on screen.
+Money the system granted, on screen the `granted` lot. Nothing grants it any
+more (docs/adr/0010); the word stays for the rows that hold it.
 _Avoid_: Grant, welcome points, bonus
