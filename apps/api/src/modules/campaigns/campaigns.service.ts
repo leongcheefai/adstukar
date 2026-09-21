@@ -6,6 +6,7 @@ import { and, asc, desc, eq, inArray, isNotNull, ne } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import { domainFromUrl } from "../../lib/domain";
 import type { Tx } from "../ledger/ledger.service";
+import { refundSlot, startSlot } from "../slots/term";
 import { spentTodayByCampaign } from "./spend";
 import { verifyDomain } from "./verification";
 
@@ -224,6 +225,8 @@ export async function archiveCampaign(userId: string, campaignId: string) {
       .update(schema.listing)
       .set({ state: "archived", updatedAt: now })
       .where(eq(schema.listing.campaignId, campaignId));
+    // A booking that never ran gives its charge back; a running one ends.
+    await refundSlot(tx, campaignId, now);
   });
   return { id: campaignId };
 }
@@ -233,16 +236,21 @@ export async function verifyCampaign(userId: string, campaignId: string) {
   const result = await verifyDomain(existing.domain, existing.verificationToken);
   if (result.verified) {
     const now = new Date();
-    await db
-      .update(schema.campaign)
-      .set({
-        verifiedAt: now,
-        // A verified draft starts running. The advertiser asked for that when
-        // they created it; the check was the only thing holding it.
-        state: existing.state === "draft" ? "active" : existing.state,
-        updatedAt: now,
-      })
-      .where(eq(schema.campaign.id, campaignId));
+    await db.transaction(async (tx) => {
+      await tx
+        .update(schema.campaign)
+        .set({
+          verifiedAt: now,
+          // A verified draft starts running. The advertiser asked for that when
+          // they created it; the check was the only thing holding it.
+          state: existing.state === "draft" ? "active" : existing.state,
+          updatedAt: now,
+        })
+        .where(eq(schema.campaign.id, campaignId));
+      // The domain was the last gate, or the review still is; either way the
+      // slot's term starts only when both are open.
+      await startSlot(tx, campaignId, now);
+    });
   }
   return result;
 }

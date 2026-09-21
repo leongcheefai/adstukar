@@ -2,6 +2,7 @@ import { log } from "../../lib/logger";
 import { paceCampaigns } from "../campaigns/pacing.service";
 import { expireDue, settleDue } from "../ledger/ledger.service";
 import { voidStalePlays } from "../serve/serve.service";
+import { endDueSlots } from "../slots/term";
 
 export async function runSettlement(now: Date = new Date()) {
   const settled = await settleDue(now);
@@ -34,11 +35,19 @@ export async function runCampaignPacing(now: Date = new Date()) {
   return sweep;
 }
 
+/** A term is over when its clock says so. The position opens for the next member. */
+export async function runSlotEnd(now: Date = new Date()) {
+  const ended = await endDueSlots(now);
+  if (ended > 0) log("info", "slots_ended", { ended });
+  return ended;
+}
+
 export async function runAllJobs(now: Date = new Date()) {
   return {
     settled: await runSettlement(now),
     expired: await runExpiry(now),
     voided: await runPlayCleanup(now),
     paced: await runCampaignPacing(now),
+    slotsEnded: await runSlotEnd(now),
   };
 }
