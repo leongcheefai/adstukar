@@ -53,12 +53,3 @@ export function lapMs(
   const travel = frameWidth + runWidth / bands;
   return Math.round((crossMs * runWidth) / travel);
 }
-
-/**
- * One loop's bands: the brands first, then `null` for each open slot. A list
- * longer than the loop is cut, so the lap never grows past its twenty bands.
- */
-export function bandsForLoop<T>(ads: readonly T[], bands = BANDS_PER_LOOP): (T | null)[] {
-  const count = Math.max(0, Math.floor(bands));
-  return Array.from({ length: count }, (_, slot) => ads[slot] ?? null);
-}
