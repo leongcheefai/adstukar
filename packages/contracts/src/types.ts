@@ -21,6 +21,7 @@ export type {
   DeviceTier,
   VenueType,
 } from "./entities/device";
+export type { Feedback } from "./entities/feedback";
 export type { Placement, PlacementFormat, PlacementSize } from "./entities/placement";
 export type { Play, PlayState } from "./entities/play";
 export type { LedgerEntry, LedgerLot, LedgerReason, LedgerState } from "./entities/ledger-entry";
@@ -68,6 +69,8 @@ export type {
   ReviewedDevice,
   TopupQueue,
   TopupReview,
+  FeedbackQueue,
+  FeedbackReview,
 } from "./modules/admin";
 export type { ConnectStripeResponse, PayoutBlock, PayoutOverview } from "./modules/payouts";
 export type {

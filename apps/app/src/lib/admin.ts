@@ -1,9 +1,17 @@
-import type { Listing, ModerationQueue, Topup, TopupQueue } from "@repo/contracts/types";
+import type {
+  Feedback,
+  FeedbackQueue,
+  Listing,
+  ModerationQueue,
+  Topup,
+  TopupQueue,
+} from "@repo/contracts/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "./api";
 
 const queueKey = ["admin", "moderation"] as const;
 const topupsKey = ["admin", "topups"] as const;
+const feedbackKey = ["admin", "feedback"] as const;
 
 /** The listings that wait for a person to read them. */
 export function useModerationQueue() {
@@ -50,5 +58,25 @@ export function useRefundTopup() {
   return useMutation({
     mutationFn: (id: string) => apiFetch<Topup>(`/admin/topups/${id}/refund`, { method: "POST" }),
     onSuccess: () => qc.invalidateQueries({ queryKey: topupsKey }),
+  });
+}
+
+/** Every piece of feedback a member sent, open rows first. */
+export function useFeedbackQueue() {
+  return useQuery({
+    queryKey: feedbackKey,
+    queryFn: () => apiFetch<FeedbackQueue>("/admin/feedback"),
+  });
+}
+
+/** Admin: stamps one piece of feedback resolved, or clears the stamp. */
+export function useSetFeedbackResolved() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, resolved }: { id: string; resolved: boolean }) =>
+      apiFetch<Feedback>(`/admin/feedback/${id}/${resolved ? "resolve" : "reopen"}`, {
+        method: "POST",
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: feedbackKey }),
   });
 }

@@ -1,6 +1,7 @@
 import { release } from "@repo/db/schema";
 import { createSelectSchema } from "drizzle-zod";
 import { describe, expect, it } from "vitest";
+import { feedbackContract } from "./feedback";
 import { releaseContract } from "./release";
 
 describe("derived entity contracts", () => {
@@ -25,6 +26,25 @@ describe("derived entity contracts", () => {
       publishedAt: "2026-02-03T00:00:00.000Z",
       syncedAt: "2026-02-04T00:00:00.000Z",
     });
+  });
+
+  it("serializes feedback createdAt to an ISO string and keeps the member id off the wire", () => {
+    const result = feedbackContract.parse({
+      id: "f1",
+      userId: "u1",
+      type: "bug",
+      message: "The clock is one hour behind.",
+      createdAt: new Date("2026-09-21T01:02:03.000Z"),
+      resolvedAt: null,
+    });
+    expect(result).toEqual({
+      id: "f1",
+      type: "bug",
+      message: "The clock is one hour behind.",
+      createdAt: "2026-09-21T01:02:03.000Z",
+      resolvedAt: null,
+    });
+    expect(result).not.toHaveProperty("userId");
   });
 
   it("throws at construction when a picked column no longer exists on the table", () => {

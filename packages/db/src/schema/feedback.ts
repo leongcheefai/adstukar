@@ -12,4 +12,7 @@ export const feedback = pgTable("feedback", {
   type: feedbackTypeEnum("type").notNull(),
   message: text("message").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+  /** Null while the feedback is open. An admin stamps it, and may clear it again. */
+  resolvedAt: timestamp("resolved_at"),
+  resolvedBy: text("resolved_by").references(() => user.id, { onDelete: "set null" }),
 });

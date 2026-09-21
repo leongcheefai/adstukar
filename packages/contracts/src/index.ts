@@ -3,6 +3,7 @@ export * from "./entities/release";
 export * from "./entities/campaign";
 export * from "./entities/listing";
 export * from "./entities/device";
+export * from "./entities/feedback";
 export * from "./entities/placement";
 export * from "./entities/play";
 export * from "./entities/ledger-entry";
