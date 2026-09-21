@@ -9,7 +9,7 @@ import {
 import { economy } from "@repo/config/economy";
 import { usd, usdCents } from "@repo/config/money";
 import { project } from "@repo/config/project";
-import type { Campaign } from "@repo/contracts/types";
+import type { Campaign, LoopBand } from "@repo/contracts/types";
 import {
   Button,
   Card,
@@ -26,20 +26,19 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   uploadLogo,
-  useCreateCampaign,
   useCreateListing,
   useUpdateCampaign,
   useUpdateListing,
 } from "../../lib/campaigns";
 import { lookUpSite } from "../../lib/site-lookup";
 import {
-  type LoopBand,
   SLOT_PRICE,
   type Slot,
   type SlotPosition,
   firstOpenPosition,
   termEnd,
 } from "../../lib/slots";
+import { useBookSlot } from "../../lib/slots-api";
 import { domainOf, isProbablyUrl, normalizeUrl } from "../../lib/url";
 import { AddFundsButton } from "../topups/add-funds-button";
 import { Fact } from "./slot-fact";
@@ -56,8 +55,6 @@ interface SlotFormProps {
   bands: LoopBand[];
   /** The position a press on the loop picked. Null takes the first open one. */
   position: SlotPosition | null;
-  /** A new booking went through, and it holds this position. */
-  onBooked: (campaignId: string, position: SlotPosition) => void;
   /** Domains this member already holds a slot for. One domain, one slot. */
   takenDomains: string[];
   /** Settled points in the wallet, or undefined while the figure loads. */
@@ -123,7 +120,6 @@ export function SlotForm({
   slot,
   bands,
   position: pickedPosition,
-  onBooked,
   takenDomains,
   balance,
   slotsOpen,
@@ -145,12 +141,14 @@ export function SlotForm({
   /** What the last site check put in the form, so a later check may replace it. */
   const filled = useRef({ name: "", logoUrl: "" });
 
-  const createCampaign = useCreateCampaign();
+  const bookSlot = useBookSlot();
+  // An edit on a slot whose creative was archived writes a new one; that is the
+  // only path that still creates a listing on its own.
   const createListing = useCreateListing();
   const updateCampaign = useUpdateCampaign();
   const updateListing = useUpdateListing();
   const saving =
-    createCampaign.isPending ||
+    bookSlot.isPending ||
     createListing.isPending ||
     updateCampaign.isPending ||
     updateListing.isPending;
@@ -277,21 +275,27 @@ export function SlotForm({
         return;
       }
 
-      const created = await createCampaign.mutateAsync({ name: name.trim(), url: targetUrl });
-      if (bookedPosition !== null) onBooked(created.campaign.id, bookedPosition);
-      await createListing.mutateAsync({
-        campaignId: created.campaign.id,
+      if (bookedPosition === null) {
+        toast.error("Every slot is taken. A slot opens when a term ends.");
+        return;
+      }
+      // One request books the campaign, the creative and the charge together,
+      // so a short balance or a taken position leaves nothing behind.
+      const created = await bookSlot.mutateAsync({
+        name: name.trim(),
+        url: targetUrl,
         tagline: tagline.trim(),
         logoUrl: logo,
+        position: bookedPosition,
       });
 
       if (created.campaign.verifiedAt) {
-        toast.success("Slot booked. Your ad is in review.");
+        toast.success(`Slot #${created.slot.position} booked. Your ad is in review.`);
         onDone();
         return;
       }
       // The domain has never been proved, so the token step is still owed.
-      toast.success("Slot booked. One step left.");
+      toast.success(`Slot #${created.slot.position} booked. One step left.`);
       setBooked(created.campaign);
       setStep("verify");
     } catch (err) {
@@ -570,7 +574,7 @@ export function SlotForm({
                 <Fact
                   icon={<CalendarBlank />}
                   value={term}
-                  label={`Ends ${END_DAY.format(termEnd())}`}
+                  label={`From approval. Ends ${END_DAY.format(termEnd())} at the earliest`}
                 />
               </div>
             )}

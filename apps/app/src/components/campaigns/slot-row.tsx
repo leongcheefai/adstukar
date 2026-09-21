@@ -7,6 +7,7 @@ import {
   ShieldCheck,
   Trash,
 } from "@phosphor-icons/react";
+import { economy } from "@repo/config/economy";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -95,11 +96,13 @@ export function SlotRow({
 
   const verified = campaign.verifiedAt !== null;
   const ended = status === "ended";
+  // A refunded booking never ran: the charge came back before the term started.
+  const refunded = slot.item.slot.state === "refunded";
   const paused = campaign.state === "paused";
   // Only a verified slot inside its term may move between running and paused.
   const canMove = verified && !ended && (paused || campaign.state === "active");
   const note = noteOf(slot);
-  const state = STATUS[status];
+  const state = refunded ? { label: "Refunded", variant: "neutral" as const } : STATUS[status];
 
   async function toggleRunning() {
     try {
@@ -225,10 +228,20 @@ export function SlotRow({
       <div className="col-span-2 min-w-0 space-y-1.5 text-xs md:col-span-1 text-muted-foreground tabular-nums">
         <div className="flex justify-between gap-2">
           <span className="font-medium text-foreground">
-            {ended ? "Term ended" : `${slot.daysLeft} ${slot.daysLeft === 1 ? "day" : "days"} left`}
+            {refunded
+              ? "Not started"
+              : ended
+                ? "Term ended"
+                : slot.startsAt === null
+                  ? `${economy.slot.termDays} days, from approval`
+                  : `${slot.daysLeft} ${slot.daysLeft === 1 ? "day" : "days"} left`}
           </span>
           <span>
-            {DAY.format(slot.startsAt)} – {DAY.format(slot.endsAt)}
+            {slot.startsAt && slot.endsAt
+              ? `${DAY.format(slot.startsAt)} – ${DAY.format(slot.endsAt)}`
+              : refunded
+                ? "The charge went back to your wallet"
+                : "Starts when your ad is approved"}
           </span>
         </div>
         {/* Decorative: the line above already says the days left in words. */}
