@@ -9,16 +9,7 @@ export const FEEDBACK_TYPES = ["bug", "feature", "other"] as const;
  */
 export const CAMPAIGN_STATES = ["draft", "active", "paused", "archived"] as const;
 
-/**
- * Why the system paused a campaign. A campaign a person paused carries no
- * reason, and only that person starts it again.
- *
- * `budget` lifts on the next UTC day, because the daily budget resets then.
- * `balance` lifts as soon as the owner's purse covers one play.
- */
-export const CAMPAIGN_PAUSE_REASONS = ["budget", "balance"] as const;
-
-export type CampaignPauseReason = (typeof CAMPAIGN_PAUSE_REASONS)[number];
+export type CampaignState = (typeof CAMPAIGN_STATES)[number];
 
 /**
  * An admin reviews every listing. `paused` is the advertiser's own stop: the

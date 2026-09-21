@@ -12,7 +12,6 @@ import {
 } from "drizzle-orm/pg-core";
 import { user } from "./auth";
 import {
-  CAMPAIGN_PAUSE_REASONS,
   CAMPAIGN_STATES,
   DEVICE_STATES,
   DEVICE_TIERS,
@@ -30,7 +29,6 @@ import {
 } from "./enums";
 
 export const campaignStateEnum = pgEnum("campaign_state", CAMPAIGN_STATES);
-export const campaignPauseReasonEnum = pgEnum("campaign_pause_reason", CAMPAIGN_PAUSE_REASONS);
 export const listingStateEnum = pgEnum("listing_state", LISTING_STATES);
 export const deviceStateEnum = pgEnum("device_state", DEVICE_STATES);
 export const deviceTierEnum = pgEnum("device_tier", DEVICE_TIERS);
@@ -60,14 +58,6 @@ export const campaign = pgTable(
     url: text("url").notNull(),
     domain: text("domain").notNull(),
     state: campaignStateEnum("state").notNull().default("draft"),
-    /**
-     * Why the system paused this campaign, and when. Both are null on a campaign
-     * a person paused, and only that person starts one of those again.
-     */
-    pauseReason: campaignPauseReasonEnum("pause_reason"),
-    pausedAt: timestamp("paused_at"),
-    /** The most this campaign may spend in one day, as an amount. */
-    dailyBudget: integer("daily_budget").notNull(),
     verificationToken: text("verification_token").notNull(),
     verifiedAt: timestamp("verified_at"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
