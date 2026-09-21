@@ -1,5 +1,5 @@
 import { economy } from "@repo/config/economy";
-import { usd } from "@repo/config/money";
+import { usdCents } from "@repo/config/money";
 import { project } from "@repo/config/project";
 import { useEffect, useRef, useState } from "react";
 
@@ -40,8 +40,8 @@ const TOTAL = "Total ads view:";
 const ONLINE = "Online users:";
 /** Not measured anywhere yet, so the strap carries the brand's own figure. */
 const ONLINE_USERS = 2_345;
-/** The welcome grant is an economy number, so the strap reads it from there. */
-const NEWS = `News: new users receive ${usd(economy.grants.firstListingApproval)} trial credit`;
+/** The slot price is an economy number, so the strap reads it from there. */
+const NEWS = `News: a slot on every screen is ${usdCents(economy.slot.priceUsdCents)} for ${economy.slot.termDays} days`;
 
 function Run({ plays }: { plays: number | null | undefined }) {
   return (
