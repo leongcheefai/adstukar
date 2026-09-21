@@ -153,6 +153,10 @@ Open the dashboard, top up the smallest amount with a Stripe test card, and watc
 CLI forward `checkout.session.completed`. The ledger then shows one `topup` row
 against the `bought` lot.
 
+## Tests
+- `pnpm --filter @repo/api test`: the pure tests (`*.test.ts`), no database. Part of `pnpm verify`.
+- `pnpm --filter @repo/api test:db`: the database tests (`*.db.test.ts`), one file at a time, against `TEST_DATABASE_URL`. `src/test/global-setup.ts` creates the `_test` database and runs the migrations; `src/test/fixtures.ts` builds members, screens, and slots, and `truncateAll()` empties every table before each test. Write a database test when the thing under test is a query or a transaction, and a pure test for everything else.
+
 ## Gotchas
 - `POST /report` reads a **text/plain** body (`navigator.sendBeacon` cannot send JSON content types) and parses it by hand — do not add `zValidator("json")` there
 - `/serve`, `/loop`, `/report` and `/scan/*` accept any origin, because CapyTV runs on member devices. Every other route keeps the `APP_URL`/`WEB_URL` allow-list; the check lives in `PUBLIC_PREFIXES` and the `cors()` origin function in `src/lib/app.ts`. A new public screen route must be added there too

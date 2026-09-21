@@ -19,6 +19,7 @@
     "typecheck": "turbo typecheck",
     "test:scripts": "node --test scripts/*.test.mjs",
     "test": "pnpm test:scripts && turbo test",
+    "test:db": "pnpm --filter @repo/api test:db",
     "verify": "pnpm lint:scripts && pnpm test:scripts && turbo lint typecheck test build",
     "prepare": "git config core.hooksPath .githooks || true",
     "db:up": "docker compose up -d",

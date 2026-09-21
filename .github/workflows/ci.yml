@@ -15,6 +15,24 @@ jobs:
     name: Lint, typecheck, test, build
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    services:
+      # Only the database tests read it. `pnpm verify` still runs with no
+      # database, so a fresh clone and the pre-push hook are unchanged.
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          # The container lives for one job on a runner nobody else reaches, so
+          # it takes no password, and no password sits in this file.
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: adstukar_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
 
@@ -37,6 +55,11 @@ jobs:
 
       # Same script the pre-push hook runs, so local and CI cannot disagree.
       # No .env is written on purpose: the whole gate must pass without one, which
-      # is what a fresh clone gets. If a future task needs a database, add a
-      # postgres service here rather than weakening this.
+      # is what a fresh clone gets.
       - run: pnpm verify
+
+      # The tests that need Postgres: the serve, report, scan, and admin paths.
+      # They migrate the test database first, so the migration files are proved too.
+      - run: pnpm test:db
+        env:
+          TEST_DATABASE_URL: postgresql://postgres@localhost:5432/adstukar_test
