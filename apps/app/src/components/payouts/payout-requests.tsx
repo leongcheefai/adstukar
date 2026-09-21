@@ -1,4 +1,4 @@
-import { usd, usdCents } from "@repo/config/money";
+import { usdCents } from "@repo/config/money";
 import type { PayoutRequest, PayoutState } from "@repo/contracts/types";
 import { Badge, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@repo/ui";
 
@@ -32,7 +32,6 @@ export function PayoutRequests({ requests }: { requests: PayoutRequest[] }) {
             <TableRow>
               <TableHead>Asked</TableHead>
               <TableHead>Amount</TableHead>
-              <TableHead>Money</TableHead>
               <TableHead>State</TableHead>
               <TableHead>Note</TableHead>
             </TableRow>
@@ -43,7 +42,6 @@ export function PayoutRequests({ requests }: { requests: PayoutRequest[] }) {
                 <TableCell className="whitespace-nowrap">
                   {new Date(row.createdAt).toLocaleDateString()}
                 </TableCell>
-                <TableCell className="tabular-nums">{usd(row.amount)}</TableCell>
                 <TableCell className="tabular-nums">{usdCents(row.usdCents)}</TableCell>
                 <TableCell>
                   <Badge variant={STATE_VARIANT[row.state]}>{STATE_LABEL[row.state]}</Badge>

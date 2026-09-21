@@ -52,7 +52,7 @@ const ADMIN_SECTIONS: SettingsSection[] = [
     label: "Moderation",
     title: "Moderation",
     description:
-      "Listings and devices waiting for review, oldest first. A first approved listing grants the trial credit.",
+      "Listings waiting for review, oldest first. A first approved listing grants the trial credit.",
     group: "Admin",
   },
   {
@@ -119,7 +119,7 @@ export function SettingsPage() {
     // Cancels the main padding so both panels reach the page edges.
     <div className="-m-6 flex min-h-full flex-col md:h-[calc(100vh-3.5rem)] md:flex-row">
       <aside className="shrink-0 border-b md:w-72 md:overflow-y-auto md:border-r md:border-b-0">
-        <h1 className="px-6 pt-6 pb-4 text-xl font-semibold tracking-tight">Settings</h1>
+        <h1 className="px-6 pt-6 pb-4 text-2xl font-semibold tracking-tight">Settings</h1>
         <nav className="pb-4">
           {sections.map((section) => {
             const isActive = section.id === active.id;

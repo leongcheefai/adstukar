@@ -129,6 +129,24 @@ export const economy = {
     gapSeconds: { min: 30, max: 900, default: 180 },
   },
 
+  /**
+   * The ticker loop an advertiser books into. The loop holds a fixed count of
+   * slots, and one slot is one brand for one term at one flat price. The price
+   * follows the peg, so the points it costs are derived and never stored.
+   */
+  slot: {
+    /** Slots in one loop. It is also how many bands the ticker prints. */
+    count: 20,
+    /** What one slot costs for one term. */
+    priceUsdCents: 2_000,
+    /** Days one booking holds its slot. */
+    termDays: 7,
+    /** Characters of the brand name a band shows. Every band is one width, so the copy is cut to fit. */
+    nameMaxLength: 20,
+    /** Characters of the tagline a band shows. */
+    taglineMaxLength: 30,
+  },
+
   /** Listings one campaign may hold, so an advertiser can compare them. */
   maxListingsPerCampaign: 4,
 

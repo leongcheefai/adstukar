@@ -1,0 +1,1638 @@
+/* CapyTV stage. Scoped to the member-app shell. One bottom-anchored ticker
+   over two channels. An ad is a logo, a name, a tagline and a link. */
+
+.capychannel-page,
+.capychannel-page *,
+.capychannel-page *::before,
+.capychannel-page *::after {
+  box-sizing: border-box;
+}
+
+.capychannel-page {
+  height: 100dvh;
+  margin: 0;
+  background: #08080a;
+  color: #fff;
+  overflow: hidden;
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* --------------------------------------------------------------------------
+   Stage — a 16:9 TV, centred, as large as the viewport allows.
+   container-type: size lets everything inside scale in cqh/cqw, so the
+   overlay is judged at true TV proportions whatever the window size.
+   1cqh = 10.8px on a 1080-tall stage. px equivalents noted per token.
+   -------------------------------------------------------------------------- */
+
+.capychannel-stage {
+  position: fixed;
+  inset: 0;
+  /* The set stands on the bottom of the window rather than floating in the
+     middle of it. The ad bar is on the bottom edge of the picture, and a few
+     pixels of letterbox under a solid blue block read as a seam in the block
+     rather than as the edge of the set. Whatever shape the window costs the
+     16:9 picture is taken off the top, where the picture is dark and there is
+     no hard edge for a gap to sit against. */
+  margin: auto auto 0;
+  width: min(100vw, 100vh * 16 / 9);
+  height: min(100vh, 100vw * 9 / 16);
+  container-type: size;
+  overflow: hidden;
+  isolation: isolate;
+  background: #000;
+
+  /* z-index scale — no arbitrary values anywhere below */
+  --z-channel: 1;
+  --z-ad: 100;
+  --z-scrim: 149;
+  --z-nav: 150;
+  --z-boot: 200;
+  --z-chrome: 210;
+
+  /* The bar's own height. Nothing is reserved for it: the bar covers the
+     bottom of the picture and the source keeps its whole frame behind it. */
+  --strip: 72px;
+
+  /* Interface scale. Every size below is a percentage of the stage, so this
+     one number moves the whole interface at once: type, controls, chips and
+     ads together. The drawing is made for a screen you sit close to — a
+     tablet, a laptop, a monitor. A television is the same drawing scaled up,
+     which is a larger --ui and nothing else.
+
+     What stays in plain cqh is the screen rather than the interface on it:
+     the fixtures and the tube's own furniture. The ad bar is the one part in
+     fixed pixels: see `.v-ticker`. */
+  --ui: 0.68;
+  --u: calc(1cqh * var(--ui));
+  --uw: calc(1cqw * var(--ui));
+
+  /* Safe area. Backgrounds bleed to the edge; text stays inside this. */
+  --safe-x: calc(3.6 * var(--uw));
+  --safe-y: calc(4 * var(--u));
+
+  /* Type scale. Floor is --t-xs; nothing in an ad may go below it.
+     px are for a 1080-tall stage at --ui: .68. */
+  --t-xs: calc(2.3 * var(--u)); /* 17px */
+  --t-sm: calc(2.7 * var(--u)); /* 20px */
+  --t-md: calc(3.3 * var(--u)); /* 24px */
+  --t-lg: calc(4.4 * var(--u)); /* 32px */
+  --t-xl: calc(6.0 * var(--u)); /* 44px */
+
+  /* One lap of the crawl, before the ticker has measured itself. The rule is
+     the crossing, not the lap: a band takes one minute from one end of the
+     frame to the other, and the ticker sets this from the widths it finds
+     (`lapMs` in ticker-math.ts). Twenty bands come to about three minutes. */
+  --crawl: 180s;
+}
+
+/* Every looping background stops when the tab is hidden. */
+.capychannel-stage[data-paused] *,
+.capychannel-stage[data-paused] {
+  animation-play-state: paused !important;
+}
+
+/* --------------------------------------------------------------------------
+   Channel layer — the content CapyTV is showing. The channel is content, not
+   a design decision, so it keeps the whole stage and the ad bar sits over it.
+   -------------------------------------------------------------------------- */
+
+.capychannel-channel-layer {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-channel);
+}
+.chan {
+  position: absolute;
+  inset: 0;
+}
+
+/* --- 1. Upload — the member's own pictures and clips, one at a time.
+       Contained, not cropped: the file is theirs, and a crop can cut a
+       price or a face out of it. --- */
+.chan-upload {
+  background: #000;
+}
+.chan-media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  animation: chan-in 600ms ease-out both;
+}
+@keyframes chan-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* --- 2. Wallpaper — the presets. Each one is drawn here, so the chooser can
+       show the same class as a thumbnail and no image file ships. They swing
+       from blown out to near black, so no single scrim value suits them all. --- */
+.wall-beach {
+  background: radial-gradient(60% 40% at 74% 16%, rgb(255 253 240 / 0.95) 0%, transparent 62%),
+    linear-gradient(180deg, #cfe6ff 0%, #eaf5ff 44%, #fbf6e6 62%, #f3e6c8 100%);
+}
+.wall-night {
+  background: radial-gradient(40% 30% at 22% 24%, rgb(90 120 200 / 0.35) 0%, transparent 70%),
+    linear-gradient(180deg, #05070f 0%, #0a0f1d 55%, #04060c 100%);
+}
+.wall-market {
+  background: radial-gradient(35% 45% at 20% 30%, rgb(255 84 60 / 0.75) 0%, transparent 66%),
+    radial-gradient(40% 40% at 78% 26%, rgb(255 196 40 / 0.7) 0%, transparent 64%),
+    radial-gradient(45% 50% at 52% 82%, rgb(30 190 160 / 0.65) 0%, transparent 66%),
+    linear-gradient(140deg, #2a1b3d 0%, #43264a 50%, #16283f 100%);
+}
+.wall-portrait {
+  background: radial-gradient(
+      30% 42% at 40% 44%,
+      rgb(238 194 160 / 0.95) 0%,
+      rgb(176 122 92 / 0.6) 58%,
+      transparent 76%
+    ), radial-gradient(50% 50% at 82% 70%, rgb(120 140 110 / 0.5) 0%, transparent 70%),
+    linear-gradient(160deg, #4a4137 0%, #2d2a26 60%, #1a1917 100%);
+}
+.wall-firepit {
+  background: radial-gradient(120% 90% at 50% 108%, #2a1206 0%, #120802 42%, #050303 78%, #000 100%);
+}
+/* The embers are sized to the stage, so only the full wallpaper holds them. */
+.ember {
+  position: absolute;
+  left: 50%;
+  bottom: -6cqh;
+  width: 42cqh;
+  height: 42cqh;
+  margin-left: -21cqh;
+  border-radius: 50%;
+  filter: blur(14px); /* well under the 20px cost cliff */
+  mix-blend-mode: screen;
+  will-change: transform, opacity;
+}
+.ember-a {
+  background: radial-gradient(
+    circle,
+    rgb(255 138 32 / 0.85) 0%,
+    rgb(198 62 8 / 0.35) 45%,
+    transparent 70%
+  );
+  animation: flicker-a 3.1s ease-in-out infinite;
+}
+.ember-b {
+  background: radial-gradient(
+    circle,
+    rgb(255 196 84 / 0.7) 0%,
+    rgb(214 92 12 / 0.3) 42%,
+    transparent 68%
+  );
+  width: 30cqh;
+  height: 30cqh;
+  margin-left: -15cqh;
+  animation: flicker-b 2.3s ease-in-out infinite;
+}
+.ember-c {
+  background: radial-gradient(circle, rgb(255 92 12 / 0.55) 0%, transparent 66%);
+  width: 62cqh;
+  height: 40cqh;
+  margin-left: -31cqh;
+  animation: flicker-c 4.7s ease-in-out infinite;
+}
+@keyframes flicker-a {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: translateY(-2cqh) scale(1.08);
+    opacity: 1;
+  }
+}
+@keyframes flicker-b {
+  0%,
+  100% {
+    transform: translateY(0) scale(1.04);
+    opacity: 0.7;
+  }
+  45% {
+    transform: translateY(-3cqh) scale(0.94);
+    opacity: 0.95;
+  }
+}
+@keyframes flicker-c {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  55% {
+    transform: scale(1.06);
+    opacity: 0.72;
+  }
+}
+
+/* ==========================================================================
+   The ad layer — the ticker, and the parts it is built from
+   The ads sit ON the picture, not beside it, in a black bar on the bottom
+   edge: the contrast is the bar's job, so no ad has to fight the picture for
+   it. The layer takes no clicks. The bar inside it does, because every ad is
+   a link now and a viewer has to be able to reach one.
+   ========================================================================== */
+
+.capychannel-stage {
+  /* Two grounds, and the order of them is the design: a black bar holds the
+     ads, and a near-black surface carries a menu over the picture. Solid, not
+     glass: a pane over a moving picture cannot promise the text anything. */
+  --ad-bar: #000;
+  --ad-surface: oklch(0.16 0.012 265);
+  --ad-ring: 0 0 0 1px rgb(255 255 255 / 0.1);
+
+  /* CapyAds brand, sampled from the brand deck. #011CD8 is the exact blue. */
+  --capy-blue: oklch(0.414 0.266 264.3);
+}
+
+/* CapyAds owns the frame, the advertiser owns the content. The blue appears on
+   the disclosure chip and nowhere else — painting more of the strip blue would
+   fight four advertiser hues for a frame the chip already marks. */
+
+.capychannel-ad-layer {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-ad);
+  pointer-events: none;
+  user-select: none;
+}
+
+/* The brand lockup, one component for every place it appears. It is inline
+   SVG drawn in currentColor, so the component sets the ink and this rule only
+   sizes it: a height from the place it lands on, and the width from the
+   artwork. The ON AIR pill carries its own orange and no filter may touch it,
+   because a reversal would take the pill to white and lose the word inside. */
+.capy-logo {
+  display: block;
+  flex: none;
+  width: auto;
+}
+
+.ad-chip {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  padding: calc(0.7 * var(--u)) calc(1.4 * var(--u));
+  border-radius: calc(0.9 * var(--u));
+  background: var(--capy-blue);
+}
+/* The chip is the only thing on the bar that names the exchange, and on a
+   black bar it is the one blue object: it can afford to be read across a
+   room. 9u of the bar's 13.2u, so the block is the lockup and a margin. */
+.ad-chip .capy-logo {
+  height: calc(9 * var(--u));
+}
+
+/* The advertiser's profile picture. A circle, because a rounded square reads
+   as a product tile and this is an account. */
+.ad-avatar {
+  flex: none;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 50%;
+  /* The height of the logo slot, so a member who has uploaded a file and one
+     who has not give the ticker the same shaped ad. */
+  width: var(--ad-mark);
+  height: var(--ad-mark);
+  background: radial-gradient(
+    78% 78% at 32% 26%,
+    color-mix(in oklab, var(--brand) 82%, #fff),
+    var(--brand)
+  );
+  box-shadow: 0 0 0 calc(0.25 * var(--u)) rgb(255 255 255 / 0.18);
+}
+.ad-avatar svg {
+  width: 66%;
+  height: 66%;
+  fill: none;
+  stroke: #0b0c10;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ad-copy {
+  min-width: 0;
+}
+/* Every band is one width, so a name set in wide letters is cut and never
+   pushes the band wider. The character limits cut the copy first. */
+.ad-title,
+.ad-tagline {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* The product name leads and the tagline sits under it. Size and colour carry
+   that order on their own — no weight is raised anywhere in the lockup. The
+   URL is not printed and there is no QR code: the ad is a link, so the whole
+   lockup goes to the URL and nothing has to be copied off the screen.
+   display: block, because both are spans inside an anchor. */
+.ad-title {
+  display: block;
+  font-size: var(--t-md);
+  font-weight: 400;
+  line-height: 1.16;
+  letter-spacing: -.01em;
+  color: #fff;
+}
+/* .72 on solid black is 10.5:1 — half the title's contrast, so the order still
+   reads, and far above the floor a tagline has to clear at ticker speed. */
+.ad-tagline {
+  display: block;
+  /* The floor of the type scale. An ad may not go below it. */
+  font-size: var(--t-xs);
+  font-weight: 400;
+  line-height: 1.3;
+  color: rgb(255 255 255 / 0.72);
+}
+
+/* An advertiser's own logo, when they have supplied a file. A fixed height and
+   a free width, because a square mark and a wide wordmark are both logos: the
+   height is what has to match from one ad to the next, not the width.
+
+   No plate behind it. The bar is black, so the exchange asks for a logo that
+   reads on a dark ground, the same rule every dark ad unit carries. A file
+   that is missing leaves a gap rather than a broken-image icon, because the
+   alt is empty — the gap is the error message.
+
+   --ad-mark tall, a little under the name and the tagline stacked beside it,
+   so the bar keeps black above and below the mark. */
+.ad-logo {
+  flex: none;
+  display: grid;
+  place-items: center;
+  height: var(--ad-mark);
+}
+/* The ticker is one long line, so a wide mark costs the run length rather than
+   layout: 14u lets a wordmark through. A wider one is not rejected — it lands
+   shorter than the slot, which is the right trade. */
+.ad-logo img {
+  display: block;
+  /* The slot height again, and not 100%: the grid row is auto, so a percent
+     has no fixed height to read and a square file grew to the full 14u. */
+  max-height: var(--ad-mark);
+  max-width: calc(14 * var(--u));
+  width: auto;
+  height: auto;
+}
+
+/* --------------------------------------------------------------------------
+   The ticker — a thin strip, set in fixed sizes for a screen an arm away.
+   linear is correct: a crawl is constant-rate motion, not a UI enter.
+   -------------------------------------------------------------------------- */
+.v-ticker {
+  /* The bar is set in fixed sizes, and the stage above it is not. The default
+     screen is a browser on a laptop, a monitor or a tablet, read from an arm
+     away, so the bar takes the sizes any web page would: a 16px name and a
+     13px tagline. A stage that scales with the frame made both far too large
+     in a tall window. A television gets the same bar by AirPlay or HDMI.
+
+     The units are set again here, so every rule inside the bar that measures
+     in them becomes a fixed size with no other change. The type tokens have
+     to be set again too: a custom property is resolved where it is declared,
+     so the stage's own tokens would keep the stage's units. */
+  --u: 5px;
+  --uw: 8px;
+  --safe-x: 20px;
+  --t-xs: 13px;
+  --t-md: 16px;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--strip);
+  display: flex;
+  align-items: center;
+  /* Solid black. The picture runs under the bar, and a pane let 30% of a
+     moving source read straight through the crawl. A bar owes the text a
+     ground it can rely on, whatever is playing behind it. */
+  background: var(--ad-bar);
+  /* The bar is opaque and it holds links, so it owns the clicks that land on
+     it. Without this the layer's pointer-events: none would hand them to a
+     source the bar is covering — on the live clip, to the player's own
+     controls, which sit under exactly this band. */
+  pointer-events: auto;
+}
+/* In a bar the chip stops being a pill on the ground and becomes a block of
+   the ground. It runs from the frame to the crawl's clip edge and fills the
+   bar's whole height, because a radius or a margin on any side lets black back
+   in and the mark then reads as floating in the bar rather than anchoring it.
+   The ads are cut off by the blue itself, not by a gap in front of it.
+
+   The safe area moves inside the blue: the block may touch the frame, the
+   lockup may not. Equal on both sides, so the lockup sits in the middle of
+   the block rather than leaning on the frame. */
+.v-ticker .ad-chip {
+  align-self: stretch; /* beats the bar's align-items: center */
+  margin: 0;
+  border-radius: 0;
+  padding-inline: var(--safe-x);
+}
+/* No fade at either edge. On a solid black bar a hard edge is honest: one end
+   is the blue block, the other is the frame, and a line that reaches either
+   has arrived somewhere rather than dissolved on the way.
+
+   The vertical padding is not spacing. The window clips, so it is what keeps
+   a focus ring from being shaved off the top and bottom of the ad it marks. */
+.ticker-window {
+  flex: 1;
+  padding: calc(0.8 * var(--u)) 0;
+  overflow: hidden;
+}
+.ticker-track {
+  display: flex;
+  width: max-content;
+  animation: crawl var(--crawl) linear infinite;
+  will-change: transform;
+}
+/* One lap is one run's travel, whatever --copies the run was printed.
+   Printing more copies to fill a wide frame does not slow the crawl down. */
+@keyframes crawl {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(calc(-100% / var(--copies, 2)));
+  }
+}
+
+/* The pointer does not stop the crawl: the bar keeps its minute whatever is
+   over it. Keyboard focus does, because a ring that slides out of the frame
+   marks nothing. :focus-visible, not :focus-within, so a click, which also
+   gives the ad focus, leaves the crawl running. */
+.v-ticker:has(:focus-visible) .ticker-track {
+  animation-play-state: paused;
+}
+
+/* One ad: the logo on the far left, the name and the tagline stacked beside
+   it. The anchor wraps all three, so a viewer taps the ad rather than a word
+   inside it, and the target is as tall as the lockup.
+
+   margin-right, not a flex gap: the run is printed more than once and the lap
+   ends one run along, so each ad has to carry its own gap. A flex gap is
+   dropped at the seam, and the loop then jumps by one gap on every lap. It
+   stays wide, because that space is the only thing telling a passing eye
+   where one ad ends. */
+.ticker-item {
+  /* The mark beside the copy. Smaller than the two lines of copy, so the bar
+     keeps some black above and below it. */
+  --ad-mark: 32px;
+  box-sizing: border-box;
+  /* One width for all twenty bands, booked or open: the mark, a name of 20
+     characters at --t-md, and the padding. A band that is always this wide
+     gives every brand the same time on screen. */
+  width: 280px;
+  display: flex;
+  align-items: center;
+  gap: calc(1.2 * var(--uw));
+  margin-right: calc(6 * var(--uw));
+  padding: calc(0.8 * var(--u)) calc(1.4 * var(--u));
+  border-radius: calc(1.2 * var(--u));
+  white-space: nowrap;
+  color: inherit;
+  text-decoration: none;
+  transition: background-color 160ms ease-out;
+}
+/* The plate is the affordance. With the QR code gone it is the only thing that
+   says the ad goes somewhere. It lights under the pointer while the ad moves. */
+.ticker-item:hover {
+  background: rgb(255 255 255 / 0.1);
+}
+.ticker-item:focus-visible {
+  background: rgb(255 255 255 / 0.1);
+  outline: calc(0.3 * var(--u)) solid #fff;
+  outline-offset: calc(0.35 * var(--u));
+}
+
+/* A band with no brand. It keeps the item's gap and the lockup's height, so
+   the loop holds its rhythm whether a band is sold or not. Grey and dotted:
+   it is a place, not an ad, and it must not compete with one. It is a link to
+   the Campaigns page, so it takes the same plate as an ad. */
+.ticker-slot {
+  box-sizing: border-box;
+  justify-content: center;
+  /* The two lines of copy and the item's padding, border included. */
+  height: 44px;
+  border: calc(0.3 * var(--u)) dotted rgb(255 255 255 / 0.38);
+  color: rgb(255 255 255 / 0.5);
+}
+.ticker-slot svg {
+  width: calc(3.6 * var(--u));
+  height: calc(3.6 * var(--u));
+}
+
+/* --------------------------------------------------------------------------
+   The top bar — the two controls that belong to the viewer, not to the ad.
+   The way back to the chooser on the left, the account on the right, both
+   inside the TV safe area and both clear of the ad on the bottom edge.
+
+   It exists only while a source plays. The chooser has its own account
+   control (`.tv-pick-chrome`), because the bar sits under the boot layer
+   and a first-run member has to see a way into the dashboard before they
+   pick a source. It then fades out of the picture, and any movement, key
+   or touch brings it back.
+   -------------------------------------------------------------------------- */
+.tv-bar {
+  position: absolute;
+  top: var(--safe-y);
+  left: var(--safe-x);
+  right: var(--safe-x);
+  z-index: var(--z-nav);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  /* data-booted is already the "set is running" flag, so the bar cannot fall
+     out of step with the chooser. */
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 300ms ease-out;
+}
+/* Quick in, slow out: a control the viewer reached for has to arrive at once,
+   and one they have finished with may take its time leaving. */
+.capychannel-stage[data-booted] .tv-bar {
+  opacity: 1;
+  pointer-events: auto;
+  transition-duration: 140ms;
+}
+/* Hidden from the tab order while the chooser is up. Opacity alone would
+   leave the bar's buttons in the tree, behind a layer that paints over them. */
+.capychannel-stage:not([data-booted]) .tv-bar {
+  visibility: hidden;
+}
+
+/* Out of the way. A set shows its controls when somebody reaches for them and
+   takes them back when nobody does. Hover and focus hold it: a keyboard moves
+   no mouse to wake it, and a pointer resting on a control is still reaching
+   for it. Neither can bring the bar back on its own, because a faded bar takes
+   no pointer events — only real movement wakes it. */
+.capychannel-stage[data-idle] .tv-bar:not(:hover):not(:focus-within) {
+  opacity: 0;
+  pointer-events: none;
+  transition-duration: 460ms;
+}
+
+/* One shape for all three: a glass pill, because the picture under it can be
+   any colour. One height too, declared rather than arrived at, so a chevron,
+   a count and a profile picture cannot pull the row out of line between them.
+
+   --t-md, not the floor the bar used to take. This is a television, and the
+   controls a viewer drives from a sofa may not be the smallest type on the
+   screen — the ads below them are set two steps larger than that. */
+.tv-back,
+.tv-account-btn,
+.tv-live {
+  display: flex;
+  align-items: center;
+  min-height: calc(8.8 * var(--u));
+  border: 0;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.55);
+  -webkit-backdrop-filter: blur(calc(1.2 * var(--u))) saturate(1.3);
+  backdrop-filter: blur(calc(1.2 * var(--u))) saturate(1.3);
+  box-shadow: inset 0 0 0 calc(0.15 * var(--u)) rgb(255 255 255 / 0.28);
+  color: #fff;
+  font: inherit;
+  font-size: var(--t-md);
+}
+/* The two that answer to a press. The count is a readout and takes none of it. */
+.tv-back,
+.tv-account-btn {
+  cursor: pointer;
+  transition: background 140ms ease-out, scale 140ms ease-out, padding 160ms ease-out;
+}
+.tv-back:hover,
+.tv-account-btn:hover {
+  background: rgb(0 0 0 / 0.78);
+}
+.tv-back:active,
+.tv-account-btn:active {
+  scale: 0.96;
+}
+.tv-back:focus-visible,
+.tv-account-btn:focus-visible {
+  outline: calc(0.3 * var(--u)) solid #fff;
+  outline-offset: calc(0.4 * var(--u));
+}
+
+.tv-back {
+  gap: calc(1 * var(--u));
+  padding: 0 calc(2.6 * var(--u)) 0 calc(2 * var(--u));
+}
+.tv-back svg {
+  width: calc(4.2 * var(--u));
+  height: calc(4.2 * var(--u));
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* The right of the row: how many sets are online, then whose account this
+   is. The count sits outside the account rather than inside its menu, because
+   it is about the screen and not about the member. */
+.tv-right {
+  display: flex;
+  align-items: flex-start;
+  gap: calc(1.4 * var(--u));
+}
+
+/* The one number on the picture that says the ad on the bar below is being
+   seen. Red, the way a live count is red everywhere else. */
+.tv-live {
+  gap: calc(1.2 * var(--u));
+  margin: 0;
+  padding: 0 calc(2.6 * var(--u));
+  white-space: nowrap;
+  color: rgb(255 255 255 / 0.72);
+}
+.tv-live b {
+  font-weight: 600;
+  color: #fff;
+  /* Tabular, so a digit changing cannot change the width of the pill and walk
+     the account along the row with it. */
+  font-variant-numeric: tabular-nums;
+}
+.tv-live-dot {
+  flex: none;
+  width: calc(1.2 * var(--u));
+  height: calc(1.2 * var(--u));
+  border-radius: 50%;
+  background: oklch(0.63 0.25 25);
+  box-shadow: 0 0 0 calc(0.4 * var(--u)) oklch(0.63 0.25 25 / 0.25);
+  animation: tv-live 2s ease-in-out infinite;
+}
+@keyframes tv-live {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+/* The member's own account. Signed out the pill carries the way in; signed in
+   it closes down to the picture alone and the menu takes over. */
+.tv-account {
+  position: relative;
+}
+.tv-account-btn {
+  gap: calc(1.2 * var(--u));
+  padding: calc(0.9 * var(--u)) calc(2.4 * var(--u)) calc(0.9 * var(--u)) calc(0.9 * var(--u));
+}
+/* Signed in the picture is the control, so the pill goes: a glass ground under
+   a circle only ever draws a second circle around it. Everything the pill
+   carried — the height, the press, the focus ring — the button still has. */
+.tv-account[data-signed-in] .tv-account-btn {
+  position: relative;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.tv-account[data-signed-in] .tv-account-btn:hover {
+  background: none;
+}
+.tv-account[data-signed-in] .tv-account-btn:hover .tv-avatar {
+  filter: brightness(1.3);
+}
+.tv-account[data-signed-in] .tv-account-label {
+  display: none;
+}
+
+/* The default avatar: the member's initials in white on the ON AIR orange,
+   the same orange the pill in the lockup carries. On the blue set it is the
+   one warm object on the top edge, so the eye finds the account at once.
+
+   aria-hidden, because the initials are a picture of a name and not the name:
+   the button carries the account's own label for anyone who cannot see it. */
+.tv-avatar {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  width: calc(7 * var(--u));
+  height: calc(7 * var(--u));
+  border-radius: 50%;
+  background: var(--on-air);
+  color: var(--on-air-foreground);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  letter-spacing: .02em;
+  transition: filter 140ms ease-out;
+}
+.tv-avatar img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* With no pill around it the circle takes the whole row height itself. */
+.tv-account[data-signed-in] .tv-avatar {
+  width: calc(8.8 * var(--u));
+  height: calc(8.8 * var(--u));
+  font-size: var(--t-md);
+}
+
+/* Red dot: the dashboard has never been opened on this browser. On the
+   picture's corner, and beside the Dashboard entry once the menu is open. */
+.tv-dot {
+  display: inline-block;
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-left: 8px;
+  border-radius: 50%;
+  background: var(--destructive);
+  vertical-align: middle;
+}
+.tv-dot-avatar {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 1;
+  margin: 0;
+  width: 10px;
+  height: 10px;
+  box-shadow: 0 0 0 2px var(--capy-blue);
+}
+
+/* Opens downward, off the right edge: the bar is on the top edge and the
+   control is in the corner, so there is nothing above it and nothing beside
+   it on that side. */
+.tv-account-menu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  z-index: 1;
+  pointer-events: auto;
+  margin-top: calc(1 * var(--u));
+  display: flex;
+  flex-direction: column;
+  /* Wide enough that a two-word entry never sits in a menu narrower than the
+     control that opened it. */
+  min-width: calc(22 * var(--u));
+  padding: calc(0.6 * var(--u));
+  border-radius: calc(1.2 * var(--u));
+  /* The dashboard's own ground, so the menu reads as a piece of the
+     dashboard it opens, not as a piece of the set. */
+  background: var(--card);
+  box-shadow: 0 0 0 1px var(--border), 0 calc(1 * var(--u)) calc(3 * var(--u)) rgb(0 0 0 / 0.35);
+}
+.tv-account-menu[hidden] {
+  display: none;
+}
+.tv-account-menu button,
+.tv-account-menu a {
+  display: flex;
+  align-items: center;
+  padding: calc(1.2 * var(--u)) calc(1.5 * var(--u));
+  border: 0;
+  border-radius: calc(0.9 * var(--u));
+  background: transparent;
+  color: var(--card-foreground);
+  font: inherit;
+  font-size: var(--t-sm);
+  text-align: left;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+}
+.tv-account-menu button:hover,
+.tv-account-menu a:hover {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+.tv-account-menu button:focus-visible,
+.tv-account-menu a:focus-visible {
+  outline: calc(0.25 * var(--u)) solid var(--ring);
+  outline-offset: calc(-0.25 * var(--u));
+}
+
+/* Catches the click that closes the menu. The source can be a cross-origin
+   iframe, and a click that lands in one never reaches this document, so an
+   outside click has to have something of ours to land on. Under the bar, so
+   the control that opened the menu can still close it. */
+.tv-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-scrim);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: default;
+}
+.tv-scrim[hidden] {
+  display: none;
+}
+
+/* Profile control on the chooser. The boot layer paints over `.tv-bar`, so
+   a signed-in member needs this copy of the account to reach the dashboard
+   without first picking a source. pointer-events none on the chrome, so the
+   tiles stay hittable; the account and the scrim opt back in. */
+.tv-pick-chrome {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-chrome);
+  pointer-events: none;
+}
+.tv-pick-chrome .tv-scrim,
+.tv-pick-chrome .tv-pick-account {
+  pointer-events: auto;
+}
+.tv-pick-account {
+  position: absolute;
+  top: var(--safe-y);
+  right: var(--safe-x);
+  /* Above the scrim, the way the bar is above the outer one. The menu's own
+     z-index only counts inside this block, so without this the scrim took
+     every click meant for a menu entry. */
+  z-index: var(--z-nav);
+}
+
+/* First-run ring. Scale + fade, not box-shadow: it has to stay on the
+   compositor, and reduced-motion below kills the loop. */
+.tv-account[data-coach] .tv-account-btn::after {
+  content: "";
+  position: absolute;
+  inset: -22%;
+  border-radius: 50%;
+  border: calc(0.22 * var(--u)) solid rgb(255 255 255 / 0.85);
+  pointer-events: none;
+  animation: tv-coach-ring 1.8s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+.tv-coach {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 1.4 * var(--u));
+  z-index: 2;
+  width: max-content;
+  max-width: min(calc(46 * var(--u)), calc(100cqw - 2 * var(--safe-x)));
+  margin: 0;
+  /* A white card on the dark set. The same 16px on every side. */
+  padding: 16px;
+  border-radius: calc(0.8 * var(--u));
+  background: #fff;
+  box-shadow: 0 calc(1 * var(--u)) calc(3 * var(--u)) rgb(0 0 0 / 0.35);
+  color: #000;
+  font-family: Inter, system-ui, -apple-system, sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+  /* Not balanced: balance wraps the lines short and leaves a gap on the
+     right, so the card looks wider than its words. */
+  text-wrap: pretty;
+  /* The card is inert, so a stray click reaches the set behind it. The
+     close button turns them back on for itself. */
+  pointer-events: none;
+  transform-origin: top right;
+  animation: tv-coach-in 220ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+.tv-coach p {
+  margin: 0;
+}
+/* The title and the close button share one row, so the icon sits on the
+   title's centre line and its right edge lands on the padding, not past it. */
+.tv-coach-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+.tv-coach-title {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 20px;
+  color: var(--capy-blue);
+}
+.tv-coach-close {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  /* The hit area grows past the box without moving the icon. */
+  margin: -4px;
+  padding: 4px;
+  box-sizing: content-box;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: rgb(0 0 0 / 0.55);
+  cursor: pointer;
+  pointer-events: auto;
+  transition: background 140ms ease-out, color 140ms ease-out;
+}
+.tv-coach-close:hover {
+  background: rgb(0 0 0 / 0.06);
+  color: #000;
+}
+.tv-coach-close:focus-visible {
+  outline: 2px solid var(--capy-blue);
+  outline-offset: 1px;
+}
+.tv-coach-close svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.tv-coach::before {
+  content: "";
+  position: absolute;
+  right: calc(3.2 * var(--u));
+  top: calc(-0.65 * var(--u));
+  width: calc(1.3 * var(--u));
+  height: calc(1.3 * var(--u));
+  background: #fff;
+  transform: rotate(45deg);
+}
+@keyframes tv-coach-in {
+  from {
+    opacity: 0;
+    transform: translateY(calc(-0.8 * var(--u))) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes tv-coach-ring {
+  0% {
+    transform: scale(0.92);
+    opacity: 0.85;
+  }
+  100% {
+    transform: scale(1.35);
+    opacity: 0;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Boot — a tube warming up. A hairline strikes, the picture opens out of it,
+   and CapyTV holds behind static, scanlines and a roll bar. Then the set asks
+   what to show, and waits: a chooser that times out is not a chooser.
+
+   Every base rule here is the SETTLED state and the motion lives in keyframes
+   with `both`. The reduced-motion block below therefore leaves a plain, still
+   logo card rather than a screen frozen half open.
+   -------------------------------------------------------------------------- */
+.capychannel-boot {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-boot);
+  overflow: hidden;
+  background: #000;
+  transition: opacity 250ms ease-out;
+}
+.capychannel-boot[data-done] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* The picture, opening from a hairline. The brand blue is the picture, not
+   the layer under it: .capychannel-boot stays black, which is the set with no signal, so
+   the blue is what opens out of the strike rather than what was always
+   there. */
+.boot-screen {
+  position: absolute;
+  inset: 0;
+  background: var(--capy-blue);
+  display: grid;
+  place-content: center;
+  place-items: center;
+  animation: boot-open 380ms cubic-bezier(0.16, 1, 0.3, 1) 180ms both;
+}
+
+/* Two rows: the mark, then the tiles. The second row is closed to nothing at
+   first, so the mark is the only thing the block holds and the mark is what
+   sits in the middle of the screen. Opening that row is the whole transition —
+   a centred block grows from its middle, so the mark rises by half of what the
+   tiles take and the tiles settle into the space that opens under it. Nothing
+   is measured, and no number here has to be kept in step with the number of
+   sources.
+
+   The stack is sized by its rows rather than by the screen, which is what lets
+   1fr mean "as tall as the tiles" instead of "the rest of the set". It is left
+   unpositioned so the tray inside it can lift itself over the tube's furniture
+   on its own, and the mark can stay under it.
+
+   justify-items, not place-items: the tray has to take its whole row for the
+   clip to mean anything, and centring it would let a closed row show. */
+.boot-stack {
+  display: grid;
+  grid-template-rows: auto 0fr;
+  row-gap: 0;
+  justify-items: center;
+  position: relative;
+  z-index: 1;
+  transition: grid-template-rows 560ms cubic-bezier(0.16, 1, 0.3, 1), row-gap 560ms
+    cubic-bezier(0.16, 1, 0.3, 1);
+}
+.capychannel-boot[data-tray="auth"] .boot-stack,
+.capychannel-boot[data-tray="auth"] .boot-tray {
+  transition: none;
+}
+.capychannel-boot[data-phase="pick"] .boot-stack {
+  grid-template-rows: auto 1fr;
+  row-gap: calc(3.4 * var(--u));
+}
+
+/* The mark keeps its row and the chooser gets the one under it. Every other
+   child here is out of flow, so these two are the only rows there are. */
+.boot-brand {
+  grid-area: 1 / 1;
+}
+.boot-tray {
+  grid-area: 2 / 1;
+}
+/* Closed, the tiles are out of reach as well as out of sight. A clipped row
+   still holds live buttons, and a remote would find them there. */
+.capychannel-boot[data-phase="brand"] .boot-tray {
+  visibility: hidden;
+}
+/* Declared here rather than on .boot-pick, so it starts when the phase turns
+   over instead of at load, where it would be spent long before anyone saw it.
+   Ahead of the data-again block below, which zeroes the delay on the way back
+   from a running source. */
+.capychannel-boot[data-phase="pick"] .boot-pick {
+  animation: boot-pick-in 420ms ease-out 140ms both;
+}
+.capychannel-boot[data-phase="pick"] .boot-auth {
+  animation: boot-pick-in 220ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+.boot-auth {
+  width: min(68cqw, calc(100cqw - 2 * var(--safe-x)));
+  isolation: isolate;
+}
+.boot-auth-card {
+  display: grid;
+  /* 1 / 2.08 was the old split; 20px moves from the intro to the form. */
+  grid-template-columns: minmax(0, calc(100% / 2.08 - 20px)) minmax(0, 1fr);
+  width: 100%;
+  overflow: hidden;
+  border-radius: calc(2.4 * var(--u));
+  background: var(--card);
+  color: var(--card-foreground);
+  box-shadow: var(--elev-3);
+}
+.boot-auth-intro {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: calc(3 * var(--u));
+  min-height: 0;
+  padding: calc(4.2 * var(--u)) calc(4 * var(--u));
+  background: var(--muted);
+}
+.boot-auth-copy {
+  display: flex;
+  flex-direction: column;
+  gap: calc(2.2 * var(--u));
+}
+.boot-auth-title {
+  margin: 0;
+  font-size: var(--t-lg);
+  font-weight: 600;
+  letter-spacing: -.03em;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+.boot-auth-lede,
+.boot-auth-footer {
+  margin: 0;
+  font-size: var(--t-sm);
+  line-height: 1.45;
+  color: var(--muted-foreground);
+  text-wrap: pretty;
+}
+.boot-auth-panel {
+  display: flex;
+  flex-direction: column;
+  gap: calc(1.8 * var(--u));
+  min-height: 0;
+  height: 100%;
+  padding: calc(3.6 * var(--u)) calc(4 * var(--u));
+}
+.boot-auth-card[data-mode="login"] .boot-auth-panel {
+  padding-top: calc(3.6 * var(--u) + 56px);
+}
+.boot-auth-rule {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(1.2 * var(--u));
+  padding-block: calc(1.2 * var(--u));
+}
+.boot-auth-rule [data-slot="separator"] {
+  flex: 1 1 0;
+  width: auto;
+  min-width: 0;
+}
+.boot-auth-fields {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  gap: calc(1.6 * var(--u));
+  min-height: 0;
+}
+/* Keep the Name row in the flow on login, after the visible fields, so the
+   card is as tall as Create account and the logo does not move. */
+.boot-auth-card[data-mode="login"] [data-auth-slot="name"] {
+  order: 3;
+  margin-bottom: -56px;
+}
+.boot-auth-card[data-mode="login"] .boot-auth-error {
+  order: 4;
+}
+.boot-auth-card[data-mode="login"] .boot-auth-fields > [data-slot="button"]:last-child {
+  order: 5;
+}
+.boot-auth-hold {
+  visibility: hidden;
+  pointer-events: none;
+}
+.boot-auth-password-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(1.2 * var(--u));
+}
+.boot-auth-forgot,
+.boot-auth-switch {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  padding: 0 calc(0.4 * var(--u));
+  font-size: var(--t-xs);
+  color: var(--muted-foreground);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.boot-auth-forgot {
+  position: relative;
+}
+.boot-auth-forgot::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 44px;
+  transform: translateY(-50%);
+}
+.boot-auth-switch {
+  min-height: 44px;
+  color: var(--card-foreground);
+  text-decoration: underline;
+  text-underline-offset: .2em;
+}
+.boot-auth-forgot:hover,
+.boot-auth-switch:hover {
+  color: var(--foreground);
+}
+.boot-auth-error {
+  min-height: 1.25em;
+  margin: 0;
+  font-size: var(--t-xs);
+  color: var(--destructive);
+}
+.boot-auth-card [data-slot="label"] {
+  font-family: var(--font-sans);
+  font-size: var(--t-xs);
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 1.3;
+  text-transform: none;
+  color: var(--card-foreground);
+}
+.boot-auth-card input {
+  font-size: max(16px, var(--t-xs));
+  min-height: 44px;
+}
+.boot-auth-card [data-slot="button"] {
+  min-height: 44px;
+}
+.boot-auth-card [data-slot="button"]:active {
+  transform: scale(0.97);
+}
+.boot-auth-card [data-slot="input"]:focus,
+.boot-auth-card [data-slot="input"]:focus-visible,
+.boot-auth-card [data-slot="button"]:focus-visible {
+  border-color: transparent;
+  box-shadow: 0 0 0 2px #111;
+  outline: none;
+}
+
+@container (max-width: 42rem) {
+  .boot-auth-card {
+    grid-template-columns: 1fr;
+  }
+  .boot-auth-intro {
+    padding-bottom: calc(1.6 * var(--u));
+  }
+}
+/* Grain a logo carries happily is grain that costs a label its edges. */
+.capychannel-boot[data-phase="pick"] .boot-noise {
+  opacity: 0.09;
+}
+
+/* Coming back from a running source. The tube is already on and the mark has
+   already been read, so the strike, the flash and the mark's own arrival are
+   all switched off. The phase never leaves "pick" once it has been reached,
+   so the row is already open and there is nothing for it to animate. */
+.capychannel-boot[data-again] .boot-screen,
+.capychannel-boot[data-again] .boot-flash,
+.capychannel-boot[data-again] .boot-line,
+.capychannel-boot[data-again] .boot-brand {
+  animation: none;
+}
+.capychannel-boot[data-again] .boot-pick {
+  animation-delay: 0s;
+}
+
+/* Static. feTurbulence is the cheapest convincing grain: one decode, no
+   canvas loop. Oversized, so the jitter never uncovers an edge. */
+.boot-noise {
+  position: absolute;
+  inset: -50%;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")
+    repeat;
+  background-size: 160px 160px;
+  opacity: 0.17;
+  animation: boot-jitter 400ms steps(5) infinite;
+}
+
+.boot-scan {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  /* .18, not the .5 this took on black. On black the scan had almost nothing
+     to darken and showed only where the mark was; on a lit picture it lands
+     everywhere, and anything heavier cuts the white lockup into strips. */
+  background: repeating-linear-gradient(
+    to bottom,
+    rgb(0 0 0 / 0) 0 .28cqh,
+    rgb(0 0 0 / 0.18) .28cqh .56cqh
+  );
+}
+
+/* The soft band that drifts up a mistuned set. */
+.boot-roll {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 26cqh;
+  background: linear-gradient(
+    to bottom,
+    rgb(255 255 255 / 0),
+    rgb(255 255 255 / 0.055),
+    rgb(255 255 255 / 0)
+  );
+  animation: boot-roll 2.6s linear infinite;
+}
+
+/* The tube falling off at the edges. Lighter than it was on black, where it
+   had nothing to take away: at .78 it took the blue with it and left four
+   black corners. */
+.boot-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 100% at 50% 50%, transparent 38%, rgb(0 0 0 / 0.5) 100%);
+}
+
+/* Painted only — none of these may swallow a click meant for a button
+   underneath. The furniture covers the whole set, and the flash, the line and
+   the spent mark all settle on opacity 0 rather than leaving. */
+.boot-noise,
+.boot-roll,
+.boot-scan,
+.boot-vignette {
+  z-index: 0;
+}
+.boot-noise,
+.boot-roll,
+.boot-scan,
+.boot-vignette,
+.boot-flash,
+.boot-line {
+  pointer-events: none;
+}
+
+/* The lockup is a link to the landing page wherever it appears. The place
+   sets the box; this rule only keeps the anchor from bringing link ink. */
+.capy-home {
+  color: inherit;
+  text-decoration: none;
+}
+/* Scoped to the stage: --u does not exist in the dashboard, which sets its
+   own ring. */
+.capychannel-stage .capy-home:focus-visible {
+  outline: calc(0.3 * var(--u)) solid #fff;
+  outline-offset: calc(0.35 * var(--u));
+}
+/* The chip fills the bar, so its ring goes inside the blue. */
+.capychannel-stage .v-ticker .capy-home:focus-visible {
+  outline-offset: calc(-0.8 * var(--u));
+}
+/* On the boot screen the anchor takes the size of the artwork, so the mark
+   stays where it was and the target is the mark and nothing round it. */
+.boot-brand .capy-home {
+  display: block;
+  width: max-content;
+  border-radius: calc(0.9 * var(--u));
+}
+
+.boot-brand {
+  position: relative;
+  animation: boot-brand-in 1.7s steps(1, end) 520ms both;
+}
+.boot-brand .capy-logo {
+  /* 30u — a fifth of the screen. The mark holds the set alone for two and a
+     half seconds, so it is sized for that moment rather than for the one after
+     it, where it sits above the tiles. */
+  height: calc(30 * var(--u));
+  /* Phosphor bloom, and the colour fringe of a badly converged tube. A filter,
+     because a picture takes no text-shadow. The fringe is lighter than it was
+     on black: red beside white on blue reads as a printing fault long before
+     it reads as a tube. The pill keeps its orange under it: a drop-shadow
+     paints beside the artwork and never recolours it. */
+  filter: drop-shadow(calc(-0.22 * var(--u)) 0 rgb(255 40 90 / 0.28))
+    drop-shadow(calc(0.22 * var(--u)) 0 rgb(0 220 255 / 0.28))
+    drop-shadow(0 0 calc(3 * var(--u)) rgb(255 255 255 / 0.38));
+}
+
+/* The box the row closes on. The z-index puts the tiles on top of the tube
+   rather than behind it — the brand is a picture and belongs under the
+   scanlines, but a control the viewer has to read and hit belongs in front of
+   them. The padding is not spacing: open, the row is exactly as tall as the
+   tiles, and a focus ring would be shaved off the one it marks. */
+.boot-tray {
+  position: relative;
+  z-index: 1;
+  min-height: 0;
+  overflow: hidden;
+  /* Closed, the padding closes with the row: it is height like any other, and
+     left standing it would hold the mark off centre before anything moves. */
+  padding: 0 calc(1 * var(--u));
+  transition: padding-block 560ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.capychannel-boot[data-phase="pick"] .boot-tray {
+  padding-block: calc(1 * var(--u));
+}
+
+/* What the set asks once the mark has moved up out of the way.
+
+   Two channels on one row. The wallpapers are six tiles, three to a row, so
+   that block comes out square. A wrapping line rather than grid columns,
+   because a short last row centres itself on a flex line and hangs under the
+   first column on a grid track. The width is what breaks it: three tiles and
+   their gaps come to 32.4 units, four to 43.5. */
+.boot-pick {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: calc(1.8 * var(--u));
+  max-width: calc(34 * var(--uw));
+  margin: 0;
+  border: 0;
+  padding: 0;
+  min-inline-size: 0;
+}
+.boot-pick button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(1.4 * var(--u));
+  width: calc(18 * var(--u));
+  aspect-ratio: 1;
+  padding: calc(1.6 * var(--u)) calc(1 * var(--u));
+  border: 0;
+  /* A square with a drawing on it, sized for a couch and a remote. Rounded,
+     not a pill and not an ad card. */
+  border-radius: calc(2.4 * var(--u));
+  background: rgb(255 255 255 / 0.1);
+  box-shadow: inset 0 0 0 calc(0.15 * var(--u)) rgb(255 255 255 / 0.24);
+  color: #fff;
+  font: inherit;
+  font-size: var(--t-xs);
+  line-height: 1.15;
+  text-align: center;
+  text-wrap: balance;
+  cursor: pointer;
+  transition: background 140ms ease-out, scale 140ms ease-out;
+}
+.boot-pick svg {
+  width: calc(7.4 * var(--u));
+  height: calc(7.4 * var(--u));
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* The two channels. Tall tiles, because two squares leave the set looking
+   empty. The width cap above is for three to a row, so it lifts here. */
+.boot-pick-channels {
+  gap: calc(2.6 * var(--u));
+  max-width: none;
+}
+.boot-pick-channels button {
+  gap: calc(3 * var(--u));
+  width: calc(30 * var(--u));
+  aspect-ratio: 5 / 7;
+  border-radius: calc(2.18 * var(--u)); /* 16px */
+  font-size: var(--t-md);
+}
+.boot-pick-channels svg {
+  width: calc(7.63 * var(--u)); /* 56px */
+  height: calc(7.63 * var(--u));
+}
+/* The presets. Six tiles, three to a row, at the width of a channel tile. The
+   height comes from the thumbnail, and the row stretches the back tile to it.
+   The cap sits between three tiles (95.2 units) and four (127.8). */
+.boot-pick-walls {
+  gap: calc(2.6 * var(--u));
+  max-width: calc(100 * var(--u));
+}
+.boot-pick-walls button {
+  width: calc(30 * var(--u));
+  aspect-ratio: auto;
+  padding: calc(1.6 * var(--u));
+  border-radius: calc(2.18 * var(--u)); /* 16px */
+  font-size: var(--t-sm);
+}
+.boot-pick-walls svg {
+  width: calc(5.45 * var(--u)); /* 40px */
+  height: calc(5.45 * var(--u));
+}
+/* A preset in the chooser: the wallpaper's own class, at the stage's shape. */
+.boot-wall {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: calc(1 * var(--u));
+  box-shadow: inset 0 0 0 calc(0.15 * var(--u)) rgb(255 255 255 / 0.24);
+}
+.boot-pick button:hover {
+  background: rgb(255 255 255 / 0.2);
+}
+.boot-pick button:active {
+  scale: 0.96;
+}
+.boot-pick button:focus-visible {
+  outline: calc(0.3 * var(--u)) solid #fff;
+  outline-offset: calc(0.4 * var(--u));
+}
+
+/* Struck before the picture exists. */
+.boot-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: .3cqh;
+  margin-top: -.15cqh;
+  background: #fff;
+  box-shadow: 0 0 4cqh 1cqh rgb(255 255 255 / 0.45);
+  opacity: 0;
+  animation: boot-line 560ms ease-out both;
+}
+
+/* The bloom as the beam floods the screen. */
+.boot-flash {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+  animation: boot-flash 420ms ease-out 180ms both;
+}
+
+@keyframes boot-line {
+  0% {
+    opacity: 0;
+    transform: scaleX(0.02);
+  }
+  30% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+  55% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleX(1);
+  }
+}
+@keyframes boot-open {
+  from {
+    transform: scaleY(0.004);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+@keyframes boot-flash {
+  from {
+    opacity: 0.85;
+  }
+  to {
+    opacity: 0;
+  }
+}
+/* No `to`: the row opening is what brings the tiles up, so all this owes them
+   is the fade, and it ends on the opacity they are declared with. */
+@keyframes boot-pick-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes boot-roll {
+  from {
+    transform: translateY(100cqh);
+  }
+  to {
+    transform: translateY(-30cqh);
+  }
+}
+@keyframes boot-jitter {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  20% {
+    transform: translate3d(-3%, 2%, 0);
+  }
+  40% {
+    transform: translate3d(2%, -3%, 0);
+  }
+  60% {
+    transform: translate3d(-2%, -1%, 0);
+  }
+  80% {
+    transform: translate3d(3%, 1%, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+/* Struck, then unstable, then held — a tube finding its bias. */
+@keyframes boot-brand-in {
+  0% {
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  12% {
+    opacity: 0.18;
+  }
+  17% {
+    opacity: 1;
+  }
+  22% {
+    opacity: 0.55;
+  }
+  27% {
+    opacity: 1;
+  }
+  33% {
+    opacity: 0.8;
+  }
+  38% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Reduced motion — every animation authored here stops.
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .capychannel-stage *,
+  .capychannel-stage *::before,
+  .capychannel-stage *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  /* The crawl is one of them, so the run can no longer carry the later ads to
+     the viewer. The frame scrolls instead and the viewer goes to the ads —
+     otherwise every ad past the fourth is a link nobody can reach. */
+  .ticker-window {
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+}

@@ -14,7 +14,7 @@
 }
 
 /* First-run tips on the dashboard. The same card as the tip on the source
-   chooser (.tv-coach in capytv.css): white, 16px on every side, a blue title
+   chooser (.tv-coach in capychannel.css): white, 16px on every side, a blue title
    with the X on its line, 12px copy in Inter. Change both together. */
 .dash-coach-tip {
   position: relative;

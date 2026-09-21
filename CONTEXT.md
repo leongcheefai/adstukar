@@ -33,6 +33,13 @@ One creative under a campaign. A campaign holds up to four, so an advertiser can
 compare them.
 _Avoid_: Ad, creative, variant, banner
 
+**Slot**:
+One band of the ticker loop, booked by one advertiser for one term at one flat
+price. The loop holds a fixed count of slots. The numbers live in `economy.slot`.
+The API does not model a slot yet; the dashboard reads one campaign with one
+listing as one slot.
+_Avoid_: spot, position
+
 **Verified domain**:
 A campaign's domain, proved by a token the advertiser publishes on that domain.
 Required before a campaign may run.

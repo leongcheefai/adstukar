@@ -1,5 +1,5 @@
 import { Bank, Check, MapPin, Warning, X } from "@phosphor-icons/react";
-import { usd, usdCents } from "@repo/config/money";
+import { usdCents } from "@repo/config/money";
 import type { PayoutReview, ReviewedDevice } from "@repo/contracts/types";
 import {
   Badge,
@@ -176,8 +176,7 @@ function PayoutCard({
       <CardContent className="space-y-4 pt-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0 space-y-1">
-            <p className="text-2xl tracking-tight tabular-nums">{usd(request.amount)}</p>
-            <p className="text-sm tabular-nums">{usdCents(request.usdCents)}</p>
+            <p className="text-2xl tracking-tight tabular-nums">{usdCents(request.usdCents)}</p>
             <p className="text-xs text-muted-foreground">
               {owner.name} · <span className="font-mono">{owner.email}</span> · asked{" "}
               {new Date(request.createdAt).toLocaleDateString()}

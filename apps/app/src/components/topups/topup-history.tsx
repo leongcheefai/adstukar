@@ -1,4 +1,4 @@
-import { usd, usdCents } from "@repo/config/money";
+import { usdCents } from "@repo/config/money";
 import type { TopupHistoryItem, TopupState } from "@repo/contracts/types";
 import { Badge, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@repo/ui";
 
@@ -31,8 +31,7 @@ export function TopupHistory({ items }: { items: TopupHistoryItem[] }) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Bought</TableHead>
-              <TableHead>Amount</TableHead>
+              <TableHead>Added</TableHead>
               <TableHead>Paid</TableHead>
               <TableHead>State</TableHead>
               <TableHead>Refund</TableHead>
@@ -44,7 +43,6 @@ export function TopupHistory({ items }: { items: TopupHistoryItem[] }) {
                 <TableCell className="whitespace-nowrap">
                   {new Date(topup.createdAt).toLocaleDateString()}
                 </TableCell>
-                <TableCell className="tabular-nums">{usd(topup.amount)}</TableCell>
                 <TableCell className="tabular-nums">{usdCents(topup.usdCents)}</TableCell>
                 <TableCell>
                   <Badge variant={STATE_VARIANT[topup.state]}>{STATE_LABEL[topup.state]}</Badge>

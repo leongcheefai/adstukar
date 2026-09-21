@@ -1,11 +1,10 @@
-import { Coin } from "@phosphor-icons/react";
-import { usd, usdSigned } from "@repo/config/money";
 import { Button, Card, CardContent } from "@repo/ui";
+import { BalanceCard } from "../../components/overview/balance-card";
 import { PayoutHistory, PayoutHistorySkeleton } from "../../components/overview/payout-history";
-import { PlaysCard, PlaysCardSkeleton } from "../../components/overview/plays-card";
 import { RecentLedger } from "../../components/overview/recent-ledger";
-import { StatCard, StatCardSkeleton } from "../../components/stat-card";
+import { RunningAdsCard } from "../../components/overview/running-ads-card";
 import { useSession } from "../../lib/auth";
+import { usePayouts } from "../../lib/payouts";
 import { useStats } from "../../lib/stats";
 
 /** Local clock, so the greeting matches the room the reader is sitting in. */
@@ -16,26 +15,15 @@ function greeting(now = new Date()): string {
   return "Good Evening";
 }
 
-/**
- * One list, read by both the loaded cards and the skeletons.
- *
- * The label is known before the figure is, so the skeleton shows it. That also
- * stops the two branches from drifting apart.
- */
-const STAT_LABELS = {
-  balance: "Balance",
-  played: "Played today",
-  received: "Received today",
-  scans: "Scans today",
-} as const;
+/** Loading twin of a whole card. Same shell, so the grid keeps its shape. */
+function CardSkeleton({ className }: { className: string }) {
+  return <div className={`animate-pulse rounded-xl border bg-card ${className}`} aria-hidden />;
+}
 
 export function DashboardHome() {
   const { data: session } = useSession();
   const { data: stats, isError, isFetching, refetch } = useStats();
-
-  // The API divides by received, which is zero on a quiet day.
-  const scanRate = stats && Number.isFinite(stats.today.scanRate) ? stats.today.scanRate : 0;
-  const pending = stats?.balance.pending ?? 0;
+  const { data: payouts, isPending: payoutsLoading } = usePayouts();
 
   return (
     <div className="space-y-4">
@@ -44,10 +32,12 @@ export function DashboardHome() {
           line that large needs more air under it than the cards need between
           them. */}
       <div className="flex flex-wrap items-end justify-between gap-3 pb-4">
-        <h1 data-slot="greeting" className="min-w-0">
-          {greeting()}
-          {session?.user.name ? `, ${session.user.name}` : ""}
-        </h1>
+        <div className="min-w-0 space-y-1">
+          <h1 data-slot="greeting">
+            {greeting()}
+            {session?.user.name ? `, ${session.user.name}` : ""}
+          </h1>
+        </div>
       </div>
 
       {isError && !stats ? (
@@ -56,7 +46,7 @@ export function DashboardHome() {
             <div>
               <p className="text-sm font-medium">Could not load your stats</p>
               <p className="text-sm text-muted-foreground">
-                Your balance and history are safe. This is a read that failed.
+                Your wallet and history are safe. This is a read that failed.
               </p>
             </div>
             <Button variant="outline" onClick={() => refetch()} disabled={isFetching}>
@@ -66,39 +56,20 @@ export function DashboardHome() {
         </Card>
       ) : (
         <>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {stats ? (
-              <>
-                <StatCard
-                  label={STAT_LABELS.balance}
-                  value={usd(stats.balance.settled)}
-                  meta={pending !== 0 ? `${usdSigned(pending)} pending` : undefined}
-                  icon={<Coin size={28} weight="fill" className="text-primary" />}
-                />
-                <StatCard label={STAT_LABELS.played} value={stats.today.played.toLocaleString()} />
-                <StatCard
-                  label={STAT_LABELS.received}
-                  value={stats.today.received.toLocaleString()}
-                />
-                <StatCard
-                  label={STAT_LABELS.scans}
-                  value={stats.today.scans.toLocaleString()}
-                  meta={`Scan rate ${(scanRate * 100).toFixed(1)}%`}
-                />
-              </>
-            ) : (
-              Object.values(STAT_LABELS).map((label) => (
-                <StatCardSkeleton key={label} label={label} />
-              ))
-            )}
+          {/* Two thirds and one third. The wide card carries the money and the
+              narrow one carries the ads the money comes from. */}
+          <div className="grid gap-3 xl:grid-cols-3">
+            <div className="xl:col-span-2">
+              {stats ? (
+                <BalanceCard stats={stats} payouts={payouts} payoutsLoading={payoutsLoading} />
+              ) : (
+                <CardSkeleton className="h-72" />
+              )}
+            </div>
+            <RunningAdsCard />
           </div>
 
-          {/* Two charts, one row from xl. Below that the sidebar leaves each
-              half too narrow for a thirty-day series, so they stack. */}
-          <div className="grid gap-3 xl:grid-cols-2">
-            {stats ? <PayoutHistory data={stats.series} /> : <PayoutHistorySkeleton />}
-            {stats ? <PlaysCard data={stats.series} /> : <PlaysCardSkeleton />}
-          </div>
+          {stats ? <PayoutHistory data={stats.series} /> : <PayoutHistorySkeleton />}
         </>
       )}
 

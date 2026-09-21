@@ -67,7 +67,7 @@ export function RecentLedger() {
         <CardDescription>Your most recent wallet movements</CardDescription>
         <CardAction>
           <Button asChild variant="ghost" size="sm">
-            <Link to="/dashboard/ledger">View all</Link>
+            <Link to="/dashboard/wallet">View all</Link>
           </Button>
         </CardAction>
       </CardHeader>
@@ -86,18 +86,7 @@ export function RecentLedger() {
           </div>
         )}
 
-        {isEmpty && (
-          <EmptyState
-            icon={<Receipt />}
-            title="No movements yet"
-            description="Money lands here once a listing plays on a screen."
-            action={
-              <Button asChild size="sm">
-                <Link to="/">Start CapyTV</Link>
-              </Button>
-            }
-          />
-        )}
+        {isEmpty && <EmptyState icon={<Receipt />} title="No movements yet" />}
 
         {/* Stale rows stay on screen behind the banner; a failed refresh is
             not a reason to take away what already loaded. */}

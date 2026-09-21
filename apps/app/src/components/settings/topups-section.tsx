@@ -42,7 +42,7 @@ function blockMessage(block: TopupRefundBlock, refundWindowDays: number): string
     case "window-closed":
       return `A refund runs for ${refundWindowDays} days after the payment.`;
     case "nothing-left":
-      return "That money is spent. Only an unspent top-up refunds.";
+      return "Those funds are spent. Only unspent funds refund.";
     case "below-fee":
       return "The card fee is more than this refund is worth.";
   }
@@ -71,7 +71,6 @@ function TopupReviewRow({
           {owner.email}
         </p>
       </TableCell>
-      <TableCell className="tabular-nums">{usd(topup.amount)}</TableCell>
       <TableCell className="tabular-nums">{usdCents(topup.usdCents)}</TableCell>
       <TableCell>
         <Badge variant={topup.state === "paid" ? "success" : "neutral"}>
@@ -86,7 +85,7 @@ function TopupReviewRow({
         )}
         {topup.state !== "refunded" && block === null && (
           <Button variant="outline" size="sm" onClick={() => onRefund(item)}>
-            Refund {usd(item.refundable)} · {usdCents(item.refundNetCents)}
+            Refund {usd(item.refundable)} · {usdCents(item.refundNetCents)} back
           </Button>
         )}
         {topup.state !== "refunded" && block !== null && (
@@ -142,7 +141,6 @@ export function TopupsSection() {
               <TableRow>
                 <TableHead>Bought</TableHead>
                 <TableHead>Member</TableHead>
-                <TableHead>Amount</TableHead>
                 <TableHead>Paid</TableHead>
                 <TableHead>State</TableHead>
                 <TableHead>Refund</TableHead>
@@ -168,7 +166,7 @@ export function TopupsSection() {
             <AlertDialogTitle>Refund this top-up?</AlertDialogTitle>
             <AlertDialogDescription>
               {target &&
-                `${target.owner.name} gets ${usdCents(target.refundNetCents)} back through Stripe, and ${usd(target.refundable)} leaves their account. This cannot be undone.`}
+                `${target.owner.name} gets ${usdCents(target.refundNetCents)} back through Stripe, and ${usd(target.refundable)} leaves their wallet. This cannot be undone.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -3,7 +3,7 @@ import { CoachTip } from "./coach-tip";
 /**
  * First-run tip after the dashboard drawer opens. It sits next to the first
  * visible Campaigns control — the sidebar on desktop, the overview button on
- * a phone — and names the wallet as the other way in.
+ * a phone — and names the Wallet as the other way in.
  */
 export function SetupCoach({
   open,
@@ -19,7 +19,7 @@ export function SetupCoach({
       title="List your product here"
       onClose={onDismiss}
     >
-      <p>Create a campaign and list your product here.</p>
+      <p>Book a slot on the ticker and list your product here.</p>
     </CoachTip>
   );
 }

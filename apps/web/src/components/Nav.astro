@@ -56,9 +56,11 @@ const TEXT_LINK =
 
       <!-- One button. The app's front door is the set itself: it boots, then
            asks for a session or shows the sources, so sign-in and sign-up both
-           live behind the same switch. -->
+           live behind the same switch. `/login`, not the bare origin: the app
+           sends a visitor with no session back here unless they ask for the
+           form. -->
       <a
-        href={APP_URL}
+        href={`${APP_URL}/login`}
         class="relative inline-flex h-11 items-center justify-center rounded-[8px] bg-primary px-6 text-base font-medium text-primary-foreground transition-[background-color,transform] duration-150 ease-out before:absolute before:inset-x-0 before:-inset-y-0.5 hover:bg-[color:var(--color-accent-hover)] active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
       >
         Turn on TV

@@ -1,4 +1,3 @@
-import { designMode, designResponse } from "./design-mode";
 import { env } from "./env";
 
 export class ApiError extends Error {
@@ -19,14 +18,6 @@ export async function apiFetch<T>(
   path: string,
   init: { method?: string; body?: unknown } = {},
 ): Promise<T> {
-  if (designMode) {
-    const fixture = designResponse(path, init.method ?? "GET", init.body);
-    if (fixture !== undefined) return fixture as T;
-    throw new ApiError(
-      "Design mode is on, so this request never reached the API. Start the API for real data.",
-      501,
-    );
-  }
   const res = await fetch(`${env.VITE_API_URL}${path}`, {
     method: init.method ?? "GET",
     credentials: "include",

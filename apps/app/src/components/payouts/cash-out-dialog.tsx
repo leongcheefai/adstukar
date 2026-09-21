@@ -68,8 +68,8 @@ export function CashOutDialog({
     connect.mutate(
       {
         country,
-        returnUrl: `${origin}/dashboard/ledger?stripe=return`,
-        refreshUrl: `${origin}/dashboard/ledger?stripe=refresh`,
+        returnUrl: `${origin}/dashboard/wallet?stripe=return`,
+        refreshUrl: `${origin}/dashboard/wallet?stripe=refresh`,
       },
       {
         // The link lives for minutes, so the browser goes there at once.

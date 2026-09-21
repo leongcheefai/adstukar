@@ -15,9 +15,8 @@ import {
 /** Days of history the card reports. Short enough that every day gets a dot. */
 const WINDOW_DAYS = 14;
 
-const TITLE = "Payout history";
-const DESCRIPTION = "Earned each day";
-const META_LABEL = `Past ${WINDOW_DAYS} days`;
+const TITLE = "Earnings history";
+const DESCRIPTION = `Daily earnings from the past ${WINDOW_DAYS} days`;
 
 const chartConfig = {
   earned: { label: "Earned", color: "var(--chart-1)" },
@@ -61,7 +60,6 @@ export function PayoutHistory({ data }: { data: StatsDay[] }) {
     <ChartCard
       title={TITLE}
       description={DESCRIPTION}
-      metaLabel={META_LABEL}
       meta={<ChartCardFigure>{usd(total)}</ChartCardFigure>}
     >
       <ChartContainer
@@ -134,7 +132,6 @@ export function PayoutHistorySkeleton() {
     <ChartCard
       title={TITLE}
       description={DESCRIPTION}
-      metaLabel={META_LABEL}
       meta={<ChartCardFigureSkeleton label={TITLE} />}
     >
       <ChartBodySkeleton />
