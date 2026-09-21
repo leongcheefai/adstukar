@@ -5,6 +5,7 @@ import { db, schema } from "@repo/db";
 import { and, asc, desc, eq, inArray, isNotNull, ne } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import { domainFromUrl } from "../../lib/domain";
+import type { Tx } from "../ledger/ledger.service";
 import { spentTodayByCampaign } from "./spend";
 import { verifyDomain } from "./verification";
 
@@ -94,8 +95,8 @@ function requireDomain(url: string): string {
  * domain they already verified starts running at once. It is never read across
  * members: one member's proof says nothing about another.
  */
-async function domainVerifiedAt(userId: string, domain: string): Promise<Date | null> {
-  const [row] = await db
+async function domainVerifiedAt(tx: Tx, userId: string, domain: string): Promise<Date | null> {
+  const [row] = await tx
     .select({ verifiedAt: schema.campaign.verifiedAt })
     .from(schema.campaign)
     .where(
@@ -111,11 +112,19 @@ async function domainVerifiedAt(userId: string, domain: string): Promise<Date | 
   return row?.verifiedAt ?? null;
 }
 
-export async function createCampaign(userId: string, input: CreateCampaignInput) {
+/**
+ * The one insert behind a campaign. A booking runs it inside the transaction
+ * that also charges the slot, so a short balance leaves no campaign behind.
+ */
+export async function insertCampaign(
+  tx: Tx,
+  userId: string,
+  input: CreateCampaignInput,
+  now: Date,
+): Promise<CampaignRow> {
   const domain = requireDomain(input.url);
-  const now = new Date();
-  const verifiedAt = await domainVerifiedAt(userId, domain);
-  const [row] = await db
+  const verifiedAt = await domainVerifiedAt(tx, userId, domain);
+  const [row] = await tx
     .insert(schema.campaign)
     .values({
       id: crypto.randomUUID(),
@@ -133,6 +142,11 @@ export async function createCampaign(userId: string, input: CreateCampaignInput)
     })
     .returning();
   if (!row) throw new HTTPException(500, { message: "Insert failed" });
+  return row;
+}
+
+export async function createCampaign(userId: string, input: CreateCampaignInput) {
+  const row = await insertCampaign(db, userId, input, new Date());
   return single(row);
 }
 
@@ -155,7 +169,7 @@ export async function updateCampaign(
     if (domain !== existing.domain) {
       // A new domain needs new proof of ownership, so the campaign stops running.
       // A member who already proved the new domain keeps that proof.
-      const verifiedAt = await domainVerifiedAt(userId, domain);
+      const verifiedAt = await domainVerifiedAt(db, userId, domain);
       patch.domain = domain;
       patch.verifiedAt = verifiedAt;
       // Proof of the new domain leaves the campaign where it was; a campaign the
