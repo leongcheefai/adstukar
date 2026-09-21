@@ -53,11 +53,6 @@ const STATUS: Record<
 };
 
 /** Why the system stopped a slot, and what starts it again. */
-const PAUSE_REASON = {
-  budget: "The system paused this slot. It runs again tomorrow.",
-  balance: "Your wallet ran out. This slot runs again once you add funds.",
-} as const;
-
 const DAY = new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short" });
 
 /** The two lines under the badge: how much of the term is left, and its dates. */
@@ -88,12 +83,10 @@ function termCopy(slot: Slot): { left: string; dates: string } {
 
 /** The one line under the badge that says why, when the badge alone does not. */
 function noteOf(slot: Slot): string | null {
-  const { campaign } = slot.item;
   if (slot.status === "rejected") return slot.listing?.rejectionReason ?? null;
   if (slot.status === "action") {
     return slot.listing ? "Verify your domain to start." : "Write the ad to start.";
   }
-  if (slot.status === "paused" && campaign.pauseReason) return PAUSE_REASON[campaign.pauseReason];
   return null;
 }
 

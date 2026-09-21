@@ -1,5 +1,6 @@
 import { Bank, Check, MapPin, Warning, X } from "@phosphor-icons/react";
-import { usdCents } from "@repo/config/money";
+import { earnPerPlay } from "@repo/config/economy";
+import { perThousandPlays, usdCents } from "@repo/config/money";
 import type { PayoutReview, ReviewedDevice } from "@repo/contracts/types";
 import {
   Badge,
@@ -86,7 +87,7 @@ function DeviceReviewRow({ device, windowDays }: { device: ReviewedDevice; windo
           {device.name}
         </p>
         <Badge variant="neutral" className="capitalize">
-          {device.tier}
+          {device.tier} · {perThousandPlays(earnPerPlay(device.tier))}
         </Badge>
         {device.state !== "approved" && (
           <Badge variant="warning" className="capitalize">
