@@ -1,0 +1,40 @@
+---
+title: Advertising
+description: How to book a slot on the ticker, what a slot costs, and what occurs after you book.
+order: 2
+---
+
+import { economy } from "@repo/config/economy";
+import { usdCents } from "@repo/config/money";
+
+## What a slot is
+
+The ticker has {economy.slot.count} slots. One slot shows one brand: a logo, a name, and a tagline.
+
+The price of one slot is {usdCents(economy.slot.priceUsdCents)} for {economy.slot.termDays} days. The price is the same for each slot. There is no monthly fee.
+
+## Before you book
+
+Make sure that your wallet has sufficient funds for the slot. To add funds, refer to the **Wallet** topic.
+
+## Book a slot
+
+1. Open the **Campaigns** page in the dashboard.
+2. Select an open band on the ticker. This band is your position.
+3. Enter the address of your site. The form does a check of the site. Then the form adds the name and the logo.
+4. Write a name of {economy.slot.nameMaxLength} characters maximum.
+5. Write a tagline of {economy.slot.taglineMaxLength} characters maximum.
+6. Add a logo. Use a PNG, JPEG, or WebP image of 5 MB maximum.
+7. Confirm the booking.
+
+## Verify your domain
+
+The form tells you to show that you own the site. You can do this step later. But the ad does not play until you complete this step.
+
+## Review
+
+A person does a review of each ad before it plays. The review makes sure that the site is live and that the tagline is accurate.
+
+## Change a slot
+
+You can change the name, the tagline, and the logo at any time. A changed ad gets a new review. The slot and its term do not change.

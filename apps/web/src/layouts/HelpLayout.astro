@@ -1,0 +1,146 @@
+---
+import { getCollection } from "astro:content";
+import { project } from "@repo/config/project";
+import { Logo } from "@repo/ui";
+import { helpHref } from "../lib/help";
+import BaseLayout from "./BaseLayout.astro";
+
+interface Props {
+  title: string;
+  description: string;
+  ogSlug: string;
+  ogType?: "website" | "article";
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
+  /** The topic on the page, with its `##` headings. Without it, the page is the help home. */
+  current?: { id: string; sections: { slug: string; text: string }[] };
+}
+
+const { current, ...base } = Astro.props;
+
+const topics = (await getCollection("help"))
+  .filter((topic) => !topic.data.draft)
+  .sort((a, b) => a.data.order - b.data.order);
+
+const ITEM =
+  "flex min-h-10 items-center text-[15px] transition-colors duration-150 ease-out hover:text-foreground";
+/* The script at the foot sets `aria-current` on the section in view. The
+   link's own left rule covers the list's grey one, so the mark moves down it. */
+const SECTION_ITEM =
+  "-ml-px min-h-9 border-l border-transparent pl-4 text-sm aria-[current]:border-primary aria-[current]:font-medium aria-[current]:text-primary";
+const on = "font-medium text-primary hover:text-primary";
+const off = "text-muted-foreground";
+---
+
+<!-- The help centre reads as a manual, not as a marketing page: no floating
+     header and no ticker. The mark sits top left, and the menu sits under it. -->
+<BaseLayout {...base} nav={false} crawl={false}>
+  <a
+    href="#help-content"
+    class="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-(--z-skip-link) focus:rounded-full focus:bg-primary focus:px-5 focus:py-2.5 focus:text-sm focus:font-medium focus:text-primary-foreground"
+  >
+    Skip to content
+  </a>
+
+  <div class="mx-auto max-w-6xl px-6 lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-16">
+    <aside class="pt-8 lg:sticky lg:top-0 lg:h-dvh lg:overflow-y-auto lg:pb-8">
+      <div class="flex items-center gap-3">
+        <a
+          href="/"
+          aria-label={project.name}
+          class="inline-flex text-primary transition-opacity duration-150 ease-out hover:opacity-80"
+        >
+          <Logo variant="mark" size={32} aria-hidden="true" />
+        </a>
+        <span aria-hidden="true" class="h-5 w-px bg-border"></span>
+        <a href="/help" class="font-medium tracking-tight">Help Center</a>
+      </div>
+
+      <nav aria-label="Help" class="mt-6 lg:mt-8">
+        <ul class="flex flex-wrap gap-x-6 lg:block">
+          <li>
+            <a
+              href="/help"
+              class:list={[ITEM, current ? off : on]}
+              aria-current={current ? undefined : "page"}
+            >
+              Home
+            </a>
+          </li>
+          {
+            topics.map((topic) => {
+              const open = current?.id === topic.id;
+              return (
+                <li>
+                  <a
+                    href={helpHref(topic.id)}
+                    class:list={[ITEM, open ? on : off]}
+                    aria-current={open ? "page" : undefined}
+                  >
+                    {topic.data.title}
+                  </a>
+                  {open && current.sections.length > 0 && (
+                    <ul class="mb-2 hidden border-l border-border lg:block">
+                      {current.sections.map((section) => (
+                        <li>
+                          <a
+                            href={helpHref(topic.id, section.slug)}
+                            data-help-section={section.slug}
+                            class:list={[ITEM, SECTION_ITEM, off]}
+                          >
+                            {section.text}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              );
+            })
+          }
+        </ul>
+      </nav>
+    </aside>
+
+    <div id="help-content" class="min-w-0 pt-10 pb-24 lg:pt-24 lg:pb-32">
+      <slot />
+    </div>
+  </div>
+
+  <!-- The side menu marks the section the reader is in. A section is current
+       once its heading is in the top third of the window; at the foot of the
+       page the last one is, because a short last section never gets that far. -->
+  <script is:inline>
+    (() => {
+      const links = [...document.querySelectorAll("[data-help-section]")];
+      if (links.length === 0) return;
+      const headings = links.map((link) => document.getElementById(link.dataset.helpSection));
+      let queued = false;
+
+      function mark() {
+        queued = false;
+        const atFoot = window.innerHeight + window.scrollY >= document.body.scrollHeight - 2;
+        // A heading in the top third of the window is the one being read.
+        const line = window.innerHeight / 3;
+        let current = -1;
+        headings.forEach((heading, index) => {
+          if (heading && heading.getBoundingClientRect().top <= line) current = index;
+        });
+        if (atFoot) current = links.length - 1;
+        links.forEach((link, index) => {
+          if (index === current) link.setAttribute("aria-current", "location");
+          else link.removeAttribute("aria-current");
+        });
+      }
+
+      function queue() {
+        if (queued) return;
+        queued = true;
+        requestAnimationFrame(mark);
+      }
+
+      window.addEventListener("scroll", queue, { passive: true });
+      window.addEventListener("resize", queue);
+      mark();
+    })();
+  </script>
+</BaseLayout>

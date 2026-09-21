@@ -25,10 +25,10 @@ export const MARKETING_PAGES: MarketingPage[] = [
     description: `Insights, updates, and tutorials from the ${project.name} team.`,
   },
   {
-    slug: "faq",
-    path: "/faq",
-    title: `FAQ — ${project.name}`,
-    description: `How earning with a screen, advertising, and money work on ${project.name}.`,
+    slug: "help",
+    path: "/help",
+    title: `Help — ${project.name}`,
+    description: `How to use ${project.name}: the dashboard, CapyChannel, advertising, and money.`,
   },
   {
     slug: "terms",

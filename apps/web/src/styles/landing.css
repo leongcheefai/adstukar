@@ -574,35 +574,6 @@ body[data-bleed] .hero-float {
   }
 }
 
-.faq-groups {
-  display: grid;
-  gap: 4rem;
-  margin-top: 4rem;
-}
-.faq-group {
-  display: grid;
-  gap: 1.25rem;
-}
-@media (min-width: 1024px) {
-  .faq-group {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
-    gap: 3rem;
-  }
-}
-.faq-more {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  min-height: 2.75rem;
-  margin-top: 0.75rem;
-  font-size: 0.875rem;
-  font-weight: var(--fw-medium);
-  color: var(--primary);
-  text-underline-offset: 4px;
-}
-.faq-more:hover {
-  text-decoration: underline;
-}
 .faq-list {
   display: flex;
   flex-direction: column;
@@ -654,30 +625,6 @@ body[data-bleed] .hero-float {
   font-size: 0.9375rem;
   line-height: 1.6;
   color: var(--muted-foreground);
-}
-
-/* The FAQ page's group chips. */
-.faq-nav {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.5rem;
-  margin-top: 2rem;
-}
-.faq-nav a {
-  display: inline-flex;
-  align-items: center;
-  min-height: 2.5rem;
-  padding: 0 1rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-full);
-  background: var(--card);
-  font-size: 0.875rem;
-  font-weight: var(--fw-medium);
-  transition: border-color var(--dur-fast) var(--ease-out);
-}
-.faq-nav a:hover {
-  border-color: var(--color-border-strong);
 }
 
 /* --- Reduced motion ------------------------------------------------------- */

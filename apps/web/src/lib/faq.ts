@@ -23,9 +23,10 @@ const distributorShare = distributorPercent();
 
 /**
  * Every question on the site, in three groups: one per audience and one for
- * the money. The landing page prints the first few of each group; the FAQ page
- * prints them all; the JSON-LD on each page follows what that page shows, so
- * the visible copy and the structured data cannot drift apart.
+ * the money. The landing page prints the first few of each group, and its
+ * JSON-LD follows what it shows, so the visible copy and the structured data
+ * cannot drift apart. The longer answers live in the help centre
+ * (`src/content/help/`).
  *
  * Order matters inside a group. The landing page takes from the top.
  */
@@ -132,14 +133,7 @@ export const FAQ_GROUPS: FaqGroup[] = [
   },
 ];
 
-/** Every question, flat, for the FAQ page's structured data. */
-export const FAQ_ALL: FaqEntry[] = FAQ_GROUPS.flatMap((group) => group.items);
-
 /** The first `perGroup` questions of each group, for the landing page. */
 export function landingFaq(perGroup: number): FaqGroup[] {
   return FAQ_GROUPS.map((group) => ({ ...group, items: group.items.slice(0, perGroup) }));
-}
-
-export function faqGroupHref(id: FaqGroupId): string {
-  return `/faq#${id}`;
 }

@@ -17,6 +17,8 @@ interface Props {
   crawl?: boolean;
   /** The first section runs under the floating header, so its ground shows behind the card. */
   bleed?: boolean;
+  /** The floating site header. The help centre turns it off and brings its own side menu. */
+  nav?: boolean;
 }
 
 const {
@@ -27,6 +29,7 @@ const {
   jsonLd,
   crawl = true,
   bleed = false,
+  nav = true,
 } = Astro.props;
 const site = Astro.site ?? new URL(project.siteUrl);
 const canonicalURL = new URL(Astro.url.pathname, site);
@@ -70,7 +73,7 @@ const showCrawl = crawl && landing.footCrawl;
     ))}
   </head>
   <body data-crawl={showCrawl ? "" : undefined} data-bleed={bleed ? "" : undefined}>
-    <Nav />
+    {nav && <Nav />}
     <main id="main">
       <slot />
     </main>

@@ -141,6 +141,17 @@ h3 {
   margin-top: 2rem;
   margin-bottom: 0.75rem;
 }
+/* A help topic is one long page, so its sections stand further apart. The
+   help centre has no floating header, so an anchored heading needs less room. */
+.prose-help h2 {
+  margin-top: 3.5rem;
+}
+.prose-help h2:first-child {
+  margin-top: 0;
+}
+.prose-help :is(h2, h3) {
+  scroll-margin-top: 2rem;
+}
 .prose h3 {
   font-size: 1.25rem;
   font-weight: var(--fw-medium);
