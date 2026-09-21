@@ -74,7 +74,8 @@ const ADMIN_SECTIONS: SettingsSection[] = [
     id: "feedback",
     label: "Feedback",
     title: "Feedback",
-    description: "What members sent from the account menu, newest first.",
+    description:
+      "What members sent from the account menu, open rows first. Open a row to read it, then mark it resolved.",
   },
   {
     id: "releases",

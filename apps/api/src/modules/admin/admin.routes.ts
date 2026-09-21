@@ -8,6 +8,7 @@ import {
   payoutQueueOutput,
   refundTopupOutput,
   rejectInput,
+  resolveFeedbackOutput,
   reviewPayoutOutput,
   topupQueueOutput,
 } from "@repo/contracts";
@@ -15,7 +16,7 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import type * as z from "zod/v4";
 import type { AppVariables } from "../../lib/context";
-import { listFeedbackQueue } from "../feedback/feedback.service";
+import { listFeedbackQueue, setFeedbackResolved } from "../feedback/feedback.service";
 import { listPayoutQueue, payPayout, rejectPayout } from "../payouts/payouts.service";
 import { listTopupQueue, refundTopup } from "../topups/topups.service";
 import {
@@ -104,4 +105,18 @@ adminRouter.post("/topups/:id/refund", async (c) => {
 adminRouter.get("/feedback", async (c) => {
   const queue = await listFeedbackQueue();
   return c.json(feedbackQueueOutput.parse(queue satisfies z.input<typeof feedbackQueueOutput>));
+});
+
+adminRouter.post("/feedback/:id/resolve", async (c) => {
+  const admin = c.get("user");
+  if (!admin) throw new HTTPException(401, { message: "Unauthorized" });
+  const row = await setFeedbackResolved(c.req.param("id"), admin.id, true);
+  return c.json(resolveFeedbackOutput.parse(row satisfies z.input<typeof resolveFeedbackOutput>));
+});
+
+adminRouter.post("/feedback/:id/reopen", async (c) => {
+  const admin = c.get("user");
+  if (!admin) throw new HTTPException(401, { message: "Unauthorized" });
+  const row = await setFeedbackResolved(c.req.param("id"), admin.id, false);
+  return c.json(resolveFeedbackOutput.parse(row satisfies z.input<typeof resolveFeedbackOutput>));
 });

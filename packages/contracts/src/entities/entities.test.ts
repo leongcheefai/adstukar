@@ -35,12 +35,14 @@ describe("derived entity contracts", () => {
       type: "bug",
       message: "The clock is one hour behind.",
       createdAt: new Date("2026-09-21T01:02:03.000Z"),
+      resolvedAt: null,
     });
     expect(result).toEqual({
       id: "f1",
       type: "bug",
       message: "The clock is one hour behind.",
       createdAt: "2026-09-21T01:02:03.000Z",
+      resolvedAt: null,
     });
     expect(result).not.toHaveProperty("userId");
   });

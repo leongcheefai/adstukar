@@ -2,6 +2,13 @@ import { ChatCenteredDots } from "@phosphor-icons/react";
 import type { FeedbackReview, FeedbackType } from "@repo/contracts/types";
 import {
   Badge,
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
   EmptyState,
   Table,
   TableBody,
@@ -10,7 +17,9 @@ import {
   TableHeader,
   TableRow,
 } from "@repo/ui";
-import { useFeedbackQueue } from "../../lib/admin";
+import { useState } from "react";
+import { toast } from "sonner";
+import { useFeedbackQueue, useSetFeedbackResolved } from "../../lib/admin";
 
 const TYPE_LABEL: Record<FeedbackType, string> = {
   bug: "Bug",
@@ -24,14 +33,32 @@ const TYPE_VARIANT: Record<FeedbackType, "danger" | "info" | "neutral"> = {
   other: "neutral",
 };
 
-function FeedbackReviewRow({ item }: { item: FeedbackReview }) {
+function StateBadge({ resolvedAt }: { resolvedAt: string | null }) {
+  return resolvedAt ? (
+    <Badge variant="success">Resolved</Badge>
+  ) : (
+    <Badge variant="warning">Open</Badge>
+  );
+}
+
+function FeedbackReviewRow({
+  item,
+  onOpen,
+}: {
+  item: FeedbackReview;
+  onOpen: (item: FeedbackReview) => void;
+}) {
   const { feedback, owner } = item;
+  const resolved = feedback.resolvedAt !== null;
   return (
-    <TableRow>
-      <TableCell className="whitespace-nowrap align-top">
+    <TableRow
+      onClick={() => onOpen(item)}
+      className={resolved ? "cursor-pointer text-muted-foreground" : "cursor-pointer"}
+    >
+      <TableCell className="whitespace-nowrap">
         {new Date(feedback.createdAt).toLocaleDateString()}
       </TableCell>
-      <TableCell className="min-w-0 align-top">
+      <TableCell className="min-w-0">
         <p data-usertext className="truncate font-medium">
           {owner.name}
         </p>
@@ -39,13 +66,16 @@ function FeedbackReviewRow({ item }: { item: FeedbackReview }) {
           {owner.email}
         </p>
       </TableCell>
-      <TableCell className="align-top">
+      <TableCell>
         <Badge variant={TYPE_VARIANT[feedback.type]}>{TYPE_LABEL[feedback.type]}</Badge>
       </TableCell>
-      <TableCell className="max-w-xl align-top">
-        <p data-usertext className="whitespace-pre-wrap break-words">
+      <TableCell className="max-w-md">
+        <p data-usertext className="truncate">
           {feedback.message}
         </p>
+      </TableCell>
+      <TableCell>
+        <StateBadge resolvedAt={feedback.resolvedAt} />
       </TableCell>
     </TableRow>
   );
@@ -53,11 +83,31 @@ function FeedbackReviewRow({ item }: { item: FeedbackReview }) {
 
 /**
  * The feedback desk. A member sends feedback from the account menu, and an
- * admin reads it here, newest first. There is nothing to press: the row is the
- * whole act.
+ * admin reads it here, open rows first. A row opens to the whole message, and
+ * the one act is to mark it resolved. The mark clears again from the same
+ * place, because a wrong press has no confirm step in front of it.
  */
 export function FeedbackSection() {
   const { data: queue, isLoading } = useFeedbackQueue();
+  const setResolved = useSetFeedbackResolved();
+  const [target, setTarget] = useState<FeedbackReview | null>(null);
+
+  // Read the live row, so the dialog follows the list after a mark.
+  const current = target
+    ? (queue?.items.find((item) => item.feedback.id === target.feedback.id) ?? target)
+    : null;
+
+  function toggle() {
+    if (!current) return;
+    const resolved = current.feedback.resolvedAt === null;
+    setResolved.mutate(
+      { id: current.feedback.id, resolved },
+      {
+        onSuccess: () => toast.success(resolved ? "Marked resolved" : "Reopened"),
+        onError: (err) => toast.error(err.message),
+      },
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -80,16 +130,63 @@ export function FeedbackSection() {
                 <TableHead>Member</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Message</TableHead>
+                <TableHead>State</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {queue.items.map((item) => (
-                <FeedbackReviewRow key={item.feedback.id} item={item} />
+                <FeedbackReviewRow key={item.feedback.id} item={item} onOpen={setTarget} />
               ))}
             </TableBody>
           </Table>
         </div>
       )}
+
+      <Dialog open={current !== null} onOpenChange={(open) => !open && setTarget(null)}>
+        <DialogContent className="sm:max-w-xl">
+          {current && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Badge variant={TYPE_VARIANT[current.feedback.type]}>
+                    {TYPE_LABEL[current.feedback.type]}
+                  </Badge>
+                  <StateBadge resolvedAt={current.feedback.resolvedAt} />
+                </DialogTitle>
+                <DialogDescription>
+                  <span data-usertext>{current.owner.name}</span>{" "}
+                  <span data-usertext className="font-mono text-xs">
+                    {current.owner.email}
+                  </span>
+                  {" · "}
+                  {new Date(current.feedback.createdAt).toLocaleString()}
+                  {current.feedback.resolvedAt &&
+                    ` · resolved ${new Date(current.feedback.resolvedAt).toLocaleString()}`}
+                </DialogDescription>
+              </DialogHeader>
+              <p
+                data-usertext
+                className="max-h-[60vh] overflow-y-auto whitespace-pre-wrap break-words text-sm"
+              >
+                {current.feedback.message}
+              </p>
+              <DialogFooter>
+                <Button
+                  variant={current.feedback.resolvedAt ? "outline" : "default"}
+                  onClick={toggle}
+                  disabled={setResolved.isPending}
+                >
+                  {setResolved.isPending
+                    ? "Saving…"
+                    : current.feedback.resolvedAt
+                      ? "Reopen"
+                      : "Mark resolved"}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

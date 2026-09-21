@@ -1,4 +1,5 @@
 import type {
+  Feedback,
   FeedbackQueue,
   Listing,
   ModerationQueue,
@@ -60,10 +61,22 @@ export function useRefundTopup() {
   });
 }
 
-/** Every piece of feedback a member sent, newest first. Read only. */
+/** Every piece of feedback a member sent, open rows first. */
 export function useFeedbackQueue() {
   return useQuery({
     queryKey: feedbackKey,
     queryFn: () => apiFetch<FeedbackQueue>("/admin/feedback"),
+  });
+}
+
+/** Admin: stamps one piece of feedback resolved, or clears the stamp. */
+export function useSetFeedbackResolved() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, resolved }: { id: string; resolved: boolean }) =>
+      apiFetch<Feedback>(`/admin/feedback/${id}/${resolved ? "resolve" : "reopen"}`, {
+        method: "POST",
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: feedbackKey }),
   });
 }

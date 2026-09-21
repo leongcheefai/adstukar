@@ -116,8 +116,9 @@ export type TopupQueue = z.output<typeof topupQueueOutput>;
 
 /**
  * The feedback desk. A member sends feedback from the account menu, and an
- * admin reads it here, newest first. Nothing to approve: the row is the whole
- * act, and the GitHub handoff (when it is on) already happened at send time.
+ * admin reads it here, open rows first. The one act is to mark a row resolved,
+ * and to reopen it: the GitHub handoff (when it is on) already happened at
+ * send time.
  */
 export const feedbackReviewContract = z.object({
   feedback: feedbackContract,
@@ -127,6 +128,8 @@ export const feedbackReviewContract = z.object({
 export const feedbackQueueOutput = z.object({
   items: z.array(feedbackReviewContract),
 });
+
+export const resolveFeedbackOutput = feedbackContract;
 
 export type FeedbackReview = z.output<typeof feedbackReviewContract>;
 export type FeedbackQueue = z.output<typeof feedbackQueueOutput>;
