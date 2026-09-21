@@ -34,11 +34,11 @@ compare them.
 _Avoid_: Ad, creative, variant, banner
 
 **Slot**:
-One band of the ticker loop, booked by one advertiser for one term at one flat
-price. The loop holds a fixed count of slots. The numbers live in `economy.slot`.
-The API does not model a slot yet; the dashboard reads one campaign with one
-listing as one slot.
-_Avoid_: spot, position
+One position on the ticker loop, booked by one advertiser for one term at one
+flat price. The loop holds a fixed count of slots. The numbers live in
+`economy.slot`. The charge lands at booking and the term starts when the
+campaign is verified and its creative approved. A term ends and does not renew.
+_Avoid_: spot. "Position" is the number on the loop, not the booking.
 
 **Verified domain**:
 A campaign's domain, proved by a token the advertiser publishes on that domain.
