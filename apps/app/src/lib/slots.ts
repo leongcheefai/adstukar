@@ -1,4 +1,4 @@
-import { DAY_MS, centsToAmount, economy } from "@repo/config/economy";
+import { DAY_MS, economy } from "@repo/config/economy";
 import type { Listing, LoopBand, SlotWithCampaign } from "@repo/contracts/types";
 
 /**
@@ -17,9 +17,6 @@ export function clipCopy(text: string, max: number): string {
         .trimEnd()}…`;
 }
 
-/** The flat price of one term, as a ledger amount. */
-export const SLOT_PRICE = centsToAmount(economy.slot.priceUsdCents);
-
 export type SlotStatus =
   /** On the ticker now. */
   | "running"
@@ -31,8 +28,10 @@ export type SlotStatus =
   | "rejected"
   /** Stopped by the member or by the system. */
   | "paused"
-  /** The term is over, or the booking was refunded. */
-  | "ended";
+  /** The term is over. */
+  | "ended"
+  /** The charge came back before the term started. */
+  | "refunded";
 
 export interface Slot {
   item: SlotWithCampaign;
@@ -49,14 +48,10 @@ export interface Slot {
   elapsed: number;
 }
 
-/** The day a term ends when it starts at `from`. The form quotes it before a booking. */
-export function termEnd(from = new Date()): Date {
-  return new Date(from.getTime() + economy.slot.termDays * DAY_MS);
-}
-
 function statusOf(item: SlotWithCampaign): SlotStatus {
   const { slot, campaign, listing } = item;
-  if (slot.state === "ended" || slot.state === "refunded") return "ended";
+  if (slot.state === "refunded") return "refunded";
+  if (slot.state === "ended") return "ended";
   if (!listing || campaign.verifiedAt === null) return "action";
   if (listing.state === "rejected") return "rejected";
   if (listing.state === "pending") return "review";
@@ -82,7 +77,12 @@ export function slotOf(item: SlotWithCampaign, now = new Date()): Slot {
   };
 }
 
-/** Where a band sits on the loop. The first position is 1, the last is `economy.slot.count`. */
+/** A slot that no longer holds a position. */
+export function isOver(status: SlotStatus): boolean {
+  return status === "ended" || status === "refunded";
+}
+
+/** Where a band sits on the ring. The first position is 1, the last is `economy.slot.count`. */
 export type SlotPosition = number;
 
 /** The first position nobody holds, or null when the loop is full. */

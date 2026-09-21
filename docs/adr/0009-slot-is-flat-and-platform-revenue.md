@@ -1,7 +1,7 @@
 # A slot is a flat price, and the money is platform revenue
 
 An advertiser buys one slot on the CapyTV ticker for one term at one flat price
-(`economy.slot`: 20 slots, $20, 7 days). The whole price goes to CapyChannel.
+(`economy.slot`: 20 slots, $20, 7 days). The whole price goes to the platform.
 The ticker moves no per-play money.
 
 ## Why
@@ -29,5 +29,5 @@ The ticker moves no per-play money.
 - The database refuses a double booking with a partial unique index on the
   position. Two bookings that race never both pass a check in code.
 
-Revisit when the loop sells out for weeks in a row. The likely next steps are a
-waiting list, and a second loop per region.
+Revisit when the ring stays full for several weeks. The likely next steps are a
+waiting list, and a second ring per region.

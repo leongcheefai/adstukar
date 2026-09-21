@@ -12,9 +12,10 @@ import type { AppVariables } from "../../lib/context";
 import { bookSlot, listOwnSlots, loop } from "./slots.service";
 
 /**
- * The advertiser's side of a slot. The loop is public: every CapyTV screen
- * prints it, with or without a session, and it names no member. It is
- * registered before the guard, so the guard never sees it.
+ * The advertiser's side of a slot. The ring needs no session: the CapyTV set
+ * prints it before anybody signs in, and it names no member. It is registered
+ * before the guard, so the guard never sees it. It is not in `PUBLIC_PREFIXES`:
+ * only the dashboard's own origin prints it.
  */
 export const slotsRouter = new Hono<{ Variables: AppVariables }>();
 

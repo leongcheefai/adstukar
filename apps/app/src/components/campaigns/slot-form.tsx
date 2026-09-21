@@ -6,7 +6,7 @@ import {
   Trash,
   UploadSimple,
 } from "@phosphor-icons/react";
-import { economy } from "@repo/config/economy";
+import { economy, slotPrice, slotTermEnd } from "@repo/config/economy";
 import { usd, usdCents } from "@repo/config/money";
 import { project } from "@repo/config/project";
 import type { Campaign, LoopBand } from "@repo/contracts/types";
@@ -31,13 +31,7 @@ import {
   useUpdateListing,
 } from "../../lib/campaigns";
 import { lookUpSite } from "../../lib/site-lookup";
-import {
-  SLOT_PRICE,
-  type Slot,
-  type SlotPosition,
-  firstOpenPosition,
-  termEnd,
-} from "../../lib/slots";
+import { type Slot, type SlotPosition, firstOpenPosition } from "../../lib/slots";
 import { useBookSlot } from "../../lib/slots-api";
 import { domainOf, isProbablyUrl, normalizeUrl } from "../../lib/url";
 import { AddFundsButton } from "../topups/add-funds-button";
@@ -140,6 +134,12 @@ export function SlotForm({
   const [lookup, setLookup] = useState<LookupState>("idle");
   /** What the last site check put in the form, so a later check may replace it. */
   const filled = useRef({ name: "", logoUrl: "" });
+  /**
+   * What the server refused, and the form as it stood then. The message shows
+   * only while the form still reads the same, so any edit clears it without
+   * an effect that watches every field.
+   */
+  const [refusal, setRefusal] = useState<{ message: string; form: string } | null>(null);
 
   const bookSlot = useBookSlot();
   // An edit on a slot whose creative was archived writes a new one; that is the
@@ -181,6 +181,9 @@ export function SlotForm({
     }
     logoUpload.mutate(file);
   }
+
+  const formKey = JSON.stringify([name, tagline, url, logoUrl, position]);
+  const serverError = refusal?.form === formKey ? refusal.message : null;
 
   const targetUrl = normalizeUrl(url);
   const urlValid = isProbablyUrl(targetUrl);
@@ -225,7 +228,7 @@ export function SlotForm({
   const pickIsOpen = position !== null && bands[position - 1]?.kind === "open";
   const bookedPosition = pickIsOpen ? position : firstOpenPosition(bands);
 
-  const short = !editing && balance !== undefined && balance < SLOT_PRICE;
+  const short = !editing && balance !== undefined && balance < slotPrice();
   const valid =
     name.trim().length > 0 &&
     name.length <= NAME_MAX &&
@@ -299,7 +302,10 @@ export function SlotForm({
       setBooked(created.campaign);
       setStep("verify");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not save the slot");
+      setRefusal({
+        message: err instanceof Error ? err.message : "Could not save the slot",
+        form: formKey,
+      });
     }
   }
 
@@ -574,14 +580,19 @@ export function SlotForm({
                 <Fact
                   icon={<CalendarBlank />}
                   value={term}
-                  label={`From approval. Ends ${END_DAY.format(termEnd())} at the earliest`}
+                  label={`From approval. Ends ${END_DAY.format(slotTermEnd(new Date()))} at the earliest`}
                 />
               </div>
             )}
             <SlotPreview name={name} tagline={tagline} logoUrl={logoUrl || null} />
           </div>
 
-          <div className="flex flex-wrap justify-end gap-3 lg:col-span-2">
+          <div className="flex flex-wrap items-center justify-end gap-3 lg:col-span-2">
+            {serverError && (
+              <p role="alert" className="text-sm text-destructive">
+                {serverError}
+              </p>
+            )}
             <Button type="submit" variant="inverted" size="lg" disabled={!canSubmit}>
               {saving ? "Saving…" : editing ? "Save changes" : `Book slot · ${price}`}
             </Button>

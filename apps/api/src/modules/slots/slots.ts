@@ -1,20 +1,13 @@
-import { DAY_MS, centsToAmount, economy } from "@repo/config/economy";
+import { economy } from "@repo/config/economy";
 import type { LoopBand, SlotAvailability } from "@repo/contracts";
 import type { ListingState, SlotState } from "@repo/db/enums";
 
 /**
  * The rules of a slot, and nothing else. A slot is one campaign on one
- * position of the ticker loop for one term at one flat price. The numbers
- * live in `economy.slot`; the service and the routes read this file.
+ * position of the ticker ring for one term at one flat price. The numbers,
+ * the price and the term end live in `@repo/config/economy`; the service and
+ * the routes read this file for the rest.
  */
-
-/** The flat price of one term, as a ledger amount. */
-export const SLOT_PRICE = centsToAmount(economy.slot.priceUsdCents);
-
-/** The moment a term that starts at `startsAt` is over. */
-export function termEnd(startsAt: Date): Date {
-  return new Date(startsAt.getTime() + economy.slot.termDays * DAY_MS);
-}
 
 /** A live slot holds its position. */
 export function isLive(state: SlotState): boolean {
@@ -33,6 +26,8 @@ export function canRefund(state: SlotState): boolean {
 export interface LoopSlot {
   position: number;
   state: SlotState;
+  /** The campaign may run: it is active, not paused by the member or the system. */
+  active: boolean;
   /** Null when the campaign holds no live creative. */
   listingState: ListingState | null;
   name: string;
@@ -42,9 +37,10 @@ export interface LoopSlot {
 }
 
 /**
- * The whole loop, position by position. A running slot with an approved
- * creative prints its brand. Any other live slot is held: paid, so nobody else
- * may take the position, but not on screen. Everything else is open.
+ * The whole loop, position by position. A running slot on an active campaign
+ * with an approved creative prints its brand. Any other live slot is held:
+ * paid, so nobody else may take the position, but not on screen. A pause
+ * takes the brand off the loop and keeps the position. Everything else is open.
  */
 export function loopOf(slots: LoopSlot[]): LoopBand[] {
   const byPosition = new Map(slots.filter((s) => isLive(s.state)).map((s) => [s.position, s]));
@@ -52,7 +48,7 @@ export function loopOf(slots: LoopSlot[]): LoopBand[] {
     const position = index + 1;
     const slot = byPosition.get(position);
     if (!slot) return { position, kind: "open" };
-    if (slot.state !== "running" || slot.listingState !== "approved") {
+    if (slot.state !== "running" || !slot.active || slot.listingState !== "approved") {
       return { position, kind: "held" };
     }
     return {

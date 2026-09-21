@@ -6,7 +6,7 @@ import { and, asc, desc, eq, inArray, isNotNull, ne } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import { domainFromUrl } from "../../lib/domain";
 import type { Tx } from "../ledger/ledger.service";
-import { refundSlot, startSlot } from "../slots/term";
+import { closeSlot, startSlot } from "../slots/term";
 import { spentTodayByCampaign } from "./spend";
 import { verifyDomain } from "./verification";
 
@@ -17,7 +17,8 @@ type ListingRow = typeof schema.listing.$inferSelect;
 const LIVE_CAMPAIGN = ne(schema.campaign.state, "archived");
 const LIVE_LISTING = ne(schema.listing.state, "archived");
 
-async function listingsFor(campaignIds: string[]): Promise<Map<string, ListingRow[]>> {
+/** The live listings under each campaign, oldest first. The slot service reads it too. */
+export async function listingsFor(campaignIds: string[]): Promise<Map<string, ListingRow[]>> {
   const map = new Map<string, ListingRow[]>();
   if (campaignIds.length === 0) return map;
   const rows = await db
@@ -200,12 +201,18 @@ export async function updateCampaign(
     patch.pausedAt = null;
   }
 
-  const [row] = await db
-    .update(schema.campaign)
-    .set(patch)
-    .where(eq(schema.campaign.id, campaignId))
-    .returning();
-  if (!row) throw new HTTPException(404, { message: "Campaign not found" });
+  const row = await db.transaction(async (tx) => {
+    const [updated] = await tx
+      .update(schema.campaign)
+      .set(patch)
+      .where(eq(schema.campaign.id, campaignId))
+      .returning();
+    if (!updated) throw new HTTPException(404, { message: "Campaign not found" });
+    // A move to a domain this member already proved is a verification too, so
+    // a booked slot whose creative is approved starts its term here.
+    if (patch.verifiedAt) await startSlot(tx, campaignId, patch.updatedAt ?? new Date());
+    return updated;
+  });
   return single(row);
 }
 
@@ -226,7 +233,7 @@ export async function archiveCampaign(userId: string, campaignId: string) {
       .set({ state: "archived", updatedAt: now })
       .where(eq(schema.listing.campaignId, campaignId));
     // A booking that never ran gives its charge back; a running one ends.
-    await refundSlot(tx, campaignId, now);
+    await closeSlot(tx, campaignId, now);
   });
   return { id: campaignId };
 }

@@ -14,7 +14,7 @@ import { CampaignSummary } from "../../components/campaigns/campaign-summary";
 import { SlotRow } from "../../components/campaigns/slot-row";
 import { SlotTicker } from "../../components/campaigns/slot-ticker";
 import { TopUpDialog } from "../../components/topups/topup-dialog";
-import { type SlotPosition, type SlotStatus, slotOf } from "../../lib/slots";
+import { type SlotPosition, type SlotStatus, isOver, slotOf } from "../../lib/slots";
 import { useSlotLoop, useSlots } from "../../lib/slots-api";
 import { openWhenReady, useTopups } from "../../lib/topups";
 
@@ -31,7 +31,7 @@ const FILTERS: { key: Filter; label: string; holds: SlotStatus[] | null }[] = [
   { key: "running", label: "Running", holds: ["running"] },
   { key: "review", label: "In review", holds: ["review", "action", "rejected"] },
   { key: "paused", label: "Paused", holds: ["paused"] },
-  { key: "ended", label: "Ended", holds: ["ended"] },
+  { key: "ended", label: "Ended", holds: ["ended", "refunded"] },
 ];
 
 export function CampaignsPage() {
@@ -48,7 +48,7 @@ export function CampaignsPage() {
   const slots = useMemo(() => (data ?? []).map((item) => slotOf(item)), [data]);
   const bands = loop?.bands ?? [];
   const minePositions = useMemo(
-    () => new Set(slots.filter((slot) => slot.status !== "ended").map((slot) => slot.position)),
+    () => new Set(slots.filter((slot) => !isOver(slot.status)).map((slot) => slot.position)),
     [slots],
   );
   const holds = FILTERS.find((f) => f.key === filter)?.holds ?? null;
@@ -124,7 +124,7 @@ export function CampaignsPage() {
               <SlotRow
                 key={slot.item.slot.id}
                 slot={slot}
-                position={slot.status === "ended" ? null : slot.position}
+                position={isOver(slot.status) ? null : slot.position}
                 onEdit={(target) =>
                   navigate(`/dashboard/campaigns/${target.item.campaign.id}/edit`)
                 }

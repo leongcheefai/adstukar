@@ -310,3 +310,13 @@ export function amountToCents(amount: number): number {
 export function centsToAmount(cents: number): number {
   return (cents * economy.unit.perUsd) / 100;
 }
+
+/** The flat price of one slot term, as an amount. */
+export function slotPrice(): number {
+  return centsToAmount(economy.slot.priceUsdCents);
+}
+
+/** The moment a slot term that starts at `from` is over. */
+export function slotTermEnd(from: Date): Date {
+  return new Date(from.getTime() + economy.slot.termDays * DAY_MS);
+}

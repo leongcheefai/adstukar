@@ -1,4 +1,4 @@
-import type { BookSlotInput, SlotLoop, SlotWithCampaign } from "@repo/contracts/types";
+import type { BookSlotInput, ListSlots, SlotLoop, SlotWithCampaign } from "@repo/contracts/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "./api";
 import { campaignsKey } from "./campaigns";
@@ -13,7 +13,7 @@ export const slotLoopKey = ["slots", "loop"] as const;
 export function useSlots() {
   return useQuery({
     queryKey: slotsKey,
-    queryFn: () => apiFetch<{ items: SlotWithCampaign[] }>("/slots"),
+    queryFn: () => apiFetch<ListSlots>("/slots"),
     select: (data) => data.items,
   });
 }

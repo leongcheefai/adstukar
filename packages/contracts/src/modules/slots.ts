@@ -48,6 +48,7 @@ export const slotLoopOutput = z.object({
 });
 
 export type SlotWithCampaign = z.output<typeof slotWithCampaignOutput>;
+export type ListSlots = z.output<typeof listSlotsOutput>;
 export type LoopBand = z.output<typeof loopBandContract>;
 export type SlotAvailability = z.output<typeof slotAvailabilityContract>;
 export type SlotLoop = z.output<typeof slotLoopOutput>;

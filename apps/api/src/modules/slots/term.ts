@@ -1,7 +1,8 @@
+import { slotTermEnd } from "@repo/config/economy";
 import { db, schema } from "@repo/db";
 import { and, eq, inArray, lte } from "drizzle-orm";
 import { type Tx, voidEntry } from "../ledger/ledger.service";
-import { canRefund, termEnd } from "./slots";
+import { canRefund } from "./slots";
 
 /**
  * The life of a term. The booking service opens a slot; this file moves it
@@ -54,27 +55,19 @@ export async function startSlot(tx: Tx, campaignId: string, now: Date): Promise<
 
   await tx
     .update(schema.slot)
-    .set({ state: "running", startsAt: now, endsAt: termEnd(now) })
+    .set({ state: "running", startsAt: now, endsAt: slotTermEnd(now) })
     .where(eq(schema.slot.id, slot.id));
   return true;
 }
 
 /**
  * Gives the charge back on a booking whose term never started, and closes
- * the booking. A running slot on the same act simply ends and keeps its
- * charge. Returns true when a slot changed.
+ * the booking. A running slot is left alone: it has shown, so it keeps its
+ * charge and its term. Returns true when a slot changed.
  */
 export async function refundSlot(tx: Tx, campaignId: string, now: Date): Promise<boolean> {
   const slot = await liveSlotOf(tx, campaignId);
-  if (!slot) return false;
-
-  if (!canRefund(slot.state)) {
-    await tx
-      .update(schema.slot)
-      .set({ state: "ended", endedAt: now })
-      .where(eq(schema.slot.id, slot.id));
-    return true;
-  }
+  if (!slot || !canRefund(slot.state)) return false;
 
   const entries = await tx
     .select({ id: schema.ledgerEntry.id })
@@ -85,6 +78,22 @@ export async function refundSlot(tx: Tx, campaignId: string, now: Date): Promise
   await tx
     .update(schema.slot)
     .set({ state: "refunded", endedAt: now })
+    .where(eq(schema.slot.id, slot.id));
+  return true;
+}
+
+/**
+ * The archive path: the campaign is gone, so no slot may stay live under it.
+ * A booking that never ran is refunded; a running one ends and keeps its
+ * charge. Returns true when a slot changed.
+ */
+export async function closeSlot(tx: Tx, campaignId: string, now: Date): Promise<boolean> {
+  if (await refundSlot(tx, campaignId, now)) return true;
+  const slot = await liveSlotOf(tx, campaignId);
+  if (!slot) return false;
+  await tx
+    .update(schema.slot)
+    .set({ state: "ended", endedAt: now })
     .where(eq(schema.slot.id, slot.id));
   return true;
 }

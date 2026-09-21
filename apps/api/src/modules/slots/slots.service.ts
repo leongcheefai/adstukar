@@ -1,11 +1,12 @@
+import { slotPrice } from "@repo/config/economy";
 import type { BookSlotInput } from "@repo/contracts";
 import { db, schema } from "@repo/db";
-import { and, asc, desc, eq, inArray, ne } from "drizzle-orm";
+import { type SQL, desc, eq, inArray } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
-import { insertCampaign } from "../campaigns/campaigns.service";
+import { insertCampaign, listingsFor } from "../campaigns/campaigns.service";
 import { lockMember, postSpend } from "../ledger/ledger.service";
 import { insertListing } from "../listings/listings.service";
-import { SLOT_PRICE, availability, loopOf } from "./slots";
+import { availability, loopOf } from "./slots";
 
 type SlotRow = typeof schema.slot.$inferSelect;
 type CampaignRow = typeof schema.campaign.$inferSelect;
@@ -55,14 +56,15 @@ export async function bookSlot(
       );
 
       const id = crypto.randomUUID();
+      const price = slotPrice();
       const { posted } = await postSpend(tx, {
         userId,
-        amount: SLOT_PRICE,
+        amount: price,
         reason: "spend",
         idempotencyKey: `slot:${id}`,
         now,
       });
-      if (posted < SLOT_PRICE) {
+      if (posted < price) {
         throw new HTTPException(409, { message: "Your balance does not cover this slot" });
       }
 
@@ -74,7 +76,7 @@ export async function bookSlot(
           campaignId: campaign.id,
           position: input.position,
           state: "booked",
-          amount: SLOT_PRICE,
+          amount: price,
           bookedAt: now,
           createdAt: now,
         })
@@ -97,61 +99,43 @@ function creativeOf(listings: ListingRow[]): ListingRow | null {
   return live.find((l) => l.state === "approved") ?? live[live.length - 1] ?? null;
 }
 
-async function listingsFor(campaignIds: string[]): Promise<Map<string, ListingRow[]>> {
-  const map = new Map<string, ListingRow[]>();
-  if (campaignIds.length === 0) return map;
+/**
+ * Slots with their campaign and the one creative each shows. Both lists the
+ * API serves read this: the member's own bookings, and the ring every screen
+ * prints.
+ */
+async function slotsWithCreative(where: SQL): Promise<SlotWithCampaignRow[]> {
   const rows = await db
-    .select()
-    .from(schema.listing)
-    .where(
-      and(inArray(schema.listing.campaignId, campaignIds), ne(schema.listing.state, "archived")),
-    )
-    .orderBy(asc(schema.listing.createdAt));
-  for (const row of rows) {
-    const group = map.get(row.campaignId) ?? [];
-    group.push(row);
-    map.set(row.campaignId, group);
-  }
-  return map;
+    .select({ slot: schema.slot, campaign: schema.campaign })
+    .from(schema.slot)
+    .innerJoin(schema.campaign, eq(schema.campaign.id, schema.slot.campaignId))
+    .where(where)
+    .orderBy(desc(schema.slot.createdAt));
+  const listings = await listingsFor(rows.map((r) => r.campaign.id));
+  return rows.map(({ slot, campaign }) => ({
+    slot,
+    campaign,
+    listing: creativeOf(listings.get(campaign.id) ?? []),
+  }));
 }
 
 /** This member's bookings, newest first, each with its campaign and creative. */
 export async function listOwnSlots(userId: string): Promise<{ items: SlotWithCampaignRow[] }> {
-  const rows = await db
-    .select({ slot: schema.slot, campaign: schema.campaign })
-    .from(schema.slot)
-    .innerJoin(schema.campaign, eq(schema.campaign.id, schema.slot.campaignId))
-    .where(eq(schema.slot.userId, userId))
-    .orderBy(desc(schema.slot.createdAt));
-  const listings = await listingsFor(rows.map((r) => r.campaign.id));
-  return {
-    items: rows.map(({ slot, campaign }) => ({
-      slot,
-      campaign,
-      listing: creativeOf(listings.get(campaign.id) ?? []),
-    })),
-  };
+  return { items: await slotsWithCreative(eq(schema.slot.userId, userId)) };
 }
 
-/** The loop every screen prints, and how full it is. */
+/** The ring every screen prints, and how full it is. */
 export async function loop() {
-  const rows = await db
-    .select({ slot: schema.slot, campaign: schema.campaign })
-    .from(schema.slot)
-    .innerJoin(schema.campaign, eq(schema.campaign.id, schema.slot.campaignId))
-    .where(inArray(schema.slot.state, ["booked", "running"]));
-  const listings = await listingsFor(rows.map((r) => r.campaign.id));
-  const slots = rows.map(({ slot, campaign }) => {
-    const listing = creativeOf(listings.get(campaign.id) ?? []);
-    return {
-      position: slot.position,
-      state: slot.state,
-      listingState: listing?.state ?? null,
-      name: campaign.name,
-      tagline: listing?.tagline ?? null,
-      logoUrl: listing?.logoUrl ?? null,
-      url: campaign.url,
-    };
-  });
+  const live = await slotsWithCreative(inArray(schema.slot.state, ["booked", "running"]));
+  const slots = live.map(({ slot, campaign, listing }) => ({
+    position: slot.position,
+    state: slot.state,
+    active: campaign.state === "active",
+    listingState: listing?.state ?? null,
+    name: campaign.name,
+    tagline: listing?.tagline ?? null,
+    logoUrl: listing?.logoUrl ?? null,
+    url: campaign.url,
+  }));
   return { bands: loopOf(slots), availability: availability(slots) };
 }

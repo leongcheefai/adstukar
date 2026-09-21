@@ -1,21 +1,12 @@
-import { DAY_MS, centsToAmount, economy } from "@repo/config/economy";
+import { economy } from "@repo/config/economy";
 import { describe, expect, it } from "vitest";
-import {
-  type LoopSlot,
-  SLOT_PRICE,
-  availability,
-  canRefund,
-  isLive,
-  loopOf,
-  termEnd,
-} from "./slots";
-
-const at = new Date("2026-09-21T00:00:00.000Z");
+import { type LoopSlot, availability, canRefund, isLive, loopOf } from "./slots";
 
 function running(position: number, over: Partial<LoopSlot> = {}): LoopSlot {
   return {
     position,
     state: "running",
+    active: true,
     listingState: "approved",
     name: "TinyOrder",
     tagline: "Made for small businesses",
@@ -26,14 +17,6 @@ function running(position: number, over: Partial<LoopSlot> = {}): LoopSlot {
 }
 
 describe("slot rules", () => {
-  it("prices one term at the configured cents, as an amount", () => {
-    expect(SLOT_PRICE).toBe(centsToAmount(economy.slot.priceUsdCents));
-  });
-
-  it("ends a term termDays after it starts", () => {
-    expect(termEnd(at).getTime()).toBe(at.getTime() + economy.slot.termDays * DAY_MS);
-  });
-
   it("holds a position only while booked or running", () => {
     expect(isLive("booked")).toBe(true);
     expect(isLive("running")).toBe(true);
@@ -80,6 +63,11 @@ describe("loopOf", () => {
       expect(bands[2]).toEqual({ position: 3, kind: "held" });
     }
     expect(loopOf([running(3, { listingState: null })])[2]).toEqual({ position: 3, kind: "held" });
+  });
+
+  it("prints a running slot on a paused campaign as held", () => {
+    const bands = loopOf([running(3, { active: false })]);
+    expect(bands[2]).toEqual({ position: 3, kind: "held" });
   });
 
   it("ignores an ended or refunded slot", () => {

@@ -82,5 +82,11 @@ export type {
   TopupAmountRule,
   TopupRefundBlock,
 } from "./modules/topups";
-export type { LoopBand, SlotAvailability, SlotLoop, SlotWithCampaign } from "./modules/slots";
+export type {
+  ListSlots,
+  LoopBand,
+  SlotAvailability,
+  SlotLoop,
+  SlotWithCampaign,
+} from "./modules/slots";
 export type { PresignDevicePhotoResponse, PresignLogoResponse } from "./modules/uploads";
