@@ -52,7 +52,6 @@ const STATUS: Record<
   refunded: { label: "Refunded", variant: "neutral" },
 };
 
-/** Why the system stopped a slot, and what starts it again. */
 const DAY = new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short" });
 
 /** The two lines under the badge: how much of the term is left, and its dates. */

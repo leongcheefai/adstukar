@@ -26,8 +26,13 @@ export async function weekPool(now: Date = new Date()): Promise<WeekPool> {
   const [earn] = await db
     .select({ total: sql<number>`coalesce(sum(${schema.ledgerEntry.delta}), 0)::int` })
     .from(schema.ledgerEntry)
+    // A pending row the void job closed never reached a balance, so it is not owed.
     .where(
-      and(eq(schema.ledgerEntry.reason, "earn"), gte(schema.ledgerEntry.createdAt, weekStart)),
+      and(
+        eq(schema.ledgerEntry.reason, "earn"),
+        ne(schema.ledgerEntry.state, "void"),
+        gte(schema.ledgerEntry.createdAt, weekStart),
+      ),
     );
 
   return {

@@ -192,12 +192,17 @@ export type Economy = typeof economy;
 export type DeviceTierRate = keyof typeof economy.earn.tierMultiplier;
 export type PayoutCountry = (typeof economy.payout.countries)[number];
 
+/** The rate is quoted per this many plays. It is not the peg, which is also 1000. */
+const PLAYS_PER_RATE = 1000;
+
 /**
  * What a screen of this tier earns for one play. Rounded down, so the ledger
  * never holds a part of a unit.
  */
 export function earnPerPlay(tier: DeviceTierRate): number {
-  return Math.floor((economy.earn.perThousandPlays * economy.earn.tierMultiplier[tier]) / 1000);
+  return Math.floor(
+    (economy.earn.perThousandPlays * economy.earn.tierMultiplier[tier]) / PLAYS_PER_RATE,
+  );
 }
 
 /** One row of the published rate table: the tier, and what one play earns. */

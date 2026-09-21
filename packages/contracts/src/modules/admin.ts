@@ -146,7 +146,7 @@ export const poolOutput = toWire(
     weekStart: z.date(),
     /** `slot.amount` summed over bookings made this week that were not refunded. */
     slotRevenue: z.number().int(),
-    /** `earn` rows summed over this week. */
+    /** `earn` rows summed over this week, less the ones the void job closed. */
     earnPosted: z.number().int(),
   }),
 );

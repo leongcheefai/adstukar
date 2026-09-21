@@ -1,5 +1,9 @@
 # Bill per play, with a scan bonus on top
 
+> Status: superseded by docs/adr/0010. A play still counts and a scan is still
+> the fraud signal, but the advertiser pays a flat slot price and the screen
+> earns a fixed rate. Nothing bills per play or per scan.
+
 A physical screen cannot report viewability. There is no viewport, no user
 agent, and no session, so the browser definition of a verified impression does
 not survive. We bill a **play**: one listing shown in one placement for its full

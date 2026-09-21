@@ -1,5 +1,5 @@
 import { earnPerPlay, economy } from "@repo/config/economy";
-import { perThousandPlays, usd, usdCents } from "@repo/config/money";
+import { perThousandPlays, slotOffer, usd, usdCents } from "@repo/config/money";
 import { project } from "@repo/config/project";
 
 export interface FaqEntry {
@@ -20,7 +20,6 @@ export interface FaqGroup {
 
 const standardRate = perThousandPlays(earnPerPlay("standard"));
 const flagshipRate = perThousandPlays(earnPerPlay("flagship"));
-const slotPriceText = `${usdCents(economy.slot.priceUsdCents)} for ${economy.slot.termDays} days`;
 
 /**
  * Every question on the site, in three groups: one per audience and one for
@@ -75,7 +74,7 @@ export const FAQ_GROUPS: FaqGroup[] = [
     items: [
       {
         question: "What does it cost?",
-        answer: `One slot on the ring is ${slotPriceText}, and it plays on every screen. You top up in US dollars, any amount from ${usdCents(economy.topup.amount.minCents)} to ${usdCents(economy.topup.amount.maxCents)}, and the slot takes its price from that. There is no per-play bill and no monthly fee.`,
+        answer: `One slot on the ring is ${slotOffer()}, and it plays on every screen. You top up in US dollars, any amount from ${usdCents(economy.topup.amount.minCents)} to ${usdCents(economy.topup.amount.maxCents)}, and the slot takes its price from that. There is no per-play bill and no monthly fee.`,
       },
       {
         question: "What does a listing look like on screen?",

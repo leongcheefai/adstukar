@@ -63,6 +63,11 @@ export function perThousandPlays(rate: number): string {
   return `${usdPerThousand(rate)} per 1,000 plays`;
 }
 
+/** The slot offer in a sentence: the price, and the term it buys. */
+export function slotOffer(): string {
+  return `${usdCents(economy.slot.priceUsdCents)} for ${economy.slot.termDays} days`;
+}
+
 /**
  * What a member typed, as an amount. It takes an optional dollar sign, thousands
  * commas, and up to two decimals. Anything else, and a negative figure, is null.

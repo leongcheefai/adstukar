@@ -52,7 +52,8 @@ const ADMIN_SECTIONS: SettingsSection[] = [
     id: "moderation",
     label: "Moderation",
     title: "Moderation",
-    description: "Listings waiting for review, oldest first. Approval starts the slot's term.",
+    description:
+      "Listings waiting for review, oldest first. Approval is one of the two gates on a slot's term.",
     group: "Admin",
   },
   {

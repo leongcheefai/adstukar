@@ -36,8 +36,8 @@ const reportByIp = createRateLimiter({
   limit: economy.rateLimit.reportPerIp,
   windowMs: economy.rateLimit.windowMs,
 });
-// A scan pays a bonus, so the redirect is a money endpoint and is limited like
-// the other two. The phone that scans is not the screen, so it gets its own bucket.
+// A scan is a fraud signal the payout review reads, so the redirect is limited
+// like the other two. The phone that scans is not the screen, so it gets its own bucket.
 const scanByIp = createRateLimiter({
   limit: economy.rateLimit.scanPerIp,
   windowMs: economy.rateLimit.windowMs,

@@ -1,5 +1,5 @@
 import { type DeviceTierRate, economy, rateTable } from "@repo/config/economy";
-import { usd, usdCents, usdPerThousand } from "@repo/config/money";
+import { slotOffer, usd, usdPerThousand } from "@repo/config/money";
 import { project } from "@repo/config/project";
 import { Container, Logo, Section, SectionHeader } from "@repo/ui";
 import type { CSSProperties, ReactNode } from "react";
@@ -219,7 +219,7 @@ function Rates({ spacing, className }: { spacing: LandingConfig["density"]; clas
 const ADVERTISER_CLAIMS = [
   {
     title: "One flat price",
-    body: `${usdCents(economy.slot.priceUsdCents)} for ${economy.slot.termDays} days, on every screen. No per-play bill, no daily budget, and no surprise spend: a term ends and does not renew.`,
+    body: `${slotOffer()}, on every screen. No per-play bill, no daily budget, and no surprise spend: a term ends and does not renew.`,
   },
   {
     title: "One verified domain",

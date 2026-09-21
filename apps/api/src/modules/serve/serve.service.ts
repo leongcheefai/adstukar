@@ -332,7 +332,7 @@ export async function serveLoop(ctx: ServeContext & { size?: number }): Promise<
 }
 
 /** Everything a play needs to be paid: its placement, its device, its listing, and the live slot. */
-async function loadPlayForBilling(tx: Tx, playId: string) {
+async function loadPlayForReport(tx: Tx, playId: string) {
   const [row] = await tx
     .select({
       play: schema.play,
@@ -362,7 +362,9 @@ async function loadPlayForBilling(tx: Tx, playId: string) {
  * The one row a paid play posts: the distributor's earn, at the device's tier,
  * pending until it settles. The platform pays it from slot revenue, so there is
  * no advertiser to debit and no fee to take (docs/adr/0010). Keyed on the play,
- * so a second report of one play posts nothing twice.
+ * so a second report of one play posts nothing twice. The key keeps the shape
+ * the per-play economy used, so a play opened before the change and reported
+ * after it still meets its own earlier row.
  */
 async function postEarn(
   tx: Tx,
@@ -406,7 +408,7 @@ export async function recordReport(report: PlayReport): Promise<{ counted: boole
   const network = report.network ?? null;
 
   return db.transaction(async (tx) => {
-    const row = await loadPlayForBilling(tx, playId);
+    const row = await loadPlayForReport(tx, playId);
     if (!row || row.device.apiKey !== key) return { counted: false };
 
     const { play, device, listing, campaign, slotState } = row;
@@ -468,7 +470,7 @@ export async function recordReport(report: PlayReport): Promise<{ counted: boole
  */
 export async function recordScan(playId: string, now: Date = new Date()): Promise<string | null> {
   return db.transaction(async (tx) => {
-    const row = await loadPlayForBilling(tx, playId);
+    const row = await loadPlayForReport(tx, playId);
     if (!row?.listing || !row.campaign) return null;
     const { play, campaign } = row;
 
