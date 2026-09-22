@@ -10,66 +10,71 @@ export interface MarketingPage {
   inSitemap?: boolean;
 }
 
+/** The `<title>` of one page: the page, then the product. The home page is the one exception and leads with the product. */
+export function pageTitle(name: string): string {
+  return `${name} | ${project.name}`;
+}
+
 export const MARKETING_PAGES: MarketingPage[] = [
   {
     slug: "home",
     path: "/",
-    title: `${project.name} — ${project.tagline}`,
+    title: `${project.name} | Play and earn`,
     description:
       "Play ads on a screen while you listen or watch, and earn money. Advertisers see every play.",
   },
   {
     slug: "blog",
     path: "/blog",
-    title: `Blog — ${project.name}`,
+    title: pageTitle("Blog"),
     description: `Insights, updates, and tutorials from the ${project.name} team.`,
   },
   {
     slug: "help",
     path: "/help",
-    title: `Help — ${project.name}`,
+    title: pageTitle("Help Center"),
     description: `How to use ${project.name}: the dashboard, CapyChannel, advertising, and money.`,
   },
   {
     slug: "terms",
     path: "/terms",
-    title: `Terms of Service — ${project.name}`,
+    title: pageTitle("Terms of Service"),
     description: `Terms of Service for ${project.name}.`,
   },
   {
     slug: "privacy",
     path: "/privacy",
-    title: `Privacy Policy — ${project.name}`,
+    title: pageTitle("Privacy Policy"),
     description: `Privacy Policy for ${project.name}.`,
   },
   {
     slug: "ads-policy",
     path: "/ads-policy",
-    title: `Ads Policy — ${project.name}`,
+    title: pageTitle("Ads Policy"),
     description: `Creative and campaign rules for listings on ${project.name}.`,
   },
   {
     slug: "cookies",
     path: "/cookies",
-    title: `Cookie Policy — ${project.name}`,
+    title: pageTitle("Cookie Policy"),
     description: `Cookie Policy for ${project.name}.`,
   },
   {
     slug: "refund",
     path: "/refund",
-    title: `Refund Policy — ${project.name}`,
+    title: pageTitle("Refund Policy"),
     description: `Refund Policy for ${project.name}.`,
   },
   {
     slug: "dpa",
     path: "/dpa",
-    title: `Data Processing Agreement — ${project.name}`,
+    title: pageTitle("Data Processing Agreement"),
     description: `Data Processing Agreement for ${project.name}.`,
   },
   {
     slug: "security",
     path: "/security",
-    title: `Security — ${project.name}`,
+    title: pageTitle("Security"),
     description: `How ${project.name} protects member accounts and keeps the embed snippet free of tracking.`,
   },
 ];

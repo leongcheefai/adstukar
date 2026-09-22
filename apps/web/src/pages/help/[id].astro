@@ -3,6 +3,7 @@ import { getCollection, render } from "astro:content";
 import { project } from "@repo/config/project";
 import HelpLayout from "../../layouts/HelpLayout.astro";
 import { HELP_SEARCH_HASH, helpHref } from "../../lib/help";
+import { pageTitle } from "../../lib/pages";
 import { breadcrumbSchema } from "../../lib/structured-data";
 
 export async function getStaticPaths() {
@@ -30,7 +31,7 @@ const jsonLd = breadcrumbSchema([
 ---
 
 <HelpLayout
-  title={`${topic.data.title} — ${project.name} Help`}
+  title={pageTitle(`${topic.data.title} | Help Center`)}
   description={topic.data.description}
   ogSlug={`help-${topic.id}`}
   ogType="article"

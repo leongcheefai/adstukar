@@ -90,13 +90,18 @@ export const FAQ_GROUPS: FaqGroup[] = [
         answer: `Two methods. Serve your token as plain text at /.well-known/${project.slug}.txt, or add a DNS TXT record on your domain that contains the token. Then press Verify in the dashboard. The check reads the file first and falls back to DNS.`,
       },
       {
+        question: "Can I pause my slot?",
+        answer:
+          "No. A slot is a flat price for a fixed term, like a TV spot, and the term runs to its end. To take the ad off the ticker, remove it.",
+      },
+      {
         question: "How do I remove a listing?",
         answer:
-          "Open the campaign in the dashboard and archive the listing. It stops playing at once. The row itself stays, because the plays it earned reference it.",
+          "Open the campaign in the dashboard and archive the listing. It stops playing at once, and the slot goes back to the ring. The row itself stays, because your wallet history references it.",
       },
       {
         question: "Can I get a refund?",
-        answer: `Yes, for money you added and did not spend, within ${economy.topup.refundWindowDays} days of the payment. It pays what you paid, less what the card processor kept. Earned money is not refunded.`,
+        answer: `The price of a slot comes back to your wallet if you remove the ad before it is approved, or if the review does not approve it. After approval there is no refund. Money you added and did not spend is refunded within ${economy.topup.refundWindowDays} days of the payment, at what you paid less what the card processor kept. Earned money is not refunded.`,
       },
     ],
   },
