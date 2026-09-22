@@ -1,49 +1,33 @@
 import { describe, expect, it } from "vitest";
-import { amountToCents, centsToAmount, distributorKeeps, economy, rateTable } from "./economy";
+import { amountToCents, centsToAmount, earnPerPlay, economy, rateTable } from "./economy";
 
-describe("distributorKeeps", () => {
-  it("is the amount less the fee, so the two sides of a play add up", () => {
-    for (const amount of [3, 4, 6, 40, 160]) {
-      expect(distributorKeeps(amount) + Math.floor((amount * economy.feePercent) / 100)).toBe(
-        amount,
-      );
-    }
+describe("earnPerPlay", () => {
+  it("is the published rate: 2, 3, and 4 units by tier", () => {
+    expect(earnPerPlay("standard")).toBe(2);
+    expect(earnPerPlay("premium")).toBe(3);
+    expect(earnPerPlay("flagship")).toBe(4);
   });
 
-  it("never rounds a unit away from the distributor", () => {
-    // 30% of 3 is 0.9, and the fee rounds down, so the screen keeps all 3.
-    expect(distributorKeeps(3)).toBe(3);
+  it("is a whole number of units, so the ledger stays integer", () => {
+    const tiers = Object.keys(
+      economy.earn.tierMultiplier,
+    ) as (keyof typeof economy.earn.tierMultiplier)[];
+    for (const tier of tiers) {
+      expect(Number.isInteger(earnPerPlay(tier))).toBe(true);
+    }
   });
 });
 
 describe("rateTable", () => {
   it("lists every tier in the order the config declares them", () => {
-    expect(rateTable().map((row) => row.tier)).toEqual(Object.keys(economy.playRate));
+    expect(rateTable().map((row) => row.tier)).toEqual(Object.keys(economy.earn.tierMultiplier));
   });
 
   it("matches the published table", () => {
     expect(rateTable()).toEqual([
-      {
-        tier: "standard",
-        play: { lowest: 3, highest: 6 },
-        playKeeps: { lowest: 3, highest: 5 },
-        scan: 40,
-        scanKeeps: 28,
-      },
-      {
-        tier: "premium",
-        play: { lowest: 6, highest: 12 },
-        playKeeps: { lowest: 5, highest: 9 },
-        scan: 80,
-        scanKeeps: 56,
-      },
-      {
-        tier: "flagship",
-        play: { lowest: 12, highest: 24 },
-        playKeeps: { lowest: 9, highest: 17 },
-        scan: 160,
-        scanKeeps: 112,
-      },
+      { tier: "standard", perPlay: 2 },
+      { tier: "premium", perPlay: 3 },
+      { tier: "flagship", perPlay: 4 },
     ]);
   });
 });

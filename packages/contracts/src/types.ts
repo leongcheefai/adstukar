@@ -27,6 +27,7 @@ export type { Play, PlayState } from "./entities/play";
 export type { LedgerEntry, LedgerLot, LedgerReason, LedgerState } from "./entities/ledger-entry";
 export type { StripeAccount } from "./entities/stripe-account";
 export type { PayoutRequest, PayoutState } from "./entities/payout-request";
+export type { Slot, SlotState } from "./entities/slot";
 export type { Topup, TopupState } from "./entities/topup";
 export type { CreateCampaignInput, UpdateCampaignInput } from "./inputs/campaigns";
 export type { CreateListingInput, UpdateListingInput } from "./inputs/listings";
@@ -42,6 +43,7 @@ export type { LoopQuery, ReportInput } from "./inputs/serve";
 export type { ListLedgerQuery } from "./inputs/ledger";
 export type { ApproveDeviceInput, RejectInput } from "./inputs/admin";
 export type { ConnectStripeInput } from "./inputs/payouts";
+export type { BookSlotInput } from "./inputs/slots";
 export type { CreateTopupInput } from "./inputs/topups";
 export type { PresignDevicePhotoInput, PresignLogoInput } from "./inputs/uploads";
 export type {
@@ -65,6 +67,7 @@ export type {
   ListingReview,
   ModerationQueue,
   PayoutQueue,
+  Pool,
   PayoutReview,
   ReviewedDevice,
   TopupQueue,
@@ -80,4 +83,11 @@ export type {
   TopupAmountRule,
   TopupRefundBlock,
 } from "./modules/topups";
+export type {
+  ListSlots,
+  LoopBand,
+  SlotAvailability,
+  SlotLoop,
+  SlotWithCampaign,
+} from "./modules/slots";
 export type { PresignDevicePhotoResponse, PresignLogoResponse } from "./modules/uploads";

@@ -19,6 +19,7 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 import { useApproveListing, useModerationQueue, useRejectListing } from "../../lib/admin";
+import { PoolCard } from "./pool-card";
 
 /** The band at its smallest, then halved: the review is about the words, and a
     full-size band would not fit beside them. */
@@ -145,6 +146,7 @@ export function ModerationSection() {
 
   return (
     <div className="space-y-6">
+      <PoolCard />
       {isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
 
       {empty && (

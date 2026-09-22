@@ -10,7 +10,8 @@
     "lint": "biome check .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "jobs:run": "tsx scripts/jobs.ts"
+    "jobs:run": "tsx scripts/jobs.ts",
+    "test:db": "vitest run --config vitest.db.config.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1044.0",

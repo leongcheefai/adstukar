@@ -4,15 +4,8 @@ import { useMemo, useState } from "react";
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router";
 import { SlotForm } from "../../components/campaigns/slot-form";
 import { TopUpDialog } from "../../components/topups/topup-dialog";
-import { useCampaigns } from "../../lib/campaigns";
-import {
-  type SlotPosition,
-  loopOf,
-  readSlotPositions,
-  slotAvailability,
-  slotOf,
-  writeSlotPosition,
-} from "../../lib/slots";
+import { type SlotPosition, isOver, slotOf } from "../../lib/slots";
+import { useSlotLoop, useSlots } from "../../lib/slots-api";
 import { useStats } from "../../lib/stats";
 import { openWhenReady, useTopups } from "../../lib/topups";
 
@@ -33,15 +26,16 @@ export function SlotBookPage() {
   const { campaignId } = useParams();
   const [params] = useSearchParams();
   const navigate = useNavigate();
-  const { data, isLoading } = useCampaigns();
+  const { data, isLoading: slotsLoading } = useSlots();
+  const { data: loop } = useSlotLoop();
   const { data: stats } = useStats();
   const topupsQuery = useTopups();
   const topups = topupsQuery.data;
   const [buyOpen, setBuyOpen] = useState(false);
-  const [picks, setPicks] = useState(readSlotPositions);
 
   const slots = useMemo(() => (data ?? []).map((item) => slotOf(item)), [data]);
-  const bands = useMemo(() => loopOf(slots, picks), [slots, picks]);
+  const bands = loop?.bands ?? [];
+  const isLoading = slotsLoading || loop === undefined;
   const editing = campaignId
     ? (slots.find((slot) => slot.item.campaign.id === campaignId) ?? null)
     : null;
@@ -69,15 +63,11 @@ export function SlotBookPage() {
           slot={editing}
           bands={bands}
           position={pickOf(params.get("slot"))}
-          onBooked={(id, position) => {
-            writeSlotPosition(id, position);
-            setPicks(readSlotPositions());
-          }}
           takenDomains={slots
-            .filter((slot) => slot.status !== "ended")
+            .filter((slot) => !isOver(slot.status))
             .map((slot) => slot.item.campaign.domain)}
           balance={stats?.balance.settled}
-          slotsOpen={slotAvailability(slots).left > 0}
+          slotsOpen={(loop?.availability.left ?? 0) > 0}
           onAddFunds={() =>
             openWhenReady(
               topupsQuery,

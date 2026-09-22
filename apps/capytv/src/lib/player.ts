@@ -30,6 +30,7 @@ export function usePlayer(deviceKey: string | null): PlayerState {
   const [queue, setQueue] = useState<QueuedReport[]>(loadQueue);
   const [current, setCurrent] = useState<CachedItem | null>(null);
   const [online, setOnline] = useState(() => navigator.onLine);
+  const [visible, setVisible] = useState(() => document.visibilityState === "visible");
   const [pairingError, setPairingError] = useState<string | null>(null);
 
   // The timers read these, and a timer must never restart because a piece of
@@ -50,6 +51,15 @@ export function usePlayer(deviceKey: string | null): PlayerState {
       window.removeEventListener("online", up);
       window.removeEventListener("offline", down);
     };
+  }, []);
+
+  // A hidden page is not a screen anybody sees. There is no attestation
+  // (docs/adr/0003), so the honest client is the one that stops playing when it
+  // is minimised or covered, and owes nothing for what nobody could have seen.
+  useEffect(() => {
+    const read = () => setVisible(document.visibilityState === "visible");
+    document.addEventListener("visibilitychange", read);
+    return () => document.removeEventListener("visibilitychange", read);
   }, []);
 
   const refill = useCallback(async () => {
@@ -114,9 +124,11 @@ export function usePlayer(deviceKey: string | null): PlayerState {
   }, [deviceKey, online, queue]);
 
   // The play cycle: show one play for its dwell, owe a report for it, then hold
-  // the device quiet for the gap before taking the next.
+  // the device quiet for the gap before taking the next. It runs only while the
+  // page is visible: a play cut short by a hidden page stays in the batch, is
+  // owed nothing, and plays again when the page returns.
   useEffect(() => {
-    if (!deviceKey) return;
+    if (!deviceKey || !visible) return;
     let stopped = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
 
@@ -156,8 +168,9 @@ export function usePlayer(deviceKey: string | null): PlayerState {
     return () => {
       stopped = true;
       if (timer) clearTimeout(timer);
+      setCurrent(null);
     };
-  }, [deviceKey]);
+  }, [deviceKey, visible]);
 
   return {
     current,

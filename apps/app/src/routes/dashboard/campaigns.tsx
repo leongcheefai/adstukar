@@ -14,20 +14,13 @@ import { CampaignSummary } from "../../components/campaigns/campaign-summary";
 import { SlotRow } from "../../components/campaigns/slot-row";
 import { SlotTicker } from "../../components/campaigns/slot-ticker";
 import { TopUpDialog } from "../../components/topups/topup-dialog";
-import { useCampaigns } from "../../lib/campaigns";
-import {
-  type SlotPosition,
-  type SlotStatus,
-  loopOf,
-  readSlotPositions,
-  slotAvailability,
-  slotOf,
-} from "../../lib/slots";
+import { type SlotPosition, type SlotStatus, isOver, slotOf } from "../../lib/slots";
+import { useSlotLoop, useSlots } from "../../lib/slots-api";
 import { openWhenReady, useTopups } from "../../lib/topups";
 
 const BOOK = "/dashboard/campaigns/book";
 
-type Filter = "all" | "running" | "review" | "paused" | "ended";
+type Filter = "all" | "running" | "review" | "ended";
 
 /**
  * Which slots a menu item holds. Review takes every slot that waits on somebody: the
@@ -37,32 +30,25 @@ const FILTERS: { key: Filter; label: string; holds: SlotStatus[] | null }[] = [
   { key: "all", label: "All", holds: null },
   { key: "running", label: "Running", holds: ["running"] },
   { key: "review", label: "In review", holds: ["review", "action", "rejected"] },
-  { key: "paused", label: "Paused", holds: ["paused"] },
-  { key: "ended", label: "Ended", holds: ["ended"] },
+  { key: "ended", label: "Ended", holds: ["ended", "refunded"] },
 ];
 
 export function CampaignsPage() {
-  const { data, isLoading } = useCampaigns();
+  const { data, isLoading } = useSlots();
+  const { data: loop } = useSlotLoop();
   const topupsQuery = useTopups();
   const topups = topupsQuery.data;
   const [buyOpen, setBuyOpen] = useState(false);
   const [filter, setFilter] = useState<Filter>("all");
-  const [picks] = useState(readSlotPositions);
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const wantsNew = params.get("new") === "campaign";
 
   const slots = useMemo(() => (data ?? []).map((item) => slotOf(item)), [data]);
-  const availability = slotAvailability(slots);
-  const bands = useMemo(() => loopOf(slots, picks), [slots, picks]);
-  const positionOf = useMemo(
-    () =>
-      new Map(
-        bands.flatMap((band) =>
-          band.kind === "brand" && band.campaignId ? [[band.campaignId, band.position]] : [],
-        ),
-      ),
-    [bands],
+  const bands = loop?.bands ?? [];
+  const minePositions = useMemo(
+    () => new Set(slots.filter((slot) => !isOver(slot.status)).map((slot) => slot.position)),
+    [slots],
   );
   const holds = FILTERS.find((f) => f.key === filter)?.holds ?? null;
   const shown = holds ? slots.filter((slot) => holds.includes(slot.status)) : slots;
@@ -74,7 +60,8 @@ export function CampaignsPage() {
   // Links people saved before the booking form became a page still work.
   if (wantsNew) return <Navigate to={BOOK} replace />;
 
-  const soldOut = availability.left === 0;
+  // Nothing is sold out until the loop has answered.
+  const soldOut = loop !== undefined && loop.availability.left === 0;
 
   return (
     <div className="space-y-4">
@@ -95,7 +82,7 @@ export function CampaignsPage() {
 
       <section className="space-y-2">
         <h2 className="text-base font-semibold tracking-tight">Pick your slot</h2>
-        <SlotTicker bands={bands} onPick={book} />
+        <SlotTicker bands={bands} minePositions={minePositions} onPick={book} />
       </section>
 
       <CampaignSummary
@@ -134,9 +121,9 @@ export function CampaignsPage() {
           <ul className="divide-y">
             {shown.map((slot) => (
               <SlotRow
-                key={slot.item.campaign.id}
+                key={slot.item.slot.id}
                 slot={slot}
-                position={positionOf.get(slot.item.campaign.id) ?? null}
+                position={isOver(slot.status) ? null : slot.position}
                 onEdit={(target) =>
                   navigate(`/dashboard/campaigns/${target.item.campaign.id}/edit`)
                 }

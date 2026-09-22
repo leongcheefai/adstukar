@@ -13,7 +13,9 @@ development. See `docs/adr/0003`.
 2. `GET /loop` hands it a batch of already-open plays. It holds the batch in
    `localStorage`.
 3. It shows one play for its dwell, then holds the whole device quiet for the
-   gap. Only one paid listing is on screen at a time.
+   gap. Only one paid listing is on screen at a time. The cycle runs only while
+   the page is visible: a minimised or covered page shows nothing and owes
+   nothing, and a play cut short stays in the batch.
 4. Each finished play joins the report queue. The queue drains whenever the
    screen has a network, and survives a reload.
 5. A batch running low, or a network coming back, takes the next batch.
@@ -51,4 +53,6 @@ development. See `docs/adr/0003`.
   feed has to answer with CORS. A feed that refuses shows nothing rather than
   breaking the screen
 - `parseFeed` needs a DOM, so `vitest.config.ts` sets the jsdom environment. The
-  rest of the suite is pure
+  rest of the suite is pure, except `player.test.ts`, which mounts the hook
+- Node 22+ owns a `localStorage` global of its own, undefined without a flag, so
+  jsdom's never lands. `player.test.ts` installs a Map-backed one

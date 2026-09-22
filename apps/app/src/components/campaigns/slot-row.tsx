@@ -1,12 +1,11 @@
 import {
   DotsThreeVertical,
-  Pause,
   PencilSimple,
-  Play,
   SealCheck,
   ShieldCheck,
   Trash,
 } from "@phosphor-icons/react";
+import { economy } from "@repo/config/economy";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,8 +33,8 @@ import {
 } from "@repo/ui";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useArchiveCampaign, useUpdateCampaign } from "../../lib/campaigns";
-import type { Slot, SlotPosition, SlotStatus } from "../../lib/slots";
+import { useArchiveCampaign } from "../../lib/campaigns";
+import { type Slot, type SlotPosition, type SlotStatus, isOver } from "../../lib/slots";
 import { VerifyPanel } from "./verify-panel";
 
 const STATUS: Record<
@@ -46,26 +45,44 @@ const STATUS: Record<
   review: { label: "In review", variant: "warning" },
   action: { label: "Action needed", variant: "warning" },
   rejected: { label: "Rejected", variant: "destructive" },
-  paused: { label: "Paused", variant: "neutral" },
   ended: { label: "Ended", variant: "neutral" },
+  refunded: { label: "Refunded", variant: "neutral" },
 };
-
-/** Why the system stopped a slot, and what starts it again. */
-const PAUSE_REASON = {
-  budget: "The system paused this slot. It runs again tomorrow.",
-  balance: "Your wallet ran out. This slot runs again once you add funds.",
-} as const;
 
 const DAY = new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short" });
 
+/** The two lines under the badge: how much of the term is left, and its dates. */
+function termCopy(slot: Slot): { left: string; dates: string } {
+  if (slot.status === "refunded") {
+    return { left: "Not started", dates: "The charge went back to your wallet" };
+  }
+  if (slot.status === "ended") {
+    return {
+      left: "Term ended",
+      dates:
+        slot.startsAt && slot.endsAt
+          ? `${DAY.format(slot.startsAt)} – ${DAY.format(slot.endsAt)}`
+          : "",
+    };
+  }
+  if (!slot.startsAt || !slot.endsAt) {
+    return {
+      left: `${economy.slot.termDays} days, from approval`,
+      dates: "Starts when your ad is approved",
+    };
+  }
+  return {
+    left: `${slot.daysLeft} ${slot.daysLeft === 1 ? "day" : "days"} left`,
+    dates: `${DAY.format(slot.startsAt)} – ${DAY.format(slot.endsAt)}`,
+  };
+}
+
 /** The one line under the badge that says why, when the badge alone does not. */
 function noteOf(slot: Slot): string | null {
-  const { campaign } = slot.item;
   if (slot.status === "rejected") return slot.listing?.rejectionReason ?? null;
   if (slot.status === "action") {
     return slot.listing ? "Verify your domain to start." : "Write the ad to start.";
   }
-  if (slot.status === "paused" && campaign.pauseReason) return PAUSE_REASON[campaign.pauseReason];
   return null;
 }
 
@@ -86,7 +103,6 @@ export function SlotRow({
 }) {
   const { campaign } = slot.item;
   const { listing, status } = slot;
-  const update = useUpdateCampaign();
   const archive = useArchiveCampaign();
   // Both dialogs are controlled: a DropdownMenuItem unmounts its own subtree
   // on select, which would take a nested trigger down with it.
@@ -94,24 +110,10 @@ export function SlotRow({
   const [verifyOpen, setVerifyOpen] = useState(false);
 
   const verified = campaign.verifiedAt !== null;
-  const ended = status === "ended";
-  const paused = campaign.state === "paused";
-  // Only a verified slot inside its term may move between running and paused.
-  const canMove = verified && !ended && (paused || campaign.state === "active");
+  const ended = isOver(status);
+  const term = termCopy(slot);
   const note = noteOf(slot);
   const state = STATUS[status];
-
-  async function toggleRunning() {
-    try {
-      await update.mutateAsync({
-        id: campaign.id,
-        input: { state: paused ? "active" : "paused" },
-      });
-      toast.success(paused ? `${campaign.name} running` : `${campaign.name} paused`);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not move the slot");
-    }
-  }
 
   async function archiveSlot() {
     try {
@@ -192,10 +194,8 @@ export function SlotRow({
               <PencilSimple size={14} className="mr-2" />
               Edit ad
             </DropdownMenuItem>
-            <DropdownMenuItem disabled={!canMove || update.isPending} onSelect={toggleRunning}>
-              {paused ? <Play size={14} className="mr-2" /> : <Pause size={14} className="mr-2" />}
-              {paused ? "Start" : "Pause"}
-            </DropdownMenuItem>
+            {/* No pause: a slot runs its term to the end (docs/adr/0009). An edit
+                sends the ad back to review; an archive is the exit. */}
             <DropdownMenuSeparator />
             <DropdownMenuItem variant="destructive" onSelect={() => setConfirmOpen(true)}>
               <Trash size={14} className="mr-2" />
@@ -224,12 +224,8 @@ export function SlotRow({
 
       <div className="col-span-2 min-w-0 space-y-1.5 text-xs md:col-span-1 text-muted-foreground tabular-nums">
         <div className="flex justify-between gap-2">
-          <span className="font-medium text-foreground">
-            {ended ? "Term ended" : `${slot.daysLeft} ${slot.daysLeft === 1 ? "day" : "days"} left`}
-          </span>
-          <span>
-            {DAY.format(slot.startsAt)} – {DAY.format(slot.endsAt)}
-          </span>
+          <span className="font-medium text-foreground">{term.left}</span>
+          <span>{term.dates}</span>
         </div>
         {/* Decorative: the line above already says the days left in words. */}
         <div aria-hidden="true" className="h-1 overflow-hidden rounded-full bg-muted">

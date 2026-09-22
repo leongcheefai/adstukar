@@ -1,29 +1,13 @@
-import { economy, feeOn, playCost, scanCost } from "@repo/config/economy";
+import { earnPerPlay, economy } from "@repo/config/economy";
 import type { LoopResponse, Promotion, ServeResponse, ServedListing } from "@repo/contracts";
 import { db, schema } from "@repo/db";
 import { serverEnv } from "@repo/env";
-import { and, count, eq, gte, isNotNull, lt, ne, sql } from "drizzle-orm";
+import { and, eq, gte, isNotNull, lt, ne, sql } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
-import { shareByListing, startOfUtcDay } from "../campaigns/pacing";
-import { applyPacing, notifyLowBalance } from "../campaigns/pacing.service";
-import {
-  budgetShare,
-  spentToday,
-  spentTodayByCampaign,
-  spentTodayByListing,
-  spentTodayForListing,
-} from "../campaigns/spend";
-import {
-  type Tx,
-  getBalances,
-  getLotBalances,
-  postEntry,
-  postSpend,
-  settlesAtFrom,
-  spendable,
-  spendableByUser,
-} from "../ledger/ledger.service";
+import { startOfUtcDay } from "../../lib/day";
+import { type Tx, getBalances, postEntry, settlesAtFrom } from "../ledger/ledger.service";
 import { type PlaySource, clampReportedAt, expiresAtFor, planLoop } from "./loop";
+import { playPays } from "./payable";
 import { type Candidate, matchesExcludedTerm, nextPlacement, rankCandidates } from "./ranking";
 
 type DeviceRow = typeof schema.device.$inferSelect;
@@ -99,35 +83,39 @@ async function lastPlayAt(deviceId: string): Promise<Date | null> {
   return row?.at ? new Date(row.at) : null;
 }
 
-/** Paid plays this device has already been counted for today. */
-async function paidPlaysToday(tx: Tx, deviceId: string, now: Date): Promise<number> {
+/**
+ * What today already holds against the device's caps: the paid plays it was
+ * counted for, and the moment its first play of the day counted. A house card
+ * opens the paid hours too, because the screen was on.
+ */
+async function countedToday(
+  tx: Tx,
+  deviceId: string,
+  now: Date,
+): Promise<{ paid: number; firstPlayAt: Date | null }> {
   const [row] = await tx
-    .select({ n: count() })
+    .select({
+      paid: sql<number>`count(*) filter (where not ${schema.play.house})`.mapWith(Number),
+      firstPlayAt: sql<Date | null>`min(${schema.play.countedAt})`,
+    })
     .from(schema.play)
     .innerJoin(schema.placement, eq(schema.placement.id, schema.play.placementId))
     .where(
       and(
         eq(schema.placement.deviceId, deviceId),
-        eq(schema.play.house, false),
         eq(schema.play.state, "counted"),
         gte(schema.play.countedAt, startOfUtcDay(now)),
       ),
     );
-  return row?.n ?? 0;
+  return { paid: row?.paid ?? 0, firstPlayAt: row?.firstPlayAt ? new Date(row.firstPlayAt) : null };
 }
 
 /**
- * Listings that may play on this device right now: approved creative, a running
- * campaign on a verified domain, somebody else's account, enough spendable balance
- * to cover one play at this device's rate, and budget left for today.
+ * Listings that may play on this device right now: a running slot, an approved
+ * creative, an active campaign on a verified domain, and somebody else's
+ * account. Nothing about money is read here; the report reads it (docs/adr/0010).
  */
-async function loadCandidates(
-  device: DeviceRow,
-  placement: PlacementRow,
-  now: Date,
-): Promise<Candidate[]> {
-  const cost = playCost(device.tier, placement.format);
-
+async function loadCandidates(device: DeviceRow, placement: PlacementRow): Promise<Candidate[]> {
   const lastPlayed = db
     .select({
       listingId: schema.play.listingId,
@@ -138,54 +126,39 @@ async function loadCandidates(
     .groupBy(schema.play.listingId)
     .as("last_played");
 
-  const [rows, budgets, listingSpend, purses] = await Promise.all([
-    db
-      .select({
-        listingId: schema.listing.id,
-        campaignId: schema.campaign.id,
-        userId: schema.campaign.userId,
-        name: schema.campaign.name,
-        tagline: schema.listing.tagline,
-        logoUrl: schema.listing.logoUrl,
-        dailyBudget: schema.campaign.dailyBudget,
-        lastPlayedAt: lastPlayed.lastPlayedAt,
-      })
-      .from(schema.listing)
-      .innerJoin(schema.campaign, eq(schema.campaign.id, schema.listing.campaignId))
-      .leftJoin(lastPlayed, eq(lastPlayed.listingId, schema.listing.id))
-      .where(
-        and(
-          eq(schema.listing.state, "approved"),
-          eq(schema.campaign.state, "active"),
-          isNotNull(schema.campaign.verifiedAt),
-          ne(schema.campaign.userId, device.userId),
-        ),
+  const rows = await db
+    .select({
+      listingId: schema.listing.id,
+      campaignId: schema.campaign.id,
+      userId: schema.campaign.userId,
+      name: schema.campaign.name,
+      tagline: schema.listing.tagline,
+      logoUrl: schema.listing.logoUrl,
+      lastPlayedAt: lastPlayed.lastPlayedAt,
+    })
+    .from(schema.slot)
+    .innerJoin(schema.campaign, eq(schema.campaign.id, schema.slot.campaignId))
+    .innerJoin(schema.listing, eq(schema.listing.campaignId, schema.campaign.id))
+    .leftJoin(lastPlayed, eq(lastPlayed.listingId, schema.listing.id))
+    .where(
+      and(
+        eq(schema.slot.state, "running"),
+        eq(schema.listing.state, "approved"),
+        eq(schema.campaign.state, "active"),
+        isNotNull(schema.campaign.verifiedAt),
+        ne(schema.campaign.userId, device.userId),
       ),
-    spentTodayByCampaign(db, now),
-    spentTodayByListing(db, now),
-    spendableByUser(),
-  ]);
+    );
 
-  // Every listing this scan returned is one that may run, so the campaign's
-  // budget splits over exactly this set. A listing that has spent its share sits
-  // out the rest of the day while its siblings carry on.
-  const shares = shareByListing(rows);
-
-  return rows
-    .filter((row) => (purses.get(row.userId) ?? 0) >= cost)
-    .filter((row) => (budgets.get(row.campaignId) ?? 0) + cost <= row.dailyBudget)
-    .filter(
-      (row) => (listingSpend.get(row.listingId) ?? 0) + cost <= (shares.get(row.listingId) ?? 0),
-    )
-    .map((row) => ({
-      listingId: row.listingId,
-      campaignId: row.campaignId,
-      userId: row.userId,
-      name: row.name,
-      tagline: row.tagline,
-      logoUrl: row.logoUrl,
-      lastPlayedAt: row.lastPlayedAt ? new Date(row.lastPlayedAt) : null,
-    }));
+  return rows.map((row) => ({
+    listingId: row.listingId,
+    campaignId: row.campaignId,
+    userId: row.userId,
+    name: row.name,
+    tagline: row.tagline,
+    logoUrl: row.logoUrl,
+    lastPlayedAt: row.lastPlayedAt ? new Date(row.lastPlayedAt) : null,
+  }));
 }
 
 /**
@@ -219,10 +192,9 @@ async function loadFilters(deviceId: string): Promise<DeviceFilters> {
 async function eligibleFor(
   device: DeviceRow,
   placement: PlacementRow,
-  now: Date,
   filters: DeviceFilters,
 ): Promise<Candidate[]> {
-  const candidates = await loadCandidates(device, placement, now);
+  const candidates = await loadCandidates(device, placement);
   return candidates.filter(
     (c) =>
       !filters.vetoed.has(c.listingId) && !matchesExcludedTerm(c.name, c.tagline, filters.phrases),
@@ -282,7 +254,7 @@ export interface ServeContext {
 
 /**
  * Hands CapyTV the next listing for one of the device's regions, and opens the
- * play that will carry the money. Nothing is charged here: the device reports
+ * play that will carry the money. Nothing is paid here: the device reports
  * the full dwell first (see `recordReport`).
  */
 export async function serveListing(ctx: ServeContext): Promise<ServeResponse> {
@@ -304,7 +276,7 @@ export async function serveListing(ctx: ServeContext): Promise<ServeResponse> {
 
   // The cap is not read here. Above it a listing still shows and simply pays
   // nothing, so the cap belongs at the moment the money moves and nowhere else.
-  const candidates = await eligibleFor(device, placement, now, await loadFilters(device.id));
+  const candidates = await eligibleFor(device, placement, await loadFilters(device.id));
   const winner = rankCandidates(candidates)[0] ?? null;
 
   const play = planPlay(placement, winner, "serve", now);
@@ -316,8 +288,8 @@ export async function serveListing(ctx: ServeContext): Promise<ServeResponse> {
  * Hands CapyTV a whole batch at once, so a screen whose network drops keeps
  * playing and reports the batch when the network returns.
  *
- * Nothing is charged here either, and the checks that matter run again at report
- * time: the daily cap and the campaign's budget are read when the money moves,
+ * Nothing is paid here either, and the checks that matter run again at report
+ * time: the daily cap and the state of the slot are read when the money moves,
  * not when the batch was cut. A batch is therefore an offer of plays, never a
  * promise that every one of them pays.
  */
@@ -338,8 +310,7 @@ export async function serveLoop(ctx: ServeContext & { size?: number }): Promise<
   const byId = new Map(placements.map((p) => [p.id, p]));
   const eligible = await Promise.all(
     placements.map(
-      async (placement) =>
-        [placement.id, await eligibleFor(device, placement, now, filters)] as const,
+      async (placement) => [placement.id, await eligibleFor(device, placement, filters)] as const,
     ),
   );
   const candidatesByPlacement: Record<string, Candidate[]> = Object.fromEntries(eligible);
@@ -370,163 +341,8 @@ export async function serveLoop(ctx: ServeContext & { size?: number }): Promise<
   };
 }
 
-/**
- * The advertiser pays, the distributor earns the same number, and the fee comes
- * back off the distributor as its own row. Nothing here is a hidden spread: the
- * two sides of a play add up to what we published.
- *
- * Returns false when the advertiser cannot cover the movement, so the caller can
- * leave the play unpaid rather than post half of it.
- */
-async function chargeMovement(
-  tx: Tx,
-  input: {
-    advertiserId: string;
-    distributorId: string;
-    playId: string;
-    amount: number;
-    key: string;
-    now: Date;
-  },
-): Promise<boolean> {
-  // Reading a balance and then spending against it is a race: two reports for one
-  // advertiser would both pass the check and both post, taking the account
-  // negative. The lock serializes every charge against one advertiser and lifts
-  // when the transaction ends.
-  await lockAdvertiser(tx, input.advertiserId);
-
-  const balances = await getLotBalances(tx, input.advertiserId);
-  if (spendable(balances) < input.amount) return false;
-
-  const { posted } = await postSpend(tx, {
-    userId: input.advertiserId,
-    amount: input.amount,
-    reason: "spend",
-    idempotencyKey: `${input.key}:${input.playId}`,
-    playId: input.playId,
-    now: input.now,
-  });
-  // The lock makes this unreachable. If it ever fires, the advertiser has been
-  // debited for less than the earn about to be posted, so the whole transaction
-  // must go rather than leave the two sides of a play disagreeing.
-  if (posted < input.amount) {
-    throw new Error(`Partial spend on play ${input.playId}: ${posted} of ${input.amount}`);
-  }
-
-  const settlesAt = settlesAtFrom(input.now);
-  await postEntry(tx, {
-    userId: input.distributorId,
-    delta: input.amount,
-    reason: "earn",
-    lot: "earned",
-    state: "pending",
-    idempotencyKey: `earn:${input.key}:${input.playId}`,
-    playId: input.playId,
-    settlesAt,
-    now: input.now,
-  });
-
-  const fee = feeOn(input.amount);
-  if (fee > 0) {
-    await postEntry(tx, {
-      userId: input.distributorId,
-      delta: -fee,
-      reason: "fee",
-      lot: "earned",
-      state: "pending",
-      idempotencyKey: `fee:${input.key}:${input.playId}`,
-      playId: input.playId,
-      settlesAt,
-      now: input.now,
-    });
-  }
-  return true;
-}
-
-interface ChargeInput {
-  campaign: { id: string; userId: string; dailyBudget: number };
-  listingId: string;
-  distributorId: string;
-  playId: string;
-  amount: number;
-  /** `spend` for the play itself, `scan` for the bonus on top of it. */
-  key: "spend" | "scan";
-  now: Date;
-}
-
-/**
- * The one path both a play and a scan take: check the campaign's budget, check
- * the listing's share of it, charge, and then stop whatever can no longer run.
- *
- * Returns the member to mail when this charge emptied their purse, and null when
- * it did not or when a cap refused the charge.
- */
-async function chargeAndPace(tx: Tx, input: ChargeInput): Promise<string | null> {
-  const { campaign, now } = input;
-  const spent = await spentToday(tx, campaign.id, now);
-  if (spent + input.amount > campaign.dailyBudget) return null;
-
-  // One creative running hot must not take the whole day from the three it is
-  // being compared with, so each listing is paced against its own share.
-  const listingSpent = await spentTodayForListing(tx, input.listingId, campaign.id, now);
-  if (listingSpent + input.amount > (await budgetShare(tx, campaign, input.listingId))) return null;
-
-  const charged = await chargeMovement(tx, {
-    advertiserId: campaign.userId,
-    distributorId: input.distributorId,
-    playId: input.playId,
-    amount: input.amount,
-    key: input.key,
-    now,
-  });
-  if (!charged) return null;
-
-  const pacing = await applyPacing(tx, {
-    campaignId: campaign.id,
-    advertiserId: campaign.userId,
-    spentToday: spent + input.amount,
-    now,
-  });
-  return pacing.pausedForBalance ? campaign.userId : null;
-}
-
-/**
- * Holds one advertiser's purse for the rest of the transaction. Two charges
- * against the same account queue instead of racing; charges against different
- * accounts never touch each other.
- */
-async function lockAdvertiser(tx: Tx, advertiserId: string): Promise<void> {
-  await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${advertiserId}))`);
-}
-
-/**
- * True while this listing may still be paid for.
- *
- * A batch is cut hours before its last play is reported, so what was eligible
- * then may not be eligible now: an admin may have rejected the creative, the
- * advertiser may have paused the campaign, or the domain check may have lapsed.
- * The play still counts and still showed — it simply pays nothing.
- */
-function stillBillable(
-  listing: { state: string },
-  campaign: { state: string; verifiedAt: Date | null },
-): boolean {
-  return (
-    listing.state === "approved" && campaign.state === "active" && campaign.verifiedAt !== null
-  );
-}
-
-/** True once a play has actually been charged for. A scan bonus rides on that. */
-async function wasCharged(tx: Tx, playId: string): Promise<boolean> {
-  const [row] = await tx
-    .select({ n: count() })
-    .from(schema.ledgerEntry)
-    .where(and(eq(schema.ledgerEntry.playId, playId), eq(schema.ledgerEntry.reason, "spend")));
-  return (row?.n ?? 0) > 0;
-}
-
-/** Everything a play needs to be priced: its placement, its device, and its owners. */
-async function loadPlayForBilling(tx: Tx, playId: string) {
+/** Everything a play needs to be paid: its placement, its device, its listing, and the live slot. */
+async function loadPlayForReport(tx: Tx, playId: string) {
   const [row] = await tx
     .select({
       play: schema.play,
@@ -534,16 +350,47 @@ async function loadPlayForBilling(tx: Tx, playId: string) {
       device: schema.device,
       listing: schema.listing,
       campaign: schema.campaign,
+      slotState: schema.slot.state,
     })
     .from(schema.play)
     .innerJoin(schema.placement, eq(schema.placement.id, schema.play.placementId))
     .innerJoin(schema.device, eq(schema.device.id, schema.placement.deviceId))
     .leftJoin(schema.listing, eq(schema.listing.id, schema.play.listingId))
     .leftJoin(schema.campaign, eq(schema.campaign.id, schema.listing.campaignId))
+    // One live slot per campaign, by a partial unique index, so this join never fans out.
+    .leftJoin(
+      schema.slot,
+      and(eq(schema.slot.campaignId, schema.campaign.id), eq(schema.slot.state, "running")),
+    )
     .where(eq(schema.play.id, playId))
     .limit(1)
     .for("update", { of: schema.play });
   return row ?? null;
+}
+
+/**
+ * The one row a paid play posts: the distributor's earn, at the device's tier,
+ * pending until it settles. The platform pays it from slot revenue, so there is
+ * no advertiser to debit and no fee to take (docs/adr/0010). Keyed on the play,
+ * so a second report of one play posts nothing twice. The key keeps the shape
+ * the per-play economy used, so a play opened before the change and reported
+ * after it still meets its own earlier row.
+ */
+async function postEarn(
+  tx: Tx,
+  input: { distributorId: string; tier: DeviceRow["tier"]; playId: string; now: Date },
+): Promise<void> {
+  await postEntry(tx, {
+    userId: input.distributorId,
+    delta: earnPerPlay(input.tier),
+    reason: "earn",
+    lot: "earned",
+    state: "pending",
+    idempotencyKey: `earn:spend:${input.playId}`,
+    playId: input.playId,
+    settlesAt: settlesAtFrom(input.now),
+    now: input.now,
+  });
 }
 
 /** One report of one play, as it arrives from a screen. */
@@ -561,7 +408,7 @@ export interface PlayReport {
 
 /**
  * CapyTV reports that the listing held the placement for its full dwell. The play
- * counts, and the money moves in the same transaction. Idempotent: a second
+ * counts, and the earn posts in the same transaction. Idempotent: a second
  * report is a no-op.
  */
 export async function recordReport(report: PlayReport): Promise<{ counted: boolean }> {
@@ -570,11 +417,11 @@ export async function recordReport(report: PlayReport): Promise<{ counted: boole
   const playedAt = report.playedAt ?? null;
   const network = report.network ?? null;
 
-  const result = await db.transaction(async (tx) => {
-    const row = await loadPlayForBilling(tx, playId);
-    if (!row || row.device.apiKey !== key) return { counted: false, lowBalanceFor: null };
+  return db.transaction(async (tx) => {
+    const row = await loadPlayForReport(tx, playId);
+    if (!row || row.device.apiKey !== key) return { counted: false };
 
-    const { play, placement, device, listing, campaign } = row;
+    const { play, device, listing, campaign, slotState } = row;
 
     // The key matched, so this screen is alive whatever becomes of the play. The
     // payout review reads both: the hold exists to catch a dead screen before
@@ -584,117 +431,70 @@ export async function recordReport(report: PlayReport): Promise<{ counted: boole
       .set({ lastSeenAt: now, ...(network ? { lastNetwork: network } : {}) })
       .where(eq(schema.device.id, device.id));
 
-    if (play.state !== "open" || now > play.expiresAt) {
-      return { counted: false, lowBalanceFor: null };
-    }
+    if (play.state !== "open" || now > play.expiresAt) return { counted: false };
 
     // A queued report carries the moment it actually played, so a day of offline
     // plays counts against the day it ran rather than the day the network came
     // back. The device is the untrusted side, so the moment is clamped to the
-    // life of the play before anything is paced or capped against it.
+    // life of the play before anything is capped against it.
     const countedAt = clampReportedAt({ playedAt, openedAt: play.createdAt, now });
 
-    // The device cap counts what today already paid for, so it is read before
-    // this play joins the count. Reading it after the update below would let the
-    // play cap itself through and pay for only `dailyPlayCap - 1` plays a day.
-    const paidToday = await paidPlaysToday(tx, device.id, countedAt);
+    // The device caps count what today already holds, so they are read before
+    // this play joins the count. Reading them after the update below would let
+    // the play cap itself through and pay for only `dailyPlayCap - 1` plays a day.
+    const today = await countedToday(tx, device.id, countedAt);
 
     await tx
       .update(schema.play)
       .set({ state: "counted", countedAt })
       .where(eq(schema.play.id, playId));
 
-    const done = { counted: true, lowBalanceFor: null };
-
-    // A house card is a real play on screen and no movement at all.
-    if (play.house || !listing || !campaign) return done;
-    // Above the cap the play still showed and still counts; it just pays nothing.
-    if (paidToday >= device.dailyPlayCap) return done;
-    if (!stillBillable(listing, campaign)) return done;
-
-    const lowBalanceFor = await chargeAndPace(tx, {
-      campaign,
-      listingId: listing.id,
-      distributorId: device.userId,
-      playId,
-      amount: playCost(device.tier, placement.format),
-      key: "spend",
-      now: countedAt,
+    // A house card is a real play on screen and no movement at all. Above a
+    // cap, or on a slot that ended between serve and report, the play still
+    // showed and still counts; it just pays nothing.
+    if (!listing || !campaign) return { counted: true };
+    const pays = playPays({
+      house: play.house,
+      paidToday: today.paid,
+      dailyPlayCap: device.dailyPlayCap,
+      countedAt,
+      firstPlayAt: today.firstPlayAt,
+      slotState,
+      listingState: listing.state,
+      campaignState: campaign.state,
+      verifiedAt: campaign.verifiedAt,
     });
-    if (lowBalanceFor !== null) return { counted: true, lowBalanceFor };
+    if (!pays) return { counted: true };
 
-    // A viewer who scanned while the screen was off the network could not be paid
-    // then, because the play it rides on had not been reported yet. The report is
-    // where that debt is settled.
-    if (play.scanned) {
-      const scanLowBalanceFor = await chargeAndPace(tx, {
-        campaign,
-        listingId: listing.id,
-        distributorId: device.userId,
-        playId,
-        amount: scanCost(device.tier),
-        key: "scan",
-        now: countedAt,
-      });
-      return { counted: true, lowBalanceFor: scanLowBalanceFor };
-    }
-    return { counted: true, lowBalanceFor };
+    await postEarn(tx, { distributorId: device.userId, tier: device.tier, playId, now: countedAt });
+    return { counted: true };
   });
-
-  // The mail goes out after the charge commits, so a mail server can never roll
-  // back a play.
-  if (result.lowBalanceFor) notifyLowBalance(result.lowBalanceFor);
-  return { counted: result.counted };
 }
 
 /**
- * A viewer scanned the code on a played listing. The scan pays a bonus on top of
- * the play, and then the viewer goes to the campaign's site.
+ * A viewer scanned the code on a played listing. The scan is recorded and the
+ * viewer goes to the campaign's site. It moves no money: the advertiser pays a
+ * flat price for the slot, and the scan-to-play ratio is what the payout review
+ * reads (docs/adr/0002, docs/adr/0010).
  *
  * Returns the destination URL, or null when the play is unknown or carried no
  * listing.
  */
 export async function recordScan(playId: string, now: Date = new Date()): Promise<string | null> {
-  const result = await db.transaction(async (tx) => {
-    const row = await loadPlayForBilling(tx, playId);
-    if (!row?.listing || !row.campaign) return { url: null, lowBalanceFor: null };
-    const { play, device, listing, campaign } = row;
-    const stop = { url: campaign.url, lowBalanceFor: null };
+  return db.transaction(async (tx) => {
+    const row = await loadPlayForReport(tx, playId);
+    if (!row?.listing || !row.campaign) return null;
+    const { play, campaign } = row;
 
     // One scan per play, and a play the void job closed is over.
-    if (play.scanned || play.state === "void") return stop;
+    if (play.scanned || play.state === "void") return campaign.url;
 
     await tx
       .update(schema.play)
       .set({ scanned: true, scannedAt: now })
       .where(eq(schema.play.id, playId));
-
-    // The viewer's phone has its own network, so a scan can arrive while the
-    // screen itself is still offline and the play is still open. Record it and
-    // pay nothing now: `recordReport` settles the bonus when the screen reports
-    // the play it rides on.
-    if (play.state !== "counted") return stop;
-
-    // The bonus rides on the play, so it is paid only when the play itself was
-    // paid. A play the device cap or the campaign budget refused pays nothing,
-    // and a scan must not be the way around either of them: the cap is what puts
-    // a ceiling on what one faked screen can ever be worth (docs/adr/0003).
-    if (!(await wasCharged(tx, playId))) return stop;
-
-    const lowBalanceFor = await chargeAndPace(tx, {
-      campaign,
-      listingId: listing.id,
-      distributorId: device.userId,
-      playId,
-      amount: scanCost(device.tier),
-      key: "scan",
-      now,
-    });
-    return { url: campaign.url, lowBalanceFor };
+    return campaign.url;
   });
-
-  if (result.lowBalanceFor) notifyLowBalance(result.lowBalanceFor);
-  return result.url;
 }
 
 /**

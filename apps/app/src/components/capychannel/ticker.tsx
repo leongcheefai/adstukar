@@ -1,60 +1,54 @@
 import { Plus } from "@phosphor-icons/react";
 import { economy } from "@repo/config/economy";
+import type { LoopBand } from "@repo/contracts/types";
 import { type FocusEvent, useLayoutEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import { clipCopy } from "../../lib/slots";
-import { TICKER_ADS, type TickerAd, brandOklch } from "./ads";
+import { useSlotLoop } from "../../lib/slots-api";
 import { CapyLockup, HomeLink } from "./lockup";
-import { CRAWL_FALLBACK_MS, bandsForLoop, copiesForFrame, crawlTimeMs, lapMs } from "./ticker-math";
+import { CRAWL_FALLBACK_MS, copiesForFrame, crawlTimeMs, lapMs } from "./ticker-math";
 
-function Face({ ad }: { ad: TickerAd }) {
+type BrandBand = Extract<LoopBand, { kind: "brand" }>;
+
+function Mark({ band }: { band: BrandBand }) {
+  if (band.logoUrl) {
+    return (
+      <span className="ad-logo">
+        <img src={band.logoUrl} alt="" />
+      </span>
+    );
+  }
+  // No logo: the first letter of the name stands in.
   return (
-    <span
-      className="ad-avatar"
-      style={{ ["--brand" as string]: brandOklch(ad.hue) }}
-      aria-hidden="true"
-    >
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        {ad.face}
-      </svg>
+    <span className="ad-avatar" aria-hidden="true">
+      {Array.from(band.name.trim())[0] ?? ""}
     </span>
   );
 }
 
-function Mark({ ad }: { ad: TickerAd }) {
-  if (ad.logo) {
-    return (
-      <span className="ad-logo">
-        <img src={ad.logo} alt="" />
-      </span>
-    );
-  }
-  return <Face ad={ad} />;
-}
-
-function Item({ ad, dup }: { ad: TickerAd; dup: boolean }) {
+function Item({ band, dup }: { band: BrandBand; dup: boolean }) {
   return (
     <a
       className="ticker-item"
-      href={`https://${ad.url}`}
+      href={band.url}
       target="_blank"
       rel="noopener noreferrer"
-      style={{ ["--brand" as string]: brandOklch(ad.hue) }}
       {...(dup ? { inert: true, tabIndex: -1 } : {})}
     >
-      <Mark ad={ad} />
+      <Mark band={band} />
       <span className="ad-copy">
-        <span className="ad-title">{clipCopy(ad.name, economy.slot.nameMaxLength)}</span>{" "}
-        <span className="ad-tagline">{clipCopy(ad.head, economy.slot.taglineMaxLength)}</span>
+        <span className="ad-title">{clipCopy(band.name, economy.slot.nameMaxLength)}</span>{" "}
+        <span className="ad-tagline">{clipCopy(band.tagline, economy.slot.taglineMaxLength)}</span>
       </span>
     </a>
   );
 }
 
 /**
- * A band nobody has bought. It keeps the loop its full length, and it opens
- * the page where a member books it. Sixteen of them would be sixteen tab stops
- * saying the same thing, so only the first open slot takes focus.
+ * A band nobody's brand is on: open, or paid for and waiting for review. It
+ * keeps the loop its full length, and it opens the page where a member books.
+ * Sixteen of them would be sixteen tab stops saying the same thing, so only
+ * the first takes focus.
  */
 function OpenSlot({ dup, first }: { dup: boolean; first: boolean }) {
   return (
@@ -69,18 +63,22 @@ function OpenSlot({ dup, first }: { dup: boolean; first: boolean }) {
   );
 }
 
-const LOOP_BANDS = bandsForLoop(TICKER_ADS);
-const FIRST_OPEN_BAND = LOOP_BANDS.indexOf(null);
+/** Twenty open bands, so the bar keeps its length while the loop loads. */
+const EMPTY_LOOP: LoopBand[] = Array.from({ length: economy.slot.count }, (_, i) => ({
+  position: i + 1,
+  kind: "open",
+}));
 
-function Run({ dup }: { dup: boolean }) {
+function Run({ bands, dup }: { bands: LoopBand[]; dup: boolean }) {
   const copy = dup ? "dup" : "live";
+  const firstOpen = bands.findIndex((band) => band.kind !== "brand");
   return (
     <>
-      {LOOP_BANDS.map((ad, band) =>
-        ad ? (
-          <Item key={`${ad.id}-${copy}`} ad={ad} dup={dup} />
+      {bands.map((band, index) =>
+        band.kind === "brand" ? (
+          <Item key={`${band.position}-${copy}`} band={band} dup={dup} />
         ) : (
-          <OpenSlot key={`slot-${band}-${copy}`} dup={dup} first={band === FIRST_OPEN_BAND} />
+          <OpenSlot key={`slot-${band.position}-${copy}`} dup={dup} first={index === firstOpen} />
         ),
       )}
     </>
@@ -88,14 +86,17 @@ function Run({ dup }: { dup: boolean }) {
 }
 
 export function Ticker() {
+  const { data: loop } = useSlotLoop();
+  const bands = loop?.bands ?? EMPTY_LOOP;
   const windowRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const [copies, setCopies] = useState(2);
   const [lap, setLap] = useState(CRAWL_FALLBACK_MS);
   const runWidthRef = useRef(0);
 
-  // Measured again whenever either box changes: a logo that loads late makes
-  // the run longer, and the lap has to grow with it or the crossing speeds up.
+  // Measured again whenever either box changes: a logo that loads late, or a
+  // loop that arrives from the API, makes the run longer, and the lap has to
+  // grow with it or the crossing speeds up.
   useLayoutEffect(() => {
     const track = trackRef.current;
     const frame = windowRef.current;
@@ -147,9 +148,9 @@ export function Ticker() {
         </HomeLink>
         <div className="ticker-window" ref={windowRef} onFocusCapture={onFocusIn}>
           <div className="ticker-track" ref={trackRef}>
-            <Run dup={false} />
+            <Run bands={bands} dup={false} />
             {Array.from({ length: extras }, (_, copy) => (
-              <Run key={`dup-${copy + 1}-of-${extras}`} dup />
+              <Run key={`dup-${copy + 1}-of-${extras}`} bands={bands} dup />
             ))}
           </div>
         </div>

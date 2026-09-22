@@ -9,16 +9,7 @@ export const FEEDBACK_TYPES = ["bug", "feature", "other"] as const;
  */
 export const CAMPAIGN_STATES = ["draft", "active", "paused", "archived"] as const;
 
-/**
- * Why the system paused a campaign. A campaign a person paused carries no
- * reason, and only that person starts it again.
- *
- * `budget` lifts on the next UTC day, because the daily budget resets then.
- * `balance` lifts as soon as the owner's purse covers one play.
- */
-export const CAMPAIGN_PAUSE_REASONS = ["budget", "balance"] as const;
-
-export type CampaignPauseReason = (typeof CAMPAIGN_PAUSE_REASONS)[number];
+export type CampaignState = (typeof CAMPAIGN_STATES)[number];
 
 /**
  * An admin reviews every listing. `paused` is the advertiser's own stop: the
@@ -137,3 +128,13 @@ export type TopupRefundBlock = (typeof TOPUP_REFUND_BLOCKS)[number];
 export const TOPUP_AMOUNT_BLOCKS = ["below-minimum", "above-maximum"] as const;
 
 export type TopupAmountBlock = (typeof TOPUP_AMOUNT_BLOCKS)[number];
+
+/**
+ * One booking of a ticker slot. `booked` is paid and waits for the domain check
+ * and the creative review. `running` counts its term. `ended` is a term that
+ * is over. `refunded` is a booking whose charge went back before the term
+ * started. Only `booked` and `running` hold a position.
+ */
+export const SLOT_STATES = ["booked", "running", "ended", "refunded"] as const;
+
+export type SlotState = (typeof SLOT_STATES)[number];

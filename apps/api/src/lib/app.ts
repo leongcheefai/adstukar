@@ -21,6 +21,7 @@ import { payoutsRouter } from "../modules/payouts/payouts.routes";
 import { placementsRouter } from "../modules/placements/placements.routes";
 import { releasesRouter } from "../modules/releases/releases.routes";
 import { serveRouter } from "../modules/serve/serve.routes";
+import { slotsRouter } from "../modules/slots/slots.routes";
 import { statsRouter } from "../modules/stats/stats.routes";
 import { topupsRouter } from "../modules/topups/topups.routes";
 import { uploadsRouter } from "../modules/uploads/uploads.routes";
@@ -64,6 +65,7 @@ app.route("/stats", statsRouter);
 app.route("/ledger", ledgerRouter);
 app.route("/payouts", payoutsRouter);
 app.route("/topups", topupsRouter);
+app.route("/slots", slotsRouter);
 app.route("/admin", adminRouter);
 app.route("/", serveRouter);
 

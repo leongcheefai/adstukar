@@ -3,6 +3,7 @@ import type {
   FeedbackQueue,
   Listing,
   ModerationQueue,
+  Pool,
   Topup,
   TopupQueue,
 } from "@repo/contracts/types";
@@ -12,6 +13,7 @@ import { apiFetch } from "./api";
 const queueKey = ["admin", "moderation"] as const;
 const topupsKey = ["admin", "topups"] as const;
 const feedbackKey = ["admin", "feedback"] as const;
+const poolKey = ["admin", "pool"] as const;
 
 /** The listings that wait for a person to read them. */
 export function useModerationQueue() {
@@ -78,5 +80,13 @@ export function useSetFeedbackResolved() {
         method: "POST",
       }),
     onSuccess: () => qc.invalidateQueries({ queryKey: feedbackKey }),
+  });
+}
+
+/** The week's slot revenue beside the week's earn. */
+export function usePool() {
+  return useQuery({
+    queryKey: poolKey,
+    queryFn: () => apiFetch<Pool>("/admin/pool"),
   });
 }

@@ -12,7 +12,6 @@ import {
 } from "drizzle-orm/pg-core";
 import { user } from "./auth";
 import {
-  CAMPAIGN_PAUSE_REASONS,
   CAMPAIGN_STATES,
   DEVICE_STATES,
   DEVICE_TIERS,
@@ -24,12 +23,12 @@ import {
   PLACEMENT_FORMATS,
   PLACEMENT_SIZES,
   PLAY_STATES,
+  SLOT_STATES,
   TOPUP_STATES,
   VENUE_TYPES,
 } from "./enums";
 
 export const campaignStateEnum = pgEnum("campaign_state", CAMPAIGN_STATES);
-export const campaignPauseReasonEnum = pgEnum("campaign_pause_reason", CAMPAIGN_PAUSE_REASONS);
 export const listingStateEnum = pgEnum("listing_state", LISTING_STATES);
 export const deviceStateEnum = pgEnum("device_state", DEVICE_STATES);
 export const deviceTierEnum = pgEnum("device_tier", DEVICE_TIERS);
@@ -42,6 +41,7 @@ export const ledgerReasonEnum = pgEnum("ledger_reason", LEDGER_REASONS);
 export const ledgerLotEnum = pgEnum("ledger_lot", LEDGER_LOTS);
 export const payoutStateEnum = pgEnum("payout_state", PAYOUT_STATES);
 export const topupStateEnum = pgEnum("topup_state", TOPUP_STATES);
+export const slotStateEnum = pgEnum("slot_state", SLOT_STATES);
 
 /**
  * One destination site and every listing that points at it. The advertiser owns
@@ -58,14 +58,6 @@ export const campaign = pgTable(
     url: text("url").notNull(),
     domain: text("domain").notNull(),
     state: campaignStateEnum("state").notNull().default("draft"),
-    /**
-     * Why the system paused this campaign, and when. Both are null on a campaign
-     * a person paused, and only that person starts one of those again.
-     */
-    pauseReason: campaignPauseReasonEnum("pause_reason"),
-    pausedAt: timestamp("paused_at"),
-    /** The most this campaign may spend in one day, as an amount. */
-    dailyBudget: integer("daily_budget").notNull(),
     verificationToken: text("verification_token").notNull(),
     verifiedAt: timestamp("verified_at"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -415,5 +407,53 @@ export const topup = pgTable(
     index("topup_user_created_idx").on(t.userId, t.createdAt),
     index("topup_user_paid_idx").on(t.userId, t.paidAt),
     index("topup_state_idx").on(t.state),
+  ],
+);
+
+/**
+ * One booking of one ticker slot: one campaign, one position, one term, one
+ * flat price. The charge lands at booking and the term starts when the
+ * campaign is verified and its creative approved. A term that is over stays,
+ * because the ledger references the charge; a rebook is a new row.
+ *
+ * `amount` is stamped at booking, so a change to the price never rewrites
+ * what a member already paid.
+ */
+export const slot = pgTable(
+  "slot",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    // Restrict, not cascade: money moved against this row.
+    campaignId: text("campaign_id")
+      .notNull()
+      .references(() => campaign.id, { onDelete: "restrict" }),
+    /** Where the band sits on the loop. The first position is 1. */
+    position: integer("position").notNull(),
+    state: slotStateEnum("state").notNull().default("booked"),
+    /** What the charge took. Always positive. */
+    amount: integer("amount").notNull(),
+    bookedAt: timestamp("booked_at").notNull(),
+    startsAt: timestamp("starts_at"),
+    endsAt: timestamp("ends_at"),
+    /** When the job ended the term, or a refund closed the booking. */
+    endedAt: timestamp("ended_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [
+    index("slot_user_created_idx").on(t.userId, t.createdAt),
+    index("slot_campaign_idx").on(t.campaignId),
+    index("slot_state_ends_idx").on(t.state, t.endsAt),
+    // The database refuses a double booking: two members who press Book on one
+    // position at the same moment would both pass a check in code.
+    uniqueIndex("slot_position_live_key")
+      .on(t.position)
+      .where(sql`${t.state} in ('booked', 'running')`),
+    // One live slot per campaign.
+    uniqueIndex("slot_campaign_live_key")
+      .on(t.campaignId)
+      .where(sql`${t.state} in ('booked', 'running')`),
   ],
 );

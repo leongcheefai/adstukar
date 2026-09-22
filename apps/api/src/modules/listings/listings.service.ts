@@ -3,8 +3,12 @@ import type { CreateListingInput, UpdateListingInput } from "@repo/contracts";
 import { db, schema } from "@repo/db";
 import { and, asc, count, eq, ne } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
-import { getOwnedCampaign } from "../campaigns/campaigns.service";
+import { SLOT_DOES_NOT_PAUSE, getOwnedCampaign } from "../campaigns/campaigns.service";
+import type { Tx } from "../ledger/ledger.service";
+import { hasLiveSlot } from "../slots/term";
 import { listingStateChange } from "./lifecycle";
+
+type ListingRow = typeof schema.listing.$inferSelect;
 
 const LIVE_LISTING = ne(schema.listing.state, "archived");
 
@@ -49,14 +53,28 @@ export async function createListing(userId: string, input: CreateListingInput) {
     });
   }
 
-  const now = new Date();
-  const [row] = await db
+  return insertListing(
+    db,
+    campaign.id,
+    { tagline: input.tagline, logoUrl: input.logoUrl ?? null },
+    new Date(),
+  );
+}
+
+/** The one insert behind a listing. A booking runs it inside its own transaction. */
+export async function insertListing(
+  tx: Tx,
+  campaignId: string,
+  input: { tagline: string; logoUrl: string | null },
+  now: Date,
+): Promise<ListingRow> {
+  const [row] = await tx
     .insert(schema.listing)
     .values({
       id: crypto.randomUUID(),
-      campaignId: campaign.id,
+      campaignId,
       tagline: input.tagline,
-      logoUrl: input.logoUrl ?? null,
+      logoUrl: input.logoUrl,
       createdAt: now,
       updatedAt: now,
     })
@@ -91,6 +109,10 @@ export async function updateListing(userId: string, listingId: string, input: Up
   if (input.state !== undefined) {
     const change = listingStateChange(existing.state, input.state);
     if (!change.ok) throw new HTTPException(409, { message: change.message });
+    // A paused creative would take the brand off the ring, and a slot does not pause.
+    if (change.state === "paused" && (await hasLiveSlot(db, existing.campaignId))) {
+      throw new HTTPException(409, { message: SLOT_DOES_NOT_PAUSE });
+    }
     patch.state = change.state;
   }
 

@@ -1,5 +1,5 @@
-import { type DeviceTierRate, economy, playRateRange, rateTable } from "@repo/config/economy";
-import { perThousandPlaysRange, usd, usdPerThousand } from "@repo/config/money";
+import { type DeviceTierRate, economy, rateTable } from "@repo/config/economy";
+import { slotOffer, usd, usdPerThousand } from "@repo/config/money";
 import { project } from "@repo/config/project";
 import { Container, Logo, Section, SectionHeader } from "@repo/ui";
 import type { CSSProperties, ReactNode } from "react";
@@ -21,8 +21,6 @@ export interface LandingProps {
   /** The site ticker for the foot of a hero that has one, carrying the same figure. */
   ticker?: ReactNode;
 }
-
-const { lowest: LOWEST_RATE, highest: HIGHEST_RATE } = playRateRange();
 
 type Tone = "slab" | "light" | "dark";
 
@@ -117,7 +115,7 @@ const STEPS = [
   },
   {
     title: "Earn",
-    body: "Listings crawl in one line along the foot. Each play earns money, and a scan pays a bonus on top.",
+    body: "Listings crawl in one line along the foot. Each play earns a fixed rate, at the tier of your screen.",
   },
 ] as const;
 
@@ -176,22 +174,18 @@ const TIER_LABEL: Record<DeviceTierRate, string> = {
 const RATE_ROWS = rateTable().map((row) => ({
   tier: row.tier,
   label: TIER_LABEL[row.tier],
-  play: `${usdPerThousand(row.play.lowest)}–${usdPerThousand(row.play.highest)}`,
-  playKeeps: `${usdPerThousand(row.playKeeps.lowest)}–${usdPerThousand(row.playKeeps.highest)}`,
-  scan: usd(row.scan),
-  scanKeeps: usd(row.scanKeeps),
+  perThousand: usdPerThousand(row.perPlay),
 }));
 
 function Rates({ spacing, className }: { spacing: LandingConfig["density"]; className?: string }) {
   const rows = RATE_ROWS;
-  const share = 100 - economy.feePercent;
   return (
     <Section id="rates" spacing={spacing} className={className}>
       <Container>
         <SectionHeader
           eyebrow="What a play pays"
-          headline="One number, both sides"
-          lede={`An advertiser pays per play. ${project.name} keeps ${economy.feePercent}% as its fee, and the screen keeps ${share}%. The same number is on both dashboards.`}
+          headline="One number per screen"
+          lede={`A screen earns a fixed rate for every play. ${project.name} pays it, and the number you read is the number you keep.`}
         />
         <div className="rates-card mx-auto mt-14 max-w-3xl overflow-x-auto rounded-xl bg-card shadow-elev-2">
           <table className="rates-table">
@@ -199,16 +193,7 @@ function Rates({ spacing, className }: { spacing: LandingConfig["density"]; clas
               <tr>
                 <th scope="col">Screen tier</th>
                 <th scope="col" className="rates-num">
-                  A play, per 1,000 <span>advertiser pays</span>
-                </th>
-                <th scope="col" className="rates-num">
-                  A play, per 1,000 <span>you keep</span>
-                </th>
-                <th scope="col" className="rates-num">
-                  A scan <span>advertiser pays</span>
-                </th>
-                <th scope="col" className="rates-num">
-                  A scan <span>you keep</span>
+                  Per 1,000 plays <span>you keep</span>
                 </th>
               </tr>
             </thead>
@@ -216,10 +201,7 @@ function Rates({ spacing, className }: { spacing: LandingConfig["density"]; clas
               {rows.map((row) => (
                 <tr key={row.tier}>
                   <th scope="row">{row.label}</th>
-                  <td className="rates-num">{row.play}</td>
-                  <td className="rates-num rates-keep">{row.playKeeps}</td>
-                  <td className="rates-num">{row.scan}</td>
-                  <td className="rates-num rates-keep">{row.scanKeeps}</td>
+                  <td className="rates-num rates-keep">{row.perThousand}</td>
                 </tr>
               ))}
             </tbody>
@@ -227,7 +209,8 @@ function Rates({ spacing, className }: { spacing: LandingConfig["density"]; clas
         </div>
         <p className="mx-auto mt-6 max-w-2xl text-center text-pretty text-sm text-muted-foreground">
           In US dollars. A person stamps the tier when the screen is approved, and a screen is paid
-          for up to {economy.caps.dailyPlaysPerDevice.toLocaleString("en-US")} plays a day.
+          for up to {economy.caps.dailyPlaysPerDevice.toLocaleString("en-US")} plays and{" "}
+          {economy.caps.paidHoursPerDay} hours a day.
         </p>
       </Container>
     </Section>
@@ -236,8 +219,8 @@ function Rates({ spacing, className }: { spacing: LandingConfig["density"]; clas
 
 const ADVERTISER_CLAIMS = [
   {
-    title: "Pay per play",
-    body: `${perThousandPlaysRange(LOWEST_RATE, HIGHEST_RATE)}, by the tier of the screen. Set a daily budget from ${usd(economy.caps.minDailyBudget)}; the campaign stops when it is spent and starts again tomorrow.`,
+    title: "One flat price",
+    body: `${slotOffer()}, on every screen. No per-play bill, no daily budget, and no surprise spend: a term ends and does not renew.`,
   },
   {
     title: "One verified domain",
@@ -245,7 +228,7 @@ const ADVERTISER_CLAIMS = [
   },
   {
     title: "Every impression on one chart",
-    body: "Impressions, clicks, and spend, by day. The fee is its own line, never a spread.",
+    body: "Plays and scans, by day, on every screen your slot ran on.",
   },
 ] as const;
 
