@@ -11,7 +11,7 @@ export function ChannelLayer({
 }) {
   return (
     <div className="capychannel-channel-layer">
-      {channel?.id === "upload" ? <UploadChannel files={channel.files} paused={paused} /> : null}
+      {channel?.id === "upload" ? <UploadChannel items={channel.items} paused={paused} /> : null}
       {channel?.id === "wallpaper" ? <WallpaperChannel wallpaper={channel.wallpaper} /> : null}
     </div>
   );

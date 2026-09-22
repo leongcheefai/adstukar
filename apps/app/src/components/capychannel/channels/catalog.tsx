@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { LibraryItem } from "../../../lib/library";
 
 export const CHANNEL_IDS = ["upload", "wallpaper"] as const;
 
@@ -41,7 +42,7 @@ export const WALLPAPERS = [
 
 export type WallpaperId = (typeof WALLPAPERS)[number]["id"];
 
-/** What the member chose to play. The files live in memory only. */
+/** What the member chose to play. An upload plays from its public URLs. */
 export type ChannelPick =
-  | { id: "upload"; files: File[] }
+  | { id: "upload"; items: LibraryItem[] }
   | { id: "wallpaper"; wallpaper: WallpaperId };
