@@ -177,7 +177,6 @@ function Steps({
   );
 }
 
-
 const ADVERTISER_CLAIMS = [
   {
     title: "Choose a slot",
