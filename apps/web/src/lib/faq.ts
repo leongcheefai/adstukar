@@ -63,7 +63,7 @@ export const FAQ_GROUPS: FaqGroup[] = [
       },
       {
         question: "Is there a limit to what one screen earns?",
-        answer: `A screen is paid for up to ${economy.caps.dailyPlaysPerDevice.toLocaleString()} plays a day. Above that the listing still plays and the play still counts, and it pays nothing. The cap is what keeps a screen that faces a wall from being worth running.`,
+        answer: `A screen is paid for up to ${economy.caps.dailyPlaysPerDevice.toLocaleString()} plays a day, and for up to ${economy.caps.paidHoursPerDay} hours a day from its first play. Above either, the listing still plays and the play still counts, and it pays nothing. The caps are what keep a screen that faces a wall from being worth running.`,
       },
     ],
   },
