@@ -254,7 +254,11 @@ export function CapyChannelScreen({ dashboardOpen = false }: { dashboardOpen?: b
             hidden={bootHidden}
             tray={signedIn ? "pick" : "auth"}
           >
-            {signedIn ? <ChannelPicker onPick={pick} /> : leaving ? null : <BootAuth />}
+            {session ? (
+              <ChannelPicker userId={session.user.id} onPick={pick} />
+            ) : leaving ? null : (
+              <BootAuth />
+            )}
           </Boot>
         </div>
       </div>

@@ -1488,6 +1488,325 @@
   outline: calc(0.3 * var(--u)) solid #fff;
   outline-offset: calc(0.4 * var(--u));
 }
+/* The library: the member's own pictures and clips, on the set. A round back
+   button, one row of thumbnails, the Upload and Play pills under it, and the
+   one line that says where a file goes and how big it may be. The tray's
+   tile rules make every button a square with a drawing on it; each control
+   below sets its own shape. */
+.boot-pick-lib {
+  display: block;
+  /* As wide as its widest child, so the back button, the row and the pills
+     share one left edge, and the block as a whole sits in the middle. */
+  width: fit-content;
+  max-width: calc(100cqw - 2 * var(--safe-x));
+}
+.boot-lib {
+  /* One width for a tile and a pill, and the height the strip reserves. */
+  --lib-tile: calc(46 * var(--u));
+  --lib-pad: calc(1.6 * var(--u));
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: calc(3 * var(--u));
+  color: #fff;
+}
+/* Back on the left, the info disc on the right, on one row as wide as the
+   block. */
+.boot-lib-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  align-self: stretch;
+}
+/* Light discs with a dark glyph, sized for a remote. */
+.boot-lib .boot-lib-back,
+.boot-lib .boot-lib-info {
+  flex-direction: row;
+  gap: 0;
+  width: calc(6.7 * var(--u)); /* 56px */
+  height: calc(6.7 * var(--u));
+  aspect-ratio: 1;
+  padding: 0;
+  border-radius: 50%;
+  background: #e2e2e2;
+  box-shadow: none;
+  color: #111;
+}
+.boot-lib .boot-lib-back:hover,
+.boot-lib .boot-lib-info:hover {
+  background: #fff;
+}
+.boot-lib .boot-lib-info svg {
+  width: calc(3.5 * var(--u));
+  height: calc(3.5 * var(--u));
+  /* A filled glyph, not a stroked drawing like the tray.s own icons. */
+  fill: currentColor;
+  stroke: none;
+}
+.boot-lib .boot-lib-back svg {
+  width: calc(3.2 * var(--u));
+  height: calc(3.2 * var(--u));
+  stroke-width: 2.2;
+}
+
+/* The strip keeps the row.s height in the block; the row is out of flow and
+   as wide as the screen, centred on the tray, which is centred on the screen.
+   Its left padding is the distance from the screen edge to the block, so the
+   first tile starts on the pills. left edge and the rest run under the frame
+   to the edge, where a scroll can reach them. The tray stops clipping while
+   the library is up, or the bleed would be cut at the block. */
+.boot-lib-strip {
+  position: relative;
+  align-self: stretch;
+  height: calc(var(--lib-tile) * 5 / 9 + 2 * var(--lib-pad));
+}
+.capychannel-boot:has(.boot-pick-lib) .boot-tray {
+  overflow: visible;
+}
+.boot-lib-row {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 100cqw;
+  translate: -50% 0;
+  display: flex;
+  gap: calc(3 * var(--u));
+  padding: var(--lib-pad) var(--safe-x) var(--lib-pad) calc(50cqw - 50%);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  /* No bar: the tiles running under the frame say the row scrolls, and a bar
+     would sit on the pills. Keys and a swipe still move it. */
+  scrollbar-width: none;
+}
+.boot-lib-row::-webkit-scrollbar {
+  display: none;
+}
+.boot-lib-tile {
+  position: relative;
+  flex: none;
+  width: var(--lib-tile);
+  aspect-ratio: 9 / 5;
+  border-radius: calc(2 * var(--u));
+}
+/* The thumbnail is the button that selects. A light ground shows while a
+   thumbnail loads, or under a picture with a transparent edge. */
+.boot-lib-row .boot-lib-pick {
+  display: block;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
+  padding: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  background: #e2e2e2;
+  box-shadow: none;
+  color: #fff;
+  cursor: pointer;
+  transition: box-shadow 140ms ease-out, scale 140ms ease-out;
+}
+.boot-lib-thumb {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.boot-lib-thumb img,
+.boot-lib-thumb video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* A clip says so, always. A picture needs no word. */
+.boot-lib-label {
+  position: absolute;
+  top: calc(1.8 * var(--u));
+  left: calc(2.2 * var(--u));
+  font-size: var(--t-md);
+  font-weight: 600;
+  line-height: 1;
+  color: #111;
+  text-shadow: 0 0 calc(1.2 * var(--u)) rgb(255 255 255 / 0.9);
+}
+/* Selected: a white frame and a filled check in the lower corner, clear of
+   the x above it. */
+.boot-lib-check {
+  position: absolute;
+  right: calc(1.2 * var(--u));
+  bottom: calc(1.2 * var(--u));
+  display: grid;
+  place-items: center;
+  width: calc(3.4 * var(--u));
+  height: calc(3.4 * var(--u));
+  border-radius: 50%;
+  background: #fff;
+  color: #000;
+  opacity: 0;
+  scale: 0.6;
+  transition: opacity 140ms ease-out, scale 140ms ease-out;
+}
+.boot-lib-row .boot-lib-check svg {
+  width: calc(2.2 * var(--u));
+  height: calc(2.2 * var(--u));
+  stroke-width: 2.6;
+}
+.boot-lib-tile[data-selected] .boot-lib-pick {
+  box-shadow: 0 0 0 calc(0.5 * var(--u)) #fff;
+}
+.boot-lib-tile[data-selected] .boot-lib-check {
+  opacity: 1;
+  scale: 1;
+}
+/* The red x sits on the corner and shows on hover, on focus, and on a screen
+   with no pointer to hover with. */
+.boot-lib-row .boot-lib-x {
+  position: absolute;
+  top: calc(-1.2 * var(--u));
+  right: calc(-1.2 * var(--u));
+  display: grid;
+  place-items: center;
+  width: calc(3.6 * var(--u));
+  height: calc(3.6 * var(--u));
+  aspect-ratio: 1;
+  padding: 0;
+  border-radius: 50%;
+  background: #ef3b2f;
+  box-shadow: 0 0 0 calc(0.3 * var(--u)) rgb(0 0 0 / 0.25);
+  color: #fff;
+  opacity: 0;
+  scale: 0.7;
+  transition: opacity 140ms ease-out, scale 140ms ease-out, background 140ms ease-out;
+}
+.boot-lib-row .boot-lib-x svg {
+  width: calc(2.2 * var(--u));
+  height: calc(2.2 * var(--u));
+  stroke-width: 2.6;
+}
+.boot-lib-tile:hover .boot-lib-x,
+.boot-lib-tile:focus-within .boot-lib-x,
+.boot-lib-tile[data-failed] .boot-lib-x {
+  opacity: 1;
+  scale: 1;
+}
+@media (hover: none) {
+  .boot-lib-row .boot-lib-x {
+    opacity: 1;
+    scale: 1;
+  }
+}
+.boot-lib-row .boot-lib-x:hover {
+  background: #ff5a4e;
+}
+/* An upload in flight: a bar along the bottom edge. A failed one shows one
+   mark in the middle; the words and Retry are in the toast, and the x
+   removes it. */
+.boot-lib-tile[data-pending] .boot-lib-pick {
+  cursor: default;
+}
+.boot-lib-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: block;
+  height: calc(0.8 * var(--u));
+  background: rgb(0 0 0 / 0.25);
+}
+.boot-lib-progress > span {
+  display: block;
+  height: 100%;
+  background: #fff;
+  transition: width 200ms linear;
+}
+.boot-lib-fail {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgb(0 0 0 / 0.55);
+}
+/* A tap on the mark brings the toast back. */
+.boot-lib-row .boot-lib-fail button {
+  display: grid;
+  place-items: center;
+  width: calc(6.4 * var(--u));
+  height: calc(6.4 * var(--u));
+  aspect-ratio: 1;
+  padding: 0;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: none;
+  color: #000;
+  font-size: calc(3.8 * var(--u));
+  font-weight: 700;
+  line-height: 1;
+}
+.boot-lib-row .boot-lib-fail button:hover {
+  background: #fff;
+}
+/* An empty row keeps its height, so the pills do not jump up. */
+.boot-lib-blank {
+  border: calc(0.2 * var(--u)) dashed rgb(255 255 255 / 0.45);
+}
+
+/* Upload in black, Play in white. Two pills of one width. */
+.boot-lib-actions {
+  display: flex;
+  gap: calc(4 * var(--u));
+}
+.boot-lib-actions button {
+  flex-direction: row;
+  gap: 0;
+  width: var(--lib-tile);
+  aspect-ratio: auto;
+  padding: calc(2.2 * var(--u)) calc(4 * var(--u));
+  border-radius: 999px;
+  box-shadow: none;
+  font-size: calc(3.9 * var(--u));
+  font-weight: 500;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+.boot-lib-actions .boot-lib-upload,
+.boot-lib-actions .boot-lib-upload:hover {
+  background: #000;
+  color: #fff;
+}
+.boot-lib-actions .boot-lib-upload:hover {
+  background: #1a1a1a;
+}
+.boot-lib-actions .boot-lib-play,
+.boot-lib-actions .boot-lib-play:hover {
+  background: #fff;
+  color: #000;
+}
+.boot-lib-actions .boot-lib-play:disabled {
+  background: #fff;
+  color: rgb(0 0 0 / 0.35);
+  cursor: default;
+  scale: 1;
+}
+/* The library takes the set. The mark leaves its row for the top left corner,
+   small, so the row of thumbnails has the middle of the screen; the row it
+   held closes, gap and all, and the tray centres on its own. */
+.capychannel-boot:has(.boot-pick-lib) .boot-brand {
+  position: absolute;
+  z-index: 1;
+  /* The screen is a grid too, and an out-of-flow box keeps its grid area
+     for its containing block. Auto placement puts the corner at the screen. */
+  grid-area: auto;
+  top: calc(3 * var(--u));
+  left: var(--safe-x);
+  animation: boot-pick-in 220ms ease-out both;
+}
+.capychannel-boot:has(.boot-pick-lib) .boot-brand .capy-logo {
+  height: calc(18 * var(--u));
+}
+.capychannel-boot:has(.boot-pick-lib) .boot-stack {
+  /* Static, so the mark measures its corner from the screen, not from the
+     stack it used to share with the tray. */
+  position: static;
+  row-gap: 0;
+}
 
 /* Struck before the picture exists. */
 .boot-line {

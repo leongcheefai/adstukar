@@ -1,30 +1,27 @@
-import { media, megabytes } from "@repo/config/media";
-import { type ChangeEvent, type KeyboardEvent, useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
+import { type KeyboardEvent, useEffect, useRef, useState } from "react";
+import { lastInputWasKeyboard } from "../../lib/input-mode";
 import { CHANNELS, type ChannelId, type ChannelPick, WALLPAPERS } from "./channels/catalog";
-import { isPlayable } from "./channels/upload";
+import { Library } from "./library";
 
-/** What the picker accepts, and what the message names when it refuses. */
-const ACCEPT = [...media.image.types, ...media.video.types].join(",");
-const LIMITS = `PNG, JPEG or WebP up to ${megabytes(media.image.maxBytes)}, or MP4 up to ${megabytes(media.video.maxBytes)}`;
-
-type View = "channels" | "wallpapers";
+type View = "channels" | "wallpapers" | "library";
 
 export function ChannelPicker({
+  userId,
   onPick,
 }: {
+  userId: string;
   onPick: (pick: ChannelPick) => void;
 }) {
   const [view, setView] = useState<View>("channels");
-  const fileRef = useRef<HTMLInputElement>(null);
   const trayRef = useRef<HTMLFieldSetElement>(null);
   const moved = useRef(false);
 
   // The tiles remount when the view changes, and the focus goes with them.
-  // Boot owns the first focus, so this runs only after a change of view.
+  // Boot owns the first focus, so this runs only after a change of view, and
+  // only for a keyboard: a mouse would see a ring it did not ask for.
   // biome-ignore lint/correctness/useExhaustiveDependencies: view is the trigger
   useEffect(() => {
-    if (!moved.current) return;
+    if (!moved.current || !lastInputWasKeyboard()) return;
     trayRef.current?.querySelector<HTMLElement>("[data-first]")?.focus();
   }, [view]);
 
@@ -34,33 +31,21 @@ export function ChannelPicker({
   }
 
   function open(id: ChannelId) {
-    if (id === "upload") fileRef.current?.click();
-    else show("wallpapers");
-  }
-
-  function onFiles(event: ChangeEvent<HTMLInputElement>) {
-    const chosen = [...(event.target.files ?? [])];
-    const files = chosen.filter(isPlayable);
-    // Cleared, so the same files can be chosen a second time.
-    event.target.value = "";
-    const refused = chosen.length - files.length;
-    if (refused > 0) {
-      toast.error(
-        refused === 1
-          ? `One file was left out. ${LIMITS}.`
-          : `${refused} files were left out. ${LIMITS}.`,
-      );
-    }
-    if (files.length > 0) onPick({ id: "upload", files });
+    show(id === "upload" ? "library" : "wallpapers");
   }
 
   function onKeyDown(event: KeyboardEvent<HTMLFieldSetElement>) {
-    if (event.key === "Escape" && view === "wallpapers") {
+    // A dialog renders in a portal. Its keys bubble here through React, not
+    // through the DOM, and they belong to the dialog.
+    if (!(event.target instanceof Node) || !event.currentTarget.contains(event.target)) return;
+    if (event.key === "Escape" && view !== "channels") {
       show("channels");
       event.preventDefault();
       return;
     }
-    const buttons = [...event.currentTarget.querySelectorAll("button")];
+    const buttons = [
+      ...event.currentTarget.querySelectorAll<HTMLButtonElement>("button:not(:disabled)"),
+    ];
     const i = buttons.indexOf(document.activeElement as HTMLButtonElement);
     if (i < 0) return;
     if (event.key === "ArrowRight") {
@@ -70,6 +55,24 @@ export function ChannelPicker({
       buttons[(i - 1 + buttons.length) % buttons.length]?.focus();
       event.preventDefault();
     }
+  }
+
+  if (view === "library") {
+    return (
+      <fieldset
+        key="library"
+        ref={trayRef}
+        className="boot-pick boot-pick-lib"
+        onKeyDown={onKeyDown}
+      >
+        <legend className="sr-only">Your images and video</legend>
+        <Library
+          userId={userId}
+          onBack={() => show("channels")}
+          onPlay={(items) => onPick({ id: "upload", items })}
+        />
+      </fieldset>
+    );
   }
 
   if (view === "wallpapers") {
@@ -122,8 +125,6 @@ export function ChannelPicker({
           <span>{channel.label}</span>
         </button>
       ))}
-      {/* After the tiles: Boot gives the first focus to the first control it finds. */}
-      <input ref={fileRef} type="file" accept={ACCEPT} multiple hidden onChange={onFiles} />
     </fieldset>
   );
 }

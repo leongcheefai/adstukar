@@ -1,37 +1,21 @@
-import { acceptsImage, acceptsVideo } from "@repo/config/media";
 import { useEffect, useRef, useState } from "react";
+import type { LibraryItem } from "../../../lib/library";
 
 const IMAGE_DWELL_MS = 8000;
 
-type Media = { url: string; kind: "image" | "video" };
-
-/**
- * The same rule the presign routes apply, so a member learns the caps on their
- * own set before a file ever goes to the server.
- */
-export function isPlayable(file: File): boolean {
-  return acceptsImage(file) || acceptsVideo(file);
-}
-
-export function UploadChannel({ files, paused }: { files: File[]; paused: boolean }) {
-  const [media, setMedia] = useState<Media[]>([]);
+/** The member's own pictures and clips, from their public URLs, one at a time. */
+export function UploadChannel({ items, paused }: { items: LibraryItem[]; paused: boolean }) {
   const [index, setIndex] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
 
+  // A new set starts from its first item.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: items is the trigger
   useEffect(() => {
-    const next = files.map<Media>((file) => ({
-      url: URL.createObjectURL(file),
-      kind: file.type.startsWith("video/") ? "video" : "image",
-    }));
-    setMedia(next);
     setIndex(0);
-    return () => {
-      for (const item of next) URL.revokeObjectURL(item.url);
-    };
-  }, [files]);
+  }, [items]);
 
-  const many = media.length > 1;
-  const current = media.length > 0 ? media[index % media.length] : undefined;
+  const many = items.length > 1;
+  const current = items.length > 0 ? items[index % items.length] : undefined;
 
   // An image holds for its dwell. A video holds until it ends.
   useEffect(() => {

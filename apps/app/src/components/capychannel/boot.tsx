@@ -1,4 +1,5 @@
 import { type ReactNode, useEffect, useRef } from "react";
+import { lastInputWasKeyboard } from "../../lib/input-mode";
 import { CapyLockup, HomeLink } from "./lockup";
 
 export type BootPhase = "brand" | "pick";
@@ -23,6 +24,9 @@ export function Boot({
   useEffect(() => {
     if (phase !== "pick" || hidden) return;
     if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+    // Only a keyboard gets a starting point. A mouse would see a ring it did
+    // not ask for.
+    if (!lastInputWasKeyboard()) return;
     const first = pickRef.current?.querySelector<HTMLElement>('input[type="email"], input, button');
     first?.focus();
   }, [phase, hidden]);
