@@ -54,6 +54,18 @@ export const economy = {
      */
     countries: ["MY"],
     /**
+     * What a payout leaves in. The platform is a Malaysia account and settles
+     * MYR only, so a Transfer is in MYR while the ledger stays in USD
+     * (docs/adr/0012). The rate is Bank Negara Malaysia's 12:00 middle rate
+     * on the day the admin approves. Approval refuses a rate outside the
+     * bounds: a broken feed must never set what a member is paid.
+     */
+    paidIn: {
+      currency: "MYR",
+      /** MYR per USD. The ringgit has stayed inside 3 and 5 for two decades. */
+      rateBounds: { min: 3, max: 6 },
+    },
+    /**
      * Days of device history the fraud review reads before an admin pays. It
      * matches the hold, so the window an admin looks at is the window the hold
      * was meant to protect.

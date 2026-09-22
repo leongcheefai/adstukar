@@ -67,6 +67,7 @@ export type {
   ListingReview,
   ModerationQueue,
   PayoutQueue,
+  PayoutQuote,
   Pool,
   PayoutReview,
   ReviewedDevice,

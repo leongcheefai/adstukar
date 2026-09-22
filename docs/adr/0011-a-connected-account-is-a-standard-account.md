@@ -58,14 +58,11 @@ so the list is `["MY"]`. Every probe account was deleted.
 - The member pays whatever Stripe charges their account. A Transfer to a
   connected account carries no Stripe fee, and Stripe's standard payout to a
   bank in MY is free at the time of writing. We do not promise either in copy.
-- **Open: the transfer currency.** A Transfer is in USD today, because the
-  ledger is (ADR 0008). `country_specs/MY` lists `myr` as the only bank
-  account currency, so this platform cannot hold a USD balance: every USD
-  top-up settles to MYR, and a USD Transfer fails with `balance_insufficient`.
-  The Transfer must move to MYR, converted at approval, with the rate and the
-  MYR amount kept on the payout row. Which rate (Stripe's, a fixed peg, or a
-  daily fix) is a business decision and a separate ADR. Until it lands, an
-  approval fails on this account.
+- The transfer currency. A Transfer was in USD, because the ledger is
+  (ADR 0008). `country_specs/MY` lists `myr` as the only bank account
+  currency, so this platform cannot hold a USD balance, and a USD Transfer
+  fails with `balance_insufficient`. Resolved in docs/adr/0012: the Transfer
+  is in MYR at the Bank Negara rate of the day the admin approves.
 - Stripe may change the Malaysia rule. If a Malaysia platform can carry
   losses one day, Express is a one-function change back, and this ADR is
   superseded.

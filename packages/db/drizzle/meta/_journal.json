@@ -120,6 +120,13 @@
       "when": 1790000142702,
       "tag": "0016_drop_campaign_budget",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1790051763727,
+      "tag": "0017_payout_paid_in_myr",
+      "breakpoints": true
     }
   ]
 }

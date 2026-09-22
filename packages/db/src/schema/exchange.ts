@@ -3,6 +3,7 @@ import {
   boolean,
   index,
   integer,
+  numeric,
   pgEnum,
   pgTable,
   text,
@@ -316,7 +317,11 @@ export const stripeAccount = pgTable("stripe_account", {
  * amount comes back; it never edits the debit.
  *
  * `usdCents` is stored rather than derived, so a change to the peg never rewrites
- * what we already paid. It is also the amount the Stripe Transfer carries.
+ * what we already paid. The Stripe Transfer carries `paidCents` in
+ * `paidCurrency`: the platform settles MYR, so the dollars are converted once,
+ * at `fxRate` on `fxRateDate`, the day the admin approves (docs/adr/0012).
+ * All four are stamped from the transfer itself, so a retry that finds the
+ * transfer records what really moved.
  */
 export const payoutRequest = pgTable(
   "payout_request",
@@ -337,6 +342,14 @@ export const payoutRequest = pgTable(
     reference: text("reference"),
     /** The Stripe Transfer that paid this request. `reference` carries it too. */
     stripeTransferId: text("stripe_transfer_id").unique(),
+    /** What the transfer moved, in the payout currency's minor unit. Null until paid. */
+    paidCents: integer("paid_cents"),
+    /** ISO 4217, upper case: `MYR`. */
+    paidCurrency: text("paid_currency"),
+    /** Units of `paidCurrency` per USD, as the feed quoted it. A string, because it is a decimal. */
+    fxRate: numeric("fx_rate", { precision: 12, scale: 6 }),
+    /** The day the rate is for, `YYYY-MM-DD`. */
+    fxRateDate: text("fx_rate_date"),
     rejectionReason: text("rejection_reason"),
     reviewedBy: text("reviewed_by").references(() => user.id, { onDelete: "set null" }),
     reviewedAt: timestamp("reviewed_at"),
