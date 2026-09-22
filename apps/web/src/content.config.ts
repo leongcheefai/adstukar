@@ -16,4 +16,18 @@ const blog = defineCollection({
   }),
 });
 
-export const collections = { blog };
+/* One file is one help topic, and one page. `.mdx` where the text quotes a
+   number, so the number is imported from `@repo/config/economy` and never
+   typed by hand. */
+const help = defineCollection({
+  loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/help" }),
+  schema: z.object({
+    title: z.string(),
+    description: z.string(),
+    /** Position in the side menu, lowest first. */
+    order: z.number().default(0),
+    draft: z.boolean().default(false),
+  }),
+});
+
+export const collections = { blog, help };

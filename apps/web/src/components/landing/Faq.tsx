@@ -1,10 +1,24 @@
 import { Container, Section } from "@repo/ui";
 import type { FaqEntry } from "../../lib/faq";
-import { FaqItem } from "./FaqSections";
+
+/** One question, as a native disclosure: it works before any script and without one. */
+function FaqItem({ item }: { item: FaqEntry }) {
+  return (
+    <details className="faq-item">
+      <summary className="faq-q">
+        <span>{item.question}</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true" className="faq-plus">
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+      </summary>
+      <p className="faq-a">{item.answer}</p>
+    </details>
+  );
+}
 
 /**
  * The landing page's questions: one word of title, then the list. No groups,
- * no ledes, no link: the footer already points at the FAQ page.
+ * no ledes, no link: the nav and the footer already point at the help centre.
  */
 export function Faq({
   items,

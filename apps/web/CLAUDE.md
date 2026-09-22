@@ -1,13 +1,13 @@
 # apps/web
 
 ## Purpose
-Astro 5 marketing site, statically generated at the canonical URL from `@repo/config/project`. One landing page ("Play ads and earn money") plus FAQ, blog, releases, and legal pages. No pricing page yet — top-up and payout are a later phase. It also generates OG images at build time with Satori.
+Astro 5 marketing site, statically generated at the canonical URL from `@repo/config/project`. One landing page ("Play ads and earn money") plus a help centre, blog, releases, and legal pages. No pricing page yet — top-up and payout are a later phase. It also generates OG images at build time with Satori.
 
 ## Conventions
 - Pages live in `src/pages/` as `.astro` files — use `BaseLayout` for consistent `<head>` SEO and OG meta
 - Product name, site URL, and public email addresses come from `@repo/config/project` — do not duplicate them here
 - React components in `src/components/*.tsx` render server-side by default — add `client:load`, `client:visible`, or another `client:*` directive only when they need browser-side behavior
-- The landing page is one pure function of a config: `src/components/landing/Landing.tsx` renders `src/lib/landing.config.json`. Landing copy lives in that component; the crawl, the drawn screen, and the FAQ blocks are its siblings in `src/components/landing/`. FAQ questions live in `src/lib/faq.ts` in three groups, and the landing page prints the first few of each; page metadata is centralized in `src/lib/pages.ts`; page-specific copy stays with its route or content entry
+- The landing page is one pure function of a config: `src/components/landing/Landing.tsx` renders `src/lib/landing.config.json`. Landing copy lives in that component; the crawl, the drawn screen, and the FAQ blocks are its siblings in `src/components/landing/`. FAQ questions live in `src/lib/faq.ts` in three groups, and the landing page prints the first few of each; there is no `/faq` page. The help centre is `/help`, under `src/layouts/HelpLayout.astro` (side menu, no site header, no ticker): one file in `src/content/help/` is one topic and one page, its `##` headings are the sections the side menu and the search link to, and a topic that quotes a number is `.mdx` and imports it from `@repo/config/economy`. The help home shows a greeting and the search only. Help copy is written in ASD-STE100 Simplified Technical English; page metadata is centralized in `src/lib/pages.ts`; page-specific copy stays with its route or content entry
 - Every invented number on the landing page (the sample venue, the crawl's listings, the chart) is drawn from the config's `seed` through `src/lib/landing/prng.ts` and `src/lib/landing/sample.ts`. Never call `Math.random` in a component: the same seed must draw the same page
 - Economy numbers shown on the site come from `@repo/config/economy` — never type an amount. The rate is one number per tier (`rateTable()`, `earnPerPlay()`), and the slot price is `economy.slot`
 - Browser-exposed env goes through `src/lib/env.ts` (validated via `@t3-oss/env-core`) — never read `import.meta.env` directly, and never import `@repo/env`, which is server-only. Add new vars to the schema there and to the root `.env.example`; they must carry the `PUBLIC_` prefix to reach the bundle.
@@ -19,7 +19,7 @@ Astro 5 marketing site, statically generated at the canonical URL from `@repo/co
 Start the dev server and open `http://localhost:4321/lab/landing`. Pick a mode, move the knobs, click the page for a new seed, and press Save: it writes `src/lib/landing.config.json` (through a dev-only Vite middleware in `astro.config.ts`) and the site re-renders from it. The route builds nothing in production. Bounds for every knob live in `src/lib/landing/config.ts`.
 
 ### Update marketing copy
-Edit `src/components/landing/Landing.tsx` for the landing page, `src/lib/faq.ts` for FAQ items, and `src/lib/pages.ts` for page metadata. Legal, FAQ, customer, security, and blog copy lives in the corresponding route or `src/content/` entry. `pnpm launch:check` lists remaining placeholders.
+Edit `src/components/landing/Landing.tsx` for the landing page, `src/lib/faq.ts` for FAQ items, and `src/lib/pages.ts` for page metadata. Legal, help, customer, security, and blog copy lives in the corresponding route or `src/content/` entry. `pnpm launch:check` lists remaining placeholders.
 
 ### Add a new page
 1. Create `src/pages/<name>.astro`

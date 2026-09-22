@@ -23,7 +23,13 @@ export const getStaticPaths: GetStaticPaths = async () => {
       description: page.ogDescription ?? page.description,
     },
   }));
-  return [...staticPaths, ...blogPaths];
+  const helpPaths = (await getCollection("help"))
+    .filter((a) => !a.data.draft)
+    .map((article) => ({
+      params: { slug: `help-${article.id}` },
+      props: { title: article.data.title, description: article.data.description },
+    }));
+  return [...staticPaths, ...blogPaths, ...helpPaths];
 };
 
 // Poppins is already vendored in @repo/ui for the site itself, so the OG card

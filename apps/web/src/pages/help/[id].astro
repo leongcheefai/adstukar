@@ -1,0 +1,66 @@
+---
+import { getCollection, render } from "astro:content";
+import { project } from "@repo/config/project";
+import HelpLayout from "../../layouts/HelpLayout.astro";
+import { HELP_SEARCH_HASH, helpHref } from "../../lib/help";
+import { breadcrumbSchema } from "../../lib/structured-data";
+
+export async function getStaticPaths() {
+  const topics = await getCollection("help");
+  return topics
+    .filter((topic) => !topic.data.draft)
+    .map((topic) => ({
+      params: { id: topic.id },
+      props: { topic },
+    }));
+}
+
+const { topic } = Astro.props;
+const { Content, headings } = await render(topic);
+const site = Astro.site ?? new URL(project.siteUrl);
+
+/* The side menu lists the `##` headings; the `###` ones stay in the text. */
+const sections = headings.filter((h) => h.depth === 2).map(({ slug, text }) => ({ slug, text }));
+
+const jsonLd = breadcrumbSchema([
+  { name: "Home", url: site.origin },
+  { name: "Help", url: new URL("/help", site).href },
+  { name: topic.data.title, url: new URL(helpHref(topic.id), site).href },
+]);
+---
+
+<HelpLayout
+  title={`${topic.data.title} — ${project.name} Help`}
+  description={topic.data.description}
+  ogSlug={`help-${topic.id}`}
+  ogType="article"
+  jsonLd={jsonLd}
+  current={{ id: topic.id, sections }}
+>
+  <div class="max-w-3xl">
+    <article>
+      <header class="mb-10">
+        <h1 class="text-4xl font-medium tracking-tight">{topic.data.title}</h1>
+      </header>
+      <div class="prose prose-help">
+        <Content />
+      </div>
+    </article>
+    <p class="mt-16 border-t border-border pt-6 text-sm text-muted-foreground">
+      If you cannot find an answer, write to
+      <a href={`mailto:${project.email.support}`} class="text-primary hover:underline">
+        {project.email.support}
+      </a>.
+    </p>
+  </div>
+
+  <!-- The search field lives on the help home, so ⌘K here goes to it. -->
+  <script is:inline define:vars={{ searchUrl: `/help${HELP_SEARCH_HASH}` }}>
+    window.addEventListener("keydown", (event) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        window.location.href = searchUrl;
+      }
+    });
+  </script>
+</HelpLayout>

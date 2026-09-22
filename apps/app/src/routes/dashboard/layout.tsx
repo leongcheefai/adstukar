@@ -1,4 +1,11 @@
-import { Coins, Megaphone, Gear as Settings, SquaresFour, X } from "@phosphor-icons/react";
+import {
+  Coins,
+  Megaphone,
+  Question,
+  Gear as Settings,
+  SquaresFour,
+  X,
+} from "@phosphor-icons/react";
 import {
   Button,
   DashboardShell,
@@ -18,6 +25,10 @@ import { SetupCoach } from "../../components/setup-coach";
 import { StripeCoach } from "../../components/stripe-coach";
 import { signOutThen, useSession } from "../../lib/auth";
 import { useCoach } from "../../lib/coach";
+import { env } from "../../lib/env";
+
+/* The help centre lives on the marketing site, so its link leaves the app. */
+const HELP_URL = `${env.VITE_WEB_URL}/help`;
 
 function navItems(pathname: string): NavItem[] {
   return [
@@ -44,6 +55,11 @@ function navItems(pathname: string): NavItem[] {
       href: "/dashboard/settings",
       active: pathname === "/dashboard/settings",
       icon: <Settings size={16} />,
+    },
+    {
+      label: "Help",
+      href: HELP_URL,
+      icon: <Question size={16} />,
     },
   ];
 }
@@ -85,6 +101,14 @@ function DashboardContent({ onClose }: { onClose: () => void }) {
   function renderNavLink({ href, className, label, icon }: NavItem & { className: string }) {
     const ledger = href === "/dashboard/wallet";
     const setup = href === "/dashboard/campaigns" || ledger;
+    if (href === HELP_URL) {
+      return (
+        <a href={href} target="_blank" rel="noreferrer" className={className}>
+          {icon && <span className="size-4 shrink-0">{icon}</span>}
+          {label}
+        </a>
+      );
+    }
     return (
       <Link
         to={href ?? "#"}

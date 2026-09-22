@@ -1,29 +1,18 @@
 import { project } from "@repo/config/project";
 import { Logo } from "@repo/ui";
-import { env } from "../lib/env";
 
-const APP_URL = env.PUBLIC_APP_URL;
-
-/* The mark and the one-line promise on the left; titled columns on the right.
-   No rules and no second band: the columns are the footer. */
+/* The mark on the far left; two titled columns on the far right. No rules and
+   no second band: the columns are the footer. The site has no session, so
+   feedback goes by mail; the dashboard has its own feedback form. */
 const groups = [
   {
-    title: "Product",
+    title: "Support",
     links: [
-      { label: "How it works", href: "/#how-it-works" },
-      { label: "What a play pays", href: "/#rates" },
-      { label: "Advertisers", href: "/#advertisers" },
-      { label: "FAQ", href: "/faq" },
-      { label: "Blog", href: "/blog" },
-    ],
-  },
-  {
-    title: "Members",
-    links: [
-      { label: "Sign in", href: `${APP_URL}/login` },
-      { label: "Join free", href: `${APP_URL}/signup` },
-      { label: "Start a campaign", href: `${APP_URL}/signup` },
-      { label: "Support", href: `mailto:${project.email.support}` },
+      {
+        label: "Feedback",
+        href: `mailto:${project.email.support}?subject=${encodeURIComponent(`${project.name} feedback`)}`,
+      },
+      { label: "Help center", href: "/help" },
     ],
   },
   {
@@ -32,9 +21,7 @@ const groups = [
       { label: "Terms of service", href: "/terms" },
       { label: "Privacy policy", href: "/privacy" },
       { label: "Ads policy", href: "/ads-policy" },
-      { label: "Cookie policy", href: "/cookies" },
       { label: "Refund policy", href: "/refund" },
-      { label: "Security", href: "/security" },
     ],
   },
 ] as const;
@@ -45,8 +32,8 @@ export default function Footer() {
   return (
     <footer>
       <div className="mx-auto max-w-6xl px-6 pt-20 pb-12 sm:pt-24 sm:pb-14">
-        <div className="grid gap-14 lg:grid-cols-12 lg:gap-8">
-          <div className="lg:col-span-5">
+        <div className="flex flex-col gap-14 lg:flex-row lg:items-start lg:justify-between">
+          <div>
             <a
               href="/"
               aria-label={project.name}
@@ -56,10 +43,7 @@ export default function Footer() {
             </a>
           </div>
 
-          <nav
-            aria-label="Footer"
-            className="grid grid-cols-2 gap-x-8 gap-y-12 sm:grid-cols-3 lg:col-span-7"
-          >
+          <nav aria-label="Footer" className="grid grid-cols-2 gap-x-8 gap-y-12 lg:gap-x-24">
             {groups.map((group) => (
               <div key={group.title}>
                 <p className="text-xs font-medium uppercase tracking-[0.12em]">{group.title}</p>
