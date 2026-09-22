@@ -32,8 +32,7 @@ export function PoolCard() {
           </div>
         </dl>
         <p className="mt-3 text-xs text-muted-foreground">
-          When the earn passes the revenue, move a lever: the slot price, the pace of approval, or
-          the pace of tier promotion.
+          When the earn passes the revenue, move a lever: the slot price or the pace of approval.
         </p>
       </CardContent>
     </Card>

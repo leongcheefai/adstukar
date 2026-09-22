@@ -56,7 +56,7 @@ First run: `pnpm db:seed` creates the admin who approves listings and devices.
 - **To advertise**: book a slot under Campaigns, verify its domain, and approve
   the creative under Settings → Moderation. The slot's term starts then.
 - **To distribute**: register a device with a photo of the screen through the
-  API (the dashboard has no device page yet), approve it with a tier through
+  API (the dashboard has no device page yet), approve it through
   `POST /admin/devices/:id/approve`, add a region to it, then open CapyTV and
   paste the device key. A running slot plays on it.
 

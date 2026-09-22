@@ -7,8 +7,7 @@ order: 3
 import { earnPerPlay, economy } from "@repo/config/economy";
 import { perThousandPlays, usd, usdCents } from "@repo/config/money";
 
-export const standardRate = perThousandPlays(earnPerPlay("standard"));
-export const flagshipRate = perThousandPlays(earnPerPlay("flagship"));
+export const rate = perThousandPlays(earnPerPlay());
 export const countryName = new Intl.DisplayNames(["en"], { type: "region", style: "short" });
 
 The wallet contains US dollars. The **Wallet** page in the dashboard shows each movement of money on its own line.
@@ -32,7 +31,7 @@ You can get a refund for funds that you added and did not use. Send your request
 
 You earn money when the ticker plays ads on your screen.
 
-- Each play of an ad earns money. The rate is from {standardRate} on a standard screen to {flagshipRate} on a flagship screen.
+- Each play of an ad earns money. The rate is {rate}, on every screen.
 - There is no fee. The number you read is the number you keep.
 - A scan does not earn money. It shows that a person saw the ad.
 - A screen is paid for up to {economy.caps.dailyPlaysPerDevice.toLocaleString("en-US")} plays a day, and for {economy.caps.paidHoursPerDay} hours from its first play of the day. Above the limit, the ad still plays, and it pays nothing.

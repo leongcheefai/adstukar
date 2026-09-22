@@ -461,50 +461,31 @@ body[data-bleed] .hero-float {
 }
 /* --- Rates ---------------------------------------------------------------- */
 
-.rates-table {
-  width: 100%;
-  min-width: 36rem;
-  border-collapse: collapse;
+/* One rate for every screen, so the card holds one figure rather than a table. */
+.rates-figure {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1.25rem;
+  padding: 1.25rem;
   font-size: 0.875rem;
 }
-.rates-table th,
-.rates-table td {
-  padding: 0.9rem 1.25rem;
-  text-align: left;
-  vertical-align: bottom;
-}
-.rates-table thead th {
-  padding-top: 1.25rem;
-  border-bottom: 1px solid var(--border);
+.rates-figure dt {
   font-size: 0.75rem;
   font-weight: var(--fw-medium);
   color: var(--foreground);
 }
-.rates-table thead th span {
+.rates-figure dt span {
   display: block;
   margin-top: 0.15rem;
   font-weight: var(--fw-regular);
   color: var(--muted-foreground);
 }
-.rates-table tbody th {
-  font-weight: var(--fw-medium);
-}
-.rates-table tbody tr + tr {
-  border-top: 1px solid var(--border);
-}
-.rates-table tbody tr:last-child td,
-.rates-table tbody tr:last-child th {
-  padding-bottom: 1.25rem;
-}
-.rates-num {
-  text-align: right;
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-}
-.rates-table thead .rates-num {
-  font-family: var(--font-sans);
-}
 .rates-keep {
+  font-family: var(--font-mono);
+  font-size: 1.75rem;
+  font-variant-numeric: tabular-nums;
   font-weight: var(--fw-medium);
   color: var(--primary);
 }

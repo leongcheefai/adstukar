@@ -19,8 +19,8 @@ async function servedPlay(opts: Parameters<typeof makeDevice>[1] = {}) {
 describe("recordReport", () => {
   beforeEach(truncateAll);
 
-  it("posts one pending earn at the device's tier rate, and nothing else", async () => {
-    const { distributor, advertiser, device, playId } = await servedPlay({ tier: "premium" });
+  it("posts one pending earn at the one rate, and nothing else", async () => {
+    const { distributor, advertiser, device, playId } = await servedPlay();
 
     const result = await recordReport({ playId, key: device.apiKey });
 
@@ -31,7 +31,7 @@ describe("recordReport", () => {
       reason: "earn",
       lot: "earned",
       state: "pending",
-      delta: earnPerPlay("premium"),
+      delta: earnPerPlay(),
       playId,
     });
     expect(await ledgerOf(advertiser.id)).toHaveLength(0);

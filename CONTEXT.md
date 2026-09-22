@@ -69,8 +69,8 @@ The screen app a distributor installs. It shows content, and it plays listings
 over that content.
 
 **Device**:
-One physical screen that runs CapyTV. Holds the venue type, the tier, the
-location, the state, and the daily play cap.
+One physical screen that runs CapyTV. Holds the venue type, the location, the
+state, and the daily play cap.
 _Avoid_: Screen, TV, player, kiosk
 
 **Placement**:
@@ -83,15 +83,6 @@ How long one listing stays on a placement.
 
 **Gap**:
 The quiet time between two plays on a device.
-
-**Tier**:
-The class an admin stamps on a device at approval. It multiplies the rate the
-device earns: standard 1×, premium 1.5×, flagship 2×. A new device starts at
-standard and moves up after a clean payout review. The admin reads the photo
-and the venue: standard is a steady but small crowd (under 5 viewers per
-play); premium is a queue or a seated crowd for most of the open hours (5 to
-15); flagship is a large screen in a high-traffic public space, or a venue the
-platform wants for its name (above 15). See docs/adr/0010.
 
 **Loop**:
 The batch of plays CapyTV takes at once and holds on the device. The screen plays
@@ -179,9 +170,9 @@ The earned money that has served the hold, less what already left. It is what
 one payout may take, and it is never the same number as the balance.
 
 **Rate**:
-What a screen earns for one play, by tier. It lives in `economy.earn` and no
-fee comes off it.
-_Avoid_: Fee, commission, margin, spread, CPM
+What a screen earns for one play. It is one number for every screen
+(docs/adr/0013). It lives in `economy.earn` and no fee comes off it.
+_Avoid_: Fee, commission, margin, spread, CPM, tier
 
 **Refund**:
 Money returned for a top-up that a member did not spend. It runs for a window

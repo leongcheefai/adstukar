@@ -1,4 +1,4 @@
-import { type DeviceTierRate, economy, rateTable } from "@repo/config/economy";
+import { earnPerPlay, economy } from "@repo/config/economy";
 import { slotOffer, usd, usdPerThousand } from "@repo/config/money";
 import { project } from "@repo/config/project";
 import { Container, Logo, Section, SectionHeader } from "@repo/ui";
@@ -115,7 +115,7 @@ const STEPS = [
   },
   {
     title: "Earn",
-    body: "Listings crawl in one line along the foot. Each play earns a fixed rate, at the tier of your screen.",
+    body: "Listings crawl in one line along the foot. Each play earns the same fixed rate on every screen.",
   },
 ] as const;
 
@@ -164,52 +164,29 @@ function Steps({
   );
 }
 
-const TIER_LABEL: Record<DeviceTierRate, string> = {
-  standard: "Standard",
-  premium: "Premium",
-  flagship: "Flagship",
-};
-
-/** The table is derived once, in the config, so the dashboard shows the same rows. */
-const RATE_ROWS = rateTable().map((row) => ({
-  tier: row.tier,
-  label: TIER_LABEL[row.tier],
-  perThousand: usdPerThousand(row.perPlay),
-}));
+/** The one rate, derived in the config, so the dashboard shows the same number. */
+const RATE_PER_THOUSAND = usdPerThousand(earnPerPlay());
 
 function Rates({ spacing, className }: { spacing: LandingConfig["density"]; className?: string }) {
-  const rows = RATE_ROWS;
   return (
     <Section id="rates" spacing={spacing} className={className}>
       <Container>
         <SectionHeader
           eyebrow="What a play pays"
-          headline="One number per screen"
+          headline="One number, every screen"
           lede={`A screen earns a fixed rate for every play. ${project.name} pays it, and the number you read is the number you keep.`}
         />
-        <div className="rates-card mx-auto mt-14 max-w-3xl overflow-x-auto rounded-xl bg-card shadow-elev-2">
-          <table className="rates-table">
-            <thead>
-              <tr>
-                <th scope="col">Screen tier</th>
-                <th scope="col" className="rates-num">
-                  Per 1,000 plays <span>you keep</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.tier}>
-                  <th scope="row">{row.label}</th>
-                  <td className="rates-num rates-keep">{row.perThousand}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="rates-card mx-auto mt-14 max-w-3xl rounded-xl bg-card shadow-elev-2">
+          <dl className="rates-figure">
+            <dt>
+              Per 1,000 plays <span>you keep</span>
+            </dt>
+            <dd className="rates-keep">{RATE_PER_THOUSAND}</dd>
+          </dl>
         </div>
         <p className="mx-auto mt-6 max-w-2xl text-center text-pretty text-sm text-muted-foreground">
-          In US dollars. A person stamps the tier when the screen is approved, and a screen is paid
-          for up to {economy.caps.dailyPlaysPerDevice.toLocaleString("en-US")} plays and{" "}
+          In US dollars, on every approved screen. A screen is paid for up to{" "}
+          {economy.caps.dailyPlaysPerDevice.toLocaleString("en-US")} plays and{" "}
           {economy.caps.paidHoursPerDay} hours a day.
         </p>
       </Container>
@@ -309,9 +286,7 @@ function SampleCard({ sample }: { sample: LandingSample }) {
       </p>
       <div className="mt-3">
         <p className="text-sm font-medium tracking-tight">{ad?.name ?? "Campaign"}</p>
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          {ad?.head ?? "Listing"} · {TIER_LABEL[sample.tier]} screens
-        </p>
+        <p className="mt-0.5 text-xs text-muted-foreground">{ad?.head ?? "Listing"} · one screen</p>
       </div>
       <dl className="mt-6 grid gap-5">
         <Metric

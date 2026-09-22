@@ -27,11 +27,8 @@ export const OWNER_LISTING_STATES = ["approved", "paused"] as const;
 export type ListingState = (typeof LISTING_STATES)[number];
 export type OwnerListingState = (typeof OWNER_LISTING_STATES)[number];
 
-/** An admin reviews every device, and stamps the tier at approval. */
+/** An admin reviews every device before it earns. */
 export const DEVICE_STATES = ["pending", "approved", "rejected", "archived"] as const;
-
-/** The quality class an admin stamps on a device. The tier sets the rate. */
-export const DEVICE_TIERS = ["standard", "premium", "flagship"] as const;
 
 export const VENUE_TYPES = [
   "cafe",

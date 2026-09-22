@@ -18,8 +18,7 @@ export interface FaqGroup {
   items: FaqEntry[];
 }
 
-const standardRate = perThousandPlays(earnPerPlay("standard"));
-const flagshipRate = perThousandPlays(earnPerPlay("flagship"));
+const rate = perThousandPlays(earnPerPlay());
 
 /**
  * Every question on the site, in three groups: one per audience and one for
@@ -38,7 +37,7 @@ export const FAQ_GROUPS: FaqGroup[] = [
     items: [
       {
         question: "How do I make money?",
-        answer: `Open CapyTV in a browser and play music, a podcast, or a video. Listings crawl along the foot of the picture. Each play earns from ${standardRate} on a standard screen to ${flagshipRate} on a flagship screen. ${project.name} pays it, so the number you read is the number you keep.`,
+        answer: `Open CapyTV in a browser and play music, a podcast, or a video. Listings crawl along the foot of the picture. Each play earns ${rate}, on every screen. ${project.name} pays it, so the number you read is the number you keep.`,
       },
       {
         question: "What kind of screen do I need?",
@@ -84,7 +83,7 @@ export const FAQ_GROUPS: FaqGroup[] = [
       {
         question: "How does moderation work?",
         answer:
-          "A person reviews every listing and every screen. The listing review checks that the site is live, that the domain is verified, and that the tagline is accurate. The screen review checks the screen and the room, and stamps the tier that sets its rate.",
+          "A person reviews every listing and every screen. The listing review checks that the site is live, that the domain is verified, and that the tagline is accurate. The screen review checks the screen and the room, and clears the screen to earn.",
       },
       {
         question: "How do I verify my domain?",
@@ -116,7 +115,7 @@ export const FAQ_GROUPS: FaqGroup[] = [
       },
       {
         question: "Who pays a screen?",
-        answer: `${project.name} does, from what advertisers pay for slots. A screen earns a fixed rate per play at its tier, and no fee comes off it. What a screen reads on its rate card is what it keeps.`,
+        answer: `${project.name} does, from what advertisers pay for slots. Every screen earns the same fixed rate per play, and no fee comes off it. What a screen reads on its rate card is what it keeps.`,
       },
       {
         question: "Does my balance expire?",

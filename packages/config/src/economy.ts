@@ -16,13 +16,12 @@ export const economy = {
   /**
    * What a venue screen earns for one play. The platform pays it from slot
    * revenue (docs/adr/0010), so the number a distributor reads is the number
-   * they keep. There is no fee row.
+   * they keep. There is no fee row, and there is no tier: every approved
+   * screen earns the same rate (docs/adr/0013).
    */
   earn: {
-    /** Per 1,000 plays on a standard screen, as an amount ($2.00). */
+    /** Per 1,000 plays, as an amount ($2.00). */
     perThousandPlays: 2_000,
-    /** What the admin stamps at approval. A new device starts at standard. */
-    tierMultiplier: { standard: 1, premium: 1.5, flagship: 2 },
   },
 
   caps: {
@@ -202,37 +201,18 @@ export const economy = {
 export const DAY_MS = 86_400_000;
 
 export type Economy = typeof economy;
-export type DeviceTierRate = keyof typeof economy.earn.tierMultiplier;
 export type PayoutCountry = (typeof economy.payout.countries)[number];
 
 /** The rate is quoted per this many plays. It is not the peg, which is also 1000. */
 const PLAYS_PER_RATE = 1000;
 
 /**
- * What a screen of this tier earns for one play. Rounded down, so the ledger
- * never holds a part of a unit.
+ * What a screen earns for one play. Every page and the report path read this
+ * one derivation, so none carries its own arithmetic. Rounded down, so the
+ * ledger never holds a part of a unit.
  */
-export function earnPerPlay(tier: DeviceTierRate): number {
-  return Math.floor(
-    (economy.earn.perThousandPlays * economy.earn.tierMultiplier[tier]) / PLAYS_PER_RATE,
-  );
-}
-
-/** One row of the published rate table: the tier, and what one play earns. */
-export interface RateRow {
-  tier: DeviceTierRate;
-  perPlay: number;
-}
-
-/**
- * The rate table every page shows. The landing page and the dashboard read
- * this one derivation, so neither carries its own arithmetic.
- */
-export function rateTable(): RateRow[] {
-  return (Object.keys(economy.earn.tierMultiplier) as DeviceTierRate[]).map((tier) => ({
-    tier,
-    perPlay: earnPerPlay(tier),
-  }));
+export function earnPerPlay(): number {
+  return Math.floor(economy.earn.perThousandPlays / PLAYS_PER_RATE);
 }
 
 /**

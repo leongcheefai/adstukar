@@ -15,7 +15,6 @@ import { user } from "./auth";
 import {
   CAMPAIGN_STATES,
   DEVICE_STATES,
-  DEVICE_TIERS,
   LEDGER_LOTS,
   LEDGER_REASONS,
   LEDGER_STATES,
@@ -32,7 +31,6 @@ import {
 export const campaignStateEnum = pgEnum("campaign_state", CAMPAIGN_STATES);
 export const listingStateEnum = pgEnum("listing_state", LISTING_STATES);
 export const deviceStateEnum = pgEnum("device_state", DEVICE_STATES);
-export const deviceTierEnum = pgEnum("device_tier", DEVICE_TIERS);
 export const venueTypeEnum = pgEnum("venue_type", VENUE_TYPES);
 export const placementFormatEnum = pgEnum("placement_format", PLACEMENT_FORMATS);
 export const placementSizeEnum = pgEnum("placement_size", PLACEMENT_SIZES);
@@ -90,7 +88,7 @@ export const listing = pgTable(
 
 /**
  * One physical screen running CapyTV. The distributor owns it. An admin
- * approves it and stamps the tier, which sets the rate it earns.
+ * approves it before it earns, at the one rate (docs/adr/0013).
  */
 export const device = pgTable(
   "device",
@@ -119,7 +117,6 @@ export const device = pgTable(
     promotionTagline: text("promotion_tagline"),
     promotionUrl: text("promotion_url"),
     promotionLogoUrl: text("promotion_logo_url"),
-    tier: deviceTierEnum("tier").notNull().default("standard"),
     state: deviceStateEnum("state").notNull().default("pending"),
     rejectionReason: text("rejection_reason"),
     /** Plays this device may be paid for in one day. */

@@ -5,8 +5,6 @@ import { HTTPException } from "hono/http-exception";
 import { generateApiKey } from "../devices/keys";
 import { refundSlot, startSlot } from "../slots/term";
 
-type DeviceTier = (typeof schema.DEVICE_TIERS)[number];
-
 /**
  * Human moderation queue. An admin reviews each listing and each device; the
  * domain check is automatic and gates the campaign instead.
@@ -87,7 +85,7 @@ export async function rejectListing(listingId: string, reason: string, now: Date
 }
 
 /**
- * Approval stamps the tier, and the tier sets the rate the device earns. It also
+ * Approval clears the device to earn, at the one rate (docs/adr/0013). It also
  * issues the key CapyTV runs on: registration writes a placeholder, and the key
  * a distributor is ever shown is the one an approval minted.
  *
@@ -95,7 +93,7 @@ export async function rejectListing(listingId: string, reason: string, now: Date
  * already has, so re-approving a working screen does not black it out until
  * somebody walks over and pairs it again.
  */
-export async function approveDevice(deviceId: string, tier: DeviceTier, now: Date = new Date()) {
+export async function approveDevice(deviceId: string, now: Date = new Date()) {
   return db.transaction(async (tx) => {
     const [found] = await tx
       .select({ approvedAt: schema.device.approvedAt })
@@ -109,7 +107,6 @@ export async function approveDevice(deviceId: string, tier: DeviceTier, now: Dat
       .update(schema.device)
       .set({
         state: "approved",
-        tier,
         rejectionReason: null,
         approvedAt: now,
         updatedAt: now,
