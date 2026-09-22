@@ -128,7 +128,13 @@ The hours a distributor states their venue is open, in whole hours and in the
 venue's own time. The payout review counts the plays that fall outside them.
 
 **Daily play cap**:
-The largest number of plays one device may be paid for in one day.
+The largest number of plays one device may be paid for in one day. It bounds
+the money.
+
+**Paid hours**:
+The hours of one day a device may be paid for. The window opens at the device's
+first play of the day and closes 18 hours later. It bounds the time: a play
+after it counts and pays nothing.
 
 ## Money
 

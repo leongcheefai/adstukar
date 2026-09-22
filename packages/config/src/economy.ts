@@ -26,8 +26,15 @@ export const economy = {
   },
 
   caps: {
-    /** Plays one device may be paid for in one day. */
+    /** Plays one device may be paid for in one day. It bounds the money. */
     dailyPlaysPerDevice: 500,
+    /**
+     * Hours of one day a device may be paid for. It bounds the time: the paid
+     * window opens at the device's first play of the day and closes this many
+     * hours later. A venue is not open around the clock, so a screen that plays
+     * all night is paid for none of it (docs/adr/0003).
+     */
+    paidHoursPerDay: 18,
   },
 
   /** Hours before a pending earn entry settles. */

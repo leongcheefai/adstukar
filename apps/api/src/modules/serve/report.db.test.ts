@@ -1,4 +1,4 @@
-import { earnPerPlay } from "@repo/config/economy";
+import { earnPerPlay, economy } from "@repo/config/economy";
 import { db, schema } from "@repo/db";
 import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
@@ -55,6 +55,23 @@ describe("recordReport", () => {
     const second = await serveListing({ key: device.apiKey, now: later });
     if (!second.playId) throw new Error("no second play");
     const result = await recordReport({ playId: second.playId, key: device.apiKey, now: later });
+
+    expect(result.counted).toBe(true);
+    expect(await ledgerOf(distributor.id)).toHaveLength(1);
+  });
+
+  it("counts a play after the paid hours of the day and pays nothing for it", async () => {
+    // Both plays sit in one UTC day, so only the hours cap can refuse the second.
+    const dayStart = new Date(Date.UTC(2030, 0, 1));
+    const closed = new Date(dayStart.getTime() + economy.caps.paidHoursPerDay * 3_600_000);
+    const { distributor, device } = await servedPlay();
+    const first = await serveListing({ key: device.apiKey, now: dayStart });
+    if (!first.playId) throw new Error("no first play");
+    await recordReport({ playId: first.playId, key: device.apiKey, now: dayStart });
+
+    const second = await serveListing({ key: device.apiKey, now: closed });
+    if (!second.playId) throw new Error("no second play");
+    const result = await recordReport({ playId: second.playId, key: device.apiKey, now: closed });
 
     expect(result.counted).toBe(true);
     expect(await ledgerOf(distributor.id)).toHaveLength(1);

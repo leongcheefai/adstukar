@@ -209,7 +209,8 @@ function Rates({ spacing, className }: { spacing: LandingConfig["density"]; clas
         </div>
         <p className="mx-auto mt-6 max-w-2xl text-center text-pretty text-sm text-muted-foreground">
           In US dollars. A person stamps the tier when the screen is approved, and a screen is paid
-          for up to {economy.caps.dailyPlaysPerDevice.toLocaleString("en-US")} plays a day.
+          for up to {economy.caps.dailyPlaysPerDevice.toLocaleString("en-US")} plays and{" "}
+          {economy.caps.paidHoursPerDay} hours a day.
         </p>
       </Container>
     </Section>

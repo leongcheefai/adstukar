@@ -2,7 +2,7 @@ import { earnPerPlay, economy } from "@repo/config/economy";
 import type { LoopResponse, Promotion, ServeResponse, ServedListing } from "@repo/contracts";
 import { db, schema } from "@repo/db";
 import { serverEnv } from "@repo/env";
-import { and, count, eq, gte, isNotNull, lt, ne, sql } from "drizzle-orm";
+import { and, eq, gte, isNotNull, lt, ne, sql } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import { startOfUtcDay } from "../../lib/day";
 import { type Tx, getBalances, postEntry, settlesAtFrom } from "../ledger/ledger.service";
@@ -83,21 +83,31 @@ async function lastPlayAt(deviceId: string): Promise<Date | null> {
   return row?.at ? new Date(row.at) : null;
 }
 
-/** Paid plays this device has already been counted for today. */
-async function paidPlaysToday(tx: Tx, deviceId: string, now: Date): Promise<number> {
+/**
+ * What today already holds against the device's caps: the paid plays it was
+ * counted for, and the moment its first play of the day counted. A house card
+ * opens the paid hours too, because the screen was on.
+ */
+async function countedToday(
+  tx: Tx,
+  deviceId: string,
+  now: Date,
+): Promise<{ paid: number; firstPlayAt: Date | null }> {
   const [row] = await tx
-    .select({ n: count() })
+    .select({
+      paid: sql<number>`count(*) filter (where not ${schema.play.house})`.mapWith(Number),
+      firstPlayAt: sql<Date | null>`min(${schema.play.countedAt})`,
+    })
     .from(schema.play)
     .innerJoin(schema.placement, eq(schema.placement.id, schema.play.placementId))
     .where(
       and(
         eq(schema.placement.deviceId, deviceId),
-        eq(schema.play.house, false),
         eq(schema.play.state, "counted"),
         gte(schema.play.countedAt, startOfUtcDay(now)),
       ),
     );
-  return row?.n ?? 0;
+  return { paid: row?.paid ?? 0, firstPlayAt: row?.firstPlayAt ? new Date(row.firstPlayAt) : null };
 }
 
 /**
@@ -429,24 +439,26 @@ export async function recordReport(report: PlayReport): Promise<{ counted: boole
     // life of the play before anything is capped against it.
     const countedAt = clampReportedAt({ playedAt, openedAt: play.createdAt, now });
 
-    // The device cap counts what today already paid for, so it is read before
-    // this play joins the count. Reading it after the update below would let the
-    // play cap itself through and pay for only `dailyPlayCap - 1` plays a day.
-    const paidToday = await paidPlaysToday(tx, device.id, countedAt);
+    // The device caps count what today already holds, so they are read before
+    // this play joins the count. Reading them after the update below would let
+    // the play cap itself through and pay for only `dailyPlayCap - 1` plays a day.
+    const today = await countedToday(tx, device.id, countedAt);
 
     await tx
       .update(schema.play)
       .set({ state: "counted", countedAt })
       .where(eq(schema.play.id, playId));
 
-    // A house card is a real play on screen and no movement at all. Above the
+    // A house card is a real play on screen and no movement at all. Above a
     // cap, or on a slot that ended between serve and report, the play still
     // showed and still counts; it just pays nothing.
     if (!listing || !campaign) return { counted: true };
     const pays = playPays({
       house: play.house,
-      paidToday,
+      paidToday: today.paid,
       dailyPlayCap: device.dailyPlayCap,
+      countedAt,
+      firstPlayAt: today.firstPlayAt,
       slotState,
       listingState: listing.state,
       campaignState: campaign.state,

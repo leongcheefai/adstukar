@@ -18,6 +18,12 @@ Fraud is bounded by policy instead of by hardware:
 - An admin approves each device, with a photo of the screen in place, a location,
   and a venue type. Approval also stamps the tier.
 - A daily play cap limits what one device can ever earn.
+- A device is paid for at most 18 hours of each day, counted from its first play
+  of the day. A venue is not open around the clock, so a screen that plays all
+  night is paid for none of it.
+- CapyTV stops playing while its page is hidden, and owes nothing for that time.
+  The server cannot see the page, so this is the honest client's half of the
+  rule; the caps above bound what a patched client can take.
 - Earned points settle, then wait out a longer payout hold. An admin reviews the
   play and scan history before cash leaves.
 - The scan-to-play ratio flags dead screens.
