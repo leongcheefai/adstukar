@@ -17,7 +17,6 @@ const deviceColumns = {
   promotionTagline: true,
   promotionUrl: true,
   promotionLogoUrl: true,
-  tier: true,
   state: true,
   rejectionReason: true,
   dailyPlayCap: true,
@@ -43,5 +42,4 @@ export const deviceContract = toWire(
 export type Device = z.output<typeof deviceContract>;
 export type DeviceForAdmin = z.output<typeof deviceAdminContract>;
 export type DeviceState = Device["state"];
-export type DeviceTier = Device["tier"];
 export type VenueType = Device["venueType"];

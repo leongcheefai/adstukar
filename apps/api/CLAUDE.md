@@ -32,12 +32,12 @@ live `/serve`, hours from a `/loop` — and `POST /report` accepts a `playedAt` 
 clamps to the life of the play, so a queued report counts against the day it ran
 and a device cannot move its own history.
 
-Approving a device stamps its tier and, the first time, mints the api key CapyTV
+Approving a device clears it to earn and, the first time, mints the api key CapyTV
 runs on. Registration writes a placeholder into the unique NOT NULL column and
 the dashboard shows nothing until approval.
 
 Only a moved screen goes back for review: `updateDevice` re-pends on a new
-location or venue type, because the tier is priced on the room. A new name, a new
+location or venue type, because approval was given to the room. A new name, a new
 photo, or new open hours does not — the stated hours are what the payout review
 measures the screen against, not what prices it. `device.approved_at` records the **first** approval and
 survives a re-review, which is what stops a second approval from minting a new
@@ -50,7 +50,7 @@ a slot that ended after the batch was cut, the play still counts and simply pays
 nothing — "plays above the cap still show, and pay nothing" (issue #7). The pure
 rule is `src/modules/serve/payable.ts`.
 
-A paid play posts one `earn` row at the device's tier rate (`economy.earn`),
+A paid play posts one `earn` row at the one rate (`economy.earn`, docs/adr/0013),
 and nothing else. The platform pays it from slot revenue, so there is no
 advertiser to debit and no fee row (docs/adr/0010). `GET /admin/pool` shows the
 week's slot revenue beside the week's earn.

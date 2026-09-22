@@ -9,8 +9,6 @@ import { asc, eq, sql } from "drizzle-orm";
  * and returns it, so a test reads like the case it proves.
  */
 
-type DeviceTier = (typeof schema.DEVICE_TIERS)[number];
-
 let n = 0;
 function next(prefix: string): string {
   n += 1;
@@ -47,7 +45,7 @@ export async function makeMember(role: string | null = null) {
 /** An approved screen with one band region. The key is what CapyTV sends. */
 export async function makeDevice(
   userId: string,
-  opts: { tier?: DeviceTier; dailyPlayCap?: number; gapSeconds?: number } = {},
+  opts: { dailyPlayCap?: number; gapSeconds?: number } = {},
 ) {
   const id = next("device");
   const [device] = await db
@@ -59,7 +57,6 @@ export async function makeDevice(
       deviceId: next("CAPY"),
       apiKey: next("dk"),
       location: "Front counter",
-      tier: opts.tier ?? "standard",
       state: "approved",
       dailyPlayCap: opts.dailyPlayCap ?? economy.caps.dailyPlaysPerDevice,
       approvedAt: new Date(),

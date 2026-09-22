@@ -87,7 +87,7 @@ function DeviceReviewRow({ device, windowDays }: { device: ReviewedDevice; windo
           {device.name}
         </p>
         <Badge variant="neutral" className="capitalize">
-          {device.tier} · {perThousandPlays(earnPerPlay(device.tier))}
+          {perThousandPlays(earnPerPlay())}
         </Badge>
         {device.state !== "approved" && (
           <Badge variant="warning" className="capitalize">

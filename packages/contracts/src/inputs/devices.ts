@@ -35,8 +35,8 @@ function bothHoursOrNeither<T extends { openHour?: number | null; closeHour?: nu
 
 const HOURS_MESSAGE = "State both the opening hour and the closing hour, or neither.";
 
-// The tier, the state and the daily play cap are the admin's to set. A
-// distributor describes the screen; approval prices it.
+// The state and the daily play cap are the admin's to set. A distributor
+// describes the screen; approval clears it to earn.
 export const createDeviceInput = z
   .object({
     name,

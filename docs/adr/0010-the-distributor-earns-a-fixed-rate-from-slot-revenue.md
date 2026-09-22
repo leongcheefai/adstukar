@@ -1,5 +1,8 @@
 # The distributor earns a fixed rate, and the platform pays it from slot revenue
 
+> Amended by docs/adr/0013: the tiers are gone. Every screen earns the standard
+> rate, and the third lever below no longer exists.
+
 An advertiser pays for one thing: a slot on the ring, at a flat price for a
 term (`economy.slot`, docs/adr/0009). Every venue screen plays the ring. A
 screen earns a fixed rate per play at its tier (`economy.earn`), and CapyAds

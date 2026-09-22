@@ -30,9 +30,9 @@ interface PayoutDay {
 /**
  * A day of plays turned into the money it paid.
  *
- * The API already nets the fee off the earn, so this reads one field rather than
- * multiplying by a rate. A rate would be wrong anyway: it is tier by format now,
- * and one member may hold devices in several tiers.
+ * This reads one field rather than multiplying plays by the rate. A product
+ * would be wrong anyway: a play above the daily cap, or outside the paid hours,
+ * counts and pays nothing.
  */
 function toPayout(day: StatsDay): PayoutDay {
   return { label: shortDay(day.day), earned: day.earned };

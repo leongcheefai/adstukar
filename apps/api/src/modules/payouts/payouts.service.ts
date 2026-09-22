@@ -319,7 +319,6 @@ async function sharedCounts() {
 export interface DeviceHistory extends DeviceStat {
   userId: string;
   name: string;
-  tier: (typeof schema.DEVICE_TIERS)[number];
   state: (typeof schema.DEVICE_STATES)[number];
 }
 
@@ -340,7 +339,6 @@ async function deviceHistory(userIds: string[], since: Date): Promise<DeviceHist
       userId: schema.device.userId,
       name: schema.device.name,
       location: schema.device.location,
-      tier: schema.device.tier,
       state: schema.device.state,
       openHour: schema.device.openHour,
       closeHour: schema.device.closeHour,
@@ -383,7 +381,6 @@ async function deviceHistory(userIds: string[], since: Date): Promise<DeviceHist
       userId: device.userId,
       name: device.name,
       location: device.location,
-      tier: device.tier,
       state: device.state,
       openHour: device.openHour,
       closeHour: device.closeHour,

@@ -1,6 +1,5 @@
 import { zValidator } from "@hono/zod-validator";
 import {
-  approveDeviceInput,
   feedbackQueueOutput,
   moderateDeviceOutput,
   moderateListingOutput,
@@ -54,8 +53,8 @@ adminRouter.post("/listings/:id/reject", zValidator("json", rejectInput), async 
   return c.json(moderateListingOutput.parse(row satisfies z.input<typeof moderateListingOutput>));
 });
 
-adminRouter.post("/devices/:id/approve", zValidator("json", approveDeviceInput), async (c) => {
-  const row = await approveDevice(c.req.param("id"), c.req.valid("json").tier);
+adminRouter.post("/devices/:id/approve", async (c) => {
+  const row = await approveDevice(c.req.param("id"));
   return c.json(moderateDeviceOutput.parse(row satisfies z.input<typeof moderateDeviceOutput>));
 });
 

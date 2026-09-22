@@ -1,4 +1,4 @@
-import { type DeviceTierRate, earnPerPlay, economy, slotPrice } from "@repo/config/economy";
+import { earnPerPlay, economy, slotPrice } from "@repo/config/economy";
 import { project } from "@repo/config/project";
 import type { LandingConfig } from "./config";
 import { rng } from "./prng";
@@ -58,7 +58,6 @@ const NOW_PLAYING: readonly SampleNowPlaying[] = [
   { source: "Firepit", title: "Evening fire", by: project.name },
 ];
 
-const TIERS = Object.keys(economy.earn.tierMultiplier) as DeviceTierRate[];
 const DAYS = 30;
 
 export interface LandingSample {
@@ -67,7 +66,6 @@ export interface LandingSample {
   nowPlaying: SampleNowPlaying;
   /** Screens on the network right now, as the sample screen's bar prints it. */
   online: number;
-  tier: DeviceTierRate;
   /** Paid plays per day, oldest first. Never above the daily cap. */
   series: number[];
   /** Scans per day, oldest first, in step with `series`. */
@@ -76,13 +74,13 @@ export interface LandingSample {
   scans: number;
   /** What the advertiser paid: one slot per term, over the window. */
   spent: number;
-  /** What the venue kept, at the rate for its tier. */
+  /** What the venue kept, at the one rate. */
   earned: number;
 }
 
 /**
  * Everything invented on the page, from one seed. The economy numbers are
- * real: the sample venue earns exactly what a real one would at its tier.
+ * real: the sample venue earns exactly what a real one would.
  */
 export function sampleLanding(config: LandingConfig): LandingSample {
   const r = rng(config.seed);
@@ -91,7 +89,6 @@ export function sampleLanding(config: LandingConfig): LandingSample {
   const venue = r.pick(VENUES);
   const nowPlaying = r.pick(NOW_PLAYING);
   const online = r.int(900, 2400);
-  const tier = r.pick(TIERS);
 
   const cap = economy.caps.dailyPlaysPerDevice;
   // A quiet screen at the start, and a drift from the trend knob. Noise is a
@@ -114,9 +111,9 @@ export function sampleLanding(config: LandingConfig): LandingSample {
   const scans = scanSeries.reduce((sum, n) => sum + n, 0);
   const terms = Math.ceil(DAYS / economy.slot.termDays);
   const spent = terms * slotPrice();
-  const earned = plays * earnPerPlay(tier);
+  const earned = plays * earnPerPlay();
 
-  return { ads, venue, nowPlaying, online, tier, series, scanSeries, plays, scans, spent, earned };
+  return { ads, venue, nowPlaying, online, series, scanSeries, plays, scans, spent, earned };
 }
 
 /**
