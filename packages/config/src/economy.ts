@@ -46,19 +46,13 @@ export const economy = {
     /** The least one payout may take, as an amount. */
     minimum: 10_000,
     /**
-     * The country of the CapyAds Stripe platform account. A connected account
-     * in the same country may hold the `transfers` capability alone; one in any
-     * other country must hold `card_payments` too, and Stripe then collects the
-     * merchant requirements. Set it to what the live Stripe account says.
+     * Where a connected Stripe account may live, ISO 3166-1 alpha-2. The
+     * platform is a Malaysia account, and Stripe lets a Malaysia platform
+     * transfer to Malaysia accounts only (`country_specs/MY`,
+     * `supported_transfer_countries`). The first is the default. Probed on
+     * 2026-09-22 (docs/adr/0011). Probe again before launch.
      */
-    platformCountry: "SG",
-    /**
-     * Where a connected Stripe account may live, ISO 3166-1 alpha-2. Stripe
-     * limits the list per platform country, so the select offers only these,
-     * and the first is the default. Probed against the sandbox on 2026-09-19:
-     * ID, PH, VN and IN are refused. Probe again before launch.
-     */
-    countries: ["MY", "SG", "TH", "US", "GB", "AU", "JP", "HK"],
+    countries: ["MY"],
     /**
      * Days of device history the fraud review reads before an admin pays. It
      * matches the hold, so the window an admin looks at is the window the hold
