@@ -1,4 +1,4 @@
-import { usdCents } from "@repo/config/money";
+import { paid, usdCents } from "@repo/config/money";
 import type { PayoutRequest, PayoutState } from "@repo/contracts/types";
 import { Badge, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@repo/ui";
 
@@ -47,7 +47,10 @@ export function PayoutRequests({ requests }: { requests: PayoutRequest[] }) {
                   <Badge variant={STATE_VARIANT[row.state]}>{STATE_LABEL[row.state]}</Badge>
                 </TableCell>
                 <TableCell data-usertext className="text-muted-foreground">
-                  {row.rejectionReason ?? row.reference ?? "—"}
+                  {/* A paid row says what landed, in the currency it landed in, and at what rate. */}
+                  {row.paidCents !== null && row.paidCurrency !== null
+                    ? `${paid(row.paidCents, row.paidCurrency)} sent${row.fxRate ? ` at ${Number(row.fxRate)} per USD` : ""}`
+                    : (row.rejectionReason ?? row.reference ?? "—")}
                 </TableCell>
               </TableRow>
             ))}

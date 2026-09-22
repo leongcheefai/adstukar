@@ -3,6 +3,7 @@ import {
   boolean,
   index,
   integer,
+  numeric,
   pgEnum,
   pgTable,
   text,
@@ -14,7 +15,6 @@ import { user } from "./auth";
 import {
   CAMPAIGN_STATES,
   DEVICE_STATES,
-  DEVICE_TIERS,
   LEDGER_LOTS,
   LEDGER_REASONS,
   LEDGER_STATES,
@@ -31,7 +31,6 @@ import {
 export const campaignStateEnum = pgEnum("campaign_state", CAMPAIGN_STATES);
 export const listingStateEnum = pgEnum("listing_state", LISTING_STATES);
 export const deviceStateEnum = pgEnum("device_state", DEVICE_STATES);
-export const deviceTierEnum = pgEnum("device_tier", DEVICE_TIERS);
 export const venueTypeEnum = pgEnum("venue_type", VENUE_TYPES);
 export const placementFormatEnum = pgEnum("placement_format", PLACEMENT_FORMATS);
 export const placementSizeEnum = pgEnum("placement_size", PLACEMENT_SIZES);
@@ -89,7 +88,7 @@ export const listing = pgTable(
 
 /**
  * One physical screen running CapyTV. The distributor owns it. An admin
- * approves it and stamps the tier, which sets the rate it earns.
+ * approves it before it earns, at the one rate (docs/adr/0013).
  */
 export const device = pgTable(
   "device",
@@ -118,7 +117,6 @@ export const device = pgTable(
     promotionTagline: text("promotion_tagline"),
     promotionUrl: text("promotion_url"),
     promotionLogoUrl: text("promotion_logo_url"),
-    tier: deviceTierEnum("tier").notNull().default("standard"),
     state: deviceStateEnum("state").notNull().default("pending"),
     rejectionReason: text("rejection_reason"),
     /** Plays this device may be paid for in one day. */
@@ -316,7 +314,11 @@ export const stripeAccount = pgTable("stripe_account", {
  * amount comes back; it never edits the debit.
  *
  * `usdCents` is stored rather than derived, so a change to the peg never rewrites
- * what we already paid. It is also the amount the Stripe Transfer carries.
+ * what we already paid. The Stripe Transfer carries `paidCents` in
+ * `paidCurrency`: the platform settles MYR, so the dollars are converted once,
+ * at `fxRate` on `fxRateDate`, the day the admin approves (docs/adr/0012).
+ * All four are stamped from the transfer itself, so a retry that finds the
+ * transfer records what really moved.
  */
 export const payoutRequest = pgTable(
   "payout_request",
@@ -337,6 +339,14 @@ export const payoutRequest = pgTable(
     reference: text("reference"),
     /** The Stripe Transfer that paid this request. `reference` carries it too. */
     stripeTransferId: text("stripe_transfer_id").unique(),
+    /** What the transfer moved, in the payout currency's minor unit. Null until paid. */
+    paidCents: integer("paid_cents"),
+    /** ISO 4217, upper case: `MYR`. */
+    paidCurrency: text("paid_currency"),
+    /** Units of `paidCurrency` per USD, as the feed quoted it. A string, because it is a decimal. */
+    fxRate: numeric("fx_rate", { precision: 12, scale: 6 }),
+    /** The day the rate is for, `YYYY-MM-DD`. */
+    fxRateDate: text("fx_rate_date"),
     rejectionReason: text("rejection_reason"),
     reviewedBy: text("reviewed_by").references(() => user.id, { onDelete: "set null" }),
     reviewedAt: timestamp("reviewed_at"),

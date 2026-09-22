@@ -369,7 +369,7 @@ async function loadPlayForReport(tx: Tx, playId: string) {
 }
 
 /**
- * The one row a paid play posts: the distributor's earn, at the device's tier,
+ * The one row a paid play posts: the distributor's earn, at the one rate,
  * pending until it settles. The platform pays it from slot revenue, so there is
  * no advertiser to debit and no fee to take (docs/adr/0010). Keyed on the play,
  * so a second report of one play posts nothing twice. The key keeps the shape
@@ -378,11 +378,11 @@ async function loadPlayForReport(tx: Tx, playId: string) {
  */
 async function postEarn(
   tx: Tx,
-  input: { distributorId: string; tier: DeviceRow["tier"]; playId: string; now: Date },
+  input: { distributorId: string; playId: string; now: Date },
 ): Promise<void> {
   await postEntry(tx, {
     userId: input.distributorId,
-    delta: earnPerPlay(input.tier),
+    delta: earnPerPlay(),
     reason: "earn",
     lot: "earned",
     state: "pending",
@@ -466,7 +466,7 @@ export async function recordReport(report: PlayReport): Promise<{ counted: boole
     });
     if (!pays) return { counted: true };
 
-    await postEarn(tx, { distributorId: device.userId, tier: device.tier, playId, now: countedAt });
+    await postEarn(tx, { distributorId: device.userId, playId, now: countedAt });
     return { counted: true };
   });
 }

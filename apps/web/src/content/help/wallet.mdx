@@ -7,8 +7,7 @@ order: 3
 import { earnPerPlay, economy } from "@repo/config/economy";
 import { usd, usdCents, usdPerThousand } from "@repo/config/money";
 
-export const standardRate = usdPerThousand(earnPerPlay("standard"));
-export const flagshipRate = usdPerThousand(earnPerPlay("flagship"));
+export const rate = usdPerThousand(earnPerPlay());
 export const dailyPlays = economy.caps.dailyPlaysPerDevice.toLocaleString("en-US");
 export const countryName = new Intl.DisplayNames(["en"], { type: "region", style: "short" });
 
@@ -35,7 +34,7 @@ The price of a slot goes to your wallet again only before the review approves th
 
 You earn money when the ticker plays brands on your screen. One brand view is one play of one brand on the ticker.
 
-- You earn {standardRate} for each 1,000 brand views. A flagship screen earns {flagshipRate} for each 1,000 brand views.
+- You earn {rate} for each 1,000 brand views. The rate is the same on every screen.
 - The rate you see is the rate you keep. There is no fee.
 - A scan of a brand does not earn money.
 - Earned money stays pending for {economy.settlementDelayHours} hours. Then it becomes settled.

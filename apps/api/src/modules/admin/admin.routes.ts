@@ -1,11 +1,11 @@
 import { zValidator } from "@hono/zod-validator";
 import {
-  approveDeviceInput,
   feedbackQueueOutput,
   moderateDeviceOutput,
   moderateListingOutput,
   moderationQueueOutput,
   payoutQueueOutput,
+  payoutQuoteOutput,
   poolOutput,
   refundTopupOutput,
   rejectInput,
@@ -18,7 +18,7 @@ import { HTTPException } from "hono/http-exception";
 import type * as z from "zod/v4";
 import type { AppVariables } from "../../lib/context";
 import { listFeedbackQueue, setFeedbackResolved } from "../feedback/feedback.service";
-import { listPayoutQueue, payPayout, rejectPayout } from "../payouts/payouts.service";
+import { listPayoutQueue, payPayout, quotePayout, rejectPayout } from "../payouts/payouts.service";
 import { listTopupQueue, refundTopup } from "../topups/topups.service";
 import {
   approveDevice,
@@ -53,8 +53,8 @@ adminRouter.post("/listings/:id/reject", zValidator("json", rejectInput), async 
   return c.json(moderateListingOutput.parse(row satisfies z.input<typeof moderateListingOutput>));
 });
 
-adminRouter.post("/devices/:id/approve", zValidator("json", approveDeviceInput), async (c) => {
-  const row = await approveDevice(c.req.param("id"), c.req.valid("json").tier);
+adminRouter.post("/devices/:id/approve", async (c) => {
+  const row = await approveDevice(c.req.param("id"));
   return c.json(moderateDeviceOutput.parse(row satisfies z.input<typeof moderateDeviceOutput>));
 });
 
@@ -79,7 +79,13 @@ adminRouter.get("/payouts", async (c) => {
   return c.json(payoutQueueOutput.parse(queue satisfies z.input<typeof payoutQueueOutput>));
 });
 
-/** Approval sends the money: a Stripe Transfer to the member's connected account. */
+/** What the request pays today in the payout currency, for the admin to read before the press. */
+adminRouter.get("/payouts/:id/quote", async (c) => {
+  const quote = await quotePayout(c.req.param("id"));
+  return c.json(payoutQuoteOutput.parse(quote satisfies z.input<typeof payoutQuoteOutput>));
+});
+
+/** Approval sends the money: a Stripe Transfer to the member's connected account, in MYR. */
 adminRouter.post("/payouts/:id/pay", async (c) => {
   const admin = c.get("user");
   if (!admin) throw new HTTPException(401, { message: "Unauthorized" });

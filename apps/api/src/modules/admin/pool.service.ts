@@ -12,8 +12,8 @@ export interface WeekPool {
 /**
  * The week's slot revenue against the week's earn. Revenue is capped at the
  * ring; the earn grows with every screen approved. When the second passes the
- * first, a lever moves: the slot price, the pace of approval, or the pace of
- * tier promotion (docs/adr/0010). Both are amounts.
+ * first, a lever moves: the slot price or the pace of approval (docs/adr/0010,
+ * docs/adr/0013). Both are amounts.
  */
 export async function weekPool(now: Date = new Date()): Promise<WeekPool> {
   const weekStart = startOfUtcWeek(now);

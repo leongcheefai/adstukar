@@ -1,34 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { amountToCents, centsToAmount, earnPerPlay, economy, rateTable } from "./economy";
+import { amountToCents, centsToAmount, earnPerPlay, economy } from "./economy";
 
 describe("earnPerPlay", () => {
-  it("is the published rate: 2, 3, and 4 units by tier", () => {
-    expect(earnPerPlay("standard")).toBe(2);
-    expect(earnPerPlay("premium")).toBe(3);
-    expect(earnPerPlay("flagship")).toBe(4);
+  it("is the published rate: 2 units, $2.00 per 1,000 plays, for every screen", () => {
+    expect(earnPerPlay()).toBe(2);
+    expect(economy.earn.perThousandPlays).toBe(2_000);
   });
 
   it("is a whole number of units, so the ledger stays integer", () => {
-    const tiers = Object.keys(
-      economy.earn.tierMultiplier,
-    ) as (keyof typeof economy.earn.tierMultiplier)[];
-    for (const tier of tiers) {
-      expect(Number.isInteger(earnPerPlay(tier))).toBe(true);
-    }
-  });
-});
-
-describe("rateTable", () => {
-  it("lists every tier in the order the config declares them", () => {
-    expect(rateTable().map((row) => row.tier)).toEqual(Object.keys(economy.earn.tierMultiplier));
-  });
-
-  it("matches the published table", () => {
-    expect(rateTable()).toEqual([
-      { tier: "standard", perPlay: 2 },
-      { tier: "premium", perPlay: 3 },
-      { tier: "flagship", perPlay: 4 },
-    ]);
+    expect(Number.isInteger(earnPerPlay())).toBe(true);
   });
 });
 
@@ -72,5 +52,12 @@ describe("payout", () => {
 
   it("offers Malaysia first, because the platform lives there", () => {
     expect(economy.payout.countries[0]).toBe("MY");
+  });
+
+  it("pays in MYR, inside a rate band that holds the real ringgit", () => {
+    expect(economy.payout.paidIn.currency).toBe("MYR");
+    const { min, max } = economy.payout.paidIn.rateBounds;
+    expect(min).toBeLessThan(4);
+    expect(max).toBeGreaterThan(4.5);
   });
 });

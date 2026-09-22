@@ -1,6 +1,6 @@
 import { Bank, Check, MapPin, Warning, X } from "@phosphor-icons/react";
 import { earnPerPlay } from "@repo/config/economy";
-import { perThousandPlays, usdCents } from "@repo/config/money";
+import { paid, perThousandPlays, usdCents } from "@repo/config/money";
 import type { PayoutReview, ReviewedDevice } from "@repo/contracts/types";
 import {
   Badge,
@@ -20,7 +20,7 @@ import {
 } from "@repo/ui";
 import { useState } from "react";
 import { toast } from "sonner";
-import { usePayPayout, usePayoutQueue, useRejectPayout } from "../../lib/payouts";
+import { usePayPayout, usePayoutQueue, usePayoutQuote, useRejectPayout } from "../../lib/payouts";
 
 /** What the open dialog is doing to a request. One dialog serves both acts. */
 type Action = { kind: "pay" | "reject"; id: string; label: string };
@@ -87,7 +87,7 @@ function DeviceReviewRow({ device, windowDays }: { device: ReviewedDevice; windo
           {device.name}
         </p>
         <Badge variant="neutral" className="capitalize">
-          {device.tier} · {perThousandPlays(earnPerPlay(device.tier))}
+          {perThousandPlays(earnPerPlay())}
         </Badge>
         {device.state !== "approved" && (
           <Badge variant="warning" className="capitalize">
@@ -252,6 +252,7 @@ export function PayoutsSection() {
   const reject = useRejectPayout();
   const [action, setAction] = useState<Action | null>(null);
   const [note, setNote] = useState("");
+  const quote = usePayoutQuote(action?.kind === "pay" ? action.id : null);
 
   const pending = pay.isPending || reject.isPending;
 
@@ -305,6 +306,28 @@ export function PayoutsSection() {
               </DialogDescription>
             </DialogHeader>
 
+            {action?.kind === "pay" && (
+              /* The rate is the day's, so the admin reads the ringgit figure before the press. */
+              <div className="my-4 rounded-lg border p-3 text-sm">
+                {quote.data ? (
+                  <>
+                    <p className="text-xs text-muted-foreground">Stripe sends</p>
+                    <p className="text-xl tracking-tight tabular-nums">
+                      {paid(quote.data.paidCents, quote.data.currency)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {usdCents(quote.data.usdCents)} at {quote.data.rate} {quote.data.currency} per
+                      USD · {quote.data.source} rate for {quote.data.date}
+                    </p>
+                  </>
+                ) : quote.error ? (
+                  <p className="text-destructive">{quote.error.message}</p>
+                ) : (
+                  <p className="text-muted-foreground">Fetching today's rate…</p>
+                )}
+              </div>
+            )}
+
             {action?.kind === "reject" && (
               <div className="my-4 space-y-1.5">
                 <Label htmlFor="payout-reason">Reason</Label>
@@ -324,7 +347,11 @@ export function PayoutsSection() {
               </Button>
               <Button
                 type="submit"
-                disabled={pending || (action?.kind === "reject" && note.trim().length === 0)}
+                disabled={
+                  pending ||
+                  (action?.kind === "reject" && note.trim().length === 0) ||
+                  (action?.kind === "pay" && !quote.data)
+                }
               >
                 {action?.kind === "pay" ? "Pay now" : "Refuse"}
               </Button>

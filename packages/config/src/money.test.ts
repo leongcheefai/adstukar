@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  paid,
   parseUsd,
   perThousandPlays,
   slotOffer,
@@ -59,6 +60,14 @@ describe("usdCents", () => {
   it("shows what Stripe moved", () => {
     expect(usdCents(941)).toBe("$9.41");
     expect(usdCents(100_000)).toBe("$1,000.00");
+  });
+});
+
+describe("paid", () => {
+  it("shows what Stripe moved in the payout currency", () => {
+    // Intl keeps the symbol and the figure on one line with a no-break space.
+    expect(paid(4_076, "MYR")).toBe("RM\u00a040.76");
+    expect(paid(123_450, "MYR")).toBe("RM\u00a01,234.50");
   });
 });
 

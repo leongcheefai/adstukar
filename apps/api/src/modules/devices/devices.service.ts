@@ -141,7 +141,7 @@ export async function updateDevice(userId: string, deviceId: string, input: Upda
   if (input.closeHour !== undefined) patch.closeHour = input.closeHour ?? null;
   if (input.timezone !== undefined) patch.timezone = input.timezone ?? null;
 
-  // The tier is priced on the room, so a moved screen is a new screen to review.
+  // Approval was given to the room, so a moved screen is a new screen to review.
   // Nothing else here is: the name is a label, the photo is evidence about the
   // room rather than a change to it, and the stated hours are what the payout
   // review measures the screen against rather than what prices it.

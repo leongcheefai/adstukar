@@ -9,8 +9,10 @@ import { HTTPException } from "hono/http-exception";
 import type Stripe from "stripe";
 import { stripe } from "../../lib/stripe";
 import { type Tx, lockMember, postEntry, voidEntry } from "../ledger/ledger.service";
+import { fetchUsdMyr } from "./bnm";
 import { accountFlags, accountParams, connectEventChange } from "./connect";
 import { holdCutoff, payoutAmount, payoutBlock, withdrawable } from "./eligibility";
+import { convertCents, rateInBounds } from "./fx";
 import {
   type DeviceFlags,
   type DeviceStat,
@@ -317,7 +319,6 @@ async function sharedCounts() {
 export interface DeviceHistory extends DeviceStat {
   userId: string;
   name: string;
-  tier: (typeof schema.DEVICE_TIERS)[number];
   state: (typeof schema.DEVICE_STATES)[number];
 }
 
@@ -338,7 +339,6 @@ async function deviceHistory(userIds: string[], since: Date): Promise<DeviceHist
       userId: schema.device.userId,
       name: schema.device.name,
       location: schema.device.location,
-      tier: schema.device.tier,
       state: schema.device.state,
       openHour: schema.device.openHour,
       closeHour: schema.device.closeHour,
@@ -381,7 +381,6 @@ async function deviceHistory(userIds: string[], since: Date): Promise<DeviceHist
       userId: device.userId,
       name: device.name,
       location: device.location,
-      tier: device.tier,
       state: device.state,
       openHour: device.openHour,
       closeHour: device.closeHour,
@@ -466,10 +465,72 @@ function transferGroup(requestId: string): string {
   return `payout:${requestId}`;
 }
 
+/** Today's rate, refused when it is not one the ringgit could have. */
+async function quoteForPayout() {
+  const quote = await fetchUsdMyr();
+  if (!rateInBounds(quote.rate)) {
+    throw new HTTPException(409, {
+      message: `Bank Negara quoted ${quote.rate} ${economy.payout.paidIn.currency} per USD, outside the bounds. Check the feed before you pay.`,
+    });
+  }
+  return quote;
+}
+
+/** The one Stripe Transfer for a request: the dollars converted at today's rate. */
+async function sendTransfer(
+  request: { id: string; userId: string; usdCents: number },
+  account: { stripeAccountId: string },
+): Promise<Stripe.Transfer> {
+  const quote = await quoteForPayout();
+  return stripe.transfers.create(
+    {
+      amount: convertCents(request.usdCents, quote.rate),
+      currency: economy.payout.paidIn.currency.toLowerCase(),
+      destination: account.stripeAccountId,
+      transfer_group: transferGroup(request.id),
+      metadata: {
+        payoutRequestId: request.id,
+        userId: request.userId,
+        usdCents: String(request.usdCents),
+        fxRate: String(quote.rate),
+        fxRateDate: quote.date,
+        fxSource: quote.source,
+      },
+    },
+    { idempotencyKey: `${transferGroup(request.id)}:${crypto.randomUUID()}` },
+  );
+}
+
 /** The transfer Stripe already made for this request, if one exists. */
 async function findTransfer(requestId: string): Promise<Stripe.Transfer | null> {
   const page = await stripe.transfers.list({ transfer_group: transferGroup(requestId), limit: 1 });
   return page.data[0] ?? null;
+}
+
+/**
+ * What a request would pay today, for the admin to read before the press. The
+ * transfer fetches its own rate a moment later, so this is a preview and never
+ * the price.
+ */
+export async function quotePayout(id: string) {
+  const [row] = await db
+    .select({ usdCents: schema.payoutRequest.usdCents, state: schema.payoutRequest.state })
+    .from(schema.payoutRequest)
+    .where(eq(schema.payoutRequest.id, id))
+    .limit(1);
+  if (!row) throw new HTTPException(404, { message: "Payout not found" });
+  if (row.state !== "requested") {
+    throw new HTTPException(409, { message: "This payout was already reviewed" });
+  }
+  const quote = await quoteForPayout();
+  return {
+    usdCents: row.usdCents,
+    paidCents: convertCents(row.usdCents, quote.rate),
+    currency: economy.payout.paidIn.currency,
+    rate: quote.rate,
+    date: quote.date,
+    source: quote.source,
+  };
 }
 
 /**
@@ -486,6 +547,11 @@ async function findTransfer(requestId: string): Promise<Stripe.Transfer | null> 
  * hand back the first refusal for a day and no retry could ever pay. The key
  * therefore covers only the SDK's own retries of one attempt; the group lookup
  * is what stops a second payment. Neither path pays twice.
+ *
+ * The transfer is in the payout currency, not in USD: the platform settles MYR
+ * and holds no dollars (docs/adr/0012). The rate is fetched only when no
+ * transfer exists yet, and it rides in the transfer's metadata, so a retry
+ * that finds the transfer stamps the row with the rate that really applied.
  */
 export async function payPayout(id: string, adminId: string, now: Date = new Date()) {
   return db.transaction(async (tx) => {
@@ -500,18 +566,7 @@ export async function payPayout(id: string, adminId: string, now: Date = new Dat
       });
     }
 
-    const transfer =
-      (await findTransfer(request.id)) ??
-      (await stripe.transfers.create(
-        {
-          amount: request.usdCents,
-          currency: "usd",
-          destination: account.stripeAccountId,
-          transfer_group: transferGroup(request.id),
-          metadata: { payoutRequestId: request.id, userId: request.userId },
-        },
-        { idempotencyKey: `${transferGroup(request.id)}:${crypto.randomUUID()}` },
-      ));
+    const transfer = (await findTransfer(request.id)) ?? (await sendTransfer(request, account));
 
     const [row] = await tx
       .update(schema.payoutRequest)
@@ -519,6 +574,10 @@ export async function payPayout(id: string, adminId: string, now: Date = new Dat
         state: "paid",
         stripeTransferId: transfer.id,
         reference: transfer.id,
+        paidCents: transfer.amount,
+        paidCurrency: transfer.currency.toUpperCase(),
+        fxRate: transfer.metadata.fxRate ?? null,
+        fxRateDate: transfer.metadata.fxRateDate ?? null,
         reviewedBy: adminId,
         reviewedAt: now,
       })

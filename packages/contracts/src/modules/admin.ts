@@ -1,4 +1,4 @@
-import { DEVICE_STATES, DEVICE_TIERS } from "@repo/db/enums";
+import { DEVICE_STATES } from "@repo/db/enums";
 import * as z from "zod/v4";
 import { campaignContract } from "../entities/campaign";
 import { deviceAdminContract } from "../entities/device";
@@ -22,7 +22,7 @@ export const listingReviewContract = z.object({
   owner,
 });
 
-/** A device waiting for review. Approving it also stamps the tier. */
+/** A device waiting for review. */
 export const deviceReviewContract = z.object({
   device: deviceAdminContract,
   owner,
@@ -49,7 +49,6 @@ export const reviewedDeviceContract = toWire(
     deviceId: z.string(),
     name: z.string(),
     location: z.string(),
-    tier: z.enum(DEVICE_TIERS),
     state: z.enum(DEVICE_STATES),
     plays: z.number().int(),
     scans: z.number().int(),
@@ -93,9 +92,27 @@ export const payoutQueueOutput = z.object({
 
 export const reviewPayoutOutput = payoutRequestContract;
 
+/**
+ * What a request would pay today, in the payout currency, at the day's rate.
+ * Hand-authored: it is a preview from the feed, and no table owns it. The
+ * transfer takes its own rate a moment later (docs/adr/0012).
+ */
+export const payoutQuoteOutput = z.object({
+  usdCents: z.number().int(),
+  paidCents: z.number().int(),
+  /** ISO 4217, upper case. */
+  currency: z.string(),
+  /** Units of `currency` per USD. */
+  rate: z.number().positive(),
+  /** The day the rate is for, `YYYY-MM-DD`. */
+  date: z.string(),
+  source: z.string(),
+});
+
 export type ReviewedDevice = z.output<typeof reviewedDeviceContract>;
 export type PayoutReview = z.output<typeof payoutReviewContract>;
 export type PayoutQueue = z.output<typeof payoutQueueOutput>;
+export type PayoutQuote = z.output<typeof payoutQuoteOutput>;
 
 /**
  * One top-up as the refund desk reads it. A member never refunds their own
@@ -136,8 +153,8 @@ export type FeedbackQueue = z.output<typeof feedbackQueueOutput>;
 
 /**
  * What the week's slot revenue is against what the week's plays posted. It is
- * the one number that says when to move a lever: the slot price, the pace of
- * approval, or the pace of tier promotion (docs/adr/0010). Hand-authored: no
+ * the one number that says when to move a lever: the slot price or the pace of
+ * approval (docs/adr/0010, docs/adr/0013). Hand-authored: no
  * table owns a sum over a week.
  */
 export const poolOutput = toWire(

@@ -18,7 +18,6 @@ export type {
   Device,
   DeviceForAdmin,
   DeviceState,
-  DeviceTier,
   VenueType,
 } from "./entities/device";
 export type { Feedback } from "./entities/feedback";
@@ -41,7 +40,7 @@ export type {
 export type { CreatePlacementInput, UpdatePlacementInput } from "./inputs/placements";
 export type { LoopQuery, ReportInput } from "./inputs/serve";
 export type { ListLedgerQuery } from "./inputs/ledger";
-export type { ApproveDeviceInput, RejectInput } from "./inputs/admin";
+export type { RejectInput } from "./inputs/admin";
 export type { ConnectStripeInput } from "./inputs/payouts";
 export type { BookSlotInput } from "./inputs/slots";
 export type { CreateTopupInput } from "./inputs/topups";
@@ -67,6 +66,7 @@ export type {
   ListingReview,
   ModerationQueue,
   PayoutQueue,
+  PayoutQuote,
   Pool,
   PayoutReview,
   ReviewedDevice,
