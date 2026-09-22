@@ -30,6 +30,13 @@ The ticker moves no per-play money.
   amount comes back. A running slot keeps its charge.
 - A term ends by a job and does not renew. The member books again by hand.
   No automatic charge means no surprise spend.
+- A slot does not pause. The member paid for a position for a term, and the
+  term runs to its end on the clock. The API refuses a pause on the campaign
+  and on the creative while the slot is booked or running, and the dashboard
+  offers none. The exits are an edit, which sends the creative back to review
+  and holds the band, and an archive, which ends the term. A pause made sense
+  in the per-play economy, where it saved money; on a flat slot it saves
+  nothing (KEV-31).
 - The database refuses a double booking with a partial unique index on the
   position. Two bookings that race never both pass a check in code.
 

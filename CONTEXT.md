@@ -39,7 +39,8 @@ flat price. The ring holds a fixed count of slots. The numbers live in
 `economy.slot`. The charge lands at booking and the term starts when the
 campaign is verified and its creative approved. While the term runs, every
 venue screen plays it, and the platform pays each screen its rate
-(docs/adr/0010). A term ends and does not renew. A slot that never ran gives its charge back through a `void` row, because no
+(docs/adr/0010). A term ends and does not renew, and it does not pause: an edit sends the
+creative back to review, and an archive ends the term (docs/adr/0009). A slot that never ran gives its charge back through a `void` row, because no
 money leaves Stripe; a top-up refund is a different act (see Refund).
 _Avoid_: spot. "Position" is the number on the ring, not the booking.
 
