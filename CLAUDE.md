@@ -25,6 +25,7 @@ per-play advertiser bill on venue screens (`docs/adr/0010`). Do not restore eith
 
 ## Exchange rules (where things live)
 - **Economy numbers** — `packages/config/src/economy.ts` only. The earn rate, the slot price, the peg, the daily play cap, the paid hours, settlement delay, payout hold and threshold, expiry, top-up bounds, rate limits, listings per campaign. Never a literal in a route, a job, a page, or the client. `apps/embed` is the one exception: it is unmaintained, and its dead web-economy numbers sit in `apps/embed/src/config.ts` so they cannot drift back in.
+- **Upload caps** — `packages/config/src/media.ts` only. An image is 5 MB (png/jpeg/webp); a clip is 50 MB (mp4). The presign contracts, the API, and every file picker read them there, and `apps/api/src/modules/uploads/` presigns one S3 PUT per file with the cap in the signed length.
 - **Ledger** — `apps/api/src/modules/ledger/ledger.service.ts` is the only writer of `ledger_entry`. Rows are append-only. `idempotency_key` is unique. Balances are `SUM(delta)`; never store a counter.
 - **Lots** — every entry carries a lot: `bought`, `earned`, or `granted`. The lot decides the rules. `bought` refunds, never withdraws, never expires. `earned` withdraws after the hold, and expires. `granted` neither refunds nor withdraws, and expires. A spend consumes `granted` first, then `bought`, oldest first. Free money that can be withdrawn is a cash faucet.
 - **Serve path** — `apps/api/src/modules/serve/`: `ranking.ts` is the pure extension point for AI matching. `GET /serve` opens one play; `GET /loop` opens a whole batch for a screen with a shaky network; `POST /report` counts a play and posts the one `earn` row at the one rate; `GET /scan/:playId` records the scan and redirects, and pays nothing. `payable.ts` holds the pure rule for what pays. `loop.ts` holds the pure batch rules.
@@ -87,6 +88,7 @@ Single source of truth for every type crossing the API boundary. Hand-copying a 
 - "Start local DB" → `pnpm db:up`
 - "Apply schema changes locally" → `pnpm db:push` (dev DBs are created by push, so `db:migrate` fails on them); still run `pnpm db:generate` so a migration file ships for production
 - "Change an amount, a rate, or a cap" → edit `packages/config/src/economy.ts`; nothing else
+- "Change what a member may upload, or how big" → edit `packages/config/src/media.ts`; nothing else
 - "Run the ledger jobs once" → `pnpm --filter @repo/api jobs:run`
 - "Create the first admin" → `pnpm db:seed` (reads `SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD`, or takes `--email` and `--password`). It signs the user up through Better Auth, then sets `role = 'admin'`. It promotes an existing email instead of failing, and it refuses to run when `NODE_ENV=production`.
 - "Run everything locally" → `pnpm bootstrap && pnpm dev`

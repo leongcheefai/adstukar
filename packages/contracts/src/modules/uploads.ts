@@ -13,3 +13,6 @@ export type PresignLogoResponse = z.output<typeof presignLogoOutput>;
 
 export const presignDevicePhotoOutput = presignAvatarOutput;
 export type PresignDevicePhotoResponse = z.output<typeof presignDevicePhotoOutput>;
+
+export const presignVideoOutput = presignAvatarOutput;
+export type PresignVideoResponse = z.output<typeof presignVideoOutput>;

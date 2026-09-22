@@ -1,6 +1,12 @@
+import { media, megabytes } from "@repo/config/media";
 import { type ChangeEvent, type KeyboardEvent, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { CHANNELS, type ChannelId, type ChannelPick, WALLPAPERS } from "./channels/catalog";
 import { isPlayable } from "./channels/upload";
+
+/** What the picker accepts, and what the message names when it refuses. */
+const ACCEPT = [...media.image.types, ...media.video.types].join(",");
+const LIMITS = `PNG, JPEG or WebP up to ${megabytes(media.image.maxBytes)}, or MP4 up to ${megabytes(media.video.maxBytes)}`;
 
 type View = "channels" | "wallpapers";
 
@@ -33,9 +39,18 @@ export function ChannelPicker({
   }
 
   function onFiles(event: ChangeEvent<HTMLInputElement>) {
-    const files = [...(event.target.files ?? [])].filter(isPlayable);
+    const chosen = [...(event.target.files ?? [])];
+    const files = chosen.filter(isPlayable);
     // Cleared, so the same files can be chosen a second time.
     event.target.value = "";
+    const refused = chosen.length - files.length;
+    if (refused > 0) {
+      toast.error(
+        refused === 1
+          ? `One file was left out. ${LIMITS}.`
+          : `${refused} files were left out. ${LIMITS}.`,
+      );
+    }
     if (files.length > 0) onPick({ id: "upload", files });
   }
 
@@ -108,14 +123,7 @@ export function ChannelPicker({
         </button>
       ))}
       {/* After the tiles: Boot gives the first focus to the first control it finds. */}
-      <input
-        ref={fileRef}
-        type="file"
-        accept="image/*,video/*"
-        multiple
-        hidden
-        onChange={onFiles}
-      />
+      <input ref={fileRef} type="file" accept={ACCEPT} multiple hidden onChange={onFiles} />
     </fieldset>
   );
 }

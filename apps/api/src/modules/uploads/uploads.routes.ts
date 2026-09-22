@@ -6,6 +6,8 @@ import {
   presignDevicePhotoOutput,
   presignLogoInput,
   presignLogoOutput,
+  presignVideoInput,
+  presignVideoOutput,
 } from "@repo/contracts";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
@@ -15,6 +17,7 @@ import {
   presignAvatarUpload,
   presignDevicePhotoUpload,
   presignLogoUpload,
+  presignVideoUpload,
 } from "./uploads.service";
 
 export const uploadsRouter = new Hono<{ Variables: AppVariables }>();
@@ -47,3 +50,10 @@ uploadsRouter.post(
     );
   },
 );
+
+uploadsRouter.post("/video/presign", zValidator("json", presignVideoInput), async (c) => {
+  const user = c.get("user");
+  if (!user) throw new HTTPException(401, { message: "Unauthorized" });
+  const result = await presignVideoUpload(user.id, c.req.valid("json"));
+  return c.json(presignVideoOutput.parse(result satisfies z.input<typeof presignVideoOutput>));
+});

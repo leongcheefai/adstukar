@@ -44,7 +44,11 @@ export type { RejectInput } from "./inputs/admin";
 export type { ConnectStripeInput } from "./inputs/payouts";
 export type { BookSlotInput } from "./inputs/slots";
 export type { CreateTopupInput } from "./inputs/topups";
-export type { PresignDevicePhotoInput, PresignLogoInput } from "./inputs/uploads";
+export type {
+  PresignDevicePhotoInput,
+  PresignLogoInput,
+  PresignVideoInput,
+} from "./inputs/uploads";
 export type {
   CampaignWithListings,
   VerificationMethod,
@@ -90,4 +94,8 @@ export type {
   SlotLoop,
   SlotWithCampaign,
 } from "./modules/slots";
-export type { PresignDevicePhotoResponse, PresignLogoResponse } from "./modules/uploads";
+export type {
+  PresignDevicePhotoResponse,
+  PresignLogoResponse,
+  PresignVideoResponse,
+} from "./modules/uploads";
