@@ -1,11 +1,22 @@
 import { ArrowRight, Bank, GlobeHemisphereWest, Money, StripeLogo } from "@phosphor-icons/react";
-import { project } from "@repo/config/project";
+import { economy } from "@repo/config/economy";
 import { Button } from "@repo/ui";
 
+/** "MY" reads as "Malaysia"; two or more read as a list. */
+function countryNames(codes: readonly string[]): string {
+  const names = new Intl.DisplayNames(["en"], { type: "region" });
+  return new Intl.ListFormat("en", { type: "conjunction" }).format(
+    codes.map((code) => names.of(code) ?? code),
+  );
+}
+
 const POINTS = [
-  { icon: GlobeHemisphereWest, text: "Support for 34 countries" },
+  {
+    icon: GlobeHemisphereWest,
+    text: `For bank accounts in ${countryNames(economy.payout.countries)}`,
+  },
   { icon: Bank, text: "Paid directly to your bank" },
-  { icon: Money, text: `Stripe payout fees covered by ${project.name}` },
+  { icon: Money, text: "Your own Stripe account, in your name" },
 ] as const;
 
 /**

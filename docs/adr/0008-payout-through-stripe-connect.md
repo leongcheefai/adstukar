@@ -1,5 +1,11 @@
 # A payout leaves through Stripe Connect, and the review stays
 
+> The account shape, the country list, and the USD settlement step below are
+> superseded by docs/adr/0011: the platform is a Malaysia account, so the
+> connected account is a Standard account, only MY may be paid, and the
+> transfer currency is an open question. The flow, the webhook, the row, and
+> the ledger rules stand.
+
 A distributor connects a Stripe account once. When they ask for a payout, an
 admin reviews the history as before (docs/adr/0005), then approves, and the API
 sends the money as a Stripe Transfer to that account. Nobody types a bank number

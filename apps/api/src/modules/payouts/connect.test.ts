@@ -1,4 +1,3 @@
-import { economy } from "@repo/config/economy";
 import type Stripe from "stripe";
 import { describe, expect, it } from "vitest";
 import { accountFlags, accountParams, connectEventChange } from "./connect";
@@ -8,27 +7,20 @@ const ACCOUNT = { details_submitted: true, payouts_enabled: false } as Stripe.Ac
 describe("accountParams", () => {
   const params = accountParams({ country: "MY", email: "a@b.c", userId: "u1" });
 
-  it("asks for transfers alone when the account lives where the platform does", () => {
-    const home = accountParams({
-      country: economy.payout.platformCountry,
-      email: "a@b.c",
-      userId: "u1",
-    });
-    expect(home.capabilities).toEqual({ transfers: { requested: true } });
+  it("asks for card payments and transfers in every country, because the full dashboard refuses transfers alone", () => {
+    for (const country of ["MY", "SG", "US"]) {
+      expect(accountParams({ country, email: "a@b.c", userId: "u1" }).capabilities).toEqual({
+        card_payments: { requested: true },
+        transfers: { requested: true },
+      });
+    }
   });
 
-  it("asks for card payments too in any other country, because Stripe refuses transfers alone there", () => {
-    expect(params.capabilities).toEqual({
-      card_payments: { requested: true },
-      transfers: { requested: true },
-    });
-  });
-
-  it("lets Stripe collect the identity and carry the losses, with the Express dashboard", () => {
+  it("lets Stripe collect the identity and carry the losses, with the full dashboard, because a MY platform may not be loss-liable", () => {
     expect(params.controller).toEqual({
-      fees: { payer: "application" },
-      losses: { payments: "application" },
-      stripe_dashboard: { type: "express" },
+      fees: { payer: "account" },
+      losses: { payments: "stripe" },
+      stripe_dashboard: { type: "full" },
       requirement_collection: "stripe",
     });
   });

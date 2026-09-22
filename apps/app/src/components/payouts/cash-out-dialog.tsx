@@ -23,6 +23,11 @@ import { useConnectStripe, useRequestPayout } from "../../lib/payouts";
 
 const COUNTRIES = economy.payout.countries;
 
+/** "MY" reads as "Malaysia". The browser knows the names, so the list needs no table. */
+function countryName(code: string): string {
+  return new Intl.DisplayNames(["en"], { type: "region" }).of(code) ?? code;
+}
+
 /**
  * Why the button is not there. Every reason is a state a member can leave, so
  * each one says what to do next rather than only what is wrong.
@@ -111,24 +116,31 @@ export function CashOutDialog({
 
         {account === null ? (
           <div className="space-y-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="payout-country">Country of your bank account</Label>
-              <Select value={country} onValueChange={(v) => setCountry(v as PayoutCountry)}>
-                <SelectTrigger id="payout-country" className="w-40">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {COUNTRIES.map((value) => (
-                    <SelectItem key={value} value={value}>
-                      {value}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                Stripe fixes the country when the account is made. Choose the one your bank is in.
+            {COUNTRIES.length === 1 ? (
+              <p className="text-sm text-muted-foreground">
+                Your bank account must be in {countryName(COUNTRIES[0])}. Stripe fixes the country
+                when the account is made.
               </p>
-            </div>
+            ) : (
+              <div className="space-y-1.5">
+                <Label htmlFor="payout-country">Country of your bank account</Label>
+                <Select value={country} onValueChange={(v) => setCountry(v as PayoutCountry)}>
+                  <SelectTrigger id="payout-country" className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {COUNTRIES.map((value) => (
+                      <SelectItem key={value} value={value}>
+                        {countryName(value)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Stripe fixes the country when the account is made. Choose the one your bank is in.
+                </p>
+              </div>
+            )}
             <DialogFooter>
               <Button type="button" onClick={goToStripe} disabled={connect.isPending}>
                 {connect.isPending ? "Opening Stripe…" : "Connect Stripe"}
@@ -142,7 +154,7 @@ export function CashOutDialog({
                 We pay
               </p>
               <p className="flex items-center gap-2 font-medium">
-                Your Stripe account in {account.country}
+                Your Stripe account in {countryName(account.country)}
                 {account.payoutsEnabled ? (
                   <Badge variant="success">Ready</Badge>
                 ) : (

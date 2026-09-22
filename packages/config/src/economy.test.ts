@@ -70,8 +70,7 @@ describe("payout", () => {
     for (const country of economy.payout.countries) expect(country).toMatch(/^[A-Z]{2}$/);
   });
 
-  it("names the platform's own country, and it is one a member may pick", () => {
-    expect(economy.payout.platformCountry).toMatch(/^[A-Z]{2}$/);
-    expect(economy.payout.countries).toContain(economy.payout.platformCountry);
+  it("offers Malaysia first, because the platform lives there", () => {
+    expect(economy.payout.countries[0]).toBe("MY");
   });
 });
