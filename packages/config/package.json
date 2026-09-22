@@ -8,7 +8,8 @@
     "./tsconfig": "./tsconfig.base.json",
     "./biome": "./biome.json",
     "./economy": "./src/economy.ts",
-    "./money": "./src/money.ts"
+    "./money": "./src/money.ts",
+    "./media": "./src/media.ts"
   },
   "scripts": {
     "lint": "biome check src",

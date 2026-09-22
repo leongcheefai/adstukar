@@ -1,4 +1,5 @@
 import { Camera, SealCheck } from "@phosphor-icons/react";
+import { media, megabytes } from "@repo/config/media";
 import type { PresignAvatarResponse } from "@repo/contracts/types";
 import {
   Avatar,
@@ -95,8 +96,8 @@ export function ProfileSection() {
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("File too large (max 5 MB)");
+    if (file.size > media.image.maxBytes) {
+      toast.error(`File too large (max ${megabytes(media.image.maxBytes)})`);
       return;
     }
     avatarMutation.mutate(file);

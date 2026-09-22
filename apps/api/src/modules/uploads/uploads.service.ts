@@ -1,6 +1,11 @@
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import type { PresignAvatarInput, PresignAvatarResponse } from "@repo/contracts";
+import type {
+  PresignAvatarInput,
+  PresignAvatarResponse,
+  PresignVideoInput,
+  PresignVideoResponse,
+} from "@repo/contracts";
 import { serverEnv } from "@repo/env";
 import { HTTPException } from "hono/http-exception";
 
@@ -20,11 +25,14 @@ function getS3Client(): S3Client {
   return _s3Client;
 }
 
-function getExtension(contentType: PresignAvatarInput["contentType"]): string {
-  const map: Record<PresignAvatarInput["contentType"], string> = {
+type PresignInput = PresignAvatarInput | PresignVideoInput;
+
+function getExtension(contentType: PresignInput["contentType"]): string {
+  const map: Record<PresignInput["contentType"], string> = {
     "image/png": "png",
     "image/jpeg": "jpg",
     "image/webp": "webp",
+    "video/mp4": "mp4",
   };
   return map[contentType];
 }
@@ -55,10 +63,22 @@ export async function presignDevicePhotoUpload(
   return presignUpload("device-photos", userId, input);
 }
 
-async function presignUpload(
-  prefix: "avatars" | "logos" | "device-photos",
+/**
+ * A clip a screen plays. The contract caps it at `media.video.maxBytes`, so a
+ * member cannot presign a film; the cap is what a slot's dwell needs, not what
+ * the bucket can hold.
+ */
+export async function presignVideoUpload(
   userId: string,
-  input: PresignAvatarInput,
+  input: PresignVideoInput,
+): Promise<PresignVideoResponse> {
+  return presignUpload("videos", userId, input);
+}
+
+async function presignUpload(
+  prefix: "avatars" | "logos" | "device-photos" | "videos",
+  userId: string,
+  input: PresignInput,
 ): Promise<PresignAvatarResponse> {
   if (
     !serverEnv.S3_BUCKET ||

@@ -1,11 +1,16 @@
+import { acceptsImage, acceptsVideo } from "@repo/config/media";
 import { useEffect, useRef, useState } from "react";
 
 const IMAGE_DWELL_MS = 8000;
 
 type Media = { url: string; kind: "image" | "video" };
 
+/**
+ * The same rule the presign routes apply, so a member learns the caps on their
+ * own set before a file ever goes to the server.
+ */
 export function isPlayable(file: File): boolean {
-  return file.type.startsWith("image/") || file.type.startsWith("video/");
+  return acceptsImage(file) || acceptsVideo(file);
 }
 
 export function UploadChannel({ files, paused }: { files: File[]; paused: boolean }) {

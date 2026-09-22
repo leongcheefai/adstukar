@@ -7,6 +7,7 @@ import {
   UploadSimple,
 } from "@phosphor-icons/react";
 import { economy, slotPrice, slotTermEnd } from "@repo/config/economy";
+import { media, megabytes } from "@repo/config/media";
 import { usd, usdCents } from "@repo/config/money";
 import { project } from "@repo/config/project";
 import type { Campaign, LoopBand } from "@repo/contracts/types";
@@ -85,8 +86,9 @@ const LOOKUP_MESSAGE: Record<LookupState, string> = {
 const isTouchDevice = typeof window !== "undefined" && "ontouchstart" in window;
 
 /** What the presign route and the copy below both accept. */
-const LOGO_TYPES = "image/png,image/jpeg,image/webp";
-const LOGO_MAX_BYTES = 5 * 1024 * 1024;
+const LOGO_TYPES = media.image.types.join(",");
+const LOGO_MAX_BYTES = media.image.maxBytes;
+const LOGO_MAX_LABEL = megabytes(LOGO_MAX_BYTES);
 const NAME_MAX = economy.slot.nameMaxLength;
 const TAGLINE_MAX = economy.slot.taglineMaxLength;
 
@@ -176,7 +178,7 @@ export function SlotForm({
       return;
     }
     if (file.size > LOGO_MAX_BYTES) {
-      toast.error("That image is over 5 MB");
+      toast.error(`That image is over ${LOGO_MAX_LABEL}`);
       return;
     }
     logoUpload.mutate(file);
@@ -521,7 +523,7 @@ export function SlotForm({
                       {logoUpload.isPending ? "Uploading…" : "Drop a logo, or click to choose"}
                     </span>
                     <span className="block text-xs text-muted-foreground">
-                      Optional. PNG, JPEG or WebP up to 5 MB. It must read on black.
+                      Optional. PNG, JPEG or WebP up to {LOGO_MAX_LABEL}. It must read on black.
                     </span>
                   </span>
                 </button>
