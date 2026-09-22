@@ -3,6 +3,7 @@ import { getCollection, render } from "astro:content";
 import { project } from "@repo/config/project";
 import { Badge } from "@repo/ui";
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import { pageTitle } from "../../lib/pages";
 import { readingTime } from "../../lib/reading-time";
 import { articleSchema } from "../../lib/structured-data";
 
@@ -33,7 +34,7 @@ const jsonLd = articleSchema({
 ---
 
 <BaseLayout
-  title={`${post.data.title} — ${project.name}`}
+  title={pageTitle(post.data.title)}
   description={post.data.description}
   ogSlug={`blog-${post.id}`}
   ogType="article"

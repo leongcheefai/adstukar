@@ -4,10 +4,12 @@ description: How to add funds, how you earn money, and how to get a payout to yo
 order: 3
 ---
 
-import { distributorPercent, economy, playRateRange } from "@repo/config/economy";
-import { perThousandPlaysRange, usd, usdCents } from "@repo/config/money";
+import { earnPerPlay, economy } from "@repo/config/economy";
+import { usd, usdCents, usdPerThousand } from "@repo/config/money";
 
-export const rates = playRateRange();
+export const standardRate = usdPerThousand(earnPerPlay("standard"));
+export const flagshipRate = usdPerThousand(earnPerPlay("flagship"));
+export const dailyPlays = economy.caps.dailyPlaysPerDevice.toLocaleString("en-US");
 export const countryName = new Intl.DisplayNames(["en"], { type: "region", style: "short" });
 
 The wallet contains US dollars. The **Wallet** page in the dashboard shows each movement of money on its own line.
@@ -27,15 +29,32 @@ The funds show on the **Wallet** page a short time after the payment. No amount 
 
 You can get a refund for funds that you added and did not use. Send your request to support in {economy.topup.refundWindowDays} days or less after the payment.
 
+The price of a slot goes to your wallet again only before the review approves the ad. Refer to **Refund of a slot** in the **Advertising** topic.
+
 ## How you earn money
 
-You earn money when the ticker plays ads on your screen.
+You earn money when the ticker plays brands on your screen. One brand view is one play of one brand on the ticker.
 
-- Each play of an ad earns money. The rate is {perThousandPlaysRange(rates.lowest, rates.highest)}.
-- When a person scans an ad on your screen, you earn a bonus.
-- You keep {distributorPercent()}% of each play and each scan. {economy.feePercent}% is the fee.
+- You earn {standardRate} for each 1,000 brand views. A flagship screen earns {flagshipRate} for each 1,000 brand views.
+- The rate you see is the rate you keep. There is no fee.
+- A scan of a brand does not earn money.
 - Earned money stays pending for {economy.settlementDelayHours} hours. Then it becomes settled.
 - Earned money expires {economy.expiryMonths} months after it becomes settled.
+
+## Daily limits
+
+Two limits apply to each screen on each day. The day starts at 00:00 UTC.
+
+- **Views.** A screen earns for a maximum of {dailyPlays} brand views a day.
+- **Hours.** A screen earns for a maximum of {economy.caps.paidHoursPerDay} hours a day. The paid hours start at the first brand view of the day. The house card also starts the paid hours, because the screen was on.
+
+After a limit, the ticker continues to play. Each brand view still counts, but it pays nothing.
+
+## A hidden screen
+
+The ticker plays only while the browser tab is visible. A hidden tab, or a minimized window, shows nothing and earns nothing.
+
+If you hide the tab while an ad plays, the ad stops. The ad plays again when the tab is visible.
 
 ## Get a payout
 

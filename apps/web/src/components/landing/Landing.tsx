@@ -1,13 +1,15 @@
-import { type DeviceTierRate, economy, rateTable } from "@repo/config/economy";
-import { slotOffer, usd, usdPerThousand } from "@repo/config/money";
+import { economy } from "@repo/config/economy";
+import { usdCents } from "@repo/config/money";
 import { project } from "@repo/config/project";
-import { Container, Logo, Section, SectionHeader } from "@repo/ui";
+import { Container, Logo, Section } from "@repo/ui";
 import type { CSSProperties, ReactNode } from "react";
 import { landingFaq } from "../../lib/faq";
 import type { LandingConfig } from "../../lib/landing/config";
-import { type LandingSample, sampleLanding, seriesPath } from "../../lib/landing/sample";
+import { type LandingSample, sampleLanding } from "../../lib/landing/sample";
 import { Faq } from "./Faq";
 import { Screen } from "./Screen";
+import { SlotSample } from "./SlotSample";
+import { StepArt, type StepArtName } from "./StepArt";
 
 /**
  * The landing page as one pure function of its config. The site renders it
@@ -104,20 +106,24 @@ function HeroStrap({
 
 /* --- Sections ----------------------------------------------------------- */
 
-const STEPS = [
+const STEPS: readonly { art: StepArtName; title: string; body: string; note?: string }[] = [
   {
+    art: "open",
     title: `Open ${project.name}`,
-    body: "In a browser, on any screen: a TV, a stick, a tablet, an old laptop. Nothing to install.",
+    body: "In a browser, on a device of your choice.",
   },
   {
-    title: "Play something",
-    body: `Music, a podcast, a video, a live clip. ${project.name} plays it full frame. Nothing covers the picture.`,
+    art: "channel",
+    title: "Select a channel",
+    body: "Pick images or a video to show.",
   },
   {
+    art: "earn",
     title: "Earn",
-    body: "Listings crawl in one line along the foot. Each play earns a fixed rate, at the tier of your screen.",
+    body: "Set up Stripe, earn, and cash out.",
+    note: "Terms and conditions apply.",
   },
-] as const;
+];
 
 /**
  * How it works: the title, the three steps, and the drawn screen under them.
@@ -136,21 +142,28 @@ function Steps({
   return (
     <Section id="how-it-works" spacing={config.density} className={className}>
       <Container>
-        <h2 className="landing-title text-center">How it works</h2>
-        <ol className="steps-row relative mt-8 grid gap-12 lg:grid-cols-3 lg:gap-8">
+        <h2 className="landing-title pt-8 text-center">How it works</h2>
+        <ol className="steps-row mt-16 grid lg:mt-20 justify-center gap-12 lg:grid-cols-[repeat(3,max-content)] lg:gap-16">
           {STEPS.map((step, i) => (
             <li
               key={step.title}
-              className="step-card relative flex flex-col items-center gap-4 text-center"
+              className="step-card flex flex-col items-center gap-4 text-left"
               style={{ ["--n" as string]: i }}
             >
-              <span className="relative flex size-11 items-center justify-center rounded-full bg-primary font-mono text-base font-medium tabular-nums text-primary-foreground">
-                {i + 1}
-              </span>
+              <StepArt name={step.art} className="text-on-air" />
               <div>
-                <h3 className="text-lg font-medium tracking-tight">{step.title}</h3>
-                <p className="mx-auto mt-2 max-w-xs text-pretty text-sm leading-relaxed text-muted-foreground">
+                <h3 className="flex items-center gap-2.5 text-lg font-medium tracking-tight">
+                  <span
+                    aria-hidden="true"
+                    className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary font-mono text-xs font-medium tabular-nums text-primary-foreground"
+                  >
+                    {i + 1}
+                  </span>
+                  {step.title}
+                </h3>
+                <p className="mt-2 max-w-xs text-pretty text-sm leading-relaxed text-muted-foreground">
                   {step.body}
+                  {step.note && <span className="block">{step.note}</span>}
                 </p>
               </div>
             </li>
@@ -164,182 +177,21 @@ function Steps({
   );
 }
 
-const TIER_LABEL: Record<DeviceTierRate, string> = {
-  standard: "Standard",
-  premium: "Premium",
-  flagship: "Flagship",
-};
-
-/** The table is derived once, in the config, so the dashboard shows the same rows. */
-const RATE_ROWS = rateTable().map((row) => ({
-  tier: row.tier,
-  label: TIER_LABEL[row.tier],
-  perThousand: usdPerThousand(row.perPlay),
-}));
-
-function Rates({ spacing, className }: { spacing: LandingConfig["density"]; className?: string }) {
-  const rows = RATE_ROWS;
-  return (
-    <Section id="rates" spacing={spacing} className={className}>
-      <Container>
-        <SectionHeader
-          eyebrow="What a play pays"
-          headline="One number per screen"
-          lede={`A screen earns a fixed rate for every play. ${project.name} pays it, and the number you read is the number you keep.`}
-        />
-        <div className="rates-card mx-auto mt-14 max-w-3xl overflow-x-auto rounded-xl bg-card shadow-elev-2">
-          <table className="rates-table">
-            <thead>
-              <tr>
-                <th scope="col">Screen tier</th>
-                <th scope="col" className="rates-num">
-                  Per 1,000 plays <span>you keep</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.tier}>
-                  <th scope="row">{row.label}</th>
-                  <td className="rates-num rates-keep">{row.perThousand}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <p className="mx-auto mt-6 max-w-2xl text-center text-pretty text-sm text-muted-foreground">
-          In US dollars. A person stamps the tier when the screen is approved, and a screen is paid
-          for up to {economy.caps.dailyPlaysPerDevice.toLocaleString("en-US")} plays and{" "}
-          {economy.caps.paidHoursPerDay} hours a day.
-        </p>
-      </Container>
-    </Section>
-  );
-}
 
 const ADVERTISER_CLAIMS = [
   {
-    title: "One flat price",
-    body: `${slotOffer()}, on every screen. No per-play bill, no daily budget, and no surprise spend: a term ends and does not renew.`,
+    title: "Choose a slot",
+    body: `${economy.slot.count} slots. Pick one. Unlimited campaigns.`,
   },
   {
-    title: "One verified domain",
-    body: "Prove your site once with a token. Every listing under the campaign points at it, and a person reviews each one before it plays.",
+    title: `${economy.slot.termDays} days`,
+    body: "Starts when the campaign is approved.",
   },
   {
-    title: "Every impression on one chart",
-    body: "Plays and scans, by day, on every screen your slot ran on.",
+    title: "One flat fee",
+    body: `${usdCents(economy.slot.priceUsdCents)}. No per-play bill.`,
   },
 ] as const;
-
-/** The two plots share one width and one height, so a glance compares shape. */
-const SPARK_W = 320;
-const SPARK_H = 56;
-
-/**
- * One metric: the name and the total on the left, its own plot on the right.
- * Each metric has its own scale, because clicks are a few percent of
- * impressions and would lie flat on a shared one. The coloured mark beside the
- * name is the legend; the words stay in text ink.
- */
-function Metric({
-  label,
-  value,
-  series,
-  className,
-}: {
-  label: string;
-  value: number;
-  series: readonly number[];
-  className: string;
-}) {
-  const { line, area } = seriesPath(series, SPARK_W, SPARK_H);
-  return (
-    <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] items-center gap-4">
-      <div>
-        <dt className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span className={`size-2 rounded-full bg-current ${className}`} aria-hidden="true" />
-          {label}
-        </dt>
-        <dd className="mt-1 font-mono text-2xl font-medium leading-none tabular-nums tracking-tight">
-          {value.toLocaleString("en-US")}
-        </dd>
-      </div>
-      <dd className={`pointer-events-none select-none ${className}`}>
-        <svg
-          viewBox={`0 0 ${SPARK_W} ${SPARK_H}`}
-          width={SPARK_W}
-          height={SPARK_H}
-          className="h-14 w-full"
-          preserveAspectRatio="none"
-          role="img"
-          aria-label={`${label} by day`}
-        >
-          <title>{label} by day</title>
-          <path d={area} fill="currentColor" opacity="0.1" />
-          <path
-            d={line}
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinejoin="round"
-            strokeLinecap="round"
-            vectorEffect="non-scaling-stroke"
-          />
-        </svg>
-      </dd>
-    </div>
-  );
-}
-
-/**
- * A sample campaign's month, the way the advertiser's dashboard draws it:
- * impressions and clicks, each with its own plot, and the spend under them.
- * An impression is a play and a click is a scan; the card uses the words an
- * advertiser already knows.
- */
-function SampleCard({ sample }: { sample: LandingSample }) {
-  const ad = sample.ads[0];
-  const rate = sample.plays > 0 ? (sample.scans / sample.plays) * 100 : 0;
-  return (
-    <div className="sample-card rounded-xl bg-card p-6 shadow-elev-2 sm:p-7">
-      <p className="flex items-center justify-between text-xs font-medium uppercase tracking-widest text-muted-foreground">
-        <span>Sample</span>
-        <span className="normal-case tracking-normal">Last 30 days</span>
-      </p>
-      <div className="mt-3">
-        <p className="text-sm font-medium tracking-tight">{ad?.name ?? "Campaign"}</p>
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          {ad?.head ?? "Listing"} · {TIER_LABEL[sample.tier]} screens
-        </p>
-      </div>
-      <dl className="mt-6 grid gap-5">
-        <Metric
-          label="Impressions"
-          value={sample.plays}
-          series={sample.series}
-          className="text-primary"
-        />
-        <Metric
-          label="Clicks"
-          value={sample.scans}
-          series={sample.scanSeries}
-          className="sample-clicks"
-        />
-      </dl>
-      <dl className="mt-6 grid grid-cols-2 gap-4 border-t border-border pt-5">
-        <div>
-          <dt className="text-xs text-muted-foreground">Click rate</dt>
-          <dd className="mt-1 font-mono text-lg tabular-nums">{rate.toFixed(1)}%</dd>
-        </div>
-        <div>
-          <dt className="text-xs text-muted-foreground">Spent</dt>
-          <dd className="mt-1 font-mono text-lg tabular-nums">{usd(sample.spent)}</dd>
-        </div>
-      </dl>
-    </div>
-  );
-}
 
 function Advertisers({
   sample,
@@ -354,13 +206,18 @@ function Advertisers({
     <Section id="advertisers" spacing={spacing} className={className}>
       <Container className="grid items-center gap-12 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-16">
         <div>
-          <p className="text-sm font-medium uppercase tracking-widest text-primary">Advertisers</p>
+          <p className="inline-flex h-7 items-center rounded-full bg-on-air px-3 text-xs font-medium uppercase tracking-widest text-on-air-foreground">
+            Advertisers
+          </p>
           <h2 className="landing-title landing-title-compact mt-3">
             Be on the screens people already look at
           </h2>
-          <ul className="grid gap-6 sm:grid-cols-3 lg:grid-cols-1">
+          <ul className="grid sm:grid-cols-3 sm:gap-x-6 lg:grid-cols-1 lg:gap-x-0">
             {ADVERTISER_CLAIMS.map((claim) => (
-              <li key={claim.title} className="border-l-2 border-primary/30 pl-4">
+              <li
+                key={claim.title}
+                className="pb-5 last:pb-0 before:mb-5 before:block before:h-px before:w-32 before:bg-primary/40 first:before:hidden"
+              >
                 <h3 className="text-base font-medium tracking-tight">{claim.title}</h3>
                 <p className="mt-1.5 text-pretty text-sm leading-relaxed text-muted-foreground">
                   {claim.body}
@@ -369,7 +226,7 @@ function Advertisers({
             ))}
           </ul>
         </div>
-        <SampleCard sample={sample} />
+        <SlotSample sample={sample} />
       </Container>
     </Section>
   );
@@ -435,12 +292,11 @@ export function Landing({ config, ticker }: LandingProps) {
         config={config}
         className={surface(0)}
       />
-      <Rates spacing={config.density} className={surface(1)} />
-      <Advertisers sample={sample} spacing={config.density} className={surface(2)} />
+      <Advertisers sample={sample} spacing={config.density} className={surface(1)} />
       <Faq
         items={landingFaq(config.faqPerGroup).flatMap((group) => group.items)}
         spacing={config.density}
-        className={surface(3)}
+        className={surface(2)}
       />
       <Cta slab={config.ctaSlab} />
     </div>

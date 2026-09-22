@@ -5,16 +5,10 @@ import { env } from "../lib/env";
 
 const APP_URL = env.PUBLIC_APP_URL;
 
-/* Anchors on the landing page, plus the help centre that answers the rest. On a
-   phone the row folds to the logo and the one button: every link here is also
-   in the footer, and a drawer is more nav than a four-section site needs. The
-   rates sit under "How it works" on the page, and the footer links them. */
-const links = [
-  { label: "How it works", href: "/#how-it-works" },
-  { label: "Advertisers", href: "/#advertisers" },
-  { label: "FAQ", href: "/#faq" },
-  { label: "Help", href: "/help" },
-] as const;
+/* The help centre answers the rest. On a phone the row folds to the logo and
+   the one button: the link is also in the footer, and a drawer is more nav
+   than a one-page site needs. */
+const links = [{ label: "Help", href: "/help" }] as const;
 
 /* Text links bleed vertically only, so neighbours in the row cannot overlap. */
 const TEXT_LINK =

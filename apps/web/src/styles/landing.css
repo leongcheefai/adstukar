@@ -64,7 +64,7 @@ body[data-bleed] .hero-float {
 }
 
 .set-section {
-  margin: 3.5rem auto 0;
+  margin: 4.5rem auto 0;
   max-width: 56rem;
 }
 
@@ -459,64 +459,6 @@ body[data-bleed] .hero-float {
 .ticker-total b[data-loading] {
   min-width: 5ch;
 }
-/* --- Rates ---------------------------------------------------------------- */
-
-.rates-table {
-  width: 100%;
-  min-width: 36rem;
-  border-collapse: collapse;
-  font-size: 0.875rem;
-}
-.rates-table th,
-.rates-table td {
-  padding: 0.9rem 1.25rem;
-  text-align: left;
-  vertical-align: bottom;
-}
-.rates-table thead th {
-  padding-top: 1.25rem;
-  border-bottom: 1px solid var(--border);
-  font-size: 0.75rem;
-  font-weight: var(--fw-medium);
-  color: var(--foreground);
-}
-.rates-table thead th span {
-  display: block;
-  margin-top: 0.15rem;
-  font-weight: var(--fw-regular);
-  color: var(--muted-foreground);
-}
-.rates-table tbody th {
-  font-weight: var(--fw-medium);
-}
-.rates-table tbody tr + tr {
-  border-top: 1px solid var(--border);
-}
-.rates-table tbody tr:last-child td,
-.rates-table tbody tr:last-child th {
-  padding-bottom: 1.25rem;
-}
-.rates-num {
-  text-align: right;
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-}
-.rates-table thead .rates-num {
-  font-family: var(--font-sans);
-}
-.rates-keep {
-  font-weight: var(--fw-medium);
-  color: var(--primary);
-}
-
-/* --- The sample card ------------------------------------------------------ */
-
-/* The clicks plot, in the ON AIR orange from the lockup. Impressions take the
-   brand blue, so the two plots read as two things at a glance. */
-.sample-clicks {
-  color: #ff5100;
-}
-
 /* --- FAQ ------------------------------------------------------------------ */
 
 /* Ortland, for the one-line section titles on the landing page. A display
@@ -527,6 +469,20 @@ body[data-bleed] .hero-float {
   font-weight: 400;
   font-display: swap;
   src: url("../assets/fonts/Ortland.otf") format("opentype");
+}
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("../assets/fonts/InterVariable.ttf") format("truetype");
+}
+
+/* The figures on the sample card, in Inter with lining tabular numerals. */
+.sample-figure {
+  font-family: "Inter", var(--font-sans);
+  font-variant-numeric: tabular-nums;
 }
 
 /* A section title that is the whole header: no eyebrow, no lede. */
