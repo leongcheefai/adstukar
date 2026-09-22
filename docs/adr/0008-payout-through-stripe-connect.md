@@ -2,9 +2,9 @@
 
 > The account shape, the country list, and the USD settlement step below are
 > superseded by docs/adr/0011: the platform is a Malaysia account, so the
-> connected account is a Standard account, only MY may be paid, and the
-> transfer currency is an open question. The flow, the webhook, the row, and
-> the ledger rules stand.
+> connected account is a Standard account, and only MY may be paid. The
+> Transfer is in MYR at the day's Bank Negara rate (docs/adr/0012). The flow,
+> the webhook, the row, and the ledger rules stand.
 
 A distributor connects a Stripe account once. When they ask for a payout, an
 admin reviews the history as before (docs/adr/0005), then approves, and the API

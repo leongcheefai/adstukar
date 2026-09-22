@@ -3,6 +3,7 @@ import type {
   ConnectStripeResponse,
   PayoutOverview,
   PayoutQueue,
+  PayoutQuote,
   PayoutRequest,
   StripeAccount,
 } from "@repo/contracts/types";
@@ -63,6 +64,22 @@ export function usePayoutQueue() {
   return useQuery({
     queryKey: queueKey,
     queryFn: () => apiFetch<PayoutQueue>("/admin/payouts"),
+  });
+}
+
+/**
+ * Admin: what one request pays today in the payout currency. Fetched when the
+ * pay dialog opens and never cached, because the rate is the day's and the
+ * transfer takes its own a moment later (docs/adr/0012).
+ */
+export function usePayoutQuote(id: string | null) {
+  return useQuery({
+    queryKey: ["admin", "payouts", id, "quote"] as const,
+    queryFn: () => apiFetch<PayoutQuote>(`/admin/payouts/${id}/quote`),
+    enabled: id !== null,
+    staleTime: 0,
+    gcTime: 0,
+    retry: false,
   });
 }
 

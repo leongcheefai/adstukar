@@ -93,9 +93,27 @@ export const payoutQueueOutput = z.object({
 
 export const reviewPayoutOutput = payoutRequestContract;
 
+/**
+ * What a request would pay today, in the payout currency, at the day's rate.
+ * Hand-authored: it is a preview from the feed, and no table owns it. The
+ * transfer takes its own rate a moment later (docs/adr/0012).
+ */
+export const payoutQuoteOutput = z.object({
+  usdCents: z.number().int(),
+  paidCents: z.number().int(),
+  /** ISO 4217, upper case. */
+  currency: z.string(),
+  /** Units of `currency` per USD. */
+  rate: z.number().positive(),
+  /** The day the rate is for, `YYYY-MM-DD`. */
+  date: z.string(),
+  source: z.string(),
+});
+
 export type ReviewedDevice = z.output<typeof reviewedDeviceContract>;
 export type PayoutReview = z.output<typeof payoutReviewContract>;
 export type PayoutQueue = z.output<typeof payoutQueueOutput>;
+export type PayoutQuote = z.output<typeof payoutQuoteOutput>;
 
 /**
  * One top-up as the refund desk reads it. A member never refunds their own
