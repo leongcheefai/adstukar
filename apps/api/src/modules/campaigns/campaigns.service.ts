@@ -5,11 +5,15 @@ import { and, asc, desc, eq, inArray, isNotNull, ne } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import { domainFromUrl } from "../../lib/domain";
 import type { Tx } from "../ledger/ledger.service";
-import { closeSlot, startSlot } from "../slots/term";
+import { closeSlot, hasLiveSlot, startSlot } from "../slots/term";
 import { verifyDomain } from "./verification";
 
 type CampaignRow = typeof schema.campaign.$inferSelect;
 type ListingRow = typeof schema.listing.$inferSelect;
+
+/** The answer to a pause on a campaign that holds a live slot. The listing service says the same. */
+export const SLOT_DOES_NOT_PAUSE =
+  "A slot does not pause. Edit the ad to send it back to review, or archive the slot.";
 
 /** Archived rows stay for the ledger to reference, and leave every list. */
 const LIVE_CAMPAIGN = ne(schema.campaign.state, "archived");
@@ -167,6 +171,10 @@ export async function updateCampaign(
     const verifiedAt = "verifiedAt" in patch ? patch.verifiedAt : existing.verifiedAt;
     if (input.state === "active" && !verifiedAt) {
       throw new HTTPException(409, { message: "Verify the domain before you run the campaign" });
+    }
+    // A slot does not pause: the term runs to its end whatever the member does.
+    if (input.state === "paused" && (await hasLiveSlot(db, campaignId))) {
+      throw new HTTPException(409, { message: SLOT_DOES_NOT_PAUSE });
     }
     patch.state = input.state;
   }

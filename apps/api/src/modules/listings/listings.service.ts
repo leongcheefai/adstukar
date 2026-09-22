@@ -3,8 +3,9 @@ import type { CreateListingInput, UpdateListingInput } from "@repo/contracts";
 import { db, schema } from "@repo/db";
 import { and, asc, count, eq, ne } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
-import { getOwnedCampaign } from "../campaigns/campaigns.service";
+import { SLOT_DOES_NOT_PAUSE, getOwnedCampaign } from "../campaigns/campaigns.service";
 import type { Tx } from "../ledger/ledger.service";
+import { hasLiveSlot } from "../slots/term";
 import { listingStateChange } from "./lifecycle";
 
 type ListingRow = typeof schema.listing.$inferSelect;
@@ -108,6 +109,10 @@ export async function updateListing(userId: string, listingId: string, input: Up
   if (input.state !== undefined) {
     const change = listingStateChange(existing.state, input.state);
     if (!change.ok) throw new HTTPException(409, { message: change.message });
+    // A paused creative would take the brand off the ring, and a slot does not pause.
+    if (change.state === "paused" && (await hasLiveSlot(db, existing.campaignId))) {
+      throw new HTTPException(409, { message: SLOT_DOES_NOT_PAUSE });
+    }
     patch.state = change.state;
   }
 

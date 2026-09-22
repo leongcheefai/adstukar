@@ -39,8 +39,9 @@ export interface LoopSlot {
 /**
  * The whole loop, position by position. A running slot on an active campaign
  * with an approved creative prints its brand. Any other live slot is held:
- * paid, so nobody else may take the position, but not on screen. A pause
- * takes the brand off the loop and keeps the position. Everything else is open.
+ * paid, so nobody else may take the position, but not on screen. A slot does
+ * not pause, so a held band waits on the domain check or the review, or shows
+ * a creative an edit sent back. Everything else is open.
  */
 export function loopOf(slots: LoopSlot[]): LoopBand[] {
   const byPosition = new Map(slots.filter((s) => isLive(s.state)).map((s) => [s.position, s]));

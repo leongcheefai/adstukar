@@ -26,8 +26,6 @@ export type SlotStatus =
   | "action"
   /** A reviewer refused the creative. */
   | "rejected"
-  /** Stopped by the member or by the system. */
-  | "paused"
   /** The term is over. */
   | "ended"
   /** The charge came back before the term started. */
@@ -55,8 +53,11 @@ function statusOf(item: SlotWithCampaign): SlotStatus {
   if (!listing || campaign.verifiedAt === null) return "action";
   if (listing.state === "rejected") return "rejected";
   if (listing.state === "pending") return "review";
-  if (campaign.state === "paused" || listing.state === "paused") return "paused";
-  return slot.state === "running" && campaign.state === "active" ? "running" : "action";
+  // A slot does not pause, so a live one with an approved ad on a verified
+  // domain runs. Any other state is a step the member has to take.
+  return slot.state === "running" && campaign.state === "active" && listing.state === "approved"
+    ? "running"
+    : "action";
 }
 
 export function slotOf(item: SlotWithCampaign, now = new Date()): Slot {

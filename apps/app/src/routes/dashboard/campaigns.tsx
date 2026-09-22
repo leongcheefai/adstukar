@@ -20,7 +20,7 @@ import { openWhenReady, useTopups } from "../../lib/topups";
 
 const BOOK = "/dashboard/campaigns/book";
 
-type Filter = "all" | "running" | "review" | "paused" | "ended";
+type Filter = "all" | "running" | "review" | "ended";
 
 /**
  * Which slots a menu item holds. Review takes every slot that waits on somebody: the
@@ -30,7 +30,6 @@ const FILTERS: { key: Filter; label: string; holds: SlotStatus[] | null }[] = [
   { key: "all", label: "All", holds: null },
   { key: "running", label: "Running", holds: ["running"] },
   { key: "review", label: "In review", holds: ["review", "action", "rejected"] },
-  { key: "paused", label: "Paused", holds: ["paused"] },
   { key: "ended", label: "Ended", holds: ["ended", "refunded"] },
 ];
 

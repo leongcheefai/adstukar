@@ -15,19 +15,33 @@ export function chargeKeys(slotId: string): string[] {
   return [`slot:${slotId}:granted`, `slot:${slotId}:bought`];
 }
 
+const liveUnder = (campaignId: string) =>
+  and(eq(schema.slot.campaignId, campaignId), inArray(schema.slot.state, ["booked", "running"]));
+
+/** The live slot under a campaign, locked for the act that moves it. */
 async function liveSlotOf(tx: Tx, campaignId: string) {
   const [row] = await tx
     .select()
     .from(schema.slot)
-    .where(
-      and(
-        eq(schema.slot.campaignId, campaignId),
-        inArray(schema.slot.state, ["booked", "running"]),
-      ),
-    )
+    .where(liveUnder(campaignId))
     .limit(1)
     .for("update");
   return row ?? null;
+}
+
+/**
+ * Whether the campaign holds a slot that is booked or running. A live slot
+ * does not pause: the member paid for the position for a term, and the term
+ * runs to its end. The exits are an edit, which sends the creative back to
+ * review, and an archive (docs/adr/0009).
+ */
+export async function hasLiveSlot(tx: Tx, campaignId: string): Promise<boolean> {
+  const [row] = await tx
+    .select({ id: schema.slot.id })
+    .from(schema.slot)
+    .where(liveUnder(campaignId))
+    .limit(1);
+  return row !== undefined;
 }
 
 /**

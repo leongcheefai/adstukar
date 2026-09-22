@@ -1,8 +1,6 @@
 import {
   DotsThreeVertical,
-  Pause,
   PencilSimple,
-  Play,
   SealCheck,
   ShieldCheck,
   Trash,
@@ -35,7 +33,7 @@ import {
 } from "@repo/ui";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useArchiveCampaign, useUpdateCampaign } from "../../lib/campaigns";
+import { useArchiveCampaign } from "../../lib/campaigns";
 import { type Slot, type SlotPosition, type SlotStatus, isOver } from "../../lib/slots";
 import { VerifyPanel } from "./verify-panel";
 
@@ -47,7 +45,6 @@ const STATUS: Record<
   review: { label: "In review", variant: "warning" },
   action: { label: "Action needed", variant: "warning" },
   rejected: { label: "Rejected", variant: "destructive" },
-  paused: { label: "Paused", variant: "neutral" },
   ended: { label: "Ended", variant: "neutral" },
   refunded: { label: "Refunded", variant: "neutral" },
 };
@@ -106,7 +103,6 @@ export function SlotRow({
 }) {
   const { campaign } = slot.item;
   const { listing, status } = slot;
-  const update = useUpdateCampaign();
   const archive = useArchiveCampaign();
   // Both dialogs are controlled: a DropdownMenuItem unmounts its own subtree
   // on select, which would take a nested trigger down with it.
@@ -116,23 +112,8 @@ export function SlotRow({
   const verified = campaign.verifiedAt !== null;
   const ended = isOver(status);
   const term = termCopy(slot);
-  const paused = campaign.state === "paused";
-  // Only a verified slot inside its term may move between running and paused.
-  const canMove = verified && !ended && (paused || campaign.state === "active");
   const note = noteOf(slot);
   const state = STATUS[status];
-
-  async function toggleRunning() {
-    try {
-      await update.mutateAsync({
-        id: campaign.id,
-        input: { state: paused ? "active" : "paused" },
-      });
-      toast.success(paused ? `${campaign.name} running` : `${campaign.name} paused`);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not move the slot");
-    }
-  }
 
   async function archiveSlot() {
     try {
@@ -213,10 +194,8 @@ export function SlotRow({
               <PencilSimple size={14} className="mr-2" />
               Edit ad
             </DropdownMenuItem>
-            <DropdownMenuItem disabled={!canMove || update.isPending} onSelect={toggleRunning}>
-              {paused ? <Play size={14} className="mr-2" /> : <Pause size={14} className="mr-2" />}
-              {paused ? "Start" : "Pause"}
-            </DropdownMenuItem>
+            {/* No pause: a slot runs its term to the end (docs/adr/0009). An edit
+                sends the ad back to review; an archive is the exit. */}
             <DropdownMenuSeparator />
             <DropdownMenuItem variant="destructive" onSelect={() => setConfirmOpen(true)}>
               <Trash size={14} className="mr-2" />

@@ -7,7 +7,7 @@ import { useSlots } from "../../lib/slots-api";
 
 /**
  * How many of the member's ads are on the ticker now. The figure counts the
- * slots that run; a slot in review, paused or ended is not on a screen, so it
+ * slots that run; a slot in review or ended is not on a screen, so it
  * is not counted.
  */
 export function RunningAdsCard() {
