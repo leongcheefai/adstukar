@@ -53,6 +53,19 @@ export function usdCents(cents: number): string {
   return wholeCents.format(cents / 100);
 }
 
+/**
+ * What Stripe moved in the payout currency, as `RM 40.76`. The currency comes
+ * with the row, because what a member was paid must read the same after the
+ * platform moves country.
+ */
+export function paid(cents: number, currency: string): string {
+  return new Intl.NumberFormat(LOCALE, {
+    style: "currency",
+    currency,
+    currencyDisplay: "narrowSymbol",
+  }).format(cents / 100);
+}
+
 /** A play rate as the dollars 1,000 plays cost. The figure alone, for a table cell. */
 export function usdPerThousand(rate: number): string {
   return usd(rate * 1000);

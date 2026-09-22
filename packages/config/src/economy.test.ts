@@ -73,4 +73,11 @@ describe("payout", () => {
   it("offers Malaysia first, because the platform lives there", () => {
     expect(economy.payout.countries[0]).toBe("MY");
   });
+
+  it("pays in MYR, inside a rate band that holds the real ringgit", () => {
+    expect(economy.payout.paidIn.currency).toBe("MYR");
+    const { min, max } = economy.payout.paidIn.rateBounds;
+    expect(min).toBeLessThan(4);
+    expect(max).toBeGreaterThan(4.5);
+  });
 });
