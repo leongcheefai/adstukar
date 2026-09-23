@@ -3,7 +3,7 @@ title: "TODO: Your First Blog Post Title"
 description: "TODO: A brief description of this post for the listing page and SEO meta tags."
 date: 2026-04-30
 author: "TODO: Author Name"
-draft: false
+draft: true
 ---
 
 TODO: Replace this placeholder with your first blog post content.

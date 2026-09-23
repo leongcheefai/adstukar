@@ -4,7 +4,7 @@ import { project } from "@repo/config/project";
 import HelpLayout from "../../layouts/HelpLayout.astro";
 import { HELP_SEARCH_HASH, helpHref } from "../../lib/help";
 import { pageTitle } from "../../lib/pages";
-import { breadcrumbSchema } from "../../lib/structured-data";
+import { articleSchema, breadcrumbSchema } from "../../lib/structured-data";
 
 export async function getStaticPaths() {
   const topics = await getCollection("help");
@@ -23,11 +23,22 @@ const site = Astro.site ?? new URL(project.siteUrl);
 /* The side menu lists the `##` headings; the `###` ones stay in the text. */
 const sections = headings.filter((h) => h.depth === 2).map(({ slug, text }) => ({ slug, text }));
 
-const jsonLd = breadcrumbSchema([
-  { name: "Home", url: site.origin },
-  { name: "Help", url: new URL("/help", site).href },
-  { name: topic.data.title, url: new URL(helpHref(topic.id), site).href },
-]);
+const url = new URL(helpHref(topic.id), site).href;
+const jsonLd = [
+  articleSchema({
+    type: "TechArticle",
+    title: topic.data.title,
+    description: topic.data.description,
+    image: new URL(`/og/help-${topic.id}.png`, site).href,
+    url,
+    site,
+  }),
+  breadcrumbSchema([
+    { name: "Home", url: site.origin },
+    { name: "Help", url: new URL("/help", site).href },
+    { name: topic.data.title, url },
+  ]),
+];
 ---
 
 <HelpLayout

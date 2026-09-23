@@ -7,6 +7,7 @@ export interface MarketingPage {
   description: string;
   ogTitle?: string;
   ogDescription?: string;
+  /** `false` for a page that exists but says nothing yet: it carries `noindex`, and the sitemap leaves it out. */
   inSitemap?: boolean;
 }
 
@@ -19,9 +20,9 @@ export const MARKETING_PAGES: MarketingPage[] = [
   {
     slug: "home",
     path: "/",
-    title: `${project.name} | Play and earn`,
+    title: `${project.name} | Earn money from ads on your screen`,
     description:
-      "Play ads on a screen while you listen or watch, and earn money. Advertisers see every play.",
+      "Put a screen in your venue, play ads over music or video, and earn a fixed rate for every play. Advertisers book one slot that plays on every screen.",
   },
   {
     slug: "blog",
@@ -76,8 +77,15 @@ export const MARKETING_PAGES: MarketingPage[] = [
     path: "/security",
     title: pageTitle("Security"),
     description: `How ${project.name} protects member accounts and keeps the embed snippet free of tracking.`,
+    // The page is still the template's TODO list. Index it when it has copy.
+    inSitemap: false,
   },
 ];
+
+/** A page to keep out of search: the robots meta and the sitemap both read this. */
+export function isHidden(page: MarketingPage): boolean {
+  return page.inSitemap === false;
+}
 
 export function getPageBySlug(slug: string): MarketingPage | undefined {
   return MARKETING_PAGES.find((p) => p.slug === slug);

@@ -1,0 +1,21 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { pageTitle } from "../lib/pages";
+---
+
+<!-- The host serves this file for any path that has no page. `noindex` keeps
+     a mistyped link out of search, and the sitemap filter leaves it out. -->
+<BaseLayout
+  title={pageTitle("Page not found")}
+  description="This page does not exist."
+  noindex
+  crawl={false}
+>
+  <div class="mx-auto max-w-3xl px-6 py-24 sm:py-32">
+    <h1 class="text-4xl font-medium tracking-tight">This page does not exist.</h1>
+    <p class="mt-4 text-lg text-muted-foreground">
+      Go back to the <a href="/" class="text-primary hover:underline">home page</a>, or read the
+      <a href="/help" class="text-primary hover:underline">help center</a>.
+    </p>
+  </div>
+</BaseLayout>
