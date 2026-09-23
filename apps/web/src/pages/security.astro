@@ -2,7 +2,7 @@
 import { project } from "@repo/config/project";
 import { Container, Section, SectionHeader } from "@repo/ui";
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { requirePage } from "../lib/pages";
+import { isHidden, requirePage } from "../lib/pages";
 
 const page = requirePage("security");
 
@@ -38,6 +38,7 @@ const highlights = [
 <BaseLayout
   title={page.title}
   description={page.description}
+  noindex={isHidden(page)}
   ogSlug={page.slug}
 >
   <Section spacing="tight">
