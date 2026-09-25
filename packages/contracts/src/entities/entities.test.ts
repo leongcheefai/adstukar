@@ -1,7 +1,9 @@
 import { release } from "@repo/db/schema";
 import { createSelectSchema } from "drizzle-zod";
 import { describe, expect, it } from "vitest";
+import { createPresetInput } from "../inputs/presets";
 import { feedbackContract } from "./feedback";
+import { presetMediaContract } from "./preset-media";
 import { releaseContract } from "./release";
 import { slotContract } from "./slot";
 
@@ -46,6 +48,36 @@ describe("derived entity contracts", () => {
       resolvedAt: null,
     });
     expect(result).not.toHaveProperty("userId");
+  });
+
+  it("keeps a preset's bucket key and author off the wire", () => {
+    const result = presetMediaContract.parse({
+      id: "p1",
+      kind: "video",
+      name: "Sea",
+      key: "presets/a1/00000000-0000-0000-0000-000000000000.mp4",
+      url: "https://cdn.test/sea.mp4",
+      size: 1234,
+      createdBy: "a1",
+      createdAt: new Date("2026-09-25T00:00:00.000Z"),
+    });
+    expect(result).toEqual({
+      id: "p1",
+      kind: "video",
+      name: "Sea",
+      url: "https://cdn.test/sea.mp4",
+      size: 1234,
+      createdAt: "2026-09-25T00:00:00.000Z",
+    });
+  });
+
+  it("takes a preset key only from the presets prefix", () => {
+    const uuid = "0b1c2d3e-4f50-6172-8394-a5b6c7d8e9f0";
+    const ok = (key: string) => createPresetInput.safeParse({ key, name: "x" }).success;
+    expect(ok(`presets/admin1/${uuid}.mp4`)).toBe(true);
+    expect(ok(`avatars/admin1/${uuid}.png`)).toBe(false);
+    expect(ok(`presets/admin1/../avatars/${uuid}.png`)).toBe(false);
+    expect(ok(`presets/admin1/${uuid}.gif`)).toBe(false);
   });
 
   it("serializes every slot timestamp to an ISO string and keeps nulls", () => {

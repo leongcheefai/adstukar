@@ -14,6 +14,7 @@ Drizzle ORM schema, the Postgres client singleton, and migration tooling. Every 
 - `ledger_entry` is append-only: only `state` (pending → settled → void) and `settled_at` ever change, and only through `apps/api/src/modules/ledger/ledger.service.ts`. Every row carries a `lot` (`bought` / `earned` / `granted`), and the lot decides what the money may do
 - `play.placement_id` is `ON DELETE restrict`, not cascade: a play is where money came from, so dropping a placement must never take the record of its plays with it
 - `play.expires_at` carries the play's own deadline, so the void job never has to know whether a live `/serve` or a cached `/loop` opened it
+- `preset_media` is one picture or clip in every member's library. `key` is the bucket object and is unique; `size` and `kind` are read off storage, never off a request. No money references it, so a delete removes the row
 - `slot` is one booking of one ticker slot. Two partial unique indexes hold the rules: `slot_position_live_key` on `position` and `slot_campaign_live_key` on `campaign_id`, both where `state in ('booked', 'running')`. `campaign_id` is `ON DELETE restrict`, because the charge on the ledger references the booking
 
 ## Common tasks

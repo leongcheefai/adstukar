@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { acceptsImage, acceptsVideo, media, megabytes } from "./media";
+import { acceptsImage, acceptsVideo, media, mediaKindOf, megabytes } from "./media";
 
 describe("media", () => {
   it("caps an image at 5 MB and a video at 50 MB", () => {
@@ -10,6 +10,13 @@ describe("media", () => {
   it("holds a 30 s clip at 1080p and 6 Mbps, the longest dwell a slot pays for", () => {
     const thirtySecondsAtSixMbps = (30 * 6_000_000) / 8;
     expect(thirtySecondsAtSixMbps).toBeLessThan(media.video.maxBytes);
+  });
+
+  it("names the kind a MIME type falls under, and nothing else", () => {
+    expect(mediaKindOf("image/webp")).toBe("image");
+    expect(mediaKindOf("video/mp4")).toBe("video");
+    expect(mediaKindOf("image/gif")).toBeNull();
+    expect(mediaKindOf("video/quicktime")).toBeNull();
   });
 
   it("prints the cap as whole megabytes", () => {
