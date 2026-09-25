@@ -20,7 +20,6 @@ The dashboard has no device UI. A member does not register a screen, and Moderat
 - Authenticated API calls must include `credentials: 'include'` — session auth is cookie-based
 - Auth state via `useSession()` from `src/lib/auth.ts` — never manage session state manually
 - Dashboard pages must be nested inside the `/dashboard` route in `router.tsx` so `DashboardLayout` wraps them. It mounts only with a session; with none it redirects to `/?auth=login&redirect=<path>`. The dashboard is not under `MemberLayout`, so the set does not play behind it.
-- Production serves the SPA from Vercel with `vercel.json` rewriting every path to `index.html`, so `/dashboard/...` loads in a fresh tab.
 
 ## Common tasks
 
@@ -45,4 +44,5 @@ Edit `src/components/capychannel/channels/tv-guide.json`. Each video needs its Y
 - Dev server: port 3000; the API defaults to `http://localhost:3001`. A Vite `/api/*` proxy exists for relative requests, but the current clients use the absolute `VITE_API_URL`.
 - Icons come from `@phosphor-icons/react`, not lucide. Phosphor takes `weight` (`bold`, `fill`, …) instead of `strokeWidth`
 - The `/_dev/components` and `/_dev/tv-embeds` routes only exist in dev; they are absent from production builds
+- `vercel.json` sends every path outside `/assets/` to `index.html`, because the router runs in the browser. Without it, a reload of `/dashboard` (or any deep link) gets a 404 from Vercel. `/assets/` stays out, so a stale hashed chunk 404s instead of returning HTML
 - The Capy Channel cannot know when a browser blocks sound: a plain embed tells the page nothing. The press on the tile is the gesture that allows sound, which is enough in Chrome. Safari, and an iPad above all, can still refuse. The video takes no pointer, so the member cannot press play in the player either. The YouTube IFrame Player API is the fix when the demo grows
