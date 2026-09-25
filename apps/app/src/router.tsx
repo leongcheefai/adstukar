@@ -11,6 +11,7 @@ import { MemberLayout } from "./routes/member-layout";
 const DevComponentsPage = import.meta.env.DEV
   ? lazy(() => import("./routes/_dev/components"))
   : null;
+const DevTvEmbedsPage = import.meta.env.DEV ? lazy(() => import("./routes/_dev/tv-embeds")) : null;
 
 function LedgerRedirect() {
   const { search } = useLocation();
@@ -56,6 +57,16 @@ export function Router() {
             element={
               <Suspense fallback={null}>
                 <DevComponentsPage />
+              </Suspense>
+            }
+          />
+        )}
+        {import.meta.env.DEV && DevTvEmbedsPage && (
+          <Route
+            path="/_dev/tv-embeds"
+            element={
+              <Suspense fallback={null}>
+                <DevTvEmbedsPage />
               </Suspense>
             }
           />

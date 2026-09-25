@@ -1,7 +1,15 @@
 import type { ReactNode } from "react";
+import convertibleThumb from "../../../assets/wallpapers/jack-berry/convertible-thumb.jpg";
+import convertible from "../../../assets/wallpapers/jack-berry/convertible.jpg";
+import counterThumb from "../../../assets/wallpapers/jack-berry/counter-thumb.jpg";
+import counter from "../../../assets/wallpapers/jack-berry/counter.jpg";
+import harbourThumb from "../../../assets/wallpapers/jack-berry/harbour-thumb.jpg";
+import harbour from "../../../assets/wallpapers/jack-berry/harbour.jpg";
+import storefrontThumb from "../../../assets/wallpapers/jack-berry/storefront-thumb.jpg";
+import storefront from "../../../assets/wallpapers/jack-berry/storefront.jpg";
 import type { LibraryItem } from "../../../lib/library";
 
-export const CHANNEL_IDS = ["upload", "wallpaper"] as const;
+export const CHANNEL_IDS = ["upload", "wallpaper", "tv"] as const;
 
 export type ChannelId = (typeof CHANNEL_IDS)[number];
 
@@ -29,20 +37,60 @@ export const CHANNELS: ChannelDef[] = [
       </>
     ),
   },
+  {
+    id: "tv",
+    label: "Capy Channel",
+    icon: (
+      <>
+        <rect x="3.4" y="7.4" width="17.2" height="12.2" rx="2.4" />
+        <path d="m8.4 3.6 3.6 3.8 3.6-3.8" />
+      </>
+    ),
+  },
 ];
 
-/** Drawn in `capychannel.css` as `.wall-<id>`, so a preset ships no image file. */
-export const WALLPAPERS = [
-  { id: "beach", label: "Beach" },
-  { id: "night", label: "Night" },
-  { id: "market", label: "Market" },
-  { id: "portrait", label: "Portrait" },
-  { id: "firepit", label: "Firepit" },
-] as const;
+/**
+ * One photo in two files, the picture for the set and a small one for its
+ * tile, and the title the set prints over it.
+ */
+export type WallpaperPhoto = { title: string; src: string; thumb: string };
 
-export type WallpaperId = (typeof WALLPAPERS)[number]["id"];
+/**
+ * A collection is one photographer's photos. The chooser shows it as one tile
+ * with the name under it, and the set plays its photos one at a time, with
+ * the title and the author on each. A click on the photo opens `url`. The
+ * first photo is the cover.
+ */
+export type WallpaperCollection = {
+  id: string;
+  name: string;
+  author: string;
+  url: string;
+  photos: readonly WallpaperPhoto[];
+};
 
-/** What the member chose to play. An upload plays from its public URLs. */
+/** Demo content: the titles are ours, and the link is the photographer's page. */
+export const WALLPAPER_COLLECTIONS: readonly WallpaperCollection[] = [
+  {
+    id: "jack-berry",
+    name: "Jack Berry Collection",
+    author: "Jack Berry",
+    url: "https://unsplash.com/@jackseeberry",
+    photos: [
+      { title: "Storefront", src: storefront, thumb: storefrontThumb },
+      { title: "Lunch Counter", src: counter, thumb: counterThumb },
+      { title: "Just Married", src: convertible, thumb: convertibleThumb },
+      { title: "Harbour", src: harbour, thumb: harbourThumb },
+    ],
+  },
+];
+
+/**
+ * What the member chose to play. An upload plays from its public URLs. The
+ * Capy Channel carries its own guide (`channels/tv-guide.json`), so it plays
+ * straight from its tile.
+ */
 export type ChannelPick =
   | { id: "upload"; items: LibraryItem[] }
-  | { id: "wallpaper"; wallpaper: WallpaperId };
+  | { id: "wallpaper"; collection: WallpaperCollection }
+  | { id: "tv" };
