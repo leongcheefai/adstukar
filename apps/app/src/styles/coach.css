@@ -1,4 +1,4 @@
-/* The sheet behind an open tip. Above the drawer (250) and under the tip
+/* The sheet behind an open tip. Above the dashboard (250) and under the tip
    (260), so the page dims and the tip and the control it points at do not.
    The hole is cut with clip-path from the component, because it follows the
    control's rectangle. */
@@ -18,9 +18,9 @@
    with the X on its line, 12px copy in Inter. Change both together. */
 .dash-coach-tip {
   position: relative;
-  /* The drawer is a modal dialog, so the body under it takes pointer-events:
-     none, and the tip is portalled to the body. Opt back in, or no click on
-     the tip ever lands. */
+  /* The tip is portalled to the body. A modal dialog open on the dashboard
+     gives the body pointer-events: none, so opt back in, or no click on the
+     tip ever lands. */
   pointer-events: auto;
   width: max-content;
   max-width: min(360px, calc(100vw - 32px));

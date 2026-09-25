@@ -1,21 +1,16 @@
-import { Outlet, useLocation } from "react-router";
+import { Outlet } from "react-router";
 import { CoachProvider } from "../components/coach-provider";
-import { useSession } from "../lib/auth";
-import { AUTH_PATHS, CapyChannelScreen } from "./capychannel/home";
+import { CapyChannelScreen } from "./capychannel/home";
 
+/** The set. A session sees the channels; no session sees the login form. */
 export function MemberLayout() {
-  const { pathname } = useLocation();
-  const { data: session } = useSession();
-  const dashboardOpen = Boolean(session) && pathname.startsWith("/dashboard");
-
   return (
     <CoachProvider>
-      <div data-vaul-drawer-wrapper="" className="bg-[#08080a]">
-        <CapyChannelScreen dashboardOpen={dashboardOpen} />
+      <div className="bg-[#08080a]">
+        <CapyChannelScreen />
       </div>
-      {/* The dashboard needs a session. The auth paths need none: each is only a
-          redirect to `?auth=`, and with no outlet it would never run. */}
-      {session || AUTH_PATHS.includes(pathname) ? <Outlet /> : null}
+      {/* `/login`, `/signup` and `/forgot-password`: each only redirects to `?auth=`. */}
+      <Outlet />
     </CoachProvider>
   );
 }

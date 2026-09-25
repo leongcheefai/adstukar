@@ -4,27 +4,20 @@ import {
   Question,
   Gear as Settings,
   SquaresFour,
-  X,
+  Television,
 } from "@phosphor-icons/react";
-import {
-  Button,
-  DashboardShell,
-  DashboardTopbar,
-  Drawer,
-  DrawerContent,
-  DrawerDescription,
-  DrawerTitle,
-  type NavItem,
-} from "@repo/ui";
-import { useEffect, useRef, useState } from "react";
-import { Link, Outlet, useLocation, useNavigate } from "react-router";
+import { Button, DashboardShell, DashboardTopbar, type NavItem } from "@repo/ui";
+import { useEffect, useState } from "react";
+import { Link, Navigate, Outlet, useLocation, useNavigate } from "react-router";
 import { CapyLockup, HomeLink } from "../../components/capychannel/lockup";
 import { clearResume } from "../../components/capychannel/resume";
+import { CoachProvider } from "../../components/coach-provider";
 import { DashboardSidebarFooter } from "../../components/dashboard-sidebar-footer";
 import { SetupCoach } from "../../components/setup-coach";
 import { StripeCoach } from "../../components/stripe-coach";
 import { signOutThen, useSession } from "../../lib/auth";
 import { useCoach } from "../../lib/coach";
+import { leaveDashboard } from "../../lib/dashboard-tab";
 import { env } from "../../lib/env";
 
 /* The help centre lives on the marketing site, so its link leaves the app. */
@@ -64,7 +57,7 @@ function navItems(pathname: string): NavItem[] {
   ];
 }
 
-function DashboardContent({ onClose }: { onClose: () => void }) {
+function DashboardContent() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { data: session } = useSession();
@@ -86,7 +79,7 @@ function DashboardContent({ onClose }: { onClose: () => void }) {
   }, [pathname, dismiss]);
 
   // Three tips for a newcomer, one after the other: the account on the
-  // chooser, then these two in the drawer. Each shows once on this browser.
+  // chooser, then these two on the dashboard. Each shows once on this browser.
   // The campaign tip goes first, so the two never sit on screen together.
   const showCoach = dashHint && coachReady;
   const showStripeCoach = stripeHint === "pending" && coachReady && !showCoach;
@@ -156,10 +149,10 @@ function DashboardContent({ onClose }: { onClose: () => void }) {
               variant="outline"
               size="icon"
               className="size-10 rounded-full text-muted-foreground hover:text-foreground"
-              aria-label="Close dashboard"
-              onClick={onClose}
+              aria-label="Back to the TV"
+              onClick={() => leaveDashboard(() => navigate("/"))}
             >
-              <X size={20} />
+              <Television size={20} />
             </Button>
           }
         />
@@ -172,60 +165,25 @@ function DashboardContent({ onClose }: { onClose: () => void }) {
   );
 }
 
-/** vaul's own exit time (`TRANSITIONS.DURATION`). It is not exported, so it lives here. */
-const DRAWER_EXIT_MS = 500;
-
+/**
+ * The dashboard, as a page of its own. The set opens it in a new tab
+ * (`lib/dashboard-tab.ts`). With no session it sends the visitor to the login
+ * form on the set, which brings them back here once they sign in.
+ */
 export function DashboardLayout() {
-  const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
-  const wasOpen = useRef(false);
-  const [reduceMotion] = useState(
-    () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-  );
+  const { pathname, search } = useLocation();
+  const { data: session, isPending } = useSession();
 
-  useEffect(() => {
-    setOpen(true);
-  }, []);
-
-  // The route leaves once the sheet has slid out, whatever closed it: the
-  // handle, Escape, or the brand link. vaul reports only its own closes through
-  // `onAnimationEnd`; a close set from here as `open={false}` never reaches it,
-  // so the brand link left the route on /dashboard, the stage paused, and the
-  // screen held on a grey boot frame. One timer here covers every path.
-  useEffect(() => {
-    if (open) {
-      wasOpen.current = true;
-      return;
-    }
-    if (!wasOpen.current) return;
-    const id = window.setTimeout(() => {
-      if (window.location.pathname.startsWith("/dashboard")) navigate("/");
-    }, DRAWER_EXIT_MS);
-    return () => window.clearTimeout(id);
-  }, [open, navigate]);
-
+  if (isPending) return <div className="h-dvh bg-background" />;
+  if (!session) {
+    const params = new URLSearchParams({ auth: "login", redirect: `${pathname}${search}` });
+    return <Navigate to={`/?${params.toString()}`} replace />;
+  }
   return (
-    <Drawer
-      open={open}
-      onOpenChange={setOpen}
-      handleOnly
-      shouldScaleBackground={!reduceMotion}
-      setBackgroundColorOnScale={!reduceMotion}
-    >
-      {/* The drawer keeps the primitives' shared z-50. Every dialog, menu,
-          select and tooltip the dashboard opens portals to <body> at z-50 too,
-          and lands after the drawer in the DOM, so it wins on order. A higher
-          z-index here puts the drawer over all of them, and a listing dialog
-          opens behind the sheet where nobody can see it. The CapyTV stage
-          underneath is `isolation: isolate`, so its own z scale (up to 200)
-          never competes with anything on <body>. */}
-      <DrawerContent className="overflow-hidden p-0 data-[vaul-drawer-direction=bottom]:mt-0 data-[vaul-drawer-direction=bottom]:h-[calc(100dvh-12px)] data-[vaul-drawer-direction=bottom]:max-h-[calc(100dvh-12px)] data-[vaul-drawer-direction=bottom]:rounded-t-2xl">
-        <DrawerTitle className="sr-only">Dashboard</DrawerTitle>
-        <DrawerDescription className="sr-only">Campaigns, wallet, and settings.</DrawerDescription>
-        <div className="flex min-h-0 flex-1 flex-col">
-          <DashboardContent onClose={() => setOpen(false)} />
-        </div>
-      </DrawerContent>
-    </Drawer>
+    <CoachProvider>
+      <div className="flex h-dvh flex-col">
+        <DashboardContent />
+      </div>
+    </CoachProvider>
   );
 }

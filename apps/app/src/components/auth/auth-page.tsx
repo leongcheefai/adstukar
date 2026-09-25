@@ -2,6 +2,7 @@ import { Button, Input, Label, Separator } from "@repo/ui";
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { signIn, signUp, useSession } from "../../lib/auth";
+import { safeRedirect } from "../../lib/redirect";
 import "../../styles/capychannel.css";
 import { CapyLockup } from "../capychannel/lockup";
 
@@ -30,12 +31,6 @@ function GoogleIcon() {
 }
 
 export type AuthMode = "login" | "signup";
-
-/** A `?redirect=` that stays on this origin, or `/`. */
-function safeRedirect(search: string): string {
-  const redirectTo = new URLSearchParams(search).get("redirect");
-  return redirectTo?.startsWith("/") && !redirectTo.startsWith("//") ? redirectTo : "/";
-}
 
 /**
  * What the API put in `?error=` when a Google sign-in failed, in words. The
@@ -124,9 +119,8 @@ export function AuthPage({
     if (error) setError("");
   }
 
-  // The move to `/` waits for the session to reach the hook. `/` with no
-  // `?auth=` and no session is the front door's cue to send a visitor to the
-  // landing page, so a move made too soon throws a new member off their set.
+  // The move waits for the session to reach the hook. A `?redirect=` into the
+  // dashboard reached too soon finds no session and sends the member back here.
   useEffect(() => {
     if (!accepted || !session) return;
     navigate(safeRedirect(search), { replace: true });

@@ -211,7 +211,8 @@ function checkEnvironment(root, envFile, project) {
   ) {
     errors.push("WEB_URL must match project siteUrl.");
   }
-  // The app sends a signed-out visitor to WEB_URL. On one origin that is a loop.
+  // The landing page sends a member with a session to APP_URL. On one origin
+  // that is a loop, and two deployments cannot share one host anyway.
   if (
     isProductionUrl(env.APP_URL) &&
     isProductionUrl(env.WEB_URL) &&
