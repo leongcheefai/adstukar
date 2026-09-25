@@ -7,17 +7,23 @@ import { project } from "@repo/config/project";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "astro/config";
 import { parseLandingConfig } from "./src/lib/landing/config";
+import { sitemapRules } from "./src/lib/seo/sitemap";
 
 const REPO_ROOT = resolve(import.meta.dirname, "../..");
 /** The file the landing page reads, and the one the lab's Save button writes. */
 const LANDING_CONFIG = resolve(import.meta.dirname, "src/lib/landing.config.json");
+/** Which pages the sitemap lists, and the last change of each (`src/lib/seo/sitemap.ts`). */
+const SITEMAP = sitemapRules(import.meta.dirname);
 
 export default defineConfig({
   site: project.siteUrl,
   integrations: [
     react(),
     mdx(),
-    sitemap({ filter: (page) => !page.includes("/og/") && !page.includes("/lab/") }),
+    sitemap({
+      filter: SITEMAP.filter,
+      serialize: (item) => ({ ...item, lastmod: SITEMAP.lastmod(item.url) }),
+    }),
   ],
   vite: {
     // Env lives in the repo-root .env. Only PUBLIC_-prefixed vars reach the browser bundle.

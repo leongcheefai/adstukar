@@ -25,6 +25,13 @@ Edit `src/components/landing/Landing.tsx` for the landing page, `src/lib/faq.ts`
 1. Create `src/pages/<name>.astro`
 2. Use `<BaseLayout>` — pass an `ogSlug` prop matching the page name
 3. Add the page to `MARKETING_PAGES` in `src/lib/pages.ts`; the OG image route derives its static paths from that registry
+4. While the page has no real copy, set `inSitemap: false` there and pass `noindex={isHidden(page)}` to `BaseLayout`. Remove both when the copy lands
+
+### Search and AI engines (SEO, GEO)
+- `BaseLayout` writes the canonical, the robots meta, Open Graph, and the Organization JSON-LD on every page. A page adds its own schemas through `jsonLd`; builders live in `src/lib/structured-data.ts` and link to the one publisher by `@id`
+- The sitemap is `@astrojs/sitemap`, with rules in `src/lib/seo/sitemap.ts`: it drops `/og/`, `/lab/`, the 404, every `inSitemap: false` page, and `/blog` while no post is published. `lastmod` is the last git commit on the page's source files; a build without `.git` omits it
+- `/robots.txt` allows every crawler and lists the AI crawlers by name. `/llms.txt` is the site in plain text for AI answer engines: key facts from `@repo/config/economy`, the help topics, the policies, and every FAQ answer. Change a fact in its source, never in the route
+- `/logo.png` (the schema logo) and `/apple-touch-icon.png` are drawn from `public/favicon.svg` at build time
 
 ### Add a blog post
 Create a markdown/MDX file under `src/content/blog/`. Its page and OG image are generated automatically.

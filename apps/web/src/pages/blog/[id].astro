@@ -5,10 +5,11 @@ import { Badge } from "@repo/ui";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { pageTitle } from "../../lib/pages";
 import { readingTime } from "../../lib/reading-time";
-import { articleSchema } from "../../lib/structured-data";
+import { articleSchema, breadcrumbSchema } from "../../lib/structured-data";
 
 export async function getStaticPaths() {
-  const posts = await getCollection("blog");
+  // A draft has no page: the index, the RSS feed, and the sitemap skip it too.
+  const posts = (await getCollection("blog")).filter((post) => !post.data.draft);
   return posts.map((post) => ({
     params: { id: post.id },
     props: { post },
@@ -23,14 +24,22 @@ const canonicalURL = new URL(`/blog/${post.id}`, site).href;
 // Use remark-estimated-reading-time if available, otherwise fall back to our util
 const rt = remarkPluginFrontmatter?.readingTime ?? readingTime(post.body ?? "").text;
 
-const jsonLd = articleSchema({
-  title: post.data.title,
-  description: post.data.description,
-  date: post.data.date,
-  author: post.data.author,
-  image: post.data.image ? new URL(post.data.image, site).href : undefined,
-  url: canonicalURL,
-});
+const jsonLd = [
+  articleSchema({
+    title: post.data.title,
+    description: post.data.description,
+    date: post.data.date,
+    author: post.data.author,
+    image: new URL(post.data.image ?? `/og/blog-${post.id}.png`, site).href,
+    url: canonicalURL,
+    site,
+  }),
+  breadcrumbSchema([
+    { name: "Home", url: site.origin },
+    { name: "Blog", url: new URL("/blog", site).href },
+    { name: post.data.title, url: canonicalURL },
+  ]),
+];
 ---
 
 <BaseLayout

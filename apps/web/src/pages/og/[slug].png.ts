@@ -56,11 +56,13 @@ async function getFonts(): Promise<[Buffer, Buffer]> {
 export const GET: APIRoute = async ({ props }) => {
   const { title, description } = props as { title: string; description: string };
   const [regular, bold] = await getFonts();
-  // The card already carries the brand as its own line, so drop the "CapyAds — "
-  // that MARKETING_PAGES prefixes onto every title.
-  const headline = title.startsWith(`${project.name} — `)
+  // The card already carries the brand as its own line, so drop the product
+  // name that `pageTitle()` puts after a page, and the home puts before it.
+  const headline = title.startsWith(`${project.name} | `)
     ? title.slice(project.name.length + 3)
-    : title;
+    : title.endsWith(` | ${project.name}`)
+      ? title.slice(0, -(project.name.length + 3))
+      : title;
 
   const svg = await satori(
     createElement(

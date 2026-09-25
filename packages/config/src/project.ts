@@ -26,7 +26,7 @@ export const project = {
   slug: "adstukar",
   tagline: "Play ads on your screen and earn money.",
   description:
-    "An ad network for small screens. Put a screen in your venue and earn money every time it plays a listing. Advertisers pay per play; distributors cash out.",
+    "An ad network for small screens. Put a screen in your venue and earn a fixed rate every time it plays a listing. Advertisers book a slot that plays on every screen; screen owners cash out what they earn.",
   siteUrl: "https://capychannel.site",
   email: {
     from: "noreply@capychannel.site",
