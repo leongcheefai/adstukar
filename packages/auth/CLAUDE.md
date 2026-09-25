@@ -11,7 +11,7 @@ Better Auth server instance. Single source of truth for session management, emai
 ## Common tasks
 
 ### Enable Google OAuth
-Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in the root `.env`. The conditional spread in `src/index.ts` activates the provider automatically. Add `signIn.social({ provider: 'google', callbackURL: '/dashboard' })` in `apps/app`.
+Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in the root `.env`. The conditional spread in `src/index.ts` activates the provider automatically. In the Google Cloud console, add `${BETTER_AUTH_URL}/api/auth/callback/google` as an authorized redirect URI; the API logs the exact value at boot as `auth_google`. The button lives in `apps/app/src/components/auth/auth-page.tsx`.
 
 ### Add a new OAuth provider
 Add to the `socialProviders` object in `src/index.ts` using the same conditional pattern as Google.
@@ -25,5 +25,7 @@ Set `requireEmailVerification: true` in the `emailAndPassword` block.
 ## Gotchas
 - `BETTER_AUTH_URL` must point at the API (where `/api/auth/*` is mounted), not the frontend
 - `trustedOrigins` is set to `[APP_URL, WEB_URL]` — update it if either deploys to a different origin
-- In production the session cookie is `sameSite: "none"` because `app` (Vercel) and `api` (Railway) are different domains, not subdomains — `crossSubDomainCookies` doesn't apply here. Dev stays `sameSite: "lax"` since `SameSite=None` requires `Secure`, which localhost-over-http can't satisfy
+- `signIn.social` needs **absolute** `callbackURL` and `errorCallbackURL` on the app's origin. Better Auth redirects to them verbatim from the API, so a relative `/` lands the member on the API's own `/` (a 404)
+- The API must live on the app's site (`api.<site>`, which `pnpm launch:check` enforces). On another site, a browser that blocks third-party cookies drops the OAuth state cookie and Google sign-in fails with `?error=state_mismatch`
+- In production the session cookie is `sameSite: "none"` so it rides the dashboard's cross-origin fetches. Dev stays `sameSite: "lax"` since `SameSite=None` requires `Secure`, which localhost-over-http can't satisfy
 - `auth.$Infer.Session` is used by `apps/api/src/lib/context.ts` for the Hono `AppVariables` type — changing session shape affects the API context
