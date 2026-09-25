@@ -31,8 +31,11 @@ export const auth = betterAuth({
   advanced: {
     defaultCookieAttributes:
       serverEnv.NODE_ENV === "production"
-        ? // app (Vercel) and api (Railway) are different domains, not subdomains —
-          // the session cookie must be SameSite=None to survive cross-site fetches
+        ? // The API lives on the app's site (`api.<site>`, as `pnpm launch:check`
+          // requires), so its cookies are first-party. SameSite=None keeps the
+          // session cookie on the dashboard's cross-origin fetches. Move the API to
+          // another site and a browser that blocks third-party cookies drops the
+          // OAuth state cookie: Google sign-in then fails with `state_mismatch`.
           { sameSite: "none", secure: true }
         : { sameSite: "lax", secure: false },
   },
