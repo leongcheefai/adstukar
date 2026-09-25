@@ -314,7 +314,6 @@
   );
 }
 
-
 /* The video's details over the channel buttons, in the lower left, above
    the ad bar. */
 .tvc-controls {
@@ -338,11 +337,7 @@
   bottom: calc(-1 * clamp(12px, 2.4cqh, 28px));
   width: 70cqw;
   height: 60cqh;
-  background: radial-gradient(
-    100% 100% at 0% 100%,
-    rgb(0 0 0 / 0.6),
-    rgb(0 0 0 / 0) 70%
-  );
+  background: radial-gradient(100% 100% at 0% 100%, rgb(0 0 0 / 0.6), rgb(0 0 0 / 0) 70%);
   pointer-events: none;
 }
 /* The overlays are one group: the top bar, the details and the channel
@@ -484,11 +479,7 @@
   bottom: calc(-1 * clamp(12px, 2.4cqh, 28px));
   width: 50cqw;
   height: 50cqh;
-  background: radial-gradient(
-    100% 100% at 100% 100%,
-    rgb(0 0 0 / 0.55),
-    rgb(0 0 0 / 0) 70%
-  );
+  background: radial-gradient(100% 100% at 100% 100%, rgb(0 0 0 / 0.55), rgb(0 0 0 / 0) 70%);
   pointer-events: none;
 }
 .tvc-next-label {
