@@ -10,7 +10,7 @@ import { Ticker } from "../../components/capychannel/ticker";
 import { TvBar } from "../../components/capychannel/tv-bar";
 import { useSession } from "../../lib/auth";
 import { useCoach } from "../../lib/coach";
-import { env } from "../../lib/env";
+import { landingUrl } from "../../lib/landing";
 import "../../styles/capychannel.css";
 
 const BAR_IDLE_MS = 3500;
@@ -38,8 +38,11 @@ export function CapyChannelScreen({ dashboardOpen = false }: { dashboardOpen?: b
   // turns each into `?auth=`, but only in an effect, and the session check can
   // already read "no session" in that same commit. Without the path check the
   // redirect below wins the race and the landing page's own button bounces.
+  //
+  // With no landing page to go to, the form stays on the set instead.
   const asksForForm = params.has("auth") || AUTH_PATHS.includes(pathname);
-  const leaving = !isPending && !signedIn && !error && !asksForForm;
+  const landing = landingUrl();
+  const leaving = !isPending && !signedIn && !error && !asksForForm && landing !== null;
 
   const [phase, setPhase] = useState<BootPhase>("brand");
   const [brandHeld, setBrandHeld] = useState(false);
@@ -62,12 +65,12 @@ export function CapyChannelScreen({ dashboardOpen = false }: { dashboardOpen?: b
   const showDot = !opened && !showHint && !dashboardOpen;
 
   useEffect(() => {
-    if (!leaving) return;
+    if (!leaving || !landing) return;
     // `from=app` tells the landing page not to check the session again. Two
     // origins that disagree about one cookie would otherwise trade the visitor
     // back and forth for ever.
-    window.location.replace(`${env.VITE_WEB_URL}/?from=app`);
-  }, [leaving]);
+    window.location.replace(landing);
+  }, [leaving, landing]);
 
   useEffect(() => {
     if (phase !== "brand") return;

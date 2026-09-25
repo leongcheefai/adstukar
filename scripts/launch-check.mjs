@@ -85,6 +85,20 @@ function urlsMatch(left, right) {
   }
 }
 
+/**
+ * The site a URL belongs to, for the cookie rules: its last two host labels.
+ * A browser treats a cookie from another site as third-party and may drop it.
+ * Two labels is right for `.com`, `.site` and `.up.railway.app` style hosts;
+ * a suffix like `.co.uk` needs three, and would read as one site here.
+ */
+function siteOf(value) {
+  try {
+    return new URL(value).hostname.split(".").slice(-2).join(".");
+  } catch {
+    return null;
+  }
+}
+
 function isNonLocalDatabaseUrl(value) {
   try {
     const url = new URL(value);
@@ -184,6 +198,7 @@ function checkEnvironment(root, envFile, project) {
     "APP_URL",
     "WEB_URL",
     "VITE_API_URL",
+    "VITE_WEB_URL",
     "PUBLIC_APP_URL",
     "PUBLIC_API_URL",
   ]) {
@@ -196,9 +211,29 @@ function checkEnvironment(root, envFile, project) {
   ) {
     errors.push("WEB_URL must match project siteUrl.");
   }
+  // The app sends a signed-out visitor to WEB_URL. On one origin that is a loop.
+  if (
+    isProductionUrl(env.APP_URL) &&
+    isProductionUrl(env.WEB_URL) &&
+    new URL(env.APP_URL).origin === new URL(env.WEB_URL).origin
+  ) {
+    errors.push("APP_URL and WEB_URL must be different hosts, such as app.<site> and <site>.");
+  }
+  // The session cookie is set by the API. On another site it is third-party,
+  // and a browser that blocks those signs the member in and drops the session.
+  if (
+    isProductionUrl(env.BETTER_AUTH_URL) &&
+    isProductionUrl(env.APP_URL) &&
+    siteOf(env.BETTER_AUTH_URL) !== siteOf(env.APP_URL)
+  ) {
+    errors.push(
+      `BETTER_AUTH_URL must be on the same site as APP_URL (${siteOf(env.APP_URL)}), such as api.${siteOf(env.APP_URL)}.`,
+    );
+  }
   errors.push(
     ...checkMatchingUrls(env, "BETTER_AUTH_URL", ["VITE_API_URL", "PUBLIC_API_URL"]),
     ...checkMatchingUrls(env, "APP_URL", ["PUBLIC_APP_URL"]),
+    ...checkMatchingUrls(env, "WEB_URL", ["VITE_WEB_URL"]),
     ...checkCompleteGroup(env, "Google OAuth", ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"]),
     ...checkCompleteGroup(env, "Stripe", ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET"]),
     ...checkCompleteGroup(env, "S3/R2", [

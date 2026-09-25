@@ -42,6 +42,7 @@ function createReadyFixture() {
       "APP_URL=https://app.acme.example",
       "WEB_URL=https://acme.example",
       "VITE_API_URL=https://api.acme.example",
+      "VITE_WEB_URL=https://acme.example",
       "PUBLIC_APP_URL=https://app.acme.example",
       "PUBLIC_API_URL=https://api.acme.example",
       "",
@@ -124,6 +125,32 @@ test("browser deployment URLs must match their server counterparts", (t) => {
   assert.equal(result.status, 1);
   assert.match(output, /VITE_API_URL must match BETTER_AUTH_URL/);
   assert.match(output, /PUBLIC_APP_URL must match APP_URL/);
+});
+
+test("an app on the landing host, an API on another site, and no VITE_WEB_URL block launch", (t) => {
+  const root = createReadyFixture();
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const envPath = join(root, ".env.production");
+  // The layout that sent a member to localhost after sign-in: the app on the
+  // apex, the API on the host's own domain, and a dashboard build with no
+  // landing URL.
+  const env = readFileSync(envPath, "utf8")
+    .replace("APP_URL=https://app.acme.example", "APP_URL=https://acme.example")
+    .replace("PUBLIC_APP_URL=https://app.acme.example", "PUBLIC_APP_URL=https://acme.example")
+    .replaceAll("https://api.acme.example", "https://acme-api.up.railway.app")
+    .replace("VITE_WEB_URL=https://acme.example\n", "");
+  writeFileSync(envPath, env);
+
+  const result = spawnSync(process.execPath, [scriptPath, "--env", ".env.production"], {
+    cwd: root,
+    encoding: "utf8",
+  });
+  const output = result.stdout + result.stderr;
+
+  assert.equal(result.status, 1);
+  assert.match(output, /VITE_WEB_URL must be a public HTTPS URL/);
+  assert.match(output, /APP_URL and WEB_URL must be different hosts/);
+  assert.match(output, /BETTER_AUTH_URL must be on the same site as APP_URL \(acme\.example\)/);
 });
 
 test("a partially configured integration blocks launch without exposing secrets", (t) => {

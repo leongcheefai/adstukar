@@ -39,3 +39,13 @@ export const serverEnv = createEnv({
   },
   runtimeEnv: process.env,
 });
+
+/**
+ * The browser origins the API trusts with the session cookie: the dashboard and
+ * the landing site. A browser's `Origin` header is scheme, host and port only,
+ * so each URL is cut to its origin here. A variable set as
+ * `https://capychannel.site/` (trailing slash) or with a path still matches.
+ */
+export const trustedOrigins: readonly string[] = [
+  ...new Set([serverEnv.APP_URL, serverEnv.WEB_URL].map((url) => new URL(url).origin)),
+];

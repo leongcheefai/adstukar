@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { auth } from "@repo/auth";
-import { serverEnv } from "@repo/env";
+import { serverEnv, trustedOrigins } from "@repo/env";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
@@ -27,6 +27,7 @@ import { statsRouter } from "../modules/stats/stats.routes";
 import { topupsRouter } from "../modules/topups/topups.routes";
 import { uploadsRouter } from "../modules/uploads/uploads.routes";
 import type { AppVariables } from "./context";
+import { log } from "./logger";
 
 export const app = new Hono<{ Variables: AppVariables }>();
 
@@ -36,7 +37,10 @@ app.use("*", logger());
 // four accept any origin (they never use the session cookie). Everything else stays
 // locked to the dashboard and marketing origins.
 const PUBLIC_PREFIXES = ["/serve", "/loop", "/report", "/scan/"];
-const TRUSTED_ORIGINS = new Set([serverEnv.APP_URL, serverEnv.WEB_URL]);
+const TRUSTED_ORIGINS = new Set(trustedOrigins);
+// Printed once at boot: a sign-in refused at preflight is almost always an
+// `APP_URL` or `WEB_URL` that does not name the site the browser is on.
+log("info", "cors_trusted_origins", { origins: trustedOrigins });
 app.use(
   "*",
   cors({

@@ -6,7 +6,7 @@ import {
   sendVerifyEmail,
   sendWelcomeEmail,
 } from "@repo/emails";
-import { serverEnv } from "@repo/env";
+import { serverEnv, trustedOrigins } from "@repo/env";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { admin } from "better-auth/plugins";
@@ -23,7 +23,7 @@ export const auth = betterAuth({
   }),
   secret: serverEnv.BETTER_AUTH_SECRET,
   baseURL: serverEnv.BETTER_AUTH_URL,
-  trustedOrigins: [serverEnv.APP_URL, serverEnv.WEB_URL],
+  trustedOrigins: [...trustedOrigins],
   advanced: {
     defaultCookieAttributes:
       serverEnv.NODE_ENV === "production"
