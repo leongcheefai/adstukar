@@ -1,5 +1,5 @@
 /* CapyTV stage. Scoped to the member-app shell. One bottom-anchored ticker
-   over two channels. An ad is a logo, a name, a tagline and a link. */
+   over three channels. An ad is a logo, a name, a tagline and a link. */
 
 .capychannel-page,
 .capychannel-page *,
@@ -128,108 +128,408 @@
   }
 }
 
-/* --- 2. Wallpaper — the presets. Each one is drawn here, so the chooser can
-       show the same class as a thumbnail and no image file ships. They swing
-       from blown out to near black, so no single scrim value suits them all. --- */
-.wall-beach {
-  background: radial-gradient(60% 40% at 74% 16%, rgb(255 253 240 / 0.95) 0%, transparent 62%),
-    linear-gradient(180deg, #cfe6ff 0%, #eaf5ff 44%, #fbf6e6 62%, #f3e6c8 100%);
+/* --- 2. Wallpaper — one photo, cropped to fill the set: it is a backdrop,
+       and no price or face on it is the member's. The whole photo is the link
+       to the photographer's page. --- */
+.chan-wall {
+  background: #000;
 }
-.wall-night {
-  background: radial-gradient(40% 30% at 22% 24%, rgb(90 120 200 / 0.35) 0%, transparent 70%),
-    linear-gradient(180deg, #05070f 0%, #0a0f1d 55%, #04060c 100%);
+.chan-wall .chan-media {
+  object-fit: cover;
 }
-.wall-market {
-  background: radial-gradient(35% 45% at 20% 30%, rgb(255 84 60 / 0.75) 0%, transparent 66%),
-    radial-gradient(40% 40% at 78% 26%, rgb(255 196 40 / 0.7) 0%, transparent 64%),
-    radial-gradient(45% 50% at 52% 82%, rgb(30 190 160 / 0.65) 0%, transparent 66%),
-    linear-gradient(140deg, #2a1b3d 0%, #43264a 50%, #16283f 100%);
-}
-.wall-portrait {
-  background: radial-gradient(
-      30% 42% at 40% 44%,
-      rgb(238 194 160 / 0.95) 0%,
-      rgb(176 122 92 / 0.6) 58%,
-      transparent 76%
-    ), radial-gradient(50% 50% at 82% 70%, rgb(120 140 110 / 0.5) 0%, transparent 70%),
-    linear-gradient(160deg, #4a4137 0%, #2d2a26 60%, #1a1917 100%);
-}
-.wall-firepit {
-  background: radial-gradient(120% 90% at 50% 108%, #2a1206 0%, #120802 42%, #050303 78%, #000 100%);
-}
-/* The embers are sized to the stage, so only the full wallpaper holds them. */
-.ember {
+.chan-wall-link {
   position: absolute;
-  left: 50%;
-  bottom: -6cqh;
-  width: 42cqh;
-  height: 42cqh;
-  margin-left: -21cqh;
-  border-radius: 50%;
-  filter: blur(14px); /* well under the 20px cost cliff */
-  mix-blend-mode: screen;
-  will-change: transform, opacity;
+  inset: 0;
+  display: block;
+  color: #fff;
 }
-.ember-a {
+.chan-wall-link:focus-visible {
+  outline: calc(0.4 * var(--u)) solid #fff;
+  outline-offset: calc(-1 * var(--safe-y));
+}
+/* Small, in the lower right corner, above the ad bar. No ground: a soft
+   shadow keeps the words clear of a bright photo. It arrives with its
+   photo. */
+.chan-wall-credit {
+  position: absolute;
+  right: var(--safe-x);
+  bottom: calc(var(--strip) + var(--safe-y));
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: calc(0.3 * var(--u));
+  max-width: calc(60 * var(--u));
+  line-height: 1.2;
+  text-align: right;
+  text-shadow: 0 0 calc(1.2 * var(--u)) rgb(0 0 0 / 0.6), 0 calc(0.2 * var(--u))
+    calc(0.4 * var(--u)) rgb(0 0 0 / 0.5);
+  animation: chan-in 600ms ease-out both;
+}
+.chan-wall-title {
+  overflow: hidden;
+  font-size: var(--t-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.chan-wall-author {
+  font-size: var(--t-xs);
+  color: rgb(255 255 255 / 0.8);
+}
+
+/* --- 3. Capy Channel — hand-picked YouTube videos played like live TV.
+       The video fills the set, with scanlines over it, and the ad bar
+       covers its bottom edge, as on the other channels. The top bar, the
+       details and the channel buttons, and Up next come and go together.
+       Text and buttons keep browser sizes, bounded by clamp(); the picture
+       scales with the set. --- */
+.chan-tv {
+  /* Grey snow: the boot's grain with the colour taken out. */
+  --tv-snow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+  overflow: hidden;
+  /* The ground while a video loads, under the snow: lit in the middle and
+     falling off at the edges, the way a tube does. */
   background: radial-gradient(
-    circle,
-    rgb(255 138 32 / 0.85) 0%,
-    rgb(198 62 8 / 0.35) 45%,
-    transparent 70%
+    120% 95% at 50% 42%,
+    oklch(0.47 0.25 264.3) 0%,
+    var(--capy-blue) 55%,
+    oklch(0.3 0.2 264.3) 100%
   );
-  animation: flicker-a 3.1s ease-in-out infinite;
 }
-.ember-b {
-  background: radial-gradient(
-    circle,
-    rgb(255 196 84 / 0.7) 0%,
-    rgb(214 92 12 / 0.3) 42%,
-    transparent 68%
-  );
-  width: 30cqh;
-  height: 30cqh;
-  margin-left: -15cqh;
-  animation: flicker-b 2.3s ease-in-out infinite;
+
+/* The whole set. The set is 16:9 and so is a video, so nothing is cut. */
+.tvc-player {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
 }
-.ember-c {
-  background: radial-gradient(circle, rgb(255 92 12 / 0.55) 0%, transparent 66%);
-  width: 62cqh;
-  height: 40cqh;
-  margin-left: -31cqh;
-  animation: flicker-c 4.7s ease-in-out infinite;
+/* The picture takes no pointer. A mouse moving over a frame from another
+   site never reaches this page, so the bar and the controls could not wake,
+   and a click would take the keys away from the channel buttons. */
+.tvc-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  pointer-events: none;
 }
-@keyframes flicker-a {
+/* Oversized, so the jitter never uncovers an edge. */
+.tvc-snow,
+.tvc-burst {
+  position: absolute;
+  inset: -50%;
+  background: var(--tv-snow) repeat;
+  background-size: 160px 160px;
+  pointer-events: none;
+}
+/* Under the player: it shows while the embed loads, and the embed paints
+   over it. */
+.tvc-snow {
+  opacity: 0.4;
+  animation: boot-jitter 400ms steps(5) infinite;
+}
+/* Grain over the picture, the same snow blended in: overlay leaves a mid
+   grey alone, so it moves the light and the dark a little and greys
+   nothing. Raise the opacity for more. Oversized for the jitter, and the
+   player's overflow crops it. Over the embed, under the burst. */
+.tvc-player::after {
+  content: "";
+  position: absolute;
+  inset: -50%;
+  background: var(--tv-snow) repeat;
+  background-size: 160px 160px;
+  mix-blend-mode: overlay;
+  opacity: 0.55;
+  pointer-events: none;
+  animation: boot-jitter 400ms steps(5) infinite;
+}
+/* A change of channel: a short burst of snow over the picture. It settles
+   clear, so with the motion off there is none. */
+.tvc-burst {
+  z-index: 1;
+  background-color: #1a1a1a;
+  opacity: 0;
+  animation: tvc-burst 300ms linear both, boot-jitter 100ms steps(5) 3;
+}
+/* The channel number in the corner of the picture, the way a set shows it,
+   under the account. It pops on and off; it does not fade. */
+.tvc-osd {
+  position: absolute;
+  z-index: 2;
+  top: calc(var(--safe-y) + 11 * var(--u));
+  right: var(--safe-x);
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: clamp(18px, 4.4cqh, 44px);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #6dff8a;
+  text-shadow: 0 0 0.4em rgb(109 255 138 / 0.6), 0.08em 0.08em 0 rgb(0 0 0 / 0.7);
+  pointer-events: none;
+  opacity: 0;
+  animation: tvc-osd 2s steps(1, end) both;
+}
+.tvc-no-signal {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: clamp(16px, 3.6cqh, 32px);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+@keyframes tvc-burst {
   0%,
-  100% {
-    transform: translateY(0) scale(1);
-    opacity: 0.85;
-  }
-  50% {
-    transform: translateY(-2cqh) scale(1.08);
+  80% {
     opacity: 1;
   }
-}
-@keyframes flicker-b {
-  0%,
   100% {
-    transform: translateY(0) scale(1.04);
-    opacity: 0.7;
-  }
-  45% {
-    transform: translateY(-3cqh) scale(0.94);
-    opacity: 0.95;
+    opacity: 0;
   }
 }
-@keyframes flicker-c {
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 0.5;
+@keyframes tvc-osd {
+  from {
+    opacity: 1;
   }
-  55% {
-    transform: scale(1.06);
-    opacity: 0.72;
+  to {
+    opacity: 0;
   }
+}
+
+/* Over the picture, and light enough to leave it its detail. Under the
+   controls: a button the viewer has to read belongs in front of the tube. */
+.tvc-scan {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgb(0 0 0 / 0) 0 0.28cqh,
+    rgb(0 0 0 / 0.16) 0.28cqh 0.56cqh
+  );
+}
+
+/* The video's details over the channel buttons, in the lower left, above
+   the ad bar. */
+.tvc-controls {
+  position: absolute;
+  z-index: 3;
+  left: var(--safe-x);
+  bottom: calc(var(--strip) + clamp(12px, 2.4cqh, 28px));
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: clamp(12px, 2.4cqh, 24px);
+  transition: opacity 140ms ease-out;
+}
+/* Shade from the lower left corner, so the white words hold on a white
+   picture. It is part of the controls, so it goes with them. */
+.tvc-controls::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: calc(-1 * var(--safe-x));
+  bottom: calc(-1 * clamp(12px, 2.4cqh, 28px));
+  width: 70cqw;
+  height: 60cqh;
+  background: radial-gradient(100% 100% at 0% 100%, rgb(0 0 0 / 0.6), rgb(0 0 0 / 0) 70%);
+  pointer-events: none;
+}
+/* The overlays are one group: the top bar, the details and the channel
+   buttons, and Up next. A mouse moving over the picture brings them all at
+   once, and after the idle time they all go at once. A pointer resting on
+   any one of them holds the whole group, so none is left behind. Focus
+   left on the account after its menu closes does not hold the bar here: a
+   key wakes the set anyway. */
+.capychannel-stage[data-idle]:has(.chan-tv):not(
+    :has(.tv-bar:hover, .tvc-controls:hover, .tvc-next:hover)
+  )
+  :is(.tv-bar, .tvc-controls, .tvc-next) {
+  opacity: 0;
+  pointer-events: none;
+  transition-duration: 460ms;
+}
+/* The bar's own rule lets only the bar hold the bar. Here the controls and
+   Up next hold it too. */
+.capychannel-stage[data-idle]:has(.chan-tv):has(.tvc-controls:hover, .tvc-next:hover) .tv-bar {
+  opacity: 1;
+  pointer-events: auto;
+  transition-duration: 140ms;
+}
+.tvc-info {
+  display: grid;
+  gap: clamp(4px, 0.9cqh, 8px);
+  max-width: min(36cqw, 520px);
+  margin: 0;
+  text-shadow: 0 1px 3px rgb(0 0 0 / 0.5);
+}
+.tvc-info dd {
+  margin: 0;
+}
+.tvc-title {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: clamp(16px, 3cqh, 26px);
+  font-weight: 600;
+  line-height: 1.25;
+  text-wrap: pretty;
+}
+.tvc-creator,
+.tvc-time {
+  font-size: clamp(13px, 2.3cqh, 19px);
+  line-height: 1.3;
+  color: rgb(255 255 255 / 0.82);
+}
+.tvc-creator {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+/* Tabular, so a digit changing cannot change the width of the line. */
+.tvc-time {
+  font-variant-numeric: tabular-nums;
+}
+.tvc-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #fff;
+}
+.tvc-live::before {
+  content: "";
+  width: 0.55em;
+  height: 0.55em;
+  border-radius: 50%;
+  background: oklch(0.63 0.25 25);
+  animation: tv-live 2s ease-in-out infinite;
+}
+
+.tvc-buttons {
+  display: flex;
+  gap: clamp(10px, 2cqw, 32px);
+  min-inline-size: 0;
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+/* Grey keys with red names, like the buttons on a set. 4.9:1. */
+.tvc-buttons button {
+  min-width: clamp(96px, 11cqw, 176px);
+  height: clamp(40px, 8cqh, 72px);
+  padding: 0 clamp(14px, 1.6cqw, 28px);
+  border: 0;
+  border-radius: clamp(10px, 1.6cqh, 16px);
+  background: #e6e6e6;
+  color: #c21807;
+  font: inherit;
+  font-size: clamp(14px, 2.6cqh, 22px);
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 2px 0 rgb(0 0 30 / 0.3);
+  transition: background 140ms ease-out, color 140ms ease-out, scale 140ms ease-out;
+}
+.tvc-buttons button:hover {
+  background: #fff;
+}
+.tvc-buttons button:active {
+  scale: 0.96;
+}
+/* The channel on the air is lit: the red it prints in becomes its ground.
+   After :hover, so a pointer on it cannot turn it white on white. 6.1:1. */
+.tvc-buttons button[aria-pressed="true"] {
+  background: #c21807;
+  color: #fff;
+}
+/* No focus ring. The lit channel already says which one is on, and a key
+   pressed after a click would ring the button the pointer left. */
+.tvc-buttons button:focus-visible {
+  outline: none;
+}
+
+/* What plays next, in the lower right, level with the channel buttons. A
+   live stream has none. */
+.tvc-next {
+  position: absolute;
+  z-index: 3;
+  right: var(--safe-x);
+  bottom: calc(var(--strip) + clamp(12px, 2.4cqh, 28px));
+  display: grid;
+  justify-items: end;
+  gap: clamp(6px, 1.2cqh, 12px);
+  max-width: min(32cqw, 460px);
+  text-shadow: 0 1px 3px rgb(0 0 0 / 0.5);
+  transition: opacity 140ms ease-out;
+}
+/* The lower left shade, turned round for this corner. */
+.tvc-next::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  right: calc(-1 * var(--safe-x));
+  bottom: calc(-1 * clamp(12px, 2.4cqh, 28px));
+  width: 50cqw;
+  height: 50cqh;
+  background: radial-gradient(100% 100% at 100% 100%, rgb(0 0 0 / 0.55), rgb(0 0 0 / 0) 70%);
+  pointer-events: none;
+}
+.tvc-next-label {
+  margin: 0;
+  font-size: clamp(11px, 1.9cqh, 15px);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 0.75);
+  font-variant-numeric: tabular-nums;
+}
+.tvc-next-card {
+  display: flex;
+  align-items: center;
+  gap: clamp(10px, 1.2cqw, 16px);
+  min-width: 0;
+}
+.tvc-next-thumb {
+  flex: none;
+  width: clamp(112px, 12cqw, 200px);
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: clamp(6px, 1cqh, 10px);
+  background: rgb(0 0 0 / 0.4);
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.18), 0 4px 12px rgb(0 0 0 / 0.35);
+}
+.tvc-next-text {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.tvc-next-title {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  margin: 0;
+  font-size: clamp(14px, 2.4cqh, 20px);
+  font-weight: 600;
+  line-height: 1.25;
+  text-wrap: pretty;
+}
+.tvc-next-creator {
+  overflow: hidden;
+  margin: 0;
+  font-size: clamp(12px, 2cqh, 16px);
+  line-height: 1.3;
+  color: rgb(255 255 255 / 0.8);
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 /* ==========================================================================
@@ -1387,11 +1687,10 @@
 
 /* What the set asks once the mark has moved up out of the way.
 
-   Two channels on one row. The wallpapers are six tiles, three to a row, so
-   that block comes out square. A wrapping line rather than grid columns,
-   because a short last row centres itself on a flex line and hangs under the
-   first column on a grid track. The width is what breaks it: three tiles and
-   their gaps come to 32.4 units, four to 43.5. */
+   The channels on one row. A wrapping line rather than grid columns, because
+   a short last row centres itself on a flex line and hangs under the first
+   column on a grid track. The library and the wallpapers set their own
+   block below. */
 .boot-pick {
   display: flex;
   flex-wrap: wrap;
@@ -1436,8 +1735,9 @@
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-/* The two channels. Tall tiles, because two squares leave the set looking
-   empty. The width cap above is for three to a row, so it lifts here. */
+/* The channels. Tall tiles, because a few squares leave the set looking
+   empty. The width cap above is for three small tiles to a row, so it lifts
+   here. */
 .boot-pick-channels {
   gap: calc(2.6 * var(--u));
   max-width: none;
@@ -1453,31 +1753,6 @@
   width: calc(7.63 * var(--u)); /* 56px */
   height: calc(7.63 * var(--u));
 }
-/* The presets. Six tiles, three to a row, at the width of a channel tile. The
-   height comes from the thumbnail, and the row stretches the back tile to it.
-   The cap sits between three tiles (95.2 units) and four (127.8). */
-.boot-pick-walls {
-  gap: calc(2.6 * var(--u));
-  max-width: calc(100 * var(--u));
-}
-.boot-pick-walls button {
-  width: calc(30 * var(--u));
-  aspect-ratio: auto;
-  padding: calc(1.6 * var(--u));
-  border-radius: calc(2.18 * var(--u)); /* 16px */
-  font-size: var(--t-sm);
-}
-.boot-pick-walls svg {
-  width: calc(5.45 * var(--u)); /* 40px */
-  height: calc(5.45 * var(--u));
-}
-/* A preset in the chooser: the wallpaper's own class, at the stage's shape. */
-.boot-wall {
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  border-radius: calc(1 * var(--u));
-  box-shadow: inset 0 0 0 calc(0.15 * var(--u)) rgb(255 255 255 / 0.24);
-}
 .boot-pick button:hover {
   background: rgb(255 255 255 / 0.2);
 }
@@ -1492,7 +1767,9 @@
    button, one row of thumbnails, the Upload and Play pills under it, and the
    one line that says where a file goes and how big it may be. The tray's
    tile rules make every button a square with a drawing on it; each control
-   below sets its own shape. */
+   below sets its own shape. The wallpapers use the same block, with a line
+   under each tile and Play alone in the middle (`.boot-lib-walls`, at the
+   end). */
 .boot-pick-lib {
   display: block;
   /* As wide as its widest child, so the back button, the row and the pills
@@ -1785,6 +2062,69 @@
   cursor: default;
   scale: 1;
 }
+/* The wallpapers. As wide as the library, so the row starts at the same place
+   in both. The block sits in the middle of the screen, so Play, in the middle
+   of the block, is in the middle of the screen. Each tile carries one line
+   under it, and the strip grows by that line. */
+.boot-lib-walls {
+  --lib-caption-gap: calc(1.4 * var(--u));
+  --lib-caption-line: calc(3.4 * var(--u));
+  --lib-caption: calc(var(--lib-caption-gap) + var(--lib-caption-line));
+  min-width: calc(2 * var(--lib-tile) + 4 * var(--u));
+}
+.boot-lib-walls .boot-lib-strip {
+  height: calc(var(--lib-tile) * 5 / 9 + 2 * var(--lib-pad) + var(--lib-caption));
+}
+.boot-lib-walls .boot-lib-actions {
+  align-self: center;
+}
+.boot-lib-item {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: var(--lib-caption-gap);
+  width: var(--lib-tile);
+}
+/* In a column, a tile would grow to the height of a photo that is taller than
+   9:5. The ratio holds only when the content may not push it. */
+.boot-lib-item > .boot-lib-tile {
+  min-height: 0;
+}
+/* A collection's thumbnails, stacked. The one coming up fades in on top, and
+   the one it covers drops out after, so the tile never shows through. The
+   stack is its own layer, so its z-index stays under the check mark. */
+.boot-lib-reel {
+  position: relative;
+  isolation: isolate;
+}
+.boot-lib-reel img {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0s linear 300ms;
+}
+.boot-lib-reel img[data-on] {
+  z-index: 1;
+  opacity: 1;
+  transition: opacity 300ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .boot-lib-reel img,
+  .boot-lib-reel img[data-on] {
+    transition: none;
+  }
+}
+.boot-lib-caption {
+  overflow: hidden;
+  padding-inline: calc(0.4 * var(--u));
+  font-size: var(--t-sm);
+  font-weight: 500;
+  line-height: var(--lib-caption-line);
+  color: rgb(255 255 255 / 0.85);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 /* The library takes the set. The mark leaves its row for the top left corner,
    small, so the row of thumbnails has the middle of the screen; the row it
    held closes, gap and all, and the tray centres on its own. */
