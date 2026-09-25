@@ -2,6 +2,8 @@ import { project } from "@repo/config/project";
 import { useId } from "react";
 import { useNavigate } from "react-router";
 import { signOutThen, useSession } from "../../lib/auth";
+import { useCoach } from "../../lib/coach";
+import { openDashboard } from "../../lib/dashboard-tab";
 import { clearResume } from "./resume";
 
 function initials(name: string): string {
@@ -31,6 +33,7 @@ export function AccountMenu({
 }) {
   const navigate = useNavigate();
   const { data: session } = useSession();
+  const { dismiss } = useCoach();
   const name = session?.user.name ?? "Account";
   const image = session?.user.image;
   const tipId = useId();
@@ -93,7 +96,9 @@ export function AccountMenu({
           onClick={(event) => {
             event.stopPropagation();
             onOpenChange(false);
-            navigate("/dashboard");
+            dismiss("source");
+            dismiss("opened");
+            openDashboard();
           }}
         >
           Dashboard

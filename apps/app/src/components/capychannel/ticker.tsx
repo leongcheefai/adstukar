@@ -2,7 +2,7 @@ import { Plus } from "@phosphor-icons/react";
 import { economy } from "@repo/config/economy";
 import type { LoopBand } from "@repo/contracts/types";
 import { type FocusEvent, useLayoutEffect, useRef, useState } from "react";
-import { Link } from "react-router";
+import { DASHBOARD_WINDOW } from "../../lib/dashboard-tab";
 import { clipCopy } from "../../lib/slots";
 import { useSlotLoop } from "../../lib/slots-api";
 import { CapyLockup, HomeLink } from "./lockup";
@@ -46,20 +46,22 @@ function Item({ band, dup }: { band: BrandBand; dup: boolean }) {
 
 /**
  * A band nobody's brand is on: open, or paid for and waiting for review. It
- * keeps the loop its full length, and it opens the page where a member books.
+ * keeps the loop its full length, and it opens the page where a member books,
+ * in the dashboard's own tab.
  * Sixteen of them would be sixteen tab stops saying the same thing, so only
  * the first takes focus.
  */
 function OpenSlot({ dup, first }: { dup: boolean; first: boolean }) {
   return (
-    <Link
+    <a
       className="ticker-item ticker-slot"
-      to="/dashboard/campaigns/book"
+      href="/dashboard/campaigns/book"
+      target={DASHBOARD_WINDOW}
       aria-label="Add your brand"
       {...(dup ? { inert: true, tabIndex: -1 } : first ? {} : { tabIndex: -1 })}
     >
       <Plus weight="bold" aria-hidden="true" />
-    </Link>
+    </a>
   );
 }
 

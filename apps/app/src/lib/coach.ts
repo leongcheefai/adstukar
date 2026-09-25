@@ -1,11 +1,15 @@
-import { createContext, useCallback, useContext, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 
 /**
  * First-run hints. `source` is the profile control on the chooser; `dashboard`
- * is the campaign / Wallet tip after the drawer opens; `stripe` guides the
+ * is the campaign / Wallet tip when the dashboard opens; `stripe` guides the
  * first top-up, which is where Stripe enters the product; `opened` records
  * that the dashboard was opened at all, which is what the red dot on the
  * profile picture waits for. A dismissed step stays dismissed on this browser.
+ *
+ * The set and the dashboard are two tabs, and each holds its own copy. Every
+ * write merges into what storage already holds, so one tab never undoes the
+ * other, and a write in one tab reaches the other through the `storage` event.
  */
 export type CoachId = "source" | "dashboard" | "stripe" | "opened";
 
@@ -52,6 +56,16 @@ function write(next: CoachMap) {
   }
 }
 
+/** Done beats ignored beats nothing: a step only ever moves forward. */
+function merge(a: CoachMap, b: CoachMap): CoachMap {
+  const out: CoachMap = {};
+  for (const id of IDS) {
+    const value = a[id] === true || b[id] === true ? true : (a[id] ?? b[id]);
+    if (value) out[id] = value;
+  }
+  return out;
+}
+
 function statusOf(value: true | "ignored" | undefined): CoachStatus {
   if (value === true) return "done";
   if (value === "ignored") return "ignored";
@@ -75,10 +89,18 @@ export const CoachContext = createContext<CoachValue | null>(null);
 export function useCoachState(): CoachValue {
   const [done, setDone] = useState<CoachMap>(read);
 
+  useEffect(() => {
+    function onStorage(event: StorageEvent) {
+      if (event.key === KEY) setDone((prev) => merge(prev, read()));
+    }
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
   const dismiss = useCallback((id: CoachId) => {
     setDone((prev) => {
       if (prev[id] === true) return prev;
-      const next = { ...prev, [id]: true as const };
+      const next = merge(read(), { ...prev, [id]: true as const });
       write(next);
       return next;
     });
@@ -87,7 +109,7 @@ export function useCoachState(): CoachValue {
   const ignore = useCallback((id: CoachId) => {
     setDone((prev) => {
       if (prev[id]) return prev;
-      const next = { ...prev, [id]: "ignored" as const };
+      const next = merge(read(), { ...prev, [id]: "ignored" as const });
       write(next);
       return next;
     });

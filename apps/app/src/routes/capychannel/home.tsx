@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useLocation, useSearchParams } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { AccountMenu } from "../../components/capychannel/account-menu";
 import { Boot, type BootPhase } from "../../components/capychannel/boot";
 import { BootAuth } from "../../components/capychannel/boot-auth";
@@ -10,7 +10,7 @@ import { Ticker } from "../../components/capychannel/ticker";
 import { TvBar } from "../../components/capychannel/tv-bar";
 import { useSession } from "../../lib/auth";
 import { useCoach } from "../../lib/coach";
-import { landingUrl } from "../../lib/landing";
+import { safeRedirect } from "../../lib/redirect";
 import "../../styles/capychannel.css";
 
 const BAR_IDLE_MS = 3500;
@@ -20,30 +20,20 @@ function brandHoldMs(): number {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 900 : 2500;
 }
 
-/** The paths the router turns into `?auth=`. Each one is a request for the form. */
-export const AUTH_PATHS = ["/login", "/signup", "/forgot-password"];
-
-export function CapyChannelScreen({ dashboardOpen = false }: { dashboardOpen?: boolean }) {
-  const { data: session, isPending, error } = useSession();
+/**
+ * The front door. A session sees the channel tiles; no session sees the login
+ * form on the same set (`?auth=` picks login, sign-up or a reset). The
+ * dashboard is not here: it opens in its own tab (`lib/dashboard-tab.ts`).
+ */
+export function CapyChannelScreen() {
+  const { data: session, isPending } = useSession();
   const { source: sourceHint, opened, dismiss } = useCoach();
-  const [params] = useSearchParams();
-  const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const { search } = useLocation();
   const signedIn = Boolean(session);
-  // No session and no request for the form: the visitor belongs on the landing
-  // page. `?auth=` is how the landing page's own buttons ask for the form, so
-  // it is the one way in. A failed check is not an answer, and the form stays:
-  // a dead API must not bounce a member off their own set.
-  //
-  // `/login`, `/signup` and `/forgot-password` ask for the form too. The router
-  // turns each into `?auth=`, but only in an effect, and the session check can
-  // already read "no session" in that same commit. Without the path check the
-  // redirect below wins the race and the landing page's own button bounces.
-  //
-  // With no landing page to go to, the form stays on the set instead.
-  const asksForForm = params.has("auth") || AUTH_PATHS.includes(pathname);
-  const landing = landingUrl();
-  const leaving = !isPending && !signedIn && !error && !asksForForm && landing !== null;
-
+  // The dashboard sends a visitor with no session here with `?redirect=`. Once
+  // they sign in, they go back to the page they asked for.
+  const redirect = safeRedirect(search);
   const [phase, setPhase] = useState<BootPhase>("brand");
   const [brandHeld, setBrandHeld] = useState(false);
   const [again, setAgain] = useState(false);
@@ -58,19 +48,15 @@ export function CapyChannelScreen({ dashboardOpen = false }: { dashboardOpen?: b
   const hadSession = useRef(false);
 
   const playing = channel !== null && bootDone;
-  const onChooser = signedIn && phase === "pick" && !playing && !dashboardOpen;
-  const showHint = sourceHint && hintReady && !dashboardOpen;
+  const onChooser = signedIn && phase === "pick" && !playing;
+  const showHint = sourceHint && hintReady;
   // A red dot on the account until the dashboard has been opened once. Not
   // while the tip is up: the tip already points at the same control.
-  const showDot = !opened && !showHint && !dashboardOpen;
+  const showDot = !opened && !showHint;
 
   useEffect(() => {
-    if (!leaving || !landing) return;
-    // `from=app` tells the landing page not to check the session again. Two
-    // origins that disagree about one cookie would otherwise trade the visitor
-    // back and forth for ever.
-    window.location.replace(landing);
-  }, [leaving, landing]);
+    if (signedIn && redirect !== "/") navigate(redirect, { replace: true });
+  }, [signedIn, redirect, navigate]);
 
   useEffect(() => {
     if (phase !== "brand") return;
@@ -115,28 +101,17 @@ export function CapyChannelScreen({ dashboardOpen = false }: { dashboardOpen?: b
   }, []);
 
   useEffect(() => {
-    if (dashboardOpen) setMenuOpen(false);
-  }, [dashboardOpen]);
-
-  useEffect(() => {
-    if (dashboardOpen) {
-      dismiss("source");
-      dismiss("opened");
-    }
-  }, [dashboardOpen, dismiss]);
-
-  useEffect(() => {
-    if (!signedIn || !sourceHint || dashboardOpen || (phase !== "pick" && !playing)) {
+    if (!signedIn || !sourceHint || (phase !== "pick" && !playing)) {
       setHintReady(false);
       return;
     }
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const id = window.setTimeout(() => setHintReady(true), reduce || again ? 200 : 700);
     return () => window.clearTimeout(id);
-  }, [signedIn, sourceHint, dashboardOpen, phase, playing, again]);
+  }, [signedIn, sourceHint, phase, playing, again]);
 
   useEffect(() => {
-    if (!playing || menuOpen || dashboardOpen || showHint) {
+    if (!playing || menuOpen || showHint) {
       setIdle(false);
       return;
     }
@@ -156,11 +131,10 @@ export function CapyChannelScreen({ dashboardOpen = false }: { dashboardOpen?: b
         document.removeEventListener(type, wake);
       }
     };
-  }, [playing, menuOpen, dashboardOpen, showHint]);
+  }, [playing, menuOpen, showHint]);
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
-      if (dashboardOpen) return;
       if (event.metaKey || event.ctrlKey || event.altKey) return;
       if (event.key !== "Escape") return;
       const target = event.target;
@@ -179,7 +153,7 @@ export function CapyChannelScreen({ dashboardOpen = false }: { dashboardOpen?: b
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [playing, menuOpen, dashboardOpen]);
+  }, [playing, menuOpen]);
 
   function setAccountMenu(open: boolean) {
     setMenuOpen(open);
@@ -209,11 +183,11 @@ export function CapyChannelScreen({ dashboardOpen = false }: { dashboardOpen?: b
     <div className="capychannel-page">
       <div
         className="capychannel-stage"
-        data-paused={paused || dashboardOpen || undefined}
+        data-paused={paused || undefined}
         data-booted={playing || undefined}
         data-idle={idle && !menuOpen ? "" : undefined}
       >
-        <ChannelLayer channel={channel} paused={paused || dashboardOpen} />
+        <ChannelLayer channel={channel} paused={paused} />
         {playing ? <Ticker /> : null}
         <TvBar
           menuOpen={menuOpen}
@@ -257,11 +231,7 @@ export function CapyChannelScreen({ dashboardOpen = false }: { dashboardOpen?: b
             hidden={bootHidden}
             tray={signedIn ? "pick" : "auth"}
           >
-            {session ? (
-              <ChannelPicker userId={session.user.id} onPick={pick} />
-            ) : leaving ? null : (
-              <BootAuth />
-            )}
+            {session ? <ChannelPicker userId={session.user.id} onPick={pick} /> : <BootAuth />}
           </Boot>
         </div>
       </div>
