@@ -1,0 +1,158 @@
+{
+  "channels": [
+    {
+      "id": "capybara",
+      "number": 1,
+      "name": "Capybara",
+      "type": "loop",
+      "videos": [
+        {
+          "id": "QQss9QRxRK4",
+          "title": "3 Relaxing Capybara Hot Springs Across Japan",
+          "creator": "Japan Animal Travels",
+          "duration": "47:51"
+        },
+        {
+          "id": "eTfJPWDWPig",
+          "title": "The World's Most Relaxed Rodents - Capybaras",
+          "creator": "Great Big Story",
+          "duration": "3:31"
+        },
+        {
+          "id": "u2Xx4dOGPJY",
+          "title": "Capybara Relaxation in Izu Shaboten Zoo, Shizuoka",
+          "creator": "Travel Japan 8k ( HDR TV )",
+          "duration": "14:04"
+        },
+        {
+          "id": "koEK7cabn2s",
+          "title": "The Truth About Capybaras",
+          "creator": "Robert E Fuller",
+          "duration": "4:08"
+        },
+        {
+          "id": "88fD9XXNszQ",
+          "title": "Japan's Adorable Capybara Hot Spring Zoo & Magical Tokyo Christmas Lights",
+          "creator": "Japan Animal Travels",
+          "duration": "27:32"
+        },
+        {
+          "id": "mC_eogwh5I4",
+          "title": "Capybaras for Kids",
+          "creator": "Learn Bright",
+          "duration": "5:49"
+        },
+        {
+          "id": "CBS8DwG7cFg",
+          "title": "Capybara Enjoy Hot Spring at Izu Shaboten Zoo",
+          "creator": "Amazing Travel Experience",
+          "duration": "8:03"
+        },
+        {
+          "id": "TCLRfSWi0lc",
+          "title": "Capybaras, the Largest and 'Chillest' Rodents in the World",
+          "creator": "Crazy Creatures",
+          "duration": "3:25"
+        },
+        {
+          "id": "NzCBBSrnrcg",
+          "title": "Japan's Capybara & Cat Cafe",
+          "creator": "Japan Animal Travels",
+          "duration": "18:17"
+        },
+        {
+          "id": "5a2ZQEVxdvA",
+          "title": "Baby Capybaras!? Staying at Japan's Capybara Resort Hotel!",
+          "creator": "Japan Animal Travels",
+          "duration": "40:36"
+        }
+      ]
+    },
+    {
+      "id": "fashion",
+      "number": 2,
+      "name": "Fashion",
+      "type": "loop",
+      "videos": [
+        {
+          "id": "aV75FYR_0xs",
+          "title": "Spring-Summer 2016 Haute Couture Show",
+          "creator": "CHANEL",
+          "duration": "19:11"
+        },
+        {
+          "id": "a1ew-tsk8KA",
+          "title": "Guo Pei Haute Couture Spring Summer 2018 Full Show",
+          "creator": "FF Channel",
+          "duration": "25:38"
+        },
+        {
+          "id": "b_SC2OLpSoc",
+          "title": "100 Years of Fashionable Womenswear: 1830s - 1930s",
+          "creator": "Victoria and Albert Museum",
+          "duration": "14:23"
+        },
+        {
+          "id": "vYp6GYv5UaI",
+          "title": "Haute Couture Autumn Winter 2018-19 Fashion Show",
+          "creator": "ELIE SAAB",
+          "duration": "19:14"
+        },
+        {
+          "id": "t15ftuJ7Vl4",
+          "title": "Spring-Summer 2017 Haute Couture Show",
+          "creator": "CHANEL",
+          "duration": "16:04"
+        },
+        {
+          "id": "K36uZgYEBOU",
+          "title": "How to Break into the Fashion Industry with Alexa Chung",
+          "creator": "Vogue",
+          "duration": "11:36"
+        },
+        {
+          "id": "-zhFpee_i1s",
+          "title": "Haute Couture Spring Summer 2019",
+          "creator": "Valentino",
+          "duration": "16:43"
+        },
+        {
+          "id": "YLDUXZ4X5b8",
+          "title": "Fall-Winter 2014/15 Ready-to-Wear Show",
+          "creator": "CHANEL",
+          "duration": "13:58"
+        },
+        {
+          "id": "AdRXKOvO4ls",
+          "title": "Pre-Spring 2025 Runway Show",
+          "creator": "Oscar de la Renta",
+          "duration": "13:25"
+        },
+        {
+          "id": "cjH6VC87xKo",
+          "title": "Fall-Winter 2015/16 Haute Couture Show",
+          "creator": "CHANEL",
+          "duration": "18:37"
+        }
+      ]
+    },
+    {
+      "id": "lofi",
+      "number": 3,
+      "name": "Lofi Music",
+      "type": "live",
+      "videos": [
+        {
+          "id": "rFZHOHl-L8A",
+          "title": "lofi hip hop radio - beats to relax/study to",
+          "creator": "Lofi Girl"
+        },
+        {
+          "id": "5yx6BWlEVcY",
+          "title": "Chillhop Radio - jazzy & lofi hip hop beats",
+          "creator": "Chillhop Music"
+        }
+      ]
+    }
+  ]
+}

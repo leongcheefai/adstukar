@@ -1,7 +1,8 @@
 import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 import { lastInputWasKeyboard } from "../../lib/input-mode";
-import { CHANNELS, type ChannelId, type ChannelPick, WALLPAPERS } from "./channels/catalog";
+import { CHANNELS, type ChannelId, type ChannelPick } from "./channels/catalog";
 import { Library } from "./library";
+import { Wallpapers } from "./wallpapers";
 
 type View = "channels" | "wallpapers" | "library";
 
@@ -31,7 +32,8 @@ export function ChannelPicker({
   }
 
   function open(id: ChannelId) {
-    show(id === "upload" ? "library" : "wallpapers");
+    if (id === "tv") onPick({ id: "tv" });
+    else show(id === "upload" ? "library" : "wallpapers");
   }
 
   function onKeyDown(event: KeyboardEvent<HTMLFieldSetElement>) {
@@ -80,26 +82,14 @@ export function ChannelPicker({
       <fieldset
         key="wallpapers"
         ref={trayRef}
-        className="boot-pick boot-pick-walls"
+        className="boot-pick boot-pick-lib"
         onKeyDown={onKeyDown}
       >
         <legend className="sr-only">Choose a wallpaper</legend>
-        <button type="button" aria-label="Back" onClick={() => show("channels")}>
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M14.6 6.2 8.8 12l5.8 5.8" />
-          </svg>
-        </button>
-        {WALLPAPERS.map((wallpaper, i) => (
-          <button
-            key={wallpaper.id}
-            type="button"
-            data-first={i === 0 || undefined}
-            onClick={() => onPick({ id: "wallpaper", wallpaper: wallpaper.id })}
-          >
-            <span className={`boot-wall wall wall-${wallpaper.id}`} aria-hidden="true" />
-            <span>{wallpaper.label}</span>
-          </button>
-        ))}
+        <Wallpapers
+          onBack={() => show("channels")}
+          onPlay={(collection) => onPick({ id: "wallpaper", collection })}
+        />
       </fieldset>
     );
   }
