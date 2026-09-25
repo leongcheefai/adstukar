@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { serveStatic } from "@hono/node-server/serve-static";
-import { auth } from "@repo/auth";
+import { auth, googleEnabled } from "@repo/auth";
 import { serverEnv, trustedOrigins } from "@repo/env";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
@@ -41,6 +41,12 @@ const TRUSTED_ORIGINS = new Set(trustedOrigins);
 // Printed once at boot: a sign-in refused at preflight is almost always an
 // `APP_URL` or `WEB_URL` that does not name the site the browser is on.
 log("info", "cors_trusted_origins", { origins: trustedOrigins });
+// A Google button that answers "Provider not found" is a missing credential.
+// Google must also list `${BETTER_AUTH_URL}/api/auth/callback/google` as a redirect URI.
+log("info", "auth_google", {
+  enabled: googleEnabled,
+  redirectUri: `${serverEnv.BETTER_AUTH_URL}/api/auth/callback/google`,
+});
 app.use(
   "*",
   cors({
