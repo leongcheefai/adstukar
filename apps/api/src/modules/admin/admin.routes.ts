@@ -1,5 +1,8 @@
 import { zValidator } from "@hono/zod-validator";
 import {
+  createPresetInput,
+  createPresetOutput,
+  deletePresetOutput,
   feedbackQueueOutput,
   moderateDeviceOutput,
   moderateListingOutput,
@@ -7,11 +10,15 @@ import {
   payoutQueueOutput,
   payoutQuoteOutput,
   poolOutput,
+  presignPresetInput,
+  presignPresetOutput,
   refundTopupOutput,
   rejectInput,
   resolveFeedbackOutput,
   reviewPayoutOutput,
   topupQueueOutput,
+  updatePresetInput,
+  updatePresetOutput,
 } from "@repo/contracts";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
@@ -19,7 +26,9 @@ import type * as z from "zod/v4";
 import type { AppVariables } from "../../lib/context";
 import { listFeedbackQueue, setFeedbackResolved } from "../feedback/feedback.service";
 import { listPayoutQueue, payPayout, quotePayout, rejectPayout } from "../payouts/payouts.service";
+import { createPreset, deletePreset, renamePreset } from "../presets/presets.service";
 import { listTopupQueue, refundTopup } from "../topups/topups.service";
+import { presignPresetUpload } from "../uploads/uploads.service";
 import {
   approveDevice,
   approveListing,
@@ -133,4 +142,34 @@ adminRouter.post("/feedback/:id/reopen", async (c) => {
   if (!admin) throw new HTTPException(401, { message: "Unauthorized" });
   const row = await setFeedbackResolved(c.req.param("id"), admin.id, false);
   return c.json(resolveFeedbackOutput.parse(row satisfies z.input<typeof resolveFeedbackOutput>));
+});
+
+/**
+ * The preset desk: pictures and clips every member's library starts with. A
+ * file goes up in two steps, as a member's does: presign, PUT to storage, then
+ * record the key. The API reads the stored object before it writes the row.
+ * The desk reads the list from `GET /presets`, the one every library reads.
+ */
+adminRouter.post("/presets/presign", zValidator("json", presignPresetInput), async (c) => {
+  const admin = c.get("user");
+  if (!admin) throw new HTTPException(401, { message: "Unauthorized" });
+  const result = await presignPresetUpload(admin.id, c.req.valid("json"));
+  return c.json(presignPresetOutput.parse(result satisfies z.input<typeof presignPresetOutput>));
+});
+
+adminRouter.post("/presets", zValidator("json", createPresetInput), async (c) => {
+  const admin = c.get("user");
+  if (!admin) throw new HTTPException(401, { message: "Unauthorized" });
+  const row = await createPreset(admin.id, c.req.valid("json"));
+  return c.json(createPresetOutput.parse(row satisfies z.input<typeof createPresetOutput>), 201);
+});
+
+adminRouter.patch("/presets/:id", zValidator("json", updatePresetInput), async (c) => {
+  const row = await renamePreset(c.req.param("id"), c.req.valid("json"));
+  return c.json(updatePresetOutput.parse(row satisfies z.input<typeof updatePresetOutput>));
+});
+
+adminRouter.delete("/presets/:id", async (c) => {
+  const result = await deletePreset(c.req.param("id"));
+  return c.json(deletePresetOutput.parse(result satisfies z.input<typeof deletePresetOutput>));
 });

@@ -101,6 +101,16 @@ _Avoid_: Block, ban
 **Excluded term**:
 A phrase that stops any listing whose name or tagline contains it.
 
+**Library**:
+The pictures and clips a member's set plays on the Images/Video channel. It
+holds the presets first, then the member's own files.
+
+**Preset**:
+A picture or a clip an admin puts in every member's library, from the preset
+desk under Settings. A member plays it and cannot delete it. It moves no money
+and goes through no moderation: an admin chose it.
+_Avoid_: Stock, template, default
+
 ## What is counted
 
 **Play**:

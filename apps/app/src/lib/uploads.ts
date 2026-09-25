@@ -1,4 +1,9 @@
-import type { PresignLogoResponse, PresignVideoResponse } from "@repo/contracts/types";
+import type {
+  PresetMedia,
+  PresignLogoResponse,
+  PresignPresetResponse,
+  PresignVideoResponse,
+} from "@repo/contracts/types";
 import { apiFetch } from "./api";
 import { kindOf } from "./library";
 
@@ -9,9 +14,6 @@ import { kindOf } from "./library";
  * A clip goes through `/uploads/video/presign`. A picture goes through the logo
  * presign, because the API has no presign for a channel image yet; it takes
  * the same types at the same cap, under the `logos` prefix.
- *
- * XHR rather than fetch, because fetch reports no upload progress and a 50 MB
- * clip on a venue's network takes long enough to need a bar.
  */
 export async function uploadChannelMedia(
   file: File,
@@ -26,7 +28,37 @@ export async function uploadChannelMedia(
       body: { contentType: file.type, size: file.size },
     },
   );
+  await putToStorage(uploadUrl, file, onProgress);
+  return publicUrl;
+}
 
+/**
+ * Admin: a preset goes up the way a member's file does, then the API records
+ * the key. It reads the stored object before it writes the row, so the size
+ * and the type on the preset are the ones storage holds.
+ */
+export async function uploadPreset(
+  file: File,
+  name: string,
+  onProgress: (fraction: number) => void,
+): Promise<PresetMedia> {
+  const { uploadUrl, key } = await apiFetch<PresignPresetResponse>("/admin/presets/presign", {
+    method: "POST",
+    body: { contentType: file.type, size: file.size },
+  });
+  await putToStorage(uploadUrl, file, onProgress);
+  return apiFetch<PresetMedia>("/admin/presets", { method: "POST", body: { key, name } });
+}
+
+/**
+ * XHR rather than fetch, because fetch reports no upload progress and a 50 MB
+ * clip on a venue's network takes long enough to need a bar.
+ */
+async function putToStorage(
+  uploadUrl: string,
+  file: File,
+  onProgress: (fraction: number) => void,
+): Promise<void> {
   await new Promise<void>((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open("PUT", uploadUrl);
@@ -42,7 +74,5 @@ export async function uploadChannelMedia(
     xhr.onabort = () => reject(new Error("The upload was cancelled"));
     xhr.send(file);
   });
-
   onProgress(1);
-  return publicUrl;
 }

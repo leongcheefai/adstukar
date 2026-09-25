@@ -99,3 +99,10 @@ export type {
   PresignLogoResponse,
   PresignVideoResponse,
 } from "./modules/uploads";
+export type { MediaKind, PresetMedia } from "./entities/preset-media";
+export type { CreatePresetInput, PresignPresetInput, UpdatePresetInput } from "./inputs/presets";
+export type {
+  DeletePresetResponse,
+  PresetList,
+  PresignPresetResponse,
+} from "./modules/presets";

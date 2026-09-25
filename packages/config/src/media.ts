@@ -43,3 +43,10 @@ export function acceptsVideo(file: { type: string; size: number }): boolean {
     file.size <= media.video.maxBytes
   );
 }
+
+/** Which cap a MIME type falls under, or null when neither list takes it. */
+export function mediaKindOf(type: string): "image" | "video" | null {
+  if ((media.image.types as readonly string[]).includes(type)) return "image";
+  if ((media.video.types as readonly string[]).includes(type)) return "video";
+  return null;
+}

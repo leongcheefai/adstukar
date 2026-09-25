@@ -135,3 +135,8 @@ export type TopupAmountBlock = (typeof TOPUP_AMOUNT_BLOCKS)[number];
 export const SLOT_STATES = ["booked", "running", "ended", "refunded"] as const;
 
 export type SlotState = (typeof SLOT_STATES)[number];
+
+/** What a file on a screen is: a picture that holds for its dwell, or a clip that plays through. */
+export const MEDIA_KINDS = ["image", "video"] as const;
+
+export type MediaKind = (typeof MEDIA_KINDS)[number];

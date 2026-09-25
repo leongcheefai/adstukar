@@ -1,4 +1,5 @@
 import { acceptsImage, acceptsVideo, media, megabytes } from "@repo/config/media";
+import type { PresetMedia } from "@repo/contracts/types";
 
 /**
  * The member's own pictures and clips: what the Images/Video channel plays.
@@ -18,6 +19,8 @@ export type LibraryItem = {
   name: string;
   size: number;
   addedAt: string;
+  /** An admin put it in every library. The member plays it and cannot delete it. */
+  preset?: true;
 };
 
 const LIBRARY_KEY = "adstukar:library";
@@ -49,6 +52,19 @@ export function refusal(file: { name: string; type: string; size: number }): str
   const cap = isVideo ? media.video.maxBytes : media.image.maxBytes;
   const noun = isVideo ? "A clip" : "An image";
   return `${file.name} is ${megabytes(file.size)}. ${noun} goes up to ${megabytes(cap)}.`;
+}
+
+/** A preset as the library holds it. It never goes to `localStorage`: the API owns it. */
+export function fromPreset(preset: PresetMedia): LibraryItem {
+  return {
+    id: preset.id,
+    url: preset.url,
+    kind: preset.kind,
+    name: preset.name,
+    size: preset.size,
+    addedAt: preset.createdAt,
+    preset: true,
+  };
 }
 
 /** Selection is a set of ids. Clicking a tile flips it. */

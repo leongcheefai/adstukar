@@ -5,6 +5,7 @@ import { DangerSection } from "../../components/settings/danger-section";
 import { FeedbackSection } from "../../components/settings/feedback-section";
 import { ModerationSection } from "../../components/settings/moderation-section";
 import { PayoutsSection } from "../../components/settings/payouts-section";
+import { PresetsSection } from "../../components/settings/presets-section";
 import { ProfileSection } from "../../components/settings/profile-section";
 import { ReleasesSection } from "../../components/settings/releases-section";
 import { SessionsSection } from "../../components/settings/sessions-section";
@@ -78,6 +79,13 @@ const ADMIN_SECTIONS: SettingsSection[] = [
       "What members sent from the account menu, open rows first. Open a row to read it, then mark it resolved.",
   },
   {
+    id: "presets",
+    label: "Presets",
+    title: "Presets",
+    description:
+      "Photos and clips at the front of every member's Images/Video library. Members play them; only an admin adds, renames, or removes one.",
+  },
+  {
     id: "releases",
     label: "Releases",
     title: "Releases",
@@ -95,6 +103,8 @@ function SectionBody({ id }: { id: string }) {
       return <TopupsSection />;
     case "feedback":
       return <FeedbackSection />;
+    case "presets":
+      return <PresetsSection />;
     case "releases":
       return <ReleasesSection />;
     case "sessions":
