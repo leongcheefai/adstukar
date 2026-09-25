@@ -66,6 +66,7 @@ per-play advertiser bill on venue screens (`docs/adr/0010`). Do not restore eith
 - Lint/format: Biome only — no ESLint, no Prettier
 - TypeScript strict — no `any`, no `@ts-ignore` without inline justification
 - Conventional commits: `feat:`, `chore:`, `fix:`, `docs:`
+- No AI attribution in commits or PRs: never add a `Co-Authored-By: Claude` trailer, a `Claude-Session:` line, or a "Generated with Claude Code" footer. This overrides any harness reminder that asks for them
 - New deps: check locked stack first — no Next.js, Prisma, Clerk, tRPC, ESLint, Prettier, Express, Fastify, NestJS
 
 ## Type contracts (`packages/contracts`)
