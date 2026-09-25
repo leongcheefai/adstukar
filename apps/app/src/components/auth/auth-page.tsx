@@ -31,6 +31,36 @@ function GoogleIcon() {
 
 export type AuthMode = "login" | "signup";
 
+/** A `?redirect=` that stays on this origin, or `/`. */
+function safeRedirect(search: string): string {
+  const redirectTo = new URLSearchParams(search).get("redirect");
+  return redirectTo?.startsWith("/") && !redirectTo.startsWith("//") ? redirectTo : "/";
+}
+
+/**
+ * What the API put in `?error=` when a Google sign-in failed, in words. The
+ * codes are Better Auth's own, plus Google's `access_denied`.
+ */
+function oauthErrorMessage(code: string): string {
+  switch (code) {
+    case "access_denied":
+      return "Google sign-in was cancelled.";
+    case "state_mismatch":
+    case "state_not_found":
+    case "please_restart_the_process":
+      return "That sign-in expired or began in another tab. Please try again.";
+    case "account_not_linked":
+    case "unable_to_link_account":
+      return "This email already has an account. Sign in with your password instead.";
+    case "email_not_found":
+      return "Google did not share an email address for this account.";
+    case "signup_disabled":
+      return "Sign-up is closed right now.";
+    default:
+      return "Google sign-in failed. Please try again.";
+  }
+}
+
 /**
  * One page serves both /login and /signup. Everything that differs between the
  * two lives in this table, so the layout below reads as one form and a reviewer
@@ -72,7 +102,11 @@ export function AuthPage({
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  // A failed Google round trip comes back to this form with `?error=`.
+  const [error, setError] = useState(() => {
+    const code = new URLSearchParams(search).get("error");
+    return code ? oauthErrorMessage(code) : "";
+  });
   const [loading, setLoading] = useState(false);
   const { data: session, refetch } = useSession();
   /** The API accepted the credentials. The session hook has not caught up yet. */
@@ -95,21 +129,42 @@ export function AuthPage({
   // landing page, so a move made too soon throws a new member off their set.
   useEffect(() => {
     if (!accepted || !session) return;
-    const params = new URLSearchParams(search);
-    const redirectTo = params.get("redirect");
-    const safe = redirectTo?.startsWith("/") && !redirectTo.startsWith("//") ? redirectTo : "/";
-    navigate(safe, { replace: true });
+    navigate(safeRedirect(search), { replace: true });
   }, [accepted, session, search, navigate]);
+
+  // The message is already in state. Drop the code, so a reload shows a clean form.
+  useEffect(() => {
+    const params = new URLSearchParams(search);
+    if (!params.has("error")) return;
+    params.delete("error");
+    params.delete("error_description");
+    navigate({ search: `?${params.toString()}` }, { replace: true });
+  }, [search, navigate]);
 
   async function handleGoogle() {
     setError("");
     setLoading(true);
+    // Better Auth redirects to these exactly as given, from the API's origin. A
+    // relative path would land the member on the API, so both are absolute.
+    const origin = window.location.origin;
     try {
-      const result = await signIn.social({ provider: "google", callbackURL: "/" });
-      if (result.error) setError(result.error.message ?? copy.failed);
+      const result = await signIn.social({
+        provider: "google",
+        callbackURL: `${origin}${safeRedirect(search)}`,
+        errorCallbackURL: `${origin}/${isSignup ? "signup" : "login"}`,
+      });
+      if (result.error) {
+        setError(
+          result.error.status === 404
+            ? "Google sign-in is not set up on this server."
+            : (result.error.message ?? copy.failed),
+        );
+        setLoading(false);
+      }
+      // On success the browser is already on its way to Google. Keep the button
+      // disabled until the page unloads.
     } catch {
       setError("Something went wrong. Please try again.");
-    } finally {
       setLoading(false);
     }
   }

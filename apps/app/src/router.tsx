@@ -13,6 +13,17 @@ const DevComponentsPage = import.meta.env.DEV
   : null;
 const DevTvEmbedsPage = import.meta.env.DEV ? lazy(() => import("./routes/_dev/tv-embeds")) : null;
 
+/**
+ * `/login` and `/signup` become `?auth=` on the front door. Any other query
+ * rides along, so an OAuth `?error=` from the API reaches the form.
+ */
+function AuthRedirect({ view }: { view: "login" | "signup" | "forgot" }) {
+  const { search } = useLocation();
+  const params = new URLSearchParams(search);
+  params.set("auth", view);
+  return <Navigate to={`/?${params.toString()}`} replace />;
+}
+
 function LedgerRedirect() {
   const { search } = useLocation();
   return <Navigate to={`/dashboard/wallet${search}`} replace />;
@@ -23,9 +34,9 @@ export function Router() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<MemberLayout />}>
-          <Route path="login" element={<Navigate to="/?auth=login" replace />} />
-          <Route path="signup" element={<Navigate to="/?auth=signup" replace />} />
-          <Route path="forgot-password" element={<Navigate to="/?auth=forgot" replace />} />
+          <Route path="login" element={<AuthRedirect view="login" />} />
+          <Route path="signup" element={<AuthRedirect view="signup" />} />
+          <Route path="forgot-password" element={<AuthRedirect view="forgot" />} />
           <Route path="dashboard" element={<DashboardLayout />}>
             <Route index element={<DashboardHome />} />
             <Route path="campaigns" element={<CampaignsPage />} />
