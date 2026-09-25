@@ -7,6 +7,7 @@ import type { APIRoute, GetStaticPaths } from "astro";
 import { createElement } from "react";
 import satori from "satori";
 import { MARKETING_PAGES } from "../../lib/pages";
+import { THEME_COLOR } from "../../lib/seo/brand";
 
 export const getStaticPaths: GetStaticPaths = async () => {
   const posts = await getCollection("blog");
@@ -38,7 +39,6 @@ export const getStaticPaths: GetStaticPaths = async () => {
 // represents.
 const resolveFont = (file: string) =>
   createRequire(import.meta.url).resolve(`@repo/ui/assets/fonts/${file}`);
-const BRAND_BLUE = "#001CD8";
 
 let fontRegular: Buffer | null = null;
 let fontBold: Buffer | null = null;
@@ -75,7 +75,7 @@ export const GET: APIRoute = async ({ props }) => {
           flexDirection: "column",
           justifyContent: "flex-end",
           padding: "72px",
-          backgroundColor: BRAND_BLUE,
+          backgroundColor: THEME_COLOR,
           fontFamily: "Poppins",
         },
       },

@@ -5,6 +5,7 @@ import { Badge } from "@repo/ui";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { pageTitle } from "../../lib/pages";
 import { readingTime } from "../../lib/reading-time";
+import { pageDates } from "../../lib/seo/sitemap";
 import { articleSchema, breadcrumbSchema } from "../../lib/structured-data";
 
 export async function getStaticPaths() {
@@ -19,7 +20,7 @@ export async function getStaticPaths() {
 const { post } = Astro.props;
 const { Content, remarkPluginFrontmatter } = await render(post);
 const site = Astro.site ?? new URL(project.siteUrl);
-const canonicalURL = new URL(`/blog/${post.id}`, site).href;
+const canonicalURL = new URL(Astro.url.pathname, site).href;
 
 // Use remark-estimated-reading-time if available, otherwise fall back to our util
 const rt = remarkPluginFrontmatter?.readingTime ?? readingTime(post.body ?? "").text;
@@ -29,6 +30,7 @@ const jsonLd = [
     title: post.data.title,
     description: post.data.description,
     date: post.data.date,
+    modified: pageDates(canonicalURL).modified,
     author: post.data.author,
     image: new URL(post.data.image ?? `/og/blog-${post.id}.png`, site).href,
     url: canonicalURL,
@@ -47,6 +49,7 @@ const jsonLd = [
   description={post.data.description}
   ogSlug={`blog-${post.id}`}
   ogType="article"
+  published={post.data.date}
   jsonLd={jsonLd}
 >
   <div class="mx-auto max-w-3xl px-6 py-24 sm:py-32">

@@ -7,7 +7,7 @@ import { landingFaq } from "../lib/faq";
 import landingConfig from "../lib/landing.config.json";
 import { parseLandingConfig } from "../lib/landing/config";
 import { requirePage } from "../lib/pages";
-import { faqSchema, websiteSchema } from "../lib/structured-data";
+import { faqSchema, screenAppSchema, slotServiceSchema } from "../lib/structured-data";
 
 const page = requirePage("home");
 const site = Astro.site ?? new URL(project.siteUrl);
@@ -15,7 +15,8 @@ const site = Astro.site ?? new URL(project.siteUrl);
 // The page is a pure function of the saved config. Change it in /lab/landing.
 const config = parseLandingConfig(landingConfig);
 const faqItems = landingFaq(config.faqPerGroup).flatMap((group) => group.items);
-const jsonLd = [websiteSchema(site), faqSchema(faqItems)];
+// The site and the page come from BaseLayout; the home adds what the product offers.
+const jsonLd = [screenAppSchema(site), slotServiceSchema(site), faqSchema(faqItems)];
 ---
 
 <BaseLayout

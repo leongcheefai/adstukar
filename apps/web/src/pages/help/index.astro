@@ -4,22 +4,34 @@ import { project } from "@repo/config/project";
 import { HelpMessageForm } from "../../components/help/HelpMessageForm";
 import { HelpSearch } from "../../components/help/HelpSearch";
 import HelpLayout from "../../layouts/HelpLayout.astro";
+import { helpHref } from "../../lib/help";
 import { helpSections } from "../../lib/help-search";
 import { requirePage } from "../../lib/pages";
-import { breadcrumbSchema } from "../../lib/structured-data";
+import { breadcrumbSchema, itemListSchema } from "../../lib/structured-data";
 
 const page = requirePage("help");
 const site = Astro.site ?? new URL(project.siteUrl);
 
-const entries = (await getCollection("help"))
+const topics = (await getCollection("help"))
   .filter((topic) => !topic.data.draft)
-  .sort((a, b) => a.data.order - b.data.order)
-  .flatMap((topic) => helpSections({ id: topic.id, title: topic.data.title }, topic.body ?? ""));
+  .sort((a, b) => a.data.order - b.data.order);
+const entries = topics.flatMap((topic) =>
+  helpSections({ id: topic.id, title: topic.data.title }, topic.body ?? ""),
+);
 
-const jsonLd = breadcrumbSchema([
-  { name: "Home", url: site.origin },
-  { name: "Help", url: new URL("/help", site).href },
-]);
+const jsonLd = [
+  breadcrumbSchema([
+    { name: "Home", url: site.origin },
+    { name: "Help", url: new URL("/help", site).href },
+  ]),
+  itemListSchema(
+    "Help topics",
+    topics.map((topic) => ({
+      name: topic.data.title,
+      url: new URL(helpHref(topic.id), site).href,
+    })),
+  ),
+];
 ---
 
 <HelpLayout title={page.title} description={page.description} ogSlug={page.slug} jsonLd={jsonLd}>

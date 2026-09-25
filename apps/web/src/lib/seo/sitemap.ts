@@ -35,20 +35,22 @@ function entries(dir: string): Entry[] {
     .filter((entry) => !isDraft(readFileSync(entry.file, "utf8")));
 }
 
-/** The newest commit date that touches any of `files`, or nothing when git cannot tell. */
-function lastCommit(cwd: string, files: string[]): string | undefined {
+/** Every commit date that touches any of `files`, newest first; empty when git cannot tell. */
+function commitDates(cwd: string, files: string[]): string[] {
   const present = files.filter((file) => existsSync(file));
-  if (present.length === 0) return undefined;
+  if (present.length === 0) return [];
   try {
-    const out = execFileSync("git", ["log", "-1", "--format=%cI", "--", ...present], {
+    return execFileSync("git", ["log", "--format=%cI", "--", ...present], {
       cwd,
       encoding: "utf8",
       stdio: ["ignore", "pipe", "ignore"],
-    }).trim();
-    return out === "" ? undefined : out;
+    })
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line !== "");
   } catch {
     // A build without the .git folder (a container, a tarball) has no dates.
-    return undefined;
+    return [];
   }
 }
 
@@ -88,7 +90,23 @@ export function sitemapRules(webRoot: string) {
       return !hidden.has(path);
     },
     lastmod(page: string): string | undefined {
-      return lastCommit(webRoot, sources(pathOf(page)));
+      return commitDates(webRoot, sources(pathOf(page)))[0];
+    },
+    /** The first and the last commit on the page's sources: `datePublished` and `dateModified`. */
+    dates(page: string): { published?: string; modified?: string } {
+      const dates = commitDates(webRoot, sources(pathOf(page)));
+      return { published: dates.at(-1), modified: dates[0] };
     },
   };
+}
+
+let rules: ReturnType<typeof sitemapRules> | undefined;
+
+/**
+ * The dates of one built page, for its structured data and its article meta.
+ * A build runs from `apps/web`, as `src/lib/seo/icon.ts` assumes too.
+ */
+export function pageDates(url: string): { published?: string; modified?: string } {
+  rules ??= sitemapRules(process.cwd());
+  return rules.dates(url);
 }

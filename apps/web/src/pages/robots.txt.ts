@@ -18,16 +18,23 @@ const AI_CRAWLERS = [
   "Perplexity-User",
   "Google-Extended",
   "Applebot-Extended",
+  "Amazonbot",
+  "DuckAssistBot",
+  "MistralAI-User",
+  "meta-externalagent",
+  "CCBot",
 ];
 
 export const GET: APIRoute = () => {
   const sitemap = new URL("/sitemap-index.xml", project.siteUrl);
   const llms = new URL("/llms.txt", project.siteUrl);
+  const llmsFull = new URL("/llms-full.txt", project.siteUrl);
   const body = [
     "User-agent: *",
     "Allow: /",
     "",
     `# AI answer engines. A summary for them: ${llms}`,
+    `# The help center in full: ${llmsFull}`,
     ...AI_CRAWLERS.map((agent) => `User-agent: ${agent}`),
     "Allow: /",
     "",
