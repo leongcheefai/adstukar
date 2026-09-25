@@ -22,55 +22,61 @@ export const MARKETING_PAGES: MarketingPage[] = [
     path: "/",
     title: `${project.name} | Earn money from ads on your screen`,
     description:
-      "Put a screen in your venue, play ads over music or video, and earn a fixed rate for every play. Advertisers book one slot that plays on every screen.",
+      "Turn any screen in your venue into income. Play ads over music or video in a web browser and earn a fixed rate per play. Advertisers book one flat-price slot that plays on every screen.",
   },
   {
     slug: "blog",
     path: "/blog",
     title: pageTitle("Blog"),
-    description: `Insights, updates, and tutorials from the ${project.name} team.`,
+    description: `News, guides, and updates on screen advertising from the ${project.name} team.`,
   },
   {
     slug: "help",
     path: "/help",
     title: pageTitle("Help Center"),
-    description: `How to use ${project.name}: the dashboard, CapyChannel, advertising, and money.`,
+    description: `How to use ${project.name}: set up a screen with CapyTV, book an ad slot, add funds, and cash out what your screen earns.`,
   },
   {
     slug: "terms",
     path: "/terms",
     title: pageTitle("Terms of Service"),
-    description: `Terms of Service for ${project.name}.`,
+    description: `The terms that govern the ${project.name} screen ad network, for screen owners and advertisers.`,
   },
   {
     slug: "privacy",
     path: "/privacy",
     title: pageTitle("Privacy Policy"),
-    description: `Privacy Policy for ${project.name}.`,
+    description: `What personal data ${project.name} collects, why, and how you can control it. CapyTV has no camera, no microphone, and no audience measurement.`,
   },
   {
     slug: "ads-policy",
     path: "/ads-policy",
     title: pageTitle("Ads Policy"),
-    description: `Creative and campaign rules for listings on ${project.name}.`,
+    description: `What an ad on ${project.name} may show: the creative and campaign rules every listing is reviewed against before it plays.`,
   },
   {
     slug: "cookies",
     path: "/cookies",
     title: pageTitle("Cookie Policy"),
     description: `Cookie Policy for ${project.name}.`,
+    // Still the template's TODO text. Index it when it has copy.
+    inSitemap: false,
   },
   {
     slug: "refund",
     path: "/refund",
     title: pageTitle("Refund Policy"),
     description: `Refund Policy for ${project.name}.`,
+    // Still the template's TODO text. Index it when it has copy.
+    inSitemap: false,
   },
   {
     slug: "dpa",
     path: "/dpa",
     title: pageTitle("Data Processing Agreement"),
     description: `Data Processing Agreement for ${project.name}.`,
+    // Still the template's TODO text. Index it when it has copy.
+    inSitemap: false,
   },
   {
     slug: "security",

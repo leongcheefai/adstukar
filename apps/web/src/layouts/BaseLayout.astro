@@ -6,7 +6,9 @@ import Nav from "../components/Nav.astro";
 import { LiveTicker } from "../components/landing/LiveTicker";
 import landingConfig from "../lib/landing.config.json";
 import { parseLandingConfig } from "../lib/landing/config";
-import { orgSchema } from "../lib/structured-data";
+import { THEME_COLOR } from "../lib/seo/brand";
+import { pageDates } from "../lib/seo/sitemap";
+import { orgSchema, webPageSchema, websiteSchema } from "../lib/structured-data";
 
 interface Props {
   title: string;
@@ -22,6 +24,8 @@ interface Props {
   bleed?: boolean;
   /** The floating site header. The help centre turns it off and brings its own side menu. */
   nav?: boolean;
+  /** An article's own publish date (a blog post's frontmatter). Otherwise the first commit on its sources. */
+  published?: Date;
 }
 
 const {
@@ -34,13 +38,26 @@ const {
   crawl = true,
   bleed = false,
   nav = true,
+  published,
 } = Astro.props;
 const site = Astro.site ?? new URL(project.siteUrl);
 const canonicalURL = new URL(Astro.url.pathname, site);
 const ogImage = new URL(`/og/${ogSlug}.png`, site);
-// Every page names its publisher, so the other schemas' `@id` links resolve on the page.
+// When the page last changed, read from git: a freshness signal for search and AI engines.
+const dates = pageDates(canonicalURL.href);
+const publishedTime = published?.toISOString() ?? dates.published;
+// Every page names its publisher and its site, so the other schemas' `@id` links resolve on the page.
 const jsonLdArray = [
   orgSchema(site),
+  websiteSchema(site),
+  webPageSchema({
+    url: canonicalURL.href,
+    title,
+    description,
+    image: ogImage.href,
+    modified: dates.modified,
+    site,
+  }),
   ...(jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : []),
 ];
 
@@ -56,6 +73,8 @@ const showCrawl = crawl && landing.footCrawl;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="theme-color" content={THEME_COLOR} />
     <meta name="generator" content={Astro.generator} />
     <!-- The marketing site is light only. This keeps the browser from painting
          form controls and scrollbars dark for a visitor whose OS is set to dark. -->
@@ -68,6 +87,9 @@ const showCrawl = crawl && landing.footCrawl;
     />
     <link rel="canonical" href={canonicalURL} />
     <link rel="alternate" type="application/rss+xml" title={`${project.name} Blog`} href="/rss.xml" />
+    <link rel="sitemap" type="application/xml" href="/sitemap-index.xml" />
+    <!-- The site in plain text for AI answer engines (the llms.txt convention). -->
+    <link rel="alternate" type="text/plain" title={`${project.name} for LLMs`} href="/llms.txt" />
     <meta property="og:type" content={ogType} />
     <meta property="og:site_name" content={project.name} />
     <meta property="og:locale" content="en_US" />
@@ -75,9 +97,16 @@ const showCrawl = crawl && landing.footCrawl;
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:image" content={ogImage} />
+    <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content={title} />
+    {ogType === "article" && publishedTime && (
+      <meta property="article:published_time" content={publishedTime} />
+    )}
+    {ogType === "article" && dates.modified && (
+      <meta property="article:modified_time" content={dates.modified} />
+    )}
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />

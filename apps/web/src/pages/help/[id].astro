@@ -2,8 +2,9 @@
 import { getCollection, render } from "astro:content";
 import { project } from "@repo/config/project";
 import HelpLayout from "../../layouts/HelpLayout.astro";
-import { HELP_SEARCH_HASH, helpHref } from "../../lib/help";
+import { HELP_SEARCH_HASH } from "../../lib/help";
 import { pageTitle } from "../../lib/pages";
+import { pageDates } from "../../lib/seo/sitemap";
 import { articleSchema, breadcrumbSchema } from "../../lib/structured-data";
 
 export async function getStaticPaths() {
@@ -23,12 +24,16 @@ const site = Astro.site ?? new URL(project.siteUrl);
 /* The side menu lists the `##` headings; the `###` ones stay in the text. */
 const sections = headings.filter((h) => h.depth === 2).map(({ slug, text }) => ({ slug, text }));
 
-const url = new URL(helpHref(topic.id), site).href;
+// The same form as the canonical BaseLayout writes, so the schema names the page it sits on.
+const url = new URL(Astro.url.pathname, site).href;
+const dates = pageDates(url);
 const jsonLd = [
   articleSchema({
     type: "TechArticle",
     title: topic.data.title,
     description: topic.data.description,
+    date: dates.published ? new Date(dates.published) : undefined,
+    modified: dates.modified,
     image: new URL(`/og/help-${topic.id}.png`, site).href,
     url,
     site,

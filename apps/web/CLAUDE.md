@@ -28,10 +28,11 @@ Edit `src/components/landing/Landing.tsx` for the landing page, `src/lib/faq.ts`
 4. While the page has no real copy, set `inSitemap: false` there and pass `noindex={isHidden(page)}` to `BaseLayout`. Remove both when the copy lands
 
 ### Search and AI engines (SEO, GEO)
-- `BaseLayout` writes the canonical, the robots meta, Open Graph, and the Organization JSON-LD on every page. A page adds its own schemas through `jsonLd`; builders live in `src/lib/structured-data.ts` and link to the one publisher by `@id`
-- The sitemap is `@astrojs/sitemap`, with rules in `src/lib/seo/sitemap.ts`: it drops `/og/`, `/lab/`, the 404, every `inSitemap: false` page, and `/blog` while no post is published. `lastmod` is the last git commit on the page's source files; a build without `.git` omits it
-- `/robots.txt` allows every crawler and lists the AI crawlers by name. `/llms.txt` is the site in plain text for AI answer engines: key facts from `@repo/config/economy`, the help topics, the policies, and every FAQ answer. Change a fact in its source, never in the route
-- `/logo.png` (the schema logo) and `/apple-touch-icon.png` are drawn from `public/favicon.svg` at build time
+- `BaseLayout` writes the canonical, the robots meta, Open Graph, and the Organization, WebSite, and WebPage JSON-LD on every page. A page adds its own schemas through `jsonLd`; builders live in `src/lib/structured-data.ts` and link to the one publisher by `@id`. The home adds CapyTV (`WebApplication`), the ad slot (`Service`), and the FAQ; the help home adds its topic list; a help topic or a post adds its article and breadcrumb
+- The sitemap is `@astrojs/sitemap`, with rules in `src/lib/seo/sitemap.ts`: it drops `/og/`, `/lab/`, the 404, every `inSitemap: false` page, and `/blog` while no post is published. `lastmod` is the last git commit on the page's source files; a build without `.git` omits it. `pageDates()` reads the same history for `dateModified`, `datePublished`, and the `article:*` meta
+- A page still holding template TODO text (cookies, refund, DPA, security) is `inSitemap: false`, so it is `noindex` and stays out of `/llms.txt` too
+- `/robots.txt` allows every crawler and lists the AI crawlers by name. `/llms.txt` is the site in plain text for AI answer engines: key facts from `@repo/config/economy`, the help topics, the policies, and every FAQ answer. `/llms-full.txt` is every help topic in full, rendered from its MDX through the Astro container and turned into markdown by `src/lib/seo/llms.ts`. Change a fact in its source, never in the route
+- `/logo.png` (the schema logo) and `/apple-touch-icon.png` are drawn from `public/favicon.svg` at build time. `/site.webmanifest` and `theme-color` use the hex brand blue in `src/lib/seo/brand.ts`, which the OG card shares
 
 ### Add a blog post
 Create a markdown/MDX file under `src/content/blog/`. Its page and OG image are generated automatically.
