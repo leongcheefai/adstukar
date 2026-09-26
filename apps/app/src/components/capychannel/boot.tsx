@@ -43,14 +43,18 @@ export function Boot({
       <div className="boot-screen">
         <div className="boot-noise" aria-hidden />
         <div className="boot-roll" aria-hidden />
-        <div className="boot-stack">
-          <div className="boot-brand">
-            <HomeLink>
-              <CapyLockup />
-            </HomeLink>
-          </div>
-          <div className="boot-tray" ref={pickRef}>
-            {children}
+        {/* Scrolls when a short screen cannot hold the stack. The tube's
+            furniture stays outside it, so the static does not scroll. */}
+        <div className="boot-scroll">
+          <div className="boot-stack">
+            <div className="boot-brand">
+              <HomeLink>
+                <CapyLockup />
+              </HomeLink>
+            </div>
+            <div className="boot-tray" ref={pickRef}>
+              {children}
+            </div>
           </div>
         </div>
         <div className="boot-scan" aria-hidden />

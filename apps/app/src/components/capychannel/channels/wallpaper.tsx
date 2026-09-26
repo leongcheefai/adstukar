@@ -6,7 +6,7 @@ const PHOTO_DWELL_MS = 10_000;
 
 /**
  * One collection, one photo at a time. A photo fills the set, cropped: it is
- * a backdrop, not the member's own file. Its title and its author sit in the
+ * a backdrop, not the member's own file. "Photo by" and the author sit in the
  * lower right corner, above the ad bar, and a click anywhere on it opens the
  * collection's page in a new tab.
  */
@@ -52,12 +52,11 @@ export function WallpaperChannel({
           href={collection.url}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label={`${photo.title}, by ${collection.author}. Opens their page in a new tab`}
+          aria-label={`Photo by ${collection.author}. Opens their page in a new tab`}
         >
           <img className="chan-media" src={photo.src} alt="" />
           <span className="chan-wall-credit" aria-hidden="true">
-            <span className="chan-wall-title">{photo.title}</span>
-            <span className="chan-wall-author">{collection.author}</span>
+            Photo by {collection.author}
           </span>
         </a>
       ) : null}

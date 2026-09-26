@@ -49,16 +49,13 @@ export const CHANNELS: ChannelDef[] = [
   },
 ];
 
-/**
- * One photo in two files, the picture for the set and a small one for its
- * tile, and the title the set prints over it.
- */
-export type WallpaperPhoto = { title: string; src: string; thumb: string };
+/** One photo in two files, the picture for the set and a small one for its tile. */
+export type WallpaperPhoto = { src: string; thumb: string };
 
 /**
  * A collection is one photographer's photos. The chooser shows it as one tile
  * with the name under it, and the set plays its photos one at a time, with
- * the title and the author on each. A click on the photo opens `url`. The
+ * "Photo by" and the author on each. A click on the photo opens `url`. The
  * first photo is the cover.
  */
 export type WallpaperCollection = {
@@ -69,7 +66,7 @@ export type WallpaperCollection = {
   photos: readonly WallpaperPhoto[];
 };
 
-/** Demo content: the titles are ours, and the link is the photographer's page. */
+/** Demo content: the link is the photographer's page. */
 export const WALLPAPER_COLLECTIONS: readonly WallpaperCollection[] = [
   {
     id: "jack-berry",
@@ -77,10 +74,10 @@ export const WALLPAPER_COLLECTIONS: readonly WallpaperCollection[] = [
     author: "Jack Berry",
     url: "https://unsplash.com/@jackseeberry",
     photos: [
-      { title: "Storefront", src: storefront, thumb: storefrontThumb },
-      { title: "Lunch Counter", src: counter, thumb: counterThumb },
-      { title: "Just Married", src: convertible, thumb: convertibleThumb },
-      { title: "Harbour", src: harbour, thumb: harbourThumb },
+      { src: storefront, thumb: storefrontThumb },
+      { src: counter, thumb: counterThumb },
+      { src: convertible, thumb: convertibleThumb },
+      { src: harbour, thumb: harbourThumb },
     ],
   },
 ];

@@ -20,24 +20,22 @@
 }
 
 /* --------------------------------------------------------------------------
-   Stage — a 16:9 TV, centred, as large as the viewport allows.
-   container-type: size lets everything inside scale in cqh/cqw, so the
-   overlay is judged at true TV proportions whatever the window size.
-   1cqh = 10.8px on a 1080-tall stage. px equivalents noted per token.
+   Stage — the whole window, whatever its shape: a laptop, a monitor, an iPad
+   or an iPhone, either way up. The set fills it, the way a YouTube page
+   does, and only a video that is not the window's shape gets bars, around
+   the video alone.
+
+   container-type: size lets everything inside measure the window in
+   cqh/cqw. The interface does not take the window itself, but the frame:
+   the largest 16:9 box that fits in the window (--fh, --fw). A window of any
+   shape then gives the controls the size a 16:9 screen of that size would,
+   and a 16:9 window gives exactly the sizes it always had.
+   1cqh = 10.8px on a 1080-tall window. px equivalents noted per token.
    -------------------------------------------------------------------------- */
 
 .capychannel-stage {
   position: fixed;
   inset: 0;
-  /* The set stands on the bottom of the window rather than floating in the
-     middle of it. The ad bar is on the bottom edge of the picture, and a few
-     pixels of letterbox under a solid blue block read as a seam in the block
-     rather than as the edge of the set. Whatever shape the window costs the
-     16:9 picture is taken off the top, where the picture is dark and there is
-     no hard edge for a gap to sit against. */
-  margin: auto auto 0;
-  width: min(100vw, 100vh * 16 / 9);
-  height: min(100vh, 100vw * 9 / 16);
   container-type: size;
   overflow: hidden;
   isolation: isolate;
@@ -51,34 +49,60 @@
   --z-boot: 200;
   --z-chrome: 210;
 
-  /* The bar's own height. Nothing is reserved for it: the bar covers the
-     bottom of the picture and the source keeps its whole frame behind it. */
-  --strip: 72px;
+  /* The bar's own height, and the home indicator of an iPhone under it.
+     Nothing is reserved for it: the bar covers the bottom of the picture and
+     the source keeps its whole frame behind it. */
+  --strip: calc(72px + env(safe-area-inset-bottom, 0px));
 
-  /* Interface scale. Every size below is a percentage of the stage, so this
+  /* The frame: 1% of the height and of the width of the largest 16:9 box in
+     the window. The cq units here are not resolved on the stage; they
+     resolve on the element that uses the token, against this container.
+     Never use these tokens on the stage itself, and never give an element
+     inside it a container-type of its own, or cqw moves under every size
+     below. */
+  --fh: min(1cqh, 1cqw * 9 / 16);
+  --fw: min(1cqw, 1cqh * 16 / 9);
+
+  /* Interface scale. Every size below is a percentage of the frame, so this
      one number moves the whole interface at once: type, controls, chips and
      ads together. The drawing is made for a screen you sit close to — a
      tablet, a laptop, a monitor. A television is the same drawing scaled up,
      which is a larger --ui and nothing else.
 
-     What stays in plain cqh is the screen rather than the interface on it:
-     the fixtures and the tube's own furniture. The ad bar is the one part in
-     fixed pixels: see `.v-ticker`. */
+     The floor is for a phone. Its frame is a strip, and a unit taken from the
+     strip drew the interface too small to read or to touch. At 3.5px three
+     channel tiles, or the two library pills, still fit a phone held upright.
+
+     What stays in plain cqh and cqw is the screen rather than the interface
+     on it: the fixtures and the tube's own furniture. The ad bar is the one
+     part in fixed pixels: see `.v-ticker`. */
   --ui: 0.68;
-  --u: calc(1cqh * var(--ui));
-  --uw: calc(1cqw * var(--ui));
+  --u: max(3.5px, var(--fh) * var(--ui));
+  --uw: calc(var(--fw) * var(--ui));
 
-  /* Safe area. Backgrounds bleed to the edge; text stays inside this. */
-  --safe-x: calc(3.6 * var(--uw));
-  --safe-y: calc(4 * var(--u));
+  /* Safe area. Backgrounds bleed to the edge; text stays inside this. At
+     least 16px, and clear of the notch and the rounded corners of an iPhone.
+     One value for both sides, so a layout centred on the screen stays
+     centred. */
+  --safe-x: max(
+    16px,
+    calc(3.6 * var(--uw)),
+    env(safe-area-inset-left, 0px),
+    env(safe-area-inset-right, 0px)
+  );
+  --safe-y: max(4 * var(--u), env(safe-area-inset-top, 0px));
 
-  /* Type scale. Floor is --t-xs; nothing in an ad may go below it.
-     px are for a 1080-tall stage at --ui: .68. */
-  --t-xs: calc(2.3 * var(--u)); /* 17px */
-  --t-sm: calc(2.7 * var(--u)); /* 20px */
-  --t-md: calc(3.3 * var(--u)); /* 24px */
-  --t-lg: calc(4.4 * var(--u)); /* 32px */
-  --t-xl: calc(6.0 * var(--u)); /* 44px */
+  /* One height for the controls on the top bar. 44px at the least, a finger. */
+  --bar-h: max(44px, 8.8 * var(--u));
+
+  /* Type scale. Floor is --t-xs; nothing in an ad may go below it. Each step
+     has a floor in px too, so a phone reads the words a laptop does.
+     px are for a 1080-tall window at --ui: .68. */
+  --t-xs: max(12px, 2.3 * var(--u)); /* 17px */
+  --t-sm: max(13px, 2.7 * var(--u)); /* 20px */
+  --t-md: max(15px, 3.3 * var(--u)); /* 24px */
+  --t-lg: max(20px, 4.4 * var(--u)); /* 32px */
+  --t-xl: max(26px, 6 * var(--u)); /* 44px */
 
   /* One lap of the crawl, before the ticker has measured itself. The rule is
      the crossing, not the lap: a band takes one minute from one end of the
@@ -143,49 +167,62 @@
   display: block;
   color: #fff;
 }
+/* 4u in from the edge, not --safe-y: that one holds the notch at the top. */
 .chan-wall-link:focus-visible {
   outline: calc(0.4 * var(--u)) solid #fff;
-  outline-offset: calc(-1 * var(--safe-y));
+  outline-offset: calc(-4 * var(--u));
 }
-/* Small, in the lower right corner, above the ad bar. No ground: a soft
-   shadow keeps the words clear of a bright photo. It arrives with its
-   photo. */
+/* "Photo by" and the author, one line, small, in the lower right corner,
+   above the ad bar. No ground: a soft shadow keeps the words clear of a
+   bright photo. It arrives with its photo. */
 .chan-wall-credit {
   position: absolute;
   right: var(--safe-x);
-  bottom: calc(var(--strip) + var(--safe-y));
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: calc(0.3 * var(--u));
+  bottom: calc(var(--strip) + 4 * var(--u));
+  overflow: hidden;
   max-width: calc(60 * var(--u));
+  font-size: var(--t-xs);
   line-height: 1.2;
-  text-align: right;
+  color: rgb(255 255 255 / 0.8);
+  white-space: nowrap;
+  text-overflow: ellipsis;
   text-shadow: 0 0 calc(1.2 * var(--u)) rgb(0 0 0 / 0.6), 0 calc(0.2 * var(--u))
     calc(0.4 * var(--u)) rgb(0 0 0 / 0.5);
   animation: chan-in 600ms ease-out both;
 }
-.chan-wall-title {
-  overflow: hidden;
-  font-size: var(--t-sm);
-  font-weight: 600;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-.chan-wall-author {
-  font-size: var(--t-xs);
-  color: rgb(255 255 255 / 0.8);
-}
 
 /* --- 3. Capy Channel — hand-picked YouTube videos played like live TV.
-       The video fills the set, with scanlines over it, and the ad bar
-       covers its bottom edge, as on the other channels. The top bar, the
-       details and the channel buttons, and Up next come and go together.
-       Text and buttons keep browser sizes, bounded by clamp(); the picture
-       scales with the set. --- */
+       The video keeps its 16:9 and is never cut, the way YouTube plays it:
+       a window of another shape shows black bars beside or above it, and
+       the set's own parts still take the whole window. Scanlines lie over
+       the video, and the ad bar covers the bottom edge, as on the other
+       channels. On a window held on its side the top bar, the details and
+       the channel buttons, and Up next lie over the picture and come and go
+       together. Held upright, the picture goes to the top and the details
+       go under it (the portrait block, after Up next). Text and buttons
+       keep browser sizes, bounded by clamp(); the picture scales with the
+       window. --- */
 .chan-tv {
   /* Grey snow: the boot's grain with the colour taken out. */
   --tv-snow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+  /* The space between the ad bar and the details, and between the details
+     and Up next. */
+  --dock-gap: clamp(12px, 2.4 * var(--fh), 28px);
+  overflow: hidden;
+  /* The bars, where the window is not the video's shape. */
+  background: #000;
+}
+
+/* The picture: the frame, the largest 16:9 box in the window, in the middle
+   of it. The video is 16:9 too, so nothing is cut and the bars fall outside
+   the box. */
+.tvc-player {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: calc(100 * var(--fw));
+  height: calc(100 * var(--fh));
+  margin: auto;
   overflow: hidden;
   /* The ground while a video loads, under the snow: lit in the middle and
      falling off at the edges, the way a tube does. */
@@ -195,14 +232,6 @@
     var(--capy-blue) 55%,
     oklch(0.3 0.2 264.3) 100%
   );
-}
-
-/* The whole set. The set is 16:9 and so is a video, so nothing is cut. */
-.tvc-player {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  overflow: hidden;
 }
 /* The picture takes no pointer. A mouse moving over a frame from another
    site never reaches this page, so the bar and the controls could not wake,
@@ -258,10 +287,10 @@
 .tvc-osd {
   position: absolute;
   z-index: 2;
-  top: calc(var(--safe-y) + 11 * var(--u));
+  top: calc(var(--safe-y) + var(--bar-h) + 2.2 * var(--u));
   right: var(--safe-x);
   font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  font-size: clamp(18px, 4.4cqh, 44px);
+  font-size: clamp(18px, 4.4 * var(--fh), 44px);
   font-weight: 700;
   letter-spacing: 0.08em;
   color: #6dff8a;
@@ -278,7 +307,7 @@
   place-items: center;
   margin: 0;
   font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  font-size: clamp(16px, 3.6cqh, 32px);
+  font-size: clamp(16px, 3.6 * var(--fh), 32px);
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -314,17 +343,28 @@
   );
 }
 
-/* The video's details over the channel buttons, in the lower left, above
-   the ad bar. */
-.tvc-controls {
+/* The row above the ad bar: the video's details and the channel buttons on
+   the left, Up next on the right. One row, so the two start level at the top
+   however many lines the title takes. The row takes no pointer, so the
+   picture between them stays the picture. */
+.tvc-dock {
   position: absolute;
   z-index: 3;
   left: var(--safe-x);
-  bottom: calc(var(--strip) + clamp(12px, 2.4cqh, 28px));
+  right: var(--safe-x);
+  bottom: calc(var(--strip) + var(--dock-gap));
+  display: flex;
+  gap: clamp(16px, 3 * var(--fw), 48px);
+  pointer-events: none;
+}
+/* The video's details over the channel buttons. */
+.tvc-controls {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: clamp(12px, 2.4cqh, 24px);
+  gap: clamp(12px, 2.4 * var(--fh), 24px);
+  pointer-events: auto;
   transition: opacity 140ms ease-out;
 }
 /* Shade from the lower left corner, so the white words hold on a white
@@ -334,7 +374,7 @@
   position: absolute;
   z-index: -1;
   left: calc(-1 * var(--safe-x));
-  bottom: calc(-1 * clamp(12px, 2.4cqh, 28px));
+  bottom: calc(-1 * var(--dock-gap));
   width: 70cqw;
   height: 60cqh;
   background: radial-gradient(100% 100% at 0% 100%, rgb(0 0 0 / 0.6), rgb(0 0 0 / 0) 70%);
@@ -345,14 +385,17 @@
    once, and after the idle time they all go at once. A pointer resting on
    any one of them holds the whole group, so none is left behind. Focus
    left on the account after its menu closes does not hold the bar here: a
-   key wakes the set anyway. */
-.capychannel-stage[data-idle]:has(.chan-tv):not(
-    :has(.tv-bar:hover, .tvc-controls:hover, .tvc-next:hover)
-  )
-  :is(.tv-bar, .tvc-controls, .tvc-next) {
-  opacity: 0;
-  pointer-events: none;
-  transition-duration: 460ms;
+   key wakes the set anyway. Only on a window held on its side: upright,
+   they sit off the picture and have nothing to clear. */
+@container (orientation: landscape) {
+  .capychannel-stage[data-idle]:has(.chan-tv):not(
+      :has(.tv-bar:hover, .tvc-controls:hover, .tvc-next:hover)
+    )
+    :is(.tv-bar, .tvc-controls, .tvc-next) {
+    opacity: 0;
+    pointer-events: none;
+    transition-duration: 460ms;
+  }
 }
 /* The bar's own rule lets only the bar hold the bar. Here the controls and
    Up next hold it too. */
@@ -363,8 +406,8 @@
 }
 .tvc-info {
   display: grid;
-  gap: clamp(4px, 0.9cqh, 8px);
-  max-width: min(36cqw, 520px);
+  gap: clamp(4px, 0.9 * var(--fh), 8px);
+  max-width: min(36 * var(--fw), 520px);
   margin: 0;
   text-shadow: 0 1px 3px rgb(0 0 0 / 0.5);
 }
@@ -376,14 +419,14 @@
   overflow: hidden;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
-  font-size: clamp(16px, 3cqh, 26px);
+  font-size: clamp(16px, 3 * var(--fh), 26px);
   font-weight: 600;
   line-height: 1.25;
   text-wrap: pretty;
 }
 .tvc-creator,
 .tvc-time {
-  font-size: clamp(13px, 2.3cqh, 19px);
+  font-size: clamp(13px, 2.3 * var(--fh), 19px);
   line-height: 1.3;
   color: rgb(255 255 255 / 0.82);
 }
@@ -413,42 +456,48 @@
   animation: tv-live 2s ease-in-out infinite;
 }
 
+/* A narrow phone may not hold every channel on one line. */
 .tvc-buttons {
   display: flex;
-  gap: clamp(10px, 2cqw, 32px);
+  flex-wrap: wrap;
+  gap: clamp(10px, 2 * var(--fw), 32px);
   min-inline-size: 0;
   margin: 0;
   border: 0;
   padding: 0;
 }
-/* Grey keys with red names, like the buttons on a set. 4.9:1. */
+/* The glass pill of the top bar, because the picture under the keys can be
+   any colour too. 4.7:1 at the least, on a white picture. */
 .tvc-buttons button {
-  min-width: clamp(96px, 11cqw, 176px);
-  height: clamp(40px, 8cqh, 72px);
-  padding: 0 clamp(14px, 1.6cqw, 28px);
+  min-width: clamp(96px, 11 * var(--fw), 176px);
+  height: clamp(44px, 8 * var(--fh), 72px);
+  padding: 0 clamp(14px, 1.6 * var(--fw), 28px);
   border: 0;
-  border-radius: clamp(10px, 1.6cqh, 16px);
-  background: #e6e6e6;
-  color: #c21807;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.55);
+  -webkit-backdrop-filter: blur(calc(1.2 * var(--u))) saturate(1.3);
+  backdrop-filter: blur(calc(1.2 * var(--u))) saturate(1.3);
+  box-shadow: inset 0 0 0 calc(0.15 * var(--u)) rgb(255 255 255 / 0.28);
+  color: #fff;
   font: inherit;
-  font-size: clamp(14px, 2.6cqh, 22px);
+  font-size: clamp(14px, 2.6 * var(--fh), 22px);
   font-weight: 500;
   white-space: nowrap;
   cursor: pointer;
-  box-shadow: 0 2px 0 rgb(0 0 30 / 0.3);
   transition: background 140ms ease-out, color 140ms ease-out, scale 140ms ease-out;
 }
 .tvc-buttons button:hover {
-  background: #fff;
+  background: rgb(0 0 0 / 0.78);
 }
 .tvc-buttons button:active {
   scale: 0.96;
 }
-/* The channel on the air is lit: the red it prints in becomes its ground.
-   After :hover, so a pointer on it cannot turn it white on white. 6.1:1. */
+/* The channel on the air is lit: the glass turns to frost and the name turns
+   dark. After :hover, so a pointer on it cannot put it out. 14:1 at the least,
+   on a black picture. */
 .tvc-buttons button[aria-pressed="true"] {
-  background: #c21807;
-  color: #fff;
+  background: rgb(255 255 255 / 0.88);
+  color: #0b0b0f;
 }
 /* No focus ring. The lit channel already says which one is on, and a key
    pressed after a click would ring the button the pointer left. */
@@ -456,18 +505,21 @@
   outline: none;
 }
 
-/* What plays next, in the lower right, level with the channel buttons. A
-   live stream has none. */
+/* What plays next, on the right of the row, level with the title. A live
+   stream has none. The margin keeps it on the right when a set shows no
+   channel buttons. It stretches to the height of the row, so its shade starts
+   on the same line as the one on the left, and its content holds to the top
+   and to the left, with the label over the thumbnail. */
 .tvc-next {
-  position: absolute;
-  z-index: 3;
-  right: var(--safe-x);
-  bottom: calc(var(--strip) + clamp(12px, 2.4cqh, 28px));
+  position: relative;
   display: grid;
-  justify-items: end;
-  gap: clamp(6px, 1.2cqh, 12px);
-  max-width: min(32cqw, 460px);
+  align-content: start;
+  justify-items: start;
+  gap: clamp(6px, 1.2 * var(--fh), 12px);
+  max-width: min(32 * var(--fw), 460px);
+  margin-left: auto;
   text-shadow: 0 1px 3px rgb(0 0 0 / 0.5);
+  pointer-events: auto;
   transition: opacity 140ms ease-out;
 }
 /* The lower left shade, turned round for this corner. */
@@ -476,7 +528,7 @@
   position: absolute;
   z-index: -1;
   right: calc(-1 * var(--safe-x));
-  bottom: calc(-1 * clamp(12px, 2.4cqh, 28px));
+  bottom: calc(-1 * var(--dock-gap));
   width: 50cqw;
   height: 50cqh;
   background: radial-gradient(100% 100% at 100% 100%, rgb(0 0 0 / 0.55), rgb(0 0 0 / 0) 70%);
@@ -484,7 +536,7 @@
 }
 .tvc-next-label {
   margin: 0;
-  font-size: clamp(11px, 1.9cqh, 15px);
+  font-size: clamp(11px, 1.9 * var(--fh), 15px);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -494,15 +546,15 @@
 .tvc-next-card {
   display: flex;
   align-items: center;
-  gap: clamp(10px, 1.2cqw, 16px);
+  gap: clamp(10px, 1.2 * var(--fw), 16px);
   min-width: 0;
 }
 .tvc-next-thumb {
   flex: none;
-  width: clamp(112px, 12cqw, 200px);
+  width: clamp(112px, 12 * var(--fw), 200px);
   aspect-ratio: 16 / 9;
   object-fit: cover;
-  border-radius: clamp(6px, 1cqh, 10px);
+  border-radius: clamp(6px, var(--fh), 10px);
   background: rgb(0 0 0 / 0.4);
   box-shadow: 0 0 0 1px rgb(255 255 255 / 0.18), 0 4px 12px rgb(0 0 0 / 0.35);
 }
@@ -517,7 +569,7 @@
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   margin: 0;
-  font-size: clamp(14px, 2.4cqh, 20px);
+  font-size: clamp(14px, 2.4 * var(--fh), 20px);
   font-weight: 600;
   line-height: 1.25;
   text-wrap: pretty;
@@ -525,11 +577,68 @@
 .tvc-next-creator {
   overflow: hidden;
   margin: 0;
-  font-size: clamp(12px, 2cqh, 16px);
+  font-size: clamp(12px, 2 * var(--fh), 16px);
   line-height: 1.3;
   color: rgb(255 255 255 / 0.8);
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+/* A window held upright: a phone, or a tablet. The picture keeps the whole
+   width, so it is as wide as it can be, and goes to the top, under the top
+   bar. The details, the channel buttons and Up next stack under it, off the
+   picture, the way the YouTube app lays out a video on a phone. The frame is
+   already full width and 9/16 of it tall here, so the player only joins the
+   column. A square window counts as upright. */
+@container (orientation: portrait) {
+  .chan-tv {
+    display: flex;
+    flex-direction: column;
+    padding-top: calc(var(--safe-y) + var(--bar-h) + 2 * var(--u));
+    padding-bottom: var(--strip);
+  }
+  .tvc-player {
+    position: relative;
+    inset: auto;
+    flex: none;
+    margin: 0;
+  }
+  /* The corner of the picture, which no longer starts at the top bar. */
+  .tvc-osd {
+    top: max(8px, 2.2 * var(--u));
+  }
+  /* The rest of the column, and it scrolls: a short phone has no room for
+     the details, the buttons and Up next at once. */
+  .tvc-dock {
+    position: relative;
+    inset: auto;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: var(--dock-gap);
+    min-height: 0;
+    padding: var(--dock-gap) var(--safe-x);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    pointer-events: auto;
+  }
+  /* On black, the words need no shade. */
+  .tvc-controls::before,
+  .tvc-next::before {
+    content: none;
+  }
+  .tvc-info,
+  .tvc-next {
+    max-width: none;
+  }
+  .tvc-next {
+    margin-left: 0;
+  }
+  /* The top bar has its own band over the picture here, so it stays. Beats
+     the bar's own idle rule, which fades it on every channel. */
+  .capychannel-stage[data-idle]:has(.chan-tv) .tv-bar:not(:hover):not(:focus-within) {
+    opacity: 1;
+    pointer-events: auto;
+  }
 }
 
 /* ==========================================================================
@@ -722,21 +831,28 @@
 
    The safe area moves inside the blue: the block may touch the frame, the
    lockup may not. Equal on both sides, so the lockup sits in the middle of
-   the block rather than leaning on the frame. */
+   the block rather than leaning on the frame. On an iPhone the block runs on
+   under the notch and the home indicator, and the lockup keeps clear of
+   both. */
 .v-ticker .ad-chip {
   align-self: stretch; /* beats the bar's align-items: center */
   margin: 0;
   border-radius: 0;
-  padding-inline: var(--safe-x);
+  padding-inline: calc(var(--safe-x) + env(safe-area-inset-left, 0px)) var(--safe-x);
+  padding-bottom: calc(0.7 * var(--u) + env(safe-area-inset-bottom, 0px));
 }
 /* No fade at either edge. On a solid black bar a hard edge is honest: one end
    is the blue block, the other is the frame, and a line that reaches either
    has arrived somewhere rather than dissolved on the way.
 
    The vertical padding is not spacing. The window clips, so it is what keeps
-   a focus ring from being shaved off the top and bottom of the ad it marks. */
+   a focus ring from being shaved off the top and bottom of the ad it marks.
+   The margin lifts the crawl off the home indicator of an iPhone: the bar
+   centres the margin with the window, so the crawl sits in the middle of
+   the 72px above it. */
 .ticker-window {
   flex: 1;
+  margin-bottom: env(safe-area-inset-bottom, 0px);
   padding: calc(0.8 * var(--u)) 0;
   overflow: hidden;
 }
@@ -884,7 +1000,7 @@
 .tv-live {
   display: flex;
   align-items: center;
-  min-height: calc(8.8 * var(--u));
+  min-height: var(--bar-h);
   border: 0;
   border-radius: 999px;
   background: rgb(0 0 0 / 0.55);
@@ -1030,8 +1146,8 @@
 }
 /* With no pill around it the circle takes the whole row height itself. */
 .tv-account[data-signed-in] .tv-avatar {
-  width: calc(8.8 * var(--u));
-  height: calc(8.8 * var(--u));
+  width: var(--bar-h);
+  height: var(--bar-h);
   font-size: var(--t-md);
 }
 
@@ -1168,7 +1284,8 @@
   top: calc(100% + 1.4 * var(--u));
   z-index: 2;
   width: max-content;
-  max-width: min(calc(46 * var(--u)), calc(100cqw - 2 * var(--safe-x)));
+  /* 280px at the least, or a phone set the tip one word to a line. */
+  max-width: min(max(calc(46 * var(--u)), 280px), calc(100cqw - 2 * var(--safe-x)));
   margin: 0;
   /* A white card on the dark set. The same 16px on every side. */
   padding: 16px;
@@ -1302,10 +1419,29 @@
   position: absolute;
   inset: 0;
   background: var(--capy-blue);
-  display: grid;
-  place-content: center;
-  place-items: center;
   animation: boot-open 380ms cubic-bezier(0.16, 1, 0.3, 1) 180ms both;
+}
+
+/* The stack's own scroll. A short screen, an iPhone on its side above all,
+   cannot hold the mark and the sign-in card at once, and a stack centred past
+   the top edge could not be scrolled back to. The stack's auto margin centres
+   it while it fits and lets go of the top edge when it does not. Over the
+   tube's furniture, which stays outside so the static does not scroll. No
+   pointer-events here: a finished boot passes `none` down through it. */
+.boot-scroll {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  padding-block: var(--safe-y) max(calc(4 * var(--u)), env(safe-area-inset-bottom, 0px));
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+.boot-scroll::-webkit-scrollbar {
+  display: none;
 }
 
 /* Two rows: the mark, then the tiles. The second row is closed to nothing at
@@ -1317,9 +1453,8 @@
    sources.
 
    The stack is sized by its rows rather than by the screen, which is what lets
-   1fr mean "as tall as the tiles" instead of "the rest of the set". It is left
-   unpositioned so the tray inside it can lift itself over the tube's furniture
-   on its own, and the mark can stay under it.
+   1fr mean "as tall as the tiles" instead of "the rest of the set". It sits
+   over the tube's furniture, the mark with it.
 
    justify-items, not place-items: the tray has to take its whole row for the
    clip to mean anything, and centring it would let a closed row show. */
@@ -1330,6 +1465,7 @@
   justify-items: center;
   position: relative;
   z-index: 1;
+  margin: auto;
   transition: grid-template-rows 560ms cubic-bezier(0.16, 1, 0.3, 1), row-gap 560ms
     cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -1366,7 +1502,7 @@
   animation: boot-pick-in 220ms cubic-bezier(0.23, 1, 0.32, 1) both;
 }
 .boot-auth {
-  width: min(68cqw, calc(100cqw - 2 * var(--safe-x)));
+  width: min(68 * var(--fw), calc(100cqw - 2 * var(--safe-x)));
   isolation: isolate;
 }
 .boot-auth-card {
@@ -1528,12 +1664,24 @@
   outline: none;
 }
 
+/* A narrow window: one column, as wide as the safe area allows. */
 @container (max-width: 42rem) {
+  .boot-auth {
+    width: calc(100cqw - 2 * var(--safe-x));
+  }
   .boot-auth-card {
     grid-template-columns: 1fr;
   }
   .boot-auth-intro {
     padding-bottom: calc(1.6 * var(--u));
+  }
+}
+/* A short window, a phone on its side: the frame is small, so 68% of it is
+   too narrow for two columns. The card takes the width instead, and the
+   scroll takes what the height cannot. */
+@container (max-height: 30rem) {
+  .boot-auth {
+    width: min(calc(100cqw - 2 * var(--safe-x)), 56rem);
   }
 }
 /* Grain a logo carries happily is grain that costs a label its edges. */
@@ -2068,9 +2216,12 @@
    under it, and the strip grows by that line. */
 .boot-lib-walls {
   --lib-caption-gap: calc(1.4 * var(--u));
-  --lib-caption-line: calc(3.4 * var(--u));
+  /* As tall as the caption's own line at the least, or a phone, where the
+     type floor lifts the caption, cut its descenders. */
+  --lib-caption-line: max(calc(3.4 * var(--u)), calc(1.25 * var(--t-sm)));
   --lib-caption: calc(var(--lib-caption-gap) + var(--lib-caption-line));
-  min-width: calc(2 * var(--lib-tile) + 4 * var(--u));
+  /* Never wider than the safe area: a 360px phone has less than two tiles. */
+  min-width: min(calc(2 * var(--lib-tile) + 4 * var(--u)), calc(100cqw - 2 * var(--safe-x)));
 }
 .boot-lib-walls .boot-lib-strip {
   height: calc(var(--lib-tile) * 5 / 9 + 2 * var(--lib-pad) + var(--lib-caption));
@@ -2131,10 +2282,11 @@
 .capychannel-boot:has(.boot-pick-lib) .boot-brand {
   position: absolute;
   z-index: 1;
-  /* The screen is a grid too, and an out-of-flow box keeps its grid area
-     for its containing block. Auto placement puts the corner at the screen. */
+  /* Out of its row. The grid area would only count if the stack were also
+     the box the corner is measured from, and it is not. */
   grid-area: auto;
-  top: calc(3 * var(--u));
+  /* Clear of the notch on an iPhone. */
+  top: max(calc(3 * var(--u)), env(safe-area-inset-top, 0px));
   left: var(--safe-x);
   animation: boot-pick-in 220ms ease-out both;
 }
@@ -2142,10 +2294,16 @@
   height: calc(18 * var(--u));
 }
 .capychannel-boot:has(.boot-pick-lib) .boot-stack {
-  /* Static, so the mark measures its corner from the screen, not from the
-     stack it used to share with the tray. */
+  /* Static, so the mark measures its corner from the scroll, which is the
+     screen, not from the stack it used to share with the tray. */
   position: static;
   row-gap: 0;
+}
+/* The corner mark's height, and its gap, kept at both ends of the scroll.
+   Equal, so the library stays in the middle of the screen; and when a short
+   screen has to scroll it, the row starts under the mark, not behind it. */
+.capychannel-boot:has(.boot-pick-lib) .boot-scroll {
+  padding-block: calc(max(calc(3 * var(--u)), env(safe-area-inset-top, 0px)) + 21 * var(--u));
 }
 
 /* Struck before the picture exists. */
@@ -2268,6 +2426,29 @@
   }
   100% {
     opacity: 1;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Touch — a finger needs a larger target than a pointer does. Only the
+   controls that the interface scale draws small on a phone or a tablet; a
+   screen with a mouse keeps the drawing as it is.
+   -------------------------------------------------------------------------- */
+@media (pointer: coarse) {
+  .boot-lib .boot-lib-back,
+  .boot-lib .boot-lib-info {
+    width: max(44px, calc(6.7 * var(--u)));
+    height: max(44px, calc(6.7 * var(--u)));
+  }
+  /* It grows down and in from the corner, so it stays inside the row's
+     padding, which the row's scroll would cut. */
+  .boot-lib-row .boot-lib-x {
+    width: max(28px, calc(3.6 * var(--u)));
+    height: max(28px, calc(3.6 * var(--u)));
+  }
+  .tv-account-menu button,
+  .tv-account-menu a {
+    min-height: 44px;
   }
 }
 

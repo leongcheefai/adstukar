@@ -156,49 +156,54 @@ export function TvChannel({ paused }: { paused: boolean }) {
 
       <div className="tvc-scan" aria-hidden="true" />
 
-      {channel ? (
-        <div className="tvc-controls">
-          {on ? (
-            <dl className="tvc-info">
-              <dt className="sr-only">Video</dt>
-              <dd className="tvc-title">{on.video.title}</dd>
-              <dt className="sr-only">Channel</dt>
-              <dd className="tvc-creator">{on.video.creator}</dd>
-              <dt className="sr-only">On air</dt>
-              <dd className="tvc-time">
-                <AirTime on={on} />
-              </dd>
-            </dl>
-          ) : null}
-          <fieldset className="tvc-buttons">
-            <legend className="sr-only">Channels</legend>
-            {channels.map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                aria-pressed={c.id === channel.id}
-                aria-keyshortcuts={String(c.number)}
-                onClick={() => tuneTo(c)}
-              >
-                {c.name}
-              </button>
-            ))}
-          </fieldset>
-        </div>
-      ) : null}
+      {/* One row, so Up next starts level with the title however many lines
+          the title takes. On a window held upright it turns into a column
+          under the picture. */}
+      <div className="tvc-dock">
+        {channel ? (
+          <div className="tvc-controls">
+            {on ? (
+              <dl className="tvc-info">
+                <dt className="sr-only">Video</dt>
+                <dd className="tvc-title">{on.video.title}</dd>
+                <dt className="sr-only">Channel</dt>
+                <dd className="tvc-creator">{on.video.creator}</dd>
+                <dt className="sr-only">On air</dt>
+                <dd className="tvc-time">
+                  <AirTime on={on} />
+                </dd>
+              </dl>
+            ) : null}
+            <fieldset className="tvc-buttons">
+              <legend className="sr-only">Channels</legend>
+              {channels.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  aria-pressed={c.id === channel.id}
+                  aria-keyshortcuts={String(c.number)}
+                  onClick={() => tuneTo(c)}
+                >
+                  {c.name}
+                </button>
+              ))}
+            </fieldset>
+          </div>
+        ) : null}
 
-      {next ? (
-        <div className="tvc-next">
-          <p className="tvc-next-label">Up next · {airTime.format(next.startsAt)}</p>
-          <div className="tvc-next-card">
-            <img className="tvc-next-thumb" src={thumbnailUrl(next.video.id)} alt="" />
-            <div className="tvc-next-text">
-              <p className="tvc-next-title">{next.video.title}</p>
-              <p className="tvc-next-creator">{next.video.creator}</p>
+        {next ? (
+          <div className="tvc-next">
+            <p className="tvc-next-label">Up next · {airTime.format(next.startsAt)}</p>
+            <div className="tvc-next-card">
+              <img className="tvc-next-thumb" src={thumbnailUrl(next.video.id)} alt="" />
+              <div className="tvc-next-text">
+                <p className="tvc-next-title">{next.video.title}</p>
+                <p className="tvc-next-creator">{next.video.creator}</p>
+              </div>
             </div>
           </div>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
     </div>
   );
 }
