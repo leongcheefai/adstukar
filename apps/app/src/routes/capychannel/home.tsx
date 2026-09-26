@@ -11,6 +11,7 @@ import { TvBar } from "../../components/capychannel/tv-bar";
 import { useSession } from "../../lib/auth";
 import { useCoach } from "../../lib/coach";
 import { safeRedirect } from "../../lib/redirect";
+import { useViewportFitCover } from "../../lib/viewport";
 import "../../styles/capychannel.css";
 
 const BAR_IDLE_MS = 3500;
@@ -26,6 +27,7 @@ function brandHoldMs(): number {
  * dashboard is not here: it opens in its own tab (`lib/dashboard-tab.ts`).
  */
 export function CapyChannelScreen() {
+  useViewportFitCover();
   const { data: session, isPending } = useSession();
   const { source: sourceHint, opened, dismiss } = useCoach();
   const navigate = useNavigate();
