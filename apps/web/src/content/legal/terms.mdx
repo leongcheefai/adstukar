@@ -4,6 +4,7 @@ import {
   earnRate,
   expiryMonths,
   holdDays,
+  listingsPerCampaign,
   livePlayMinutes,
   paidHours,
   payoutCountries,
@@ -34,22 +35,22 @@ import {
 
 ## 1. Parties and relationship
 
-These Terms of Service (“**Terms**”) govern access to and use of the **CapyChannel** platform, websites, web dashboards, web players / browser sessions, APIs, and related services (collectively, the “**Service**”) operated by **Praxor Studio**, registration number **SA0656426-A** (“**Praxor**,” “**we**,” “**us**,” or “**our**”).
+These Terms of Service (“**Terms**”) govern access to and use of the **CapyChannel** ad network for screens: its websites, the dashboard, the **CapyTV** screen app, its APIs, and related services (collectively, the “**Service**”) operated by **Praxor Studio**, registration number **SA0656426-A** (“**Praxor**,” “**we**,” “**us**,” or “**our**”).
 
 
-By creating an account, accessing the Service in a browser, running campaigns, or displaying ads as a Distributor Op, you agree to these Terms and our Privacy Policy and Ads Policy (as published or linked from the Service).
+By creating an account, booking a slot, or showing ads on a screen as a Distributor, you agree to these Terms and our Privacy Policy and Ads Policy (as published or linked from the Service).
 
 **Roles on the Service:**
 
 | Role | Description |
 |------|-------------|
-| **Advertiser / Business** | Buys or funds distribution of approved ad creatives to be shown via eligible web/browser-based placements **outside** social platforms such as X or Threads. |
-| **Distributor Op** | Earns by displaying approved ads through eligible **web/browser-based** sessions or web players under their control (v1 is website/browser only — not a native Mac menu-bar app or dedicated native display client). |
+| **Advertiser** | Books a **slot** so that its **listings** (a logo, a name, and a short tagline that links to the Advertiser's verified website) play on the screens in the network. Viewers reach the website by scanning the code shown with the listing. |
+| **Distributor** | Registers one or more **screens** in places such as cafes, restaurants, salons, gyms, clinics, shops, and offices, runs CapyTV on them, and earns a fixed rate for each paid play (Section 6). |
 | **Operator** | Praxor Studio operates **CapyChannel**. |
 
 You may act in one or more roles. These Terms apply to all roles except where a section states otherwise.
 
-We do **not** employ Distributor Ops as employees by virtue of these Terms; the relationship is that of independent users of the Service, subject to applicable law. **[TBD: counsel to confirm independent-contractor / platform wording under Malaysian law.]**
+We do **not** employ Distributors as employees by virtue of these Terms; the relationship is that of independent users of the Service, subject to applicable law. **[TBD: counsel to confirm independent-contractor / platform wording under Malaysian law.]**
 
 ---
 
@@ -66,7 +67,7 @@ The Service is only for users **18 years of age and above**. We do not knowingly
 
 The Service is intended primarily for use in connection with lawful advertising distribution. Availability in specific countries may be limited — **[TBD: geo availability / restricted territories]**.
 
-**v1 access:** Users open and use CapyChannel in a **web browser** (website only). Native desktop/mobile apps and dedicated native display clients are **not** part of the v1 Service described in these Terms.
+**How the Service runs:** Everything runs in a web browser. Members use the dashboard on the website. A screen runs **CapyTV**, a web app opened in the screen's browser; there is nothing to install from an app store. Every screen is reviewed by a person, from a photo of the screen in place, before it can earn.
 
 ---
 
@@ -74,7 +75,7 @@ The Service is intended primarily for use in connection with lawful advertising 
 
 You must provide accurate registration information and keep it updated. You are responsible for safeguarding credentials and for activity under your account.
 
-We may require identity or tax verification for Advertisers and/or Distributor Ops — **[TBD: KYC / verification requirements and providers]**.
+We may require identity or tax verification for Advertisers and/or Distributors — **[TBD: KYC / verification requirements and providers]**.
 
 **Payout verification.** Before your first payout you open a Stripe account in your own name through Stripe's hosted onboarding. Stripe checks your identity, address, and bank account, and decides whether payouts to that account are enabled. We cannot pay you until Stripe has enabled them. We may ask for more information when we review a payout request (Section 6).
 
@@ -84,7 +85,7 @@ We reserve the right to suspend or terminate accounts for breach of these Terms,
 
 ## 4. License to use the Service
 
-Subject to these Terms, Praxor grants you a limited, non-exclusive, non-transferable, revocable license to access and use the Service for its intended purpose (running or displaying ads via CapyChannel in a supported web browser).
+Subject to these Terms, Praxor grants you a limited, non-exclusive, non-transferable, revocable license to access and use the Service for its intended purpose (advertising on the network, or showing ads on your screens through CapyTV).
 
 You may not: reverse engineer the Service except as permitted by law; scrape or overload systems; resell access without our written permission; or use the Service to build a competing ad-distribution product using our non-public materials.
 
@@ -102,7 +103,7 @@ You may not: reverse engineer the Service except as permitted by law; scrape or 
 - it is among the first **{dailyPlayCap}** plays counted on that screen that day (UTC);
 - it falls within **{paidHours} hours** of the screen's first play that day (UTC);
 - the advertiser's slot is running, and the listing and its campaign are still approved, active, and verified; and
-- the Distributor Op has not vetoed the listing, or excluded a term it contains, on that screen.
+- the Distributor has not vetoed the listing, or excluded a term it contains, on that screen.
 
 A play that fails any of these still counts as shown, and earns nothing.
 
@@ -110,11 +111,13 @@ A play that fails any of these still counts as shown, and earns nothing.
 
 **Our records.** Plays, scans, and earnings are measured by our systems, and our records decide them, except where they are shown to be wrong. **[TBD: counsel to confirm the wording of this clause and a window for disputing a record.]**
 
-**No guarantee.** We do not promise any number of plays, screens, scans, or visits to an advertiser, or any level of earnings to a Distributor Op.
+**No guarantee.** We do not promise any number of plays, screens, scans, or visits to an advertiser, or any level of earnings to a Distributor.
 
 ---
 
-## 6. Distributor Ops — earnings
+## 6. Distributors — screens and earnings
+
+**Your screens.** You may register a screen only where you have the right to place it and to show ads on it. **[TBD: counsel to confirm the Distributor duties to state here — the venue owner's permission, local council advertising permits for a screen that faces a public area, licences for any music or video the screen plays in a business, no identifiable people in the screen photo, and responsibility for the news feed and for the Distributor's own promotion, which no one reviews (CoS review finding 4).]** A screen that moves to another place or venue type goes back for review.
 
 **Rate.** Each play that earns under Section 5 earns **{earnRate}**, the same on every approved screen. Praxor pays it from what advertisers pay for slots. No fee is taken from it.
 
@@ -130,7 +133,7 @@ A play that fails any of these still counts as shown, and earns nothing.
 
 **Expiry.** Settled earnings that you do not withdraw expire **{expiryMonths} months** after they settle.
 
-**Taxes.** You are responsible for any tax on your earnings. **[TBD: counsel on Malaysian income tax, withholding, and e-invoicing obligations for payments to Distributor Ops.]**
+**Taxes.** You are responsible for any tax on your earnings. **[TBD: counsel on Malaysian income tax, withholding, and e-invoicing obligations for payments to Distributors.]**
 
 **Earnings are not refunded.** Earned money leaves your wallet only as a payout. It cannot be refunded to a card or spent on a slot.
 
@@ -142,7 +145,9 @@ A play that fails any of these still counts as shown, and earns nothing.
 
 ### 7.1 Campaigns
 
-Advertisers submit creatives and campaign settings subject to the **Ads Policy**. We may approve, reject, pause, or limit campaigns. Advertisers may pause or modify campaigns subject to Service tooling.
+An Advertiser creates a **campaign** for one website, proves it controls the website's domain, and adds up to {listingsPerCampaign} **listings**. A person reviews every listing against the **Ads Policy** before it plays. We may approve, reject, or remove a campaign or a listing. An Advertiser may edit or remove a listing; a booked slot cannot be paused.
+
+**Removal is not instant on every screen.** A screen keeps a batch of plays so that it can continue when its network drops. A listing that is removed or rejected is sent to no screen again, but a screen that already holds it may show it for up to **{cachedPlayHours} hours**.
 
 ### 7.2 Payments, billing, and refunds
 
@@ -163,8 +168,8 @@ Advertisers submit creatives and campaign settings subject to the **Ads Policy**
 You must not:
 
 - Violate the Ads Policy or applicable law;
-- Generate or incentivize fake, automated, or non-human impressions;
-- Interfere with measurement, eligibility checks, or browser/session integrity signals;
+- Generate or encourage fake, automated, or unwatched plays or scans — for example, a screen that faces no one, or scans made only to raise a screen's numbers;
+- Interfere with measurement, screen review, or the reports CapyTV sends, or run a modified or unofficial screen app;
 - Attempt unauthorized access to accounts, systems, or other users’ data;
 - Impersonate others or misrepresent affiliation with Praxor;
 - Use the Service for phishing, malware distribution, or surveillance abuse;
@@ -181,11 +186,11 @@ We may investigate and take technical and account actions we reasonably consider
 
 The Service, branding, software, and documentation are owned by Praxor or its licensors. No rights are granted except as expressly stated.
 
-### 9.2 Advertiser creatives and content
+### 9.2 Your listings and uploads
 
-Advertisers retain ownership of their creatives and materials, and grant Praxor a worldwide, non-exclusive license to host, reproduce, distribute, and display those materials via the Service to fulfill campaigns (including through Distributor Op **web/browser-based** sessions or web players), and to create limited operational copies (caching, thumbnails for review, reporting).
+You keep ownership of your listings, logos, and the pictures and videos you upload, and grant Praxor a worldwide, non-exclusive license to host, reproduce, distribute, and display those materials via the Service to run the Service (including on Distributors' screens through CapyTV), and to create limited operational copies (caching, thumbnails for review, reporting).
 
-Advertisers represent they have all rights and permissions needed for such use, including destination URLs and trademarks.
+You represent that you have all rights and permissions needed for that use, including to the websites you link and the trademarks you show.
 
 ### 9.3 Feedback
 
@@ -201,7 +206,7 @@ The Service relies on third-party providers, including: **Stripe** (payments, re
 
 ## 11. Disclaimers
 
-THE SERVICE IS PROVIDED **“AS IS”** AND **“AS AVAILABLE.”** TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, PRAXOR DISCLAIMS WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. WE DO NOT WARRANT UNINTERRUPTED OR ERROR-FREE OPERATION, SPECIFIC IMPRESSION VOLUMES, EARNINGS, OR AD PERFORMANCE.
+THE SERVICE IS PROVIDED **“AS IS”** AND **“AS AVAILABLE.”** TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, PRAXOR DISCLAIMS WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. WE DO NOT WARRANT UNINTERRUPTED OR ERROR-FREE OPERATION, SPECIFIC NUMBERS OF PLAYS OR SCANS, EARNINGS, OR AD PERFORMANCE.
 
 Nothing in these Terms excludes liability that cannot be excluded under Malaysian consumer or other mandatory law — **[TBD: counsel to align disclaimer language with Malaysian law]**.
 
@@ -220,7 +225,7 @@ Some jurisdictions do not allow certain limitations; in those cases, limitations
 
 ## 13. Indemnity
 
-You agree to defend and indemnify Praxor and its personnel against claims, damages, and costs (including reasonable legal fees) arising from: your creatives or campaigns; your browser sessions / web players or how you display ads; your breach of these Terms or the Ads Policy; or your violation of third-party rights or law — except to the extent caused by Praxor’s willful misconduct. **[TBD: counsel review of indemnity scope.]**
+You agree to defend and indemnify Praxor and its personnel against claims, damages, and costs (including reasonable legal fees) arising from: your listings, uploads, or campaigns; your screens, where you place them, and what they show; your breach of these Terms or the Ads Policy; or your violation of third-party rights or law — except to the extent caused by Praxor’s willful misconduct. **[TBD: counsel review of indemnity scope.]**
 
 ---
 
@@ -230,7 +235,7 @@ You may stop using the Service at any time. You may delete your account from the
 
 **Outstanding balances at closure.** Before we close an account, you may ask for a refund of unspent top-ups still inside the refund window (Refund Policy), and request a payout of earnings that have served the hold and reach the minimum (Section 6). **[TBD: what happens to any balance left after that — for example, bought money past the window, or earnings below the minimum or still on hold.]**
 
-**We reserve the right** to suspend or terminate your account or access to the Service immediately (with or without prior notice) if we reasonably believe you have engaged in fraud, fraudulent traffic, abuse, manipulation of impressions or earnings, material breach of these Terms or the Ads Policy, unlawful activity, chargeback abuse, or other activity that creates legal, security, or financial risk to Praxor, other users, or the public.
+**We reserve the right** to suspend or terminate your account or access to the Service immediately (with or without prior notice) if we reasonably believe you have engaged in fraud, fraudulent traffic, abuse, manipulation of plays, scans, or earnings, material breach of these Terms or the Ads Policy, unlawful activity, chargeback abuse, or other activity that creates legal, security, or financial risk to Praxor, other users, or the public.
 
 **We do not close accounts solely for inactivity.** Unused accounts may remain open until you request closure or we terminate for a reason described above (or as required by law).
 
