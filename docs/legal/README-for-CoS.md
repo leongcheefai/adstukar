@@ -34,7 +34,7 @@ The wallet and payment system is complete, and Stripe is live. Every **`[to fill
 | **Privacy** | §2 matches the code: no phone or business name; hashed passwords; what a screen reports (no browser type stored); screen photos sit at an unguessable public link; library uploads; no audience measurement. §4: no targeting of people; advertisers see daily totals only. §5 points to the new Cookie Policy. §9 names the hosting regions. |
 | **Cookie Policy** | New draft at `/cookies` (`cookies.mdx`): the sign-in cookie, sign-in state cookies, and every browser-storage use in the dashboard and CapyTV. No analytics. `[TBD]`: counsel to confirm no banner is needed. Linked from the footer. |
 | **Security page** | `/security` now states the real measures. Backups, encryption at rest on Railway, and production access are `[TBD]`, so the page stays out of search until they are answered. |
-| **Still template** | `/dpa` only. It is GDPR processor text that does not fit the product; decide whether to delete it. |
+| **DPA** | `/dpa` is deleted. It was GDPR processor template text; Praxor does not process personal data on behalf of business customers. |
 
 ---
 

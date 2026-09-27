@@ -67,14 +67,6 @@ export const MARKETING_PAGES: MarketingPage[] = [
     description: `How a top-up on ${project.name} is refunded: what comes back, within how long, and how to ask.`,
   },
   {
-    slug: "dpa",
-    path: "/dpa",
-    title: pageTitle("Data Processing Agreement"),
-    description: `Data Processing Agreement for ${project.name}.`,
-    // Still the template's TODO text. Index it when it has copy.
-    inSitemap: false,
-  },
-  {
     slug: "security",
     path: "/security",
     title: pageTitle("Security"),

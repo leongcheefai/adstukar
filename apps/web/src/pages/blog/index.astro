@@ -1,5 +1,6 @@
 ---
 import { getCollection } from "astro:content";
+import { project } from "@repo/config/project";
 import { Badge } from "@repo/ui";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { requirePage } from "../../lib/pages";
@@ -19,8 +20,9 @@ const posts = (await getCollection("blog"))
   <div class="mx-auto max-w-3xl px-6 py-24 sm:py-32">
     <h1 class="text-4xl font-medium tracking-tight">Blog</h1>
     <p class="mt-4 text-lg text-muted-foreground">
-      TODO: Brief intro to your blog — what you write about and who it's for.
+      News from {project.name}: product updates, and notes for advertisers and screen owners.
     </p>
+    {posts.length === 0 && <p class="mt-12 text-muted-foreground">No posts yet.</p>}
     <div class="mt-12 space-y-10 divide-y divide-border">
       {
         posts.map((post) => (
