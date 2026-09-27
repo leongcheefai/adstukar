@@ -57,6 +57,27 @@ app.use(
     credentials: true,
   }),
 );
+// CORS stops a foreign page reading an answer, not sending the request. The
+// session cookie is SameSite=None in production, so a form on another site could
+// post to a body-less route like `/admin/payouts/:id/pay` with the member's
+// session. A browser always names the page's origin on a cross-site POST; refuse
+// any that is not ours. A request with no Origin is not a browser page (Stripe,
+// curl), and the screen routes take any origin by design. Better Auth checks
+// origins on its own routes.
+const UNSAFE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+app.use("*", async (c, next) => {
+  if (!UNSAFE_METHODS.has(c.req.method)) return next();
+  const path = c.req.path;
+  if (PUBLIC_PREFIXES.some((p) => path.startsWith(p)) || path.startsWith("/api/auth/")) {
+    return next();
+  }
+  const origin = c.req.header("origin");
+  if (origin && !TRUSTED_ORIGINS.has(origin)) {
+    log("warn", "origin_refused", { origin, path });
+    return c.json({ error: "Forbidden" }, 403);
+  }
+  return next();
+});
 app.use("*", sessionMiddleware);
 app.onError(errorHandler);
 
