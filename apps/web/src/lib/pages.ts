@@ -66,9 +66,7 @@ export const MARKETING_PAGES: MarketingPage[] = [
     slug: "refund",
     path: "/refund",
     title: pageTitle("Refund Policy"),
-    description: `Refund Policy for ${project.name}.`,
-    // Still the template's TODO text. Index it when it has copy.
-    inSitemap: false,
+    description: `How a top-up on ${project.name} is refunded: what comes back, within how long, and how to ask.`,
   },
   {
     slug: "dpa",
