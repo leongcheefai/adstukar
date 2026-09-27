@@ -44,8 +44,9 @@ survives a re-review, which is what stops a second approval from minting a new
 key and blacking out a screen somebody has already paired. A rejection clears it,
 so approving a refused screen later does issue a fresh key.
 
-The daily play cap and the state of the slot, the campaign, and the listing are
-read when the money moves, never when the play was served. Above the cap, or on
+The daily play cap, the state of the slot, the campaign, and the listing, and
+the distributor's vetoes and excluded terms are read when the money moves, never
+when the play was served. Above the cap, or on
 a slot that ended after the batch was cut, the play still counts and simply pays
 nothing — "plays above the cap still show, and pay nothing" (issue #7). The pure
 rule is `src/modules/serve/payable.ts`.
@@ -145,8 +146,10 @@ STRIPE_API_KEY=sk_test_... stripe listen --forward-connect-to localhost:3001/bil
 | `checkout.session.expired` | Mark an unpaid top-up abandoned |
 | `account.updated` (Connect endpoint) | Store `details_submitted` and `payouts_enabled` on the member's `stripe_account` |
 
-Every event is recorded in `webhook_event` by its Stripe id before it acts, so a
-retry changes nothing.
+Every event is recorded in `webhook_event` by its Stripe id once its handler
+has finished, so a retry of a handled event changes nothing, and a retry of one
+that failed runs it again. Never record the id first: a handler that then threw
+would turn Stripe's retry into a no-op, and a paid top-up would never land.
 
 ### Walk a top-up by hand
 Open the dashboard, top up the smallest amount with a Stripe test card, and watch the
