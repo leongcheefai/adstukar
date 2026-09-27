@@ -1,7 +1,10 @@
 ---
+import { Content } from "../content/legal/cookies.mdx";
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { isHidden, requirePage } from "../lib/pages";
+import { requirePage } from "../lib/pages";
 
+/* The text is the draft in src/content/legal. It carries its own title, date,
+   and draft notice, so the page adds none of its own. */
 const page = requirePage("cookies");
 ---
 
@@ -9,41 +12,10 @@ const page = requirePage("cookies");
   title={page.title}
   description={page.description}
   ogSlug={page.slug}
-  noindex={isHidden(page)}
 >
-  <div class="mx-auto max-w-3xl px-6 py-24 sm:py-32">
-    <h1 class="text-4xl font-medium tracking-tight">Cookie Policy</h1>
-    <p class="mt-2 text-sm text-muted-foreground">Last updated: TODO: Date</p>
-
-    <div class="prose mt-10">
-      <p>
-        TODO: Replace this placeholder with your actual Cookie Policy. Describe what cookies you
-        use, why you use them, and how users can control them.
-      </p>
-
-      <h2>1. What Are Cookies</h2>
-      <p>TODO: Explain what cookies are and how they work.</p>
-
-      <h2>2. Cookies We Use</h2>
-      <p>TODO: List the categories of cookies you use (essential, analytics, marketing, etc.).</p>
-
-      <h2>3. Essential Cookies</h2>
-      <p>TODO: Describe the cookies required for the service to function.</p>
-
-      <h2>4. Analytics Cookies</h2>
-      <p>TODO: Describe any analytics cookies and the tools you use (e.g. Plausible, PostHog).</p>
-
-      <h2>5. Third-Party Cookies</h2>
-      <p>TODO: List any third-party services that set cookies (payment processors, support chat, etc.).</p>
-
-      <h2>6. Managing Cookies</h2>
-      <p>TODO: Explain how users can control or delete cookies through browser settings.</p>
-
-      <h2>7. Changes to This Policy</h2>
-      <p>TODO: Explain how and when you may update this policy.</p>
-
-      <h2>8. Contact</h2>
-      <p>TODO: Provide contact information for cookie-related questions.</p>
+  <article class="mx-auto max-w-3xl px-6 py-24 sm:py-32">
+    <div class="prose prose-legal">
+      <Content />
     </div>
-  </div>
+  </article>
 </BaseLayout>

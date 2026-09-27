@@ -22,6 +22,7 @@ const groups = [
       { label: "Privacy policy", href: "/privacy" },
       { label: "Ads policy", href: "/ads-policy" },
       { label: "Refund policy", href: "/refund" },
+      { label: "Cookie policy", href: "/cookies" },
     ],
   },
 ] as const;

@@ -8,6 +8,36 @@
 
 ---
 
+## Changes applied (27 Sep 2026)
+
+The wallet and payment system is complete, and Stripe is live. Every **`[to fill in later]`** is now filled from the product code.
+
+| Topic | Change applied in drafts |
+|-------|--------------------------|
+| **Where the drafts live** | `apps/web/src/content/legal/*.mdx`. They are MDX now, so every amount (rate, caps, hold, minimum payout, expiry, top-up bounds, refund window, card fee, slot price) is read from `packages/config/src/economy.ts` — the same source as the FAQ and the product. **A change to an amount there changes the published Terms**, so it needs the notice the Terms promise. |
+| **Refund Policy** | New draft, `refund.mdx`, at `/refund`: top-up refunds (unspent part, window, less the card fee, USD), slot refunds (to the wallet before approval; none once started), how to ask, timing, what is not refunded. |
+| **Terms** | §3 payout verification (Stripe onboarding); §5 measurement (what a play is, when a report counts, when a play earns, scans); §6 earnings (rate, pending, hold, minimum, review, Stripe Connect, Malaysia only, paid in MYR at Bank Negara's rate, expiry, taxes); §7.2 payments (top-ups, slots, refunds); §10 providers; §14 closure and balances. |
+| **Privacy** | §2.1, §2.5 (what we keep about payments and payouts; card and bank details stay with Stripe), §3, §6 sub-processors, §13.1 legal basis, §14.1 categories and sources. |
+| **Ads Policy** | §2, §6, §7 (slot refunds on rejection or removal), §8 (effect on earnings), §10 measurement. |
+| **New decisions flagged** | `[TBD]` for: chargebacks; SST and invoicing; whether settled earnings may be cancelled for fraud (the product does not do this); balances left at closure; refund when we remove an ad through no fault of the advertiser; refund answer time. |
+
+**Product wording and the remaining pages (same day):**
+
+| Topic | Change applied |
+|-------|----------------|
+| **Review findings 1, 2** | All three drafts now describe the real product: screens in venues running **CapyTV**, a code viewers scan, plays and scans. "Advertiser / Business" is **Advertiser**, "Distributor Op" is **Distributor**, "impressions" are **plays**. The "outside X/Threads", "web player / browser session", "v1", and "no Mac menu-bar app" wording is gone. |
+| **Review finding 4** | Terms §6 starts with the Distributor's duty to have the right to place a screen, and a `[TBD]` listing the duties for counsel (venue permission, council permits, music licences, no people in the photo, the news feed and own promotion). |
+| **Review finding 6** | Terms §7.1 and Ads Policy §7 state that a removed or rejected listing may stay on a screen for up to the offline batch's life (4 hours today). |
+| **Review findings 17–20** | Ads Policy §3 and §5 describe the real listing: name, tagline (up to 60 characters; the band shows 20 and 30), optional logo (PNG, JPEG, or WebP, up to 5 MB), website, and a code we generate. HTTPS is now enforced in the product. A person reviews every listing; only the domain check is automatic. |
+| **Review finding 22** | Ads Policy §8 says a Distributor's own promotion must follow the same rules, marked `[TBD]` to confirm. |
+| **Review finding 23** | Ads Policy §3 keeps English-only, marked `[TBD]` for a decision. |
+| **Privacy** | §2 matches the code: no phone or business name; hashed passwords; what a screen reports (no browser type stored); screen photos sit at an unguessable public link; library uploads; no audience measurement. §4: no targeting of people; advertisers see daily totals only. §5 points to the new Cookie Policy. §9 names the hosting regions. |
+| **Cookie Policy** | New draft at `/cookies` (`cookies.mdx`): the sign-in cookie, sign-in state cookies, and every browser-storage use in the dashboard and CapyTV. No analytics. `[TBD]`: counsel to confirm no banner is needed. Linked from the footer. |
+| **Security page** | `/security` now states the real measures. Backups, encryption at rest on Railway, and production access are `[TBD]`, so the page stays out of search until they are answered. |
+| **DPA** | `/dpa` is deleted. It was GDPR processor template text; Praxor does not process personal data on behalf of business customers. |
+
+---
+
 ## Changes applied (16 Sep 2026)
 
 Applied after decisions from Wai Hong on 16 Sep 2026.

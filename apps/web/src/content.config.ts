@@ -1,4 +1,5 @@
 import { defineCollection } from "astro:content";
+import { project } from "@repo/config/project";
 import { glob } from "astro/loaders";
 import { z } from "astro/zod";
 
@@ -8,7 +9,7 @@ const blog = defineCollection({
     title: z.string(),
     description: z.string(),
     date: z.coerce.date(),
-    author: z.string().default("TODO: Author Name"),
+    author: z.string().default(project.name),
     image: z.string().optional(),
     imageAlt: z.string().optional(),
     tags: z.array(z.string()).default([]),

@@ -35,7 +35,7 @@ export function orgSchema(siteUrl: URL | string) {
     knowsAbout: ["Digital signage advertising", "Screen advertising", "Venue advertising"],
     // A raster logo: Google does not read an SVG here. `src/pages/logo.png.ts` draws it.
     logo: { "@type": "ImageObject", url: `${origin}/logo.png`, width: 512, height: 512 },
-    // sameAs: ["TODO: https://twitter.com/...", "TODO: https://github.com/..."],
+    // Add `sameAs` with the brand's social profile URLs once they exist.
   };
 }
 

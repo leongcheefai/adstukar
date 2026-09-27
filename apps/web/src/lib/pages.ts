@@ -58,32 +58,20 @@ export const MARKETING_PAGES: MarketingPage[] = [
     slug: "cookies",
     path: "/cookies",
     title: pageTitle("Cookie Policy"),
-    description: `Cookie Policy for ${project.name}.`,
-    // Still the template's TODO text. Index it when it has copy.
-    inSitemap: false,
+    description: `The cookies and browser storage ${project.name} uses: only what sign-in and the screens need, and no analytics or tracking.`,
   },
   {
     slug: "refund",
     path: "/refund",
     title: pageTitle("Refund Policy"),
-    description: `Refund Policy for ${project.name}.`,
-    // Still the template's TODO text. Index it when it has copy.
-    inSitemap: false,
-  },
-  {
-    slug: "dpa",
-    path: "/dpa",
-    title: pageTitle("Data Processing Agreement"),
-    description: `Data Processing Agreement for ${project.name}.`,
-    // Still the template's TODO text. Index it when it has copy.
-    inSitemap: false,
+    description: `How a top-up on ${project.name} is refunded: what comes back, within how long, and how to ask.`,
   },
   {
     slug: "security",
     path: "/security",
     title: pageTitle("Security"),
-    description: `How ${project.name} protects member accounts and keeps the embed snippet free of tracking.`,
-    // The page is still the template's TODO list. Index it when it has copy.
+    description: `How ${project.name} protects member accounts, payments, and screens, and how to report a security problem.`,
+    // Holds open [TBD] items (backups, encryption at rest, access). Index it when they are answered.
     inSitemap: false,
   },
 ];

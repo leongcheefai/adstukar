@@ -1,3 +1,5 @@
+import { payoutCountries, payoutCurrency } from "../../lib/legal";
+
 # **DRAFT FOR REVIEW — NOT LEGAL ADVICE**
 
 > This document is a working draft prepared for human legal review (Linear KEV-6). It is **not** legal advice and must be reviewed by qualified counsel (including for Malaysian Personal Data Protection Act (PDPA) alignment, the EU and UK General Data Protection Regulation (GDPR), the California Consumer Privacy Act (CCPA), and any cross-border transfer rules) before publication. Operator: **Praxor Studio** (SA0656426-A). Product: **CapyChannel**.
@@ -6,7 +8,7 @@
 
 # Privacy Policy
 
-**Last updated:** 16 September 2026  
+**Last updated:** 27 September 2026  
 
 **Operator / Data Controller (working designation):** Praxor Studio (SA0656426-A) — **[TBD: confirm controller vs processor roles for any sub-processors]**  
 **Product:** CapyChannel  
@@ -16,17 +18,17 @@
 
 ## 1. Scope
 
-This Privacy Policy explains how Praxor Studio (“**Praxor**,” “**we**,” “**us**”) collects, uses, discloses, and retains information in connection with **CapyChannel**, including the website, web dashboards, web players / browser sessions, and APIs that enable ad display outside platforms such as X or Threads (the “**Service**”).
+This Privacy Policy explains how Praxor Studio (“**Praxor**,” “**we**,” “**us**”) collects, uses, discloses, and retains information in connection with **CapyChannel**, an ad network for screens in places such as cafes, restaurants, salons, gyms, clinics, shops, and offices. The Service includes our websites, the dashboard, the **CapyTV** screen app, and our APIs (the “**Service**”).
 
 
 It applies to:
 
-- **Advertisers / Businesses** who create accounts and run campaigns;  
-- **Distributor Ops** who display ads via eligible **web/browser-based** sessions or web players;  
+- **Advertisers** who create accounts, run campaigns, and book slots;  
+- **Distributors** who register screens and run CapyTV on them;  
 - **People who scan a code** shown with an ad on a screen (see Section 2.8);  
 - Visitors to our marketing or product sites — primary domain: **capychannel.site**.
 
-**v1 surfaces:** Website / browser only. Users open the product in a web browser. Native apps, Mac menu-bar clients, and dedicated native display clients are **not** part of v1 and are not promised in this Policy.
+**How the Service runs:** everything runs in a web browser. Members use the dashboard on the website, and a screen runs CapyTV, a web app opened in the screen's browser. We do not offer an app-store app.
 
 This Policy should be read with our Terms of Service and Ads Policy. People in the European Economic Area (EEA) or the United Kingdom should also read Section 13. California residents should also read Section 14. Section 15 explains how to make a data request.
 
@@ -38,68 +40,70 @@ This Policy should be read with our Terms of Service and Ads Policy. People in t
 
 Depending on your role, we may collect:
 
-- Name, display name, business name;  
-- Email address, phone number — **[TBD: whether phone is required]**;  
-- Login credentials (passwords stored hashed or via auth provider — **[TBD: auth method]**);  
+- Your name and email address. We do not ask for a phone number or a business name;  
+- Your password, if you sign in with one. We store only a one-way hash of it, never the password itself;  
 - A profile photo, if you add one;  
 - If you sign in with Google: the name, email address, and profile photo that Google shares with us — **[TBD: confirm whether Google sign-in is offered at launch]**;  
-- Business registration or tax identifiers when needed for billing/payouts — **[to fill in later]**;  
-- Role (Advertiser, Distributor Op, or both).
+- We do not ask for business registration or tax identifiers in the product today. Stripe may collect them for a payout account (Section 2.5).
 
-### 2.2 Browser / session eligibility and operational signals (Distributor Ops)
+### 2.2 Screens (Distributors)
 
-To run a **web/browser-based** ad-display product, we may collect **eligibility and integrity signals**, such as:
+When a screen runs CapyTV, we collect:
 
-- Browser or session identifiers needed to enroll a web player / browser session, including the pairing code and access key issued for each screen;  
-- Browser type, OS version (as reported by the browser), and web-client version;  
-- Online/offline or “ready to show ads” status for the browser session / web player, and the time a screen last reported;  
-- Session state relevant to whether an ad can be shown (e.g. web-player heartbeat, display slot available in the browser) — **[TBD: exact eligibility signals for v1 surfaces]**;  
-- The network a screen reports from, stored as a network prefix instead of a full IP address (the first three parts of an IPv4 address, or the first four groups of an IPv6 address). A prefix can still point to a single home or venue, so we treat it as personal data;  
-- Impression and delivery logs (which creative was requested/shown, timestamps, and whether its code was scanned).
+- The access key issued for the screen, which CapyTV sends with every request;  
+- Each play: which listing played, on which screen, when, and whether its code was scanned;  
+- The time the screen last reported;  
+- The network a screen reports from, stored as a network prefix instead of a full IP address (the first three parts of an IPv4 address, or the first four groups of an IPv6 address). A prefix can still point to a single home or venue, so we treat it as personal data.
+
+We do not store the screen's browser type or operating system.
 
 When you register a screen for review, we also collect:
 
 - The screen’s name, venue type, and location as you enter it — **[TBD: location precision]**;  
-- A photo of the screen in place, which we use to review the screen. Please avoid including people in the photo — **[TBD: confirm who can access uploaded photos]**;  
+- A photo of the screen in place, which we use to review the screen. Please avoid including people in the photo. The photo is stored in our file storage at a link that cannot be guessed; anyone who has the link can open it — **[TBD: decide whether screen photos move to private storage, then confirm who can access them]**;  
 - The venue’s stated open hours and time zone;  
 - Your own promotion (name, tagline, link, logo), your excluded terms, and the listings you veto.
 
 **Settings kept on the screen:** The latitude and longitude for the weather display, and the address of a news feed, stay in the screen’s browser storage and are not sent to our servers. The screen sends the coordinates directly to a weather service to get the forecast, and loads the news feed directly from the address you enter.
 
-**v1 surfaces in scope:** **Website / browser only** (web dashboards and web players / browser sessions). No native Mac/desktop/mobile app or dedicated native display client in v1.
-
 ### 2.3 What we do **NOT** collect by default (important)
 
-Unless we later enable a feature that you clearly opt into and we update this Policy, Praxor’s CapyChannel **web** clients are **not** designed to collect:
+Unless we later enable a feature that you clearly opt into and we update this Policy, the Service does **not** collect:
 
-- **Screenshots or continuous capture of the Distributor Op’s personal desktop, documents, or non-ad content** — **[TBD: confirm product never captures user desktop content; if any limited capture for ad-slot QA is ever added, it must be disclosed and consented]**;  
+- **Anything about the people in front of a screen.** CapyTV has no camera, no microphone, and no audience measurement. It asks for a listing, shows it, and reports that it played;  
+- **Screenshots or recordings** of a screen, a device, or anything else shown on it;  
 - **Keystrokes, passwords typed into other apps or sites, or clipboard contents**;  
-- **Microphone or camera audio/video of the user’s environment** for advertising;  
-- **Contacts, photos, or files**, other than the ad creatives and logos you upload as an Advertiser, the screen photo you upload for review (Section 2.2), and an optional profile photo;  
+- **Contacts, photos, or files**, other than the logos you upload as an Advertiser, the pictures and videos you upload to your library in the dashboard, the screen photo you upload for review (Section 2.2), and an optional profile photo;  
 - **Full browsing history** outside the Service.
 
 If a future feature would change this (e.g. optional screenshot of the *ad slot only* for quality assurance), it will be marked **[TBD]** here until counsel and product approve, and users will be notified.
 
-### 2.4 Advertiser creative and campaign data
+### 2.4 Advertiser campaign data
 
-- Uploaded creatives (images/text), slogans, destination URLs;  
-- Campaign budgets, targeting preferences (as offered), schedules;  
+- The campaign's name, website address, and verified domain;  
+- Each listing's logo, name, and tagline;  
+- Pictures and videos you upload to your library in the dashboard;  
+- Slot bookings;  
 - Review notes and moderation outcomes.
 
 ### 2.5 Payments and payouts
 
-**[to fill in later]**
+**Payments.** You pay for a top-up on a checkout page run by **Stripe**. Your card details go to Stripe, not to us. We keep a record of each top-up: the amount, the time it was paid, Stripe's references for the checkout and the payment, and any refund.
+
+**Payouts.** To be paid, a Distributor opens a Stripe account in their own name through Stripe's hosted onboarding (available in {payoutCountries}). Stripe collects the identity, address, bank account, and any tax details it needs, and holds them under its own privacy policy; we do not receive your bank account number. We keep the Stripe account's ID and country, whether you finished onboarding, and whether Stripe has enabled payouts. For each payout we keep the amount, its value in {payoutCurrency}, the exchange rate and its date, Stripe's reference for the transfer, and the outcome of our review.
+
+**Your wallet.** We keep a record of every movement of money in your wallet: top-ups, slot charges and their refunds, earnings from plays, payouts, and expiries.
 
 ### 2.6 Usage, logs, and support
 
-- IP address, timestamps, browser/user-agent, referrer;  
-- Browser/web-client diagnostic or error logs;  
+- For each signed-in session: the IP address and browser user agent, and when the session started and ends;  
+- Server request logs (the address requested, the time, and the result), kept by us and our hosting provider — **[TBD: confirm how long Railway keeps request logs, and whether they hold IP addresses]**;  
 - Support tickets, feedback you send through the dashboard, and correspondence;  
 - Cookies and similar technologies (see Section 5).
 
 ### 2.7 Aggregated / de-identified data
 
-We may generate aggregate statistics (e.g. total impressions by creative category) that do not identify you.
+We produce totals that do not identify you, such as the number of paid plays across the network and the number of screens online, which the website shows.
 
 ### 2.8 People who scan a code on a screen
 
@@ -108,7 +112,7 @@ Anyone who can see a screen may scan the code shown with an ad. No account is ne
 - When you scan, your phone sends a request to our servers, and we redirect you to the Advertiser’s website;  
 - We use your phone’s IP address briefly to limit abuse (rate limiting). We do not store it in our database — **[TBD: confirm whether hosting-provider request logs keep IP addresses, and for how long]**;  
 - We record that the ad was scanned and when. We do not record who scanned it;  
-- A code on a Distributor Op’s own promotion links directly to their website and does not pass through our servers;  
+- A code on a Distributor’s own promotion links directly to their website and does not pass through our servers;  
 - The destination website has its own privacy practices (see Section 12).
 
 ---
@@ -117,9 +121,9 @@ Anyone who can see a screen may scan the code shown with an ad. No account is ne
 
 We use information to:
 
-- Provide, operate, and improve the Service (match ads to eligible browser sessions / web players, measure delivery, show dashboards);  
-- Process payments and payouts — **[to fill in later]**;  
-- Review creatives against the Ads Policy, and review screens before approval;  
+- Provide, operate, and improve the Service (send listings to screens, count plays and scans, show dashboards);  
+- Process payments, refunds, and payouts through Stripe, keep the records of your wallet, and review payout requests for fraud;  
+- Review listings against the Ads Policy, and review screens before approval;  
 - Detect fraud, invalid traffic, abuse, and security incidents;  
 - Communicate service, billing, and policy notices;  
 - Comply with law and enforce Terms;  
@@ -132,21 +136,16 @@ We use information to:
 
 ## 4. Ads targeting and reporting
 
-- **Targeting:** Campaigns may use Advertiser-selected criteria (e.g. categories, geo if enabled, browser/session eligibility). We do **not** sell personal profiles of Distributor Ops to third-party data brokers as a product offering. Broader behavioral advertising across the open web is **[TBD: whether offered; default draft assumes limited / contextual / eligibility-based targeting unless product expands]**.  
-- **Reporting:** Advertisers typically receive **aggregate** metrics (impressions, spend, delivery). We avoid sharing Distributor Ops’ personal identity with Advertisers unless needed for fraud investigation or legal process — **[TBD: confirm reporting granularity]**.
+- **No targeting of people.** A slot plays on every approved screen in the network. The only filters are the ones each Distributor sets on their own screens (excluded terms and vetoed listings). We do not build profiles of viewers or members, and we do not sell personal data.  
+- **Reporting:** Advertisers see **daily totals** of their plays and scans. They do not see which screens played their listings or who owns them, unless we must share that to investigate fraud or under legal process. Distributors see daily totals of the plays on their screens, and the listings that may play there, so that they can veto one.
 
 ---
 
 ## 5. Cookies and similar technologies
 
-Our sites and dashboards may use cookies or local storage for:
+We use only the cookies and browser storage the Service needs to work: a sign-in cookie, and browser storage for your settings in the dashboard and on each screen. We use no analytics or advertising cookies. Our **Cookie Policy** lists them.
 
-- Session/authentication;  
-- Preferences;  
-- Analytics — **[TBD: analytics tools]**;  
-- Security.
-
-**[TBD: cookie banner / consent mechanism if required for target markets.]** You can control cookies via browser settings; some features may not work without essential cookies.
+**[TBD: counsel to confirm that no cookie banner is needed, given that only essential cookies are used.]** You can control cookies in your browser settings; you cannot sign in without the sign-in cookie.
 
 ---
 
@@ -154,9 +153,9 @@ Our sites and dashboards may use cookies or local storage for:
 
 We may share information with:
 
-- **Service providers / sub-processors** (hosting, email, file storage, sign-in, weather, analytics, fraud tools) under contracts — **[TBD: list or link sub-processor list]**. Payment and payout providers: **[to fill in later]**;  
+- **Service providers / sub-processors** under contracts: **Stripe** (payments, refunds, and payouts); **Railway** (application hosting and database, Singapore region); **Vercel** (website and dashboard hosting); **Cloudflare R2** (file storage); **Resend** (email); **Google** (optional sign-in); and **Open-Meteo** (weather, called by the screen). We use no analytics or advertising-tracking tools. **[TBD: counsel to confirm controller or processor role for each]**;  
 - **Advertisers** — aggregate campaign results; limited data if needed for dispute/fraud;  
-- **Distributor Ops** — ads and campaign metadata needed to display creatives in the browser / web player;  
+- **Distributors** — the listings that may play on their screens (logo, name, tagline, and website address), so that they can see what their screens show and veto a listing;  
 - **Professional advisers** (lawyers, accountants) under confidentiality;  
 - **Authorities** when required by law or to protect rights, safety, and security;  
 - **Business transfers** (merger, acquisition, reorganization) with notice where required.
@@ -173,7 +172,7 @@ We retain information for as long as needed for the purposes above, including:
 - Transaction and earnings records for tax/audit — **[TBD: years]**;  
 - Logs for security — **[TBD: log retention]**;  
 - Screen photos and screen review records — **[TBD: retention period]**;  
-- Creatives as needed for campaigns and dispute history.
+- Listings and logos as needed for campaigns and dispute history.
 
 We then delete or de-identify when no longer needed, subject to legal holds.
 
@@ -187,7 +186,7 @@ We use administrative, technical, and organizational measures appropriate to the
 
 ## 9. International transfers
 
-Praxor is based in **Malaysia**. Data may be processed in Malaysia and in other countries where our providers operate — **[TBD: list primary hosting regions / transfer safeguards]**. Where required, we will use appropriate contractual or other safeguards — **[TBD: PDPA transfer compliance steps for counsel]**. For transfers of personal data subject to the GDPR, see Section 13.3.
+Praxor is based in **Malaysia**. Our application and database run in **Singapore** (Railway). Our websites are served from Vercel's global network. Files are stored with Cloudflare R2 — **[TBD: confirm the bucket's location]**. Email is sent through Resend, and payments through Stripe; both process data in the United States and other countries. Where required, we will use appropriate contractual or other safeguards — **[TBD: PDPA transfer compliance steps for counsel]**. For transfers of personal data subject to the GDPR, see Section 13.3.
 
 ---
 
@@ -235,8 +234,8 @@ This section applies when the EU General Data Protection Regulation or the UK GD
 |---|---|
 | Create and run your account; provide dashboards | Performance of a contract (Art. 6(1)(b)) |
 | Serve approved ads to screens, measure delivery, and record scans | Performance of a contract (Art. 6(1)(b)) |
-| Review creatives and screens before approval | Performance of a contract (Art. 6(1)(b)); legitimate interests in a safe and lawful network (Art. 6(1)(f)) |
-| Process payments and payouts | **[to fill in later]** |
+| Review listings and screens before approval | Performance of a contract (Art. 6(1)(b)); legitimate interests in a safe and lawful network (Art. 6(1)(f)) |
+| Process payments, refunds, and payouts | Performance of a contract (Art. 6(1)(b)); keeping financial records: legal obligation (Art. 6(1)(c)); reviewing payout requests for fraud: legitimate interests (Art. 6(1)(f)) |
 | Detect fraud, invalid traffic, abuse, and security incidents, including rate limiting of scans | Legitimate interests in protecting the Service and its users (Art. 6(1)(f)) |
 | Send service, security, and policy notices | Performance of a contract (Art. 6(1)(b)); legitimate interests (Art. 6(1)(f)) |
 | Comply with law and enforce the Terms | Legal obligation (Art. 6(1)(c)); legitimate interests (Art. 6(1)(f)) |
@@ -263,7 +262,7 @@ Subject to the conditions and exceptions in the GDPR, you have the right to:
 - **Withdraw consent** — at any time, where processing is based on consent (Art. 7(3));  
 - **Complain** — lodge a complaint with a supervisory authority, in particular in the country where you live or work, or where you believe the infringement took place (Art. 77). In the UK, this is the Information Commissioner’s Office (ICO).
 
-**Automated decisions:** We do not make decisions based solely on automated processing that produce legal effects concerning you or similarly significantly affect you (Art. 22). A person reviews creatives and screens before approval. **[TBD: counsel to confirm once the fraud-review and payout rules are final.]**
+**Automated decisions:** We do not make decisions based solely on automated processing that produce legal effects concerning you or similarly significantly affect you (Art. 22). A person reviews listings and screens before approval. **[TBD: counsel to confirm once the fraud-review and payout rules are final.]**
 
 ### 13.3 International transfers
 
@@ -283,13 +282,13 @@ This section applies to residents of California (“**consumers**”). It adds t
 
 ### 14.1 Personal information we collect
 
-In the 12 months before the “Last updated” date, we collected the categories of personal information below. We collect it from you, from the screens you register, from your browser or device, from phones that scan a code, and from a sign-in provider if you choose one. Sources for payments and payouts: **[to fill in later]**.
+In the 12 months before the “Last updated” date, we collected the categories of personal information below. We collect it from you, from the screens you register, from your browser or device, from phones that scan a code, and from a sign-in provider if you choose one. For payments and payouts, we also receive information from Stripe.
 
 | Category | Examples | Why we collect it | Disclosed to |
 |---|---|---|---|
 | Identifiers | Name, email address, account ID, IP address, screen pairing code and access key | Provide the Service; security and fraud prevention; communications | Service providers (hosting, email, sign-in) |
-| Customer records (Cal. Civ. Code § 1798.80(e)) | Name and email address; payment and payout details **[to fill in later]** | Provide the Service; payments and payouts **[to fill in later]** | Service providers |
-| Commercial information | Campaigns, listings, and campaign settings; purchase records **[to fill in later]** | Provide the Service | Service providers (hosting) |
+| Customer records (Cal. Civ. Code § 1798.80(e)) | Name and email address; top-up and payout records, Stripe account ID and status (Section 2.5) | Provide the Service; payments, refunds, and payouts | Service providers (hosting); Stripe |
+| Commercial information | Campaigns, listings, and campaign settings; top-ups, slot bookings, and refunds | Provide the Service; payments and refunds | Service providers (hosting); Stripe |
 | Internet or other electronic network activity | Login sessions (IP address, browser user agent), screen reports and last-report times, network prefixes, delivery and scan records | Provide and secure the Service; fraud prevention | Service providers (hosting) |
 | Geolocation data | Screen location as entered; screen coordinates for the weather display (kept on the screen and sent to the weather service) | Screen review; weather display; fraud prevention | Service providers (hosting); weather service **[TBD: counsel to confirm its status]** |
 | Audio, electronic, visual, or similar information | Screen photos, profile photos, logos | Screen review; provide the Service | Service providers (file storage, hosting) |
@@ -301,7 +300,7 @@ We use sensitive personal information only for purposes the CCPA permits, such a
 
 ### 14.2 Sale and sharing
 
-We do not sell personal information, and we do not share it for cross-context behavioral advertising. We have no actual knowledge that we sell or share the personal information of consumers under 16. **[TBD: counsel to confirm once analytics tools and payment providers are chosen.]**
+We do not sell personal information, and we do not share it for cross-context behavioral advertising. We have no actual knowledge that we sell or share the personal information of consumers under 16. We use no analytics tools, and our payment provider is Stripe. **[TBD: counsel to confirm.]**
 
 We treat a Global Privacy Control (GPC) signal from your browser as a valid request to opt out of sale and sharing.
 
