@@ -43,7 +43,7 @@ Update `siteUrl` in `packages/config/src/project.ts`.
 ## Gotchas
 - Dev server runs on port 4321: `pnpm --filter @repo/web dev`
 - `landing.config.json` is validated with zod when a page imports it. A hand edit outside the bounds in `src/lib/landing/config.ts` fails the build on purpose
-- The fixed ticker at the foot of every page (`src/components/landing/Ticker.tsx`, set in Inter Display from `src/assets/fonts`) follows `footCrawl` in the landing config, and `BaseLayout` reserves its height on `body[data-crawl]`. A page passes `crawl={false}` to opt out. It carries the live play total through `src/lib/play-count.ts`; the ad crawl (`Crawl.tsx`) now lives only inside the drawn set
+- The fixed ticker at the foot of every page (`src/components/landing/Ticker.tsx`, set in Inter Display from `src/assets/fonts`) follows `footCrawl` in the landing config, and `BaseLayout` reserves its height on `body[data-crawl]`. A page passes `crawl={false}` to opt out. It carries the live network figures (paid plays, screens online) from the public `GET /stats/network` through `src/lib/network-stats.ts`, one shared poller every 30 seconds, paused while the tab is hidden; the ad crawl (`Crawl.tsx`) now lives only inside the drawn set
 - Type-check with `astro check`, not `tsc`
 - OG image generation (`src/pages/og/[slug].png.ts`) fetches fonts from jsDelivr at build time — offline builds fail; swap to `fs.readFileSync` for local testing
 - React components render static HTML by default. Add a `client:*` directive in the `.astro` file only when browser-side behavior is required; CSS-only interactions do not need hydration.

@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import type * as z from "zod/v4";
 import type { AppVariables } from "../../lib/context";
-import { getNetworkPlays, getStatsOverview } from "./stats.service";
+import { getNetworkStats, getStatsOverview } from "./stats.service";
 
 export const statsRouter = new Hono<{ Variables: AppVariables }>();
 
@@ -15,6 +15,6 @@ statsRouter.get("/overview", async (c) => {
 });
 
 statsRouter.get("/network", async (c) => {
-  const plays = await getNetworkPlays();
-  return c.json(networkStatsOutput.parse({ plays } satisfies z.input<typeof networkStatsOutput>));
+  const result = await getNetworkStats();
+  return c.json(networkStatsOutput.parse(result satisfies z.input<typeof networkStatsOutput>));
 });

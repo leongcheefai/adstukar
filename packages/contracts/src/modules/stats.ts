@@ -34,9 +34,12 @@ export const statsOverviewOutput = z.object({
 export type StatsDay = z.output<typeof statsDayContract>;
 export type StatsOverview = z.output<typeof statsOverviewOutput>;
 
-/** Paid plays that finished their dwell. Public: the marketing site prints it. */
+/** The network's live figures. Public: the marketing site prints them. */
 export const networkStatsOutput = z.object({
+  /** Paid plays that finished their dwell, all time. */
   plays: z.number().int().nonnegative(),
+  /** Approved screens that reported in the last few minutes. */
+  screensOnline: z.number().int().nonnegative(),
 });
 
 export type NetworkStats = z.output<typeof networkStatsOutput>;
