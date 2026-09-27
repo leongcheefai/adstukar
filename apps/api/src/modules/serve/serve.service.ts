@@ -171,13 +171,13 @@ interface DeviceFilters {
   vetoed: Set<string>;
 }
 
-async function loadFilters(deviceId: string): Promise<DeviceFilters> {
+async function loadFilters(deviceId: string, runner: Tx | typeof db = db): Promise<DeviceFilters> {
   const [terms, vetoes] = await Promise.all([
-    db
+    runner
       .select({ phrase: schema.excludedTerm.phrase })
       .from(schema.excludedTerm)
       .where(eq(schema.excludedTerm.deviceId, deviceId)),
-    db
+    runner
       .select({ listingId: schema.vetoedListing.listingId })
       .from(schema.vetoedListing)
       .where(eq(schema.vetoedListing.deviceId, deviceId)),
@@ -453,6 +453,9 @@ export async function recordReport(report: PlayReport): Promise<{ counted: boole
     // cap, or on a slot that ended between serve and report, the play still
     // showed and still counts; it just pays nothing.
     if (!listing || !campaign) return { counted: true };
+    // The filters are read again here, not only at serve: a cached batch outlives
+    // a veto by hours, and the distributor refused the creative when they said so.
+    const filters = await loadFilters(device.id, tx);
     const pays = playPays({
       house: play.house,
       paidToday: today.paid,
@@ -463,6 +466,9 @@ export async function recordReport(report: PlayReport): Promise<{ counted: boole
       listingState: listing.state,
       campaignState: campaign.state,
       verifiedAt: campaign.verifiedAt,
+      refusedByDistributor:
+        filters.vetoed.has(listing.id) ||
+        matchesExcludedTerm(campaign.name, listing.tagline, filters.phrases),
     });
     if (!pays) return { counted: true };
 

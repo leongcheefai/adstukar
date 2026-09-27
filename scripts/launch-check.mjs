@@ -118,6 +118,26 @@ function checkCompleteGroup(env, label, names) {
   return [`${label} is partially configured; missing ${missing.join(", ")}.`];
 }
 
+/**
+ * Money enters and leaves through Stripe, a password reset and an account
+ * deletion arrive by email, and a logo and a screen photo live in storage. The
+ * API boots without them, so only this check stops a launch that has none.
+ */
+const STRIPE_VARS = ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "STRIPE_CONNECT_WEBHOOK_SECRET"];
+
+function checkRequiredGroup(env, label, names) {
+  const missing = names.filter((name) => !env[name]);
+  if (missing.length === 0) return [];
+  return [`${label} is required in production; missing ${missing.join(", ")}.`];
+}
+
+/** A test key takes no real card and pays no real bank. */
+function checkLiveStripeKey(env) {
+  const key = env.STRIPE_SECRET_KEY;
+  if (!key || /^(sk|rk)_live_/.test(key)) return [];
+  return ["STRIPE_SECRET_KEY must be a live key (sk_live_ or rk_live_)."];
+}
+
 function checkMatchingUrls(env, source, targets) {
   if (!isProductionUrl(env[source])) return [];
   return targets
@@ -236,8 +256,10 @@ function checkEnvironment(root, envFile, project) {
     ...checkMatchingUrls(env, "APP_URL", ["PUBLIC_APP_URL"]),
     ...checkMatchingUrls(env, "WEB_URL", ["VITE_WEB_URL"]),
     ...checkCompleteGroup(env, "Google OAuth", ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"]),
-    ...checkCompleteGroup(env, "Stripe", ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET"]),
-    ...checkCompleteGroup(env, "S3/R2", [
+    ...checkRequiredGroup(env, "Stripe", STRIPE_VARS),
+    ...checkLiveStripeKey(env),
+    ...checkRequiredGroup(env, "Email (Resend)", ["RESEND_API_KEY"]),
+    ...checkRequiredGroup(env, "S3/R2", [
       "S3_BUCKET",
       "S3_ACCESS_KEY_ID",
       "S3_SECRET_ACCESS_KEY",

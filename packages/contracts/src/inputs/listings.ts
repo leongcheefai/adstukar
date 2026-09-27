@@ -1,21 +1,21 @@
 import { economy } from "@repo/config/economy";
 import { OWNER_LISTING_STATES } from "@repo/db/enums";
 import * as z from "zod/v4";
-import { httpUrl } from "./campaigns";
+import { httpsUrl } from "./campaigns";
 
 const tagline = z.string().trim().min(1).max(economy.taglineMaxLength);
 
 export const createListingInput = z.object({
   campaignId: z.string().min(1),
   tagline,
-  logoUrl: httpUrl.nullable().optional(),
+  logoUrl: httpsUrl.nullable().optional(),
 });
 
 // `state` takes only the two an advertiser owns. A person reviews the creative,
 // so `pending`, `rejected` and `archived` are never offered here.
 export const updateListingInput = z.object({
   tagline: tagline.optional(),
-  logoUrl: httpUrl.nullable().optional(),
+  logoUrl: httpsUrl.nullable().optional(),
   state: z.enum(OWNER_LISTING_STATES).optional(),
 });
 

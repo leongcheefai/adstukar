@@ -2,6 +2,9 @@ import { earnPerPlay, economy } from "@repo/config/economy";
 import { perThousandPlays, slotOffer, usd, usdCents } from "@repo/config/money";
 import { project } from "@repo/config/project";
 
+/** How long a screen may keep showing a creative from a batch it already holds. */
+const cachedHours = economy.loop.playTtlMinutes / 60;
+
 export interface FaqEntry {
   question: string;
   answer: string;
@@ -55,7 +58,7 @@ export const FAQ_GROUPS: FaqGroup[] = [
       },
       {
         question: "Can I refuse a listing?",
-        answer: `Yes, two ways. Add up to ${economy.excludedTerms.max} excluded terms, and any listing whose name or tagline contains one never reaches your screen. Or veto a listing you have seen, and that one creative stops at once. Neither goes through a review.`,
+        answer: `Yes, two ways. Add up to ${economy.excludedTerms.max} excluded terms, and any listing whose name or tagline contains one never reaches your screen. Or veto a listing you have seen, and that one creative stops earning at once. A screen that already holds it in its offline batch may still show it for up to ${cachedHours} hours. Neither goes through a review.`,
       },
       {
         question: "What plays when no advertiser is eligible?",
@@ -96,8 +99,7 @@ export const FAQ_GROUPS: FaqGroup[] = [
       },
       {
         question: "How do I remove a listing?",
-        answer:
-          "Open the campaign in the dashboard and archive the listing. It stops playing at once, and the slot goes back to the ring. The row itself stays, because your wallet history references it.",
+        answer: `Open the campaign in the dashboard and archive the listing. No screen is sent it again, and the slot goes back to the ring. A screen that already holds it in its offline batch may still show it for up to ${cachedHours} hours. The row itself stays, because your wallet history references it.`,
       },
       {
         question: "Can I get a refund?",
@@ -112,11 +114,11 @@ export const FAQ_GROUPS: FaqGroup[] = [
     items: [
       {
         question: "What currency does the wallet hold?",
-        answer: `US dollars. Money comes in as a top-up and goes out as a payout. Inside ${project.name}, every figure is in US dollars.`,
+        answer: `US dollars. Money comes in as a top-up and goes out as a payout. Inside ${project.name}, every figure is in US dollars. A payout reaches your bank in ${economy.payout.paidIn.currency}, converted at Bank Negara Malaysia's rate on the day it is paid.`,
       },
       {
         question: "When can I cash out?",
-        answer: `A play stays pending for ${economy.settlementDelayHours} hours, then it settles. Cash-out is not open yet. When it opens, settled earnings wait out a ${economy.payout.holdDays}-day hold and come out from ${usd(economy.payout.minimum)} up. An admin reviews each request and pays by hand.`,
+        answer: `A play stays pending for ${economy.settlementDelayHours} hours, then it settles. Settled earnings wait out a ${economy.payout.holdDays}-day hold, then cash out from ${usd(economy.payout.minimum)} up. Connect a Stripe account from the Wallet page first; Stripe pays bank accounts in Malaysia only. An admin reviews each request, and Stripe sends the money to your bank.`,
       },
       {
         question: "Who pays a screen?",
@@ -124,7 +126,7 @@ export const FAQ_GROUPS: FaqGroup[] = [
       },
       {
         question: "Does my balance expire?",
-        answer: `Earned money expires ${economy.expiryMonths} months after it settles. Money you added never expires.`,
+        answer: `Earned money expires ${economy.expiryMonths} months after it settles, so cash it out before then. Money you added never expires.`,
       },
     ],
   },

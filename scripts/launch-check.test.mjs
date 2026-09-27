@@ -45,6 +45,14 @@ function createReadyFixture() {
       "VITE_WEB_URL=https://acme.example",
       "PUBLIC_APP_URL=https://app.acme.example",
       "PUBLIC_API_URL=https://api.acme.example",
+      "STRIPE_SECRET_KEY=sk_live_fixture",
+      "STRIPE_WEBHOOK_SECRET=whsec_fixture",
+      "STRIPE_CONNECT_WEBHOOK_SECRET=whsec_connect_fixture",
+      "RESEND_API_KEY=re_fixture",
+      "S3_BUCKET=acme",
+      "S3_ACCESS_KEY_ID=key",
+      "S3_SECRET_ACCESS_KEY=secret",
+      "S3_PUBLIC_URL=https://files.acme.example",
       "",
     ].join("\n"),
   );
@@ -153,14 +161,14 @@ test("an app on the landing host, an API on another site, and no VITE_WEB_URL bl
   assert.match(output, /BETTER_AUTH_URL must be on the same site as APP_URL \(acme\.example\)/);
 });
 
-test("a partially configured integration blocks launch without exposing secrets", (t) => {
+test("a missing Stripe secret blocks launch without exposing secrets", (t) => {
   const root = createReadyFixture();
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const envPath = join(root, ".env.production");
-  writeFileSync(
-    envPath,
-    `${readFileSync(envPath, "utf8")}STRIPE_SECRET_KEY=sk_live_super-secret-value\n`,
-  );
+  const env = readFileSync(envPath, "utf8")
+    .replace("sk_live_fixture", "sk_live_super-secret-value")
+    .replace("STRIPE_WEBHOOK_SECRET=whsec_fixture\n", "");
+  writeFileSync(envPath, env);
 
   const result = spawnSync(process.execPath, [scriptPath, "--env", ".env.production"], {
     cwd: root,
@@ -169,9 +177,24 @@ test("a partially configured integration blocks launch without exposing secrets"
   const output = result.stdout + result.stderr;
 
   assert.equal(result.status, 1);
-  assert.match(output, /Stripe is partially configured/);
+  assert.match(output, /Stripe is required in production/);
   assert.match(output, /STRIPE_WEBHOOK_SECRET/);
   assert.doesNotMatch(output, /sk_live_super-secret-value/);
+});
+
+test("a Stripe test key blocks launch", (t) => {
+  const root = createReadyFixture();
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const envPath = join(root, ".env.production");
+  writeFileSync(envPath, readFileSync(envPath, "utf8").replace("sk_live_fixture", "sk_test_x"));
+
+  const result = spawnSync(process.execPath, [scriptPath, "--env", ".env.production"], {
+    cwd: root,
+    encoding: "utf8",
+  });
+
+  assert.equal(result.status, 1);
+  assert.match(result.stdout + result.stderr, /STRIPE_SECRET_KEY must be a live key/);
 });
 
 test("a local database blocks launch", (t) => {
@@ -194,10 +217,11 @@ test("all multi-value integrations reject partial configuration", (t) => {
   const root = createReadyFixture();
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const envPath = join(root, ".env.production");
-  writeFileSync(
-    envPath,
-    `${readFileSync(envPath, "utf8")}GOOGLE_CLIENT_ID=client-id\nS3_BUCKET=avatars\nGITHUB_OWNER=acme\n`,
+  const env = readFileSync(envPath, "utf8").replace(
+    "S3_PUBLIC_URL=https://files.acme.example\n",
+    "",
   );
+  writeFileSync(envPath, `${env}GOOGLE_CLIENT_ID=client-id\nGITHUB_OWNER=acme\n`);
 
   const result = spawnSync(process.execPath, [scriptPath, "--env", ".env.production"], {
     cwd: root,
@@ -207,7 +231,7 @@ test("all multi-value integrations reject partial configuration", (t) => {
 
   assert.equal(result.status, 1);
   assert.match(output, /Google OAuth is partially configured/);
-  assert.match(output, /S3\/R2 is partially configured/);
+  assert.match(output, /S3\/R2 is required in production; missing S3_PUBLIC_URL/);
   assert.match(output, /GitHub feedback is partially configured/);
 });
 

@@ -6,18 +6,22 @@
  * enable a button and to label a field before the request goes out.
  */
 
-/** Accepts "craftlog.app" as readily as the full URL. */
+/**
+ * Accepts "craftlog.app" as readily as the full URL. A campaign links to HTTPS
+ * only (the Ads Policy), so a typed `http://` is upgraded rather than refused.
+ */
 export function normalizeUrl(value: string): string {
   const trimmed = value.trim();
   if (!trimmed) return "";
-  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  if (/^https:\/\//i.test(trimmed)) return trimmed;
+  if (/^http:\/\//i.test(trimmed)) return `https://${trimmed.slice("http://".length)}`;
   return `https://${trimmed}`;
 }
 
 export function isProbablyUrl(value: string): boolean {
   try {
     const parsed = new URL(value);
-    return parsed.protocol === "https:" || parsed.protocol === "http:";
+    return parsed.protocol === "https:";
   } catch {
     return false;
   }

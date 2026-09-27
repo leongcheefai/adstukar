@@ -1,25 +1,26 @@
 import * as z from "zod/v4";
 
-export const httpUrl = z
+/** A link a screen or a viewer's phone follows. The Ads Policy asks for HTTPS. */
+export const httpsUrl = z
   .string()
   .trim()
   .url()
   .max(2048)
-  .refine((v) => /^https?:\/\//i.test(v), { message: "URL must start with http:// or https://" });
+  .refine((v) => /^https:\/\//i.test(v), { message: "URL must start with https://" });
 
 /** What a campaign is called. A slot booking names one too, so the rule lives once. */
 export const campaignName = z.string().trim().min(1).max(60);
 
 export const createCampaignInput = z.object({
   name: campaignName,
-  url: httpUrl,
+  url: httpsUrl,
 });
 
 // `state` takes only the two an advertiser owns. `draft` is where a campaign
 // starts and `archived` is what the delete route writes, so neither is offered.
 export const updateCampaignInput = z.object({
   name: campaignName.optional(),
-  url: httpUrl.optional(),
+  url: httpsUrl.optional(),
   state: z.enum(["active", "paused"]).optional(),
 });
 

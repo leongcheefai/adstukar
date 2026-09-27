@@ -1,4 +1,5 @@
-import type { MeHasPasswordResponse } from "@repo/contracts/types";
+import { project } from "@repo/config/project";
+import type { MeClosureResponse, MeHasPasswordResponse } from "@repo/contracts/types";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -32,19 +33,32 @@ export function DangerSection() {
     },
   });
 
+  // An account that moved money or played closes through support, never here:
+  // the ledger keeps its rows. The API refuses the delete too; this only says so first.
+  const closureQuery = useQuery({
+    queryKey: ["me", "closure"],
+    queryFn: async () => {
+      const res = await fetch(`${env.VITE_API_URL}/me/closure`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to check account");
+      return res.json() as Promise<MeClosureResponse>;
+    },
+  });
+  const closable = closureQuery.data?.closable === true;
+
   const deleteMutation = useMutation({
     mutationFn: async (args: { password?: string; callbackURL?: string }) => {
       const result = await authClient.deleteUser(args);
       if (result.error) throw new Error(result.error.message ?? "Failed to delete account");
+      return result.data;
     },
-    onSuccess: async () => {
-      const hasPassword = hasPasswordQuery.data?.hasPassword;
-      if (hasPassword) {
-        setOpen(false);
+    onSuccess: async (data) => {
+      setOpen(false);
+      // With a verification sender set, even a correct password only sends the
+      // email; the account goes when the member opens the link.
+      if (data?.message === "User deleted") {
         await signOut();
         navigate("/login");
       } else {
-        setOpen(false);
         toast.success("Confirmation email sent");
       }
     },
@@ -52,10 +66,12 @@ export function DangerSection() {
   });
 
   async function handleDelete() {
+    // The emailed link opens on the API, so the way back must name the app's origin.
+    const callbackURL = `${window.location.origin}/login`;
     if (hasPasswordQuery.data?.hasPassword) {
-      await deleteMutation.mutateAsync({ password });
+      await deleteMutation.mutateAsync({ password, callbackURL });
     } else {
-      await deleteMutation.mutateAsync({ callbackURL: "/login" });
+      await deleteMutation.mutateAsync({ callbackURL });
     }
   }
 
@@ -64,10 +80,12 @@ export function DangerSection() {
       <div>
         <p className="text-sm font-medium">Delete account</p>
         <p className="text-xs text-muted-foreground">
-          Permanently delete your account and all associated data.
+          {closureQuery.data && !closable
+            ? `Your account has money or play history, so it cannot be deleted here. Email ${project.email.support} to close it.`
+            : "Permanently delete your account and your profile."}
         </p>
       </div>
-      <Button variant="destructive" onClick={() => setOpen(true)}>
+      <Button variant="destructive" onClick={() => setOpen(true)} disabled={!closable}>
         Delete account
       </Button>
       <AlertDialog
@@ -81,7 +99,8 @@ export function DangerSection() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete account?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action is permanent. All your data will be deleted and cannot be recovered.
+              This action is permanent. Your account, campaigns and screens will be deleted and
+              cannot be recovered.
             </AlertDialogDescription>
           </AlertDialogHeader>
 
@@ -99,6 +118,11 @@ export function DangerSection() {
           ) : (
             <p className="text-sm text-muted-foreground">
               We will email you a link to confirm account deletion.
+            </p>
+          )}
+          {hasPasswordQuery.data?.hasPassword && (
+            <p className="text-sm text-muted-foreground">
+              We will then email you a link to confirm.
             </p>
           )}
 

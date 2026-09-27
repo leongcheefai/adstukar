@@ -21,6 +21,10 @@ export const meUserOutput = toWire(
 
 export const meHasPasswordOutput = z.object({ hasPassword: z.boolean() });
 
+/** Whether the member may delete their own account, or must ask support. */
+export const meClosureOutput = z.object({ closable: z.boolean() });
+
 export type MeUserResponse = z.output<typeof meUserOutput>;
 export type MeUser = MeUserResponse["user"];
 export type MeHasPasswordResponse = z.output<typeof meHasPasswordOutput>;
+export type MeClosureResponse = z.output<typeof meClosureOutput>;

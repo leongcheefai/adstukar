@@ -1,5 +1,6 @@
 import { useSearchParams } from "react-router";
 import { ForgotPasswordPage } from "../../routes/forgot-password";
+import { ResetPasswordPage } from "../../routes/reset-password";
 import { AuthPage } from "../auth/auth-page";
 
 export function BootAuth() {
@@ -10,6 +11,8 @@ export function BootAuth() {
     <div className="boot-auth">
       {view === "forgot" ? (
         <ForgotPasswordPage embedded />
+      ) : view === "reset" ? (
+        <ResetPasswordPage embedded />
       ) : (
         <AuthPage mode={view === "signup" ? "signup" : "login"} embedded />
       )}

@@ -62,7 +62,7 @@ const ADMIN_SECTIONS: SettingsSection[] = [
     label: "Payouts",
     title: "Payouts",
     description:
-      "Distributors waiting to cash out, oldest first. Read the history behind each one, send the money by hand, then record the reference.",
+      "Distributors waiting to cash out, oldest first. Read the history behind each one, then approve to send a Stripe Transfer in ringgit, or refuse to return the money.",
   },
   {
     id: "topups",

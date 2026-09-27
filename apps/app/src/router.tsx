@@ -14,10 +14,10 @@ const DevComponentsPage = import.meta.env.DEV
 const DevTvEmbedsPage = import.meta.env.DEV ? lazy(() => import("./routes/_dev/tv-embeds")) : null;
 
 /**
- * `/login` and `/signup` become `?auth=` on the front door. Any other query
+ * `/login`, `/signup`, `/forgot-password` and `/reset-password` become `?auth=` on the front door. Any other query
  * rides along, so an OAuth `?error=` from the API reaches the form.
  */
-function AuthRedirect({ view }: { view: "login" | "signup" | "forgot" }) {
+function AuthRedirect({ view }: { view: "login" | "signup" | "forgot" | "reset" }) {
   const { search } = useLocation();
   const params = new URLSearchParams(search);
   params.set("auth", view);
@@ -37,6 +37,8 @@ export function Router() {
           <Route path="login" element={<AuthRedirect view="login" />} />
           <Route path="signup" element={<AuthRedirect view="signup" />} />
           <Route path="forgot-password" element={<AuthRedirect view="forgot" />} />
+          {/* The reset email lands here with `?token=`, which rides along. */}
+          <Route path="reset-password" element={<AuthRedirect view="reset" />} />
         </Route>
         {/* The dashboard is a page of its own, in its own tab: the set opens it
             with `openDashboard`, and keeps playing behind it. */}

@@ -5,7 +5,12 @@ export type { Wire } from "./lib/wire";
 export type { Release } from "./entities/release";
 export type { CreateFeedbackResponse } from "./modules/feedback";
 export type { HealthStatusResponse } from "./modules/health";
-export type { MeHasPasswordResponse, MeUser, MeUserResponse } from "./modules/me";
+export type {
+  MeClosureResponse,
+  MeHasPasswordResponse,
+  MeUser,
+  MeUserResponse,
+} from "./modules/me";
 export type { SyncReleasesResponse } from "./modules/releases";
 export type { PresignAvatarResponse } from "./modules/uploads";
 export type { CreateFeedbackInput, FeedbackType } from "./inputs/feedback";

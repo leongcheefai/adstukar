@@ -15,6 +15,7 @@ import {
 } from "@repo/ui";
 import { useState } from "react";
 import { toast } from "sonner";
+import { env } from "../../lib/env";
 import { useTopUp } from "../../lib/topups";
 
 /**
@@ -102,6 +103,19 @@ export function TopUpDialog({
               `Any whole-cent amount from ${usdCents(rule.minCents)} to ${usdCents(rule.maxCents)}.`}
           </p>
         </div>
+
+        <p className="text-xs text-muted-foreground">
+          By continuing to payment, you agree to the{" "}
+          <a
+            className="font-medium text-foreground underline underline-offset-2"
+            href={`${env.VITE_WEB_URL}/terms`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Terms of Service
+          </a>
+          , including how refunds work.
+        </p>
 
         <DialogFooter>
           <Button type="button" onClick={submit} disabled={buy.isPending || problem !== null}>

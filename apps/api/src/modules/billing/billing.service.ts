@@ -1,13 +1,15 @@
 import { db, schema } from "@repo/db";
 import { serverEnv } from "@repo/env";
+import { eq } from "drizzle-orm";
 import { stripe } from "../../lib/stripe";
 import { applyConnectEvent } from "../payouts/payouts.service";
 import { abandonTopup, recordPaidTopup } from "../topups/topups.service";
 
 /**
  * Stripe's side of a top-up, and of a connected account. Every event is
- * verified against its endpoint's secret and recorded once by id, so a retry
- * from Stripe changes nothing.
+ * verified against its endpoint's secret and recorded by id once its handler
+ * has finished, so a retry of a handled event changes nothing, and a retry of
+ * one that failed runs it again.
  *
  * Two endpoints, because Stripe signs events from connected accounts with a
  * Connect endpoint's own secret. `handleWebhook` takes the platform's events:
@@ -16,20 +18,33 @@ import { abandonTopup, recordPaidTopup } from "../topups/topups.service";
  * a connected account sends (docs/adr/0008).
  */
 
-/** Records the event id. False when this id was already seen. */
-async function firstSight(event: { id: string; type: string }): Promise<boolean> {
-  const deduped = await db
+/** True when an event with this id was already handled. */
+async function alreadyHandled(event: { id: string }): Promise<boolean> {
+  const [row] = await db
+    .select({ id: schema.webhookEvent.id })
+    .from(schema.webhookEvent)
+    .where(eq(schema.webhookEvent.id, event.id))
+    .limit(1);
+  return row !== undefined;
+}
+
+/**
+ * Records the event id after its handler succeeded. Never before: an id saved
+ * ahead of a handler that then threw would make Stripe's retry a no-op, and a
+ * member who paid would never be credited. Every handler is idempotent on its
+ * own key, so two deliveries that race past `alreadyHandled` do no harm.
+ */
+async function markHandled(event: { id: string; type: string }) {
+  await db
     .insert(schema.webhookEvent)
     .values({ id: event.id, type: event.type })
-    .onConflictDoNothing({ target: schema.webhookEvent.id })
-    .returning({ id: schema.webhookEvent.id });
-  return deduped.length > 0;
+    .onConflictDoNothing({ target: schema.webhookEvent.id });
 }
 
 export async function handleWebhook(body: string, signature: string) {
   if (!serverEnv.STRIPE_WEBHOOK_SECRET) throw new Error("STRIPE_WEBHOOK_SECRET not set");
   const event = stripe.webhooks.constructEvent(body, signature, serverEnv.STRIPE_WEBHOOK_SECRET);
-  if (!(await firstSight(event))) return;
+  if (await alreadyHandled(event)) return;
 
   switch (event.type) {
     // The money goes in here, keyed on the payment, so the money and the ledger
@@ -56,6 +71,7 @@ export async function handleWebhook(body: string, signature: string) {
       break;
     }
   }
+  await markHandled(event);
 }
 
 /** Events from connected accounts. Only `account.updated` changes a row. */
@@ -68,6 +84,7 @@ export async function handleConnectWebhook(body: string, signature: string) {
     signature,
     serverEnv.STRIPE_CONNECT_WEBHOOK_SECRET,
   );
-  if (!(await firstSight(event))) return;
+  if (await alreadyHandled(event)) return;
   await applyConnectEvent(event);
+  await markHandled(event);
 }

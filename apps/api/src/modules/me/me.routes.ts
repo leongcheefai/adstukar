@@ -1,4 +1,5 @@
-import { meHasPasswordOutput, meUserOutput } from "@repo/contracts";
+import { accountClosable } from "@repo/auth";
+import { meClosureOutput, meHasPasswordOutput, meUserOutput } from "@repo/contracts";
 import { db } from "@repo/db";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
@@ -24,4 +25,12 @@ meRouter.get("/has-password", async (c) => {
   });
 
   return c.json(meHasPasswordOutput.parse({ hasPassword: account !== undefined }));
+});
+
+/** The dashboard asks before it offers a delete. The auth hook enforces the same rule. */
+meRouter.get("/closure", async (c) => {
+  const user = c.get("user");
+  if (!user) throw new HTTPException(401, { message: "Unauthorized" });
+  const closable = await accountClosable(user.id);
+  return c.json(meClosureOutput.parse({ closable } satisfies z.input<typeof meClosureOutput>));
 });

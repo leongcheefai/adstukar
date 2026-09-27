@@ -23,6 +23,12 @@ export interface PayableInput {
   listingState: ListingState;
   campaignState: CampaignState;
   verifiedAt: Date | null;
+  /**
+   * The distributor vetoed this creative, or excluded a term it carries, after
+   * the batch that holds the play was cut. The screen may still show it until
+   * the batch runs out; it earns nothing from the moment they refused it.
+   */
+  refusedByDistributor: boolean;
 }
 
 /** True when the platform pays the distributor for this play (docs/adr/0010). */
@@ -33,6 +39,7 @@ export function playPays(input: PayableInput): boolean {
   if (input.slotState !== "running") return false;
   if (input.listingState !== "approved") return false;
   if (input.campaignState !== "active") return false;
+  if (input.refusedByDistributor) return false;
   return input.verifiedAt !== null;
 }
 

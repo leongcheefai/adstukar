@@ -45,6 +45,8 @@ export function Weather({ latitude, longitude }: { latitude: number; longitude: 
         {Math.round(reading.temperature)}°
       </span>
       <span className="mt-[1vh] text-[1.8vw] text-white/55">{describeWeather(reading.code)}</span>
+      {/* Open-Meteo's data is CC BY 4.0, which asks for this credit wherever it shows. */}
+      <span className="mt-[0.6vh] text-[0.9vw] text-white/35">Weather data by Open-Meteo.com</span>
     </div>
   );
 }
