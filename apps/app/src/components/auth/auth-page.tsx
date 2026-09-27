@@ -1,7 +1,8 @@
-import { Button, Input, Label, Separator } from "@repo/ui";
+import { Button, Checkbox, Input, Label, Separator } from "@repo/ui";
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { signIn, signUp, useSession } from "../../lib/auth";
+import { env } from "../../lib/env";
 import { safeRedirect } from "../../lib/redirect";
 import "../../styles/capychannel.css";
 import { CapyLockup } from "../capychannel/lockup";
@@ -84,6 +85,24 @@ const COPY = {
   },
 } as const;
 
+const CONSENT_REQUIRED = "Confirm you are 18 or older and agree to the terms.";
+
+/** The two documents a new member accepts. They live on the marketing site. */
+function LegalLinks() {
+  const link = "font-medium text-foreground underline underline-offset-2";
+  return (
+    <>
+      <a className={link} href={`${env.VITE_WEB_URL}/terms`} target="_blank" rel="noreferrer">
+        Terms of Service
+      </a>{" "}
+      and the{" "}
+      <a className={link} href={`${env.VITE_WEB_URL}/privacy`} target="_blank" rel="noreferrer">
+        Privacy Policy
+      </a>
+    </>
+  );
+}
+
 export function AuthPage({
   mode,
   embedded = false,
@@ -103,6 +122,8 @@ export function AuthPage({
     return code ? oauthErrorMessage(code) : "";
   });
   const [loading, setLoading] = useState(false);
+  /** Sign-up only: 18 or older, and the Terms and the Privacy Policy accepted. */
+  const [agreed, setAgreed] = useState(false);
   const { data: session, refetch } = useSession();
   /** The API accepted the credentials. The session hook has not caught up yet. */
   const [accepted, setAccepted] = useState(false);
@@ -117,6 +138,13 @@ export function AuthPage({
 
   function clearError() {
     if (error) setError("");
+  }
+
+  /** A new account needs the box ticked, whichever way it signs up. */
+  function consentMissing(): boolean {
+    if (!isSignup || agreed) return false;
+    setError(CONSENT_REQUIRED);
+    return true;
   }
 
   // The move waits for the session to reach the hook. A `?redirect=` into the
@@ -136,6 +164,7 @@ export function AuthPage({
   }, [search, navigate]);
 
   async function handleGoogle() {
+    if (consentMissing()) return;
     setError("");
     setLoading(true);
     // Better Auth redirects to these exactly as given, from the API's origin. A
@@ -165,6 +194,7 @@ export function AuthPage({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (consentMissing()) return;
     setError("");
     setLoading(true);
     try {
@@ -314,6 +344,28 @@ export function AuthPage({
             </p>
           )}
         </div>
+
+        {isSignup ? (
+          <div className="flex items-start gap-3">
+            <Checkbox
+              id="signup-consent"
+              checked={agreed}
+              onCheckedChange={(value) => {
+                clearError();
+                setAgreed(value === true);
+              }}
+              className="mt-0.5"
+            />
+            <Label htmlFor="signup-consent" className="text-xs font-normal leading-snug">
+              I am 18 or older, and I agree to the <LegalLinks />.
+            </Label>
+          </div>
+        ) : (
+          <p className="text-xs leading-snug text-muted-foreground">
+            A new account made with Google means you are 18 or older and agree to the <LegalLinks />
+            .
+          </p>
+        )}
 
         <p
           id={errorId}
