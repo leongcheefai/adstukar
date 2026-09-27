@@ -1,3 +1,21 @@
+import {
+  cachedPlayHours,
+  dailyPlayCap,
+  earnRate,
+  expiryMonths,
+  holdDays,
+  livePlayMinutes,
+  paidHours,
+  payoutCountries,
+  payoutCurrency,
+  payoutMinimum,
+  refundWindowDays,
+  settlementHours,
+  slotPrice,
+  topupMaximum,
+  topupMinimum,
+} from "../../lib/legal";
+
 # **DRAFT FOR REVIEW — NOT LEGAL ADVICE**
 
 > This document is a working draft prepared for human legal review (Linear KEV-6). It is **not** legal advice, does not create a binding contract by itself until counsel-approved and published, and must be reviewed by qualified counsel before use. Operator: **Praxor Studio** (Malaysia business registration **SA0656426-A**). Product: **CapyChannel**.
@@ -6,7 +24,7 @@
 
 # Terms of Service
 
-**Last updated:** 16 September 2026  
+**Last updated:** 27 September 2026  
 
 **Operator:** Praxor Studio (SA0656426-A)  
 **Product:** CapyChannel  
@@ -56,7 +74,9 @@ The Service is intended primarily for use in connection with lawful advertising 
 
 You must provide accurate registration information and keep it updated. You are responsible for safeguarding credentials and for activity under your account.
 
-We may require identity or tax verification for Advertisers and/or Distributor Ops — **[TBD: KYC / verification requirements and providers]**. Payout verification: **[to fill in later]**.
+We may require identity or tax verification for Advertisers and/or Distributor Ops — **[TBD: KYC / verification requirements and providers]**.
+
+**Payout verification.** Before your first payout you open a Stripe account in your own name through Stripe's hosted onboarding. Stripe checks your identity, address, and bank account, and decides whether payouts to that account are enabled. We cannot pay you until Stripe has enabled them. We may ask for more information when we review a payout request (Section 6).
 
 We reserve the right to suspend or terminate accounts for breach of these Terms, the Ads Policy, suspected or confirmed fraud, abusive or unlawful activity, chargebacks, or legal risk, as set out in Section 14.
 
@@ -72,13 +92,49 @@ You may not: reverse engineer the Service except as permitted by law; scrape or 
 
 ## 5. Measurement and reporting
 
-**[to fill in later]**
+**What a play is.** A **play** is one approved listing shown on an approved screen for its full display time, and reported to us by the CapyChannel screen app. We measure plays from those reports. A play is not proof that a person saw it.
+
+**When a report counts.** A report must reach us while the play is still open: **{livePlayMinutes} minutes** for a play the screen asked for live, or up to **{cachedPlayHours} hours** for a play from the batch a screen keeps for when its network drops. A play whose report arrives later is closed and counts for nothing. A screen reporting late gives the time the play ran; we limit that time to the life of the play.
+
+**When a play earns.** A counted play earns the rate in Section 6 only if, when it is reported:
+
+- the screen is approved;
+- it is among the first **{dailyPlayCap}** plays counted on that screen that day (UTC);
+- it falls within **{paidHours} hours** of the screen's first play that day (UTC);
+- the advertiser's slot is running, and the listing and its campaign are still approved, active, and verified; and
+- the Distributor Op has not vetoed the listing, or excluded a term it contains, on that screen.
+
+A play that fails any of these still counts as shown, and earns nothing.
+
+**Scans.** When a viewer scans the code on a listing, we record the scan and send the viewer to the advertiser's site. A scan earns nothing and costs nothing. We use scans, among other signals, to review payouts (Section 6).
+
+**Our records.** Plays, scans, and earnings are measured by our systems, and our records decide them, except where they are shown to be wrong. **[TBD: counsel to confirm the wording of this clause and a window for disputing a record.]**
+
+**No guarantee.** We do not promise any number of plays, screens, scans, or visits to an advertiser, or any level of earnings to a Distributor Op.
 
 ---
 
 ## 6. Distributor Ops — earnings
 
-**[to fill in later]**
+**Rate.** Each play that earns under Section 5 earns **{earnRate}**, the same on every approved screen. Praxor pays it from what advertisers pay for slots. No fee is taken from it.
+
+**Pending and settled.** An earning is **pending** for **{settlementHours} hours**, then it **settles**. We may cancel a pending earning that did not meet Section 5.
+
+**Hold.** Settled earnings may be withdrawn **{holdDays} days** after they settle. The hold gives us time to review a screen's activity before money leaves.
+
+**Payout requests.** You may request a payout when at least **{payoutMinimum}** of your earnings has served the hold. A request takes the whole amount you can withdraw at that moment, in whole cents, and removes it from your wallet at once. You may have one open request at a time.
+
+**Review.** An administrator reviews each request before it is paid. The review looks at, among other things, how often a screen's plays are scanned, plays outside the venue's stated opening hours, and screens that share an address or a network. We may refuse a request. When we refuse one, the amount returns to your wallet. **[TBD: decide whether, and when, we may cancel settled earnings found to come from fraud or a breach of these Terms. The product does not do this today.]**
+
+**How you are paid.** We pay through Stripe Connect, to the Stripe account you opened under Section 3. Payouts are available only to Stripe accounts in **{payoutCountries}**. Your wallet is in US dollars; we pay in **{payoutCurrency}**, converted at Bank Negara Malaysia's 12:00 middle rate on the day we approve the request. Stripe then pays your bank on its own schedule. Stripe's terms, and any fees Stripe charges your account, apply.
+
+**Expiry.** Settled earnings that you do not withdraw expire **{expiryMonths} months** after they settle.
+
+**Taxes.** You are responsible for any tax on your earnings. **[TBD: counsel on Malaysian income tax, withholding, and e-invoicing obligations for payments to Distributor Ops.]**
+
+**Earnings are not refunded.** Earned money leaves your wallet only as a payout. It cannot be refunded to a card or spent on a slot.
+
+**Changes to the rate.** We may change the rate, the caps, the hold, the minimum, or the expiry. A change applies only to plays counted after it takes effect, and we will give notice under Section 16.
 
 ---
 
@@ -90,7 +146,15 @@ Advertisers submit creatives and campaign settings subject to the **Ads Policy**
 
 ### 7.2 Payments, billing, and refunds
 
-**[to fill in later]**
+**Top-ups.** You pay by adding money to your wallet (a **top-up**) in US dollars, any amount from **{topupMinimum}** to **{topupMaximum}**, by card through Stripe. No top-up carries a bonus. Money you add does not expire, and it cannot be withdrawn as a payout.
+
+**Slots.** One slot costs **{slotPrice}**. The price comes out of your wallet when you book. The slot's term starts when your campaign's domain is verified and your listing is approved, and it runs to its end; a slot cannot be paused. There is no charge per play or per scan.
+
+**Refunds.** The unspent part of a top-up can be refunded within **{refundWindowDays} days** of the payment, less what the card processor kept. The price of a slot goes back to your wallet if you remove the ad before it is approved or it is not approved; once the slot has started, its price is not refunded. The **Refund Policy** sets out the details, and forms part of these Terms.
+
+**Chargebacks.** **[TBD: the rule for a card chargeback, to match the Refund Policy.]**
+
+**Taxes.** **[TBD: whether prices include or exclude Malaysian service tax (SST) or other taxes, and invoicing.]**
 
 ---
 
@@ -131,7 +195,7 @@ Feedback you provide may be used by Praxor without obligation to you.
 
 ## 10. Third-party services
 
-The Service may integrate third-party hosting, email, file storage, analytics, or identity providers — **[TBD: list key processors when selected]**. Payment and payout providers: **[to fill in later]**. Their terms and privacy practices apply to their services. Praxor is not responsible for third-party outages beyond its reasonable control.
+The Service relies on third-party providers, including: **Stripe** (payments, refunds, and payouts); **Railway** (application hosting and database, Singapore region); **Vercel** (website and dashboard hosting); **Cloudflare R2** (file storage); **Resend** (email); **Google** (optional sign-in); and **Open-Meteo** (weather shown on screens). Their terms and privacy practices apply to their services. Praxor is not responsible for third-party outages beyond its reasonable control.
 
 ---
 
@@ -162,7 +226,9 @@ You agree to defend and indemnify Praxor and its personnel against claims, damag
 
 ## 14. Termination
 
-You may stop using the Service and request account closure subject to **[TBD: account closure process]**. Outstanding balances at closure: **[to fill in later]**.
+You may stop using the Service at any time. You may delete your account from the dashboard if it has never moved money and its screens have never played. Otherwise, email **support@capychannel.site** to close it; we keep the records of money that moved, as the law and our accounts require.
+
+**Outstanding balances at closure.** Before we close an account, you may ask for a refund of unspent top-ups still inside the refund window (Refund Policy), and request a payout of earnings that have served the hold and reach the minimum (Section 6). **[TBD: what happens to any balance left after that — for example, bought money past the window, or earnings below the minimum or still on hold.]**
 
 **We reserve the right** to suspend or terminate your account or access to the Service immediately (with or without prior notice) if we reasonably believe you have engaged in fraud, fraudulent traffic, abuse, manipulation of impressions or earnings, material breach of these Terms or the Ads Policy, unlawful activity, chargeback abuse, or other activity that creates legal, security, or financial risk to Praxor, other users, or the public.
 

@@ -1,3 +1,5 @@
+import { payoutCountries, payoutCurrency } from "../../lib/legal";
+
 # **DRAFT FOR REVIEW — NOT LEGAL ADVICE**
 
 > This document is a working draft prepared for human legal review (Linear KEV-6). It is **not** legal advice and must be reviewed by qualified counsel (including for Malaysian Personal Data Protection Act (PDPA) alignment, the EU and UK General Data Protection Regulation (GDPR), the California Consumer Privacy Act (CCPA), and any cross-border transfer rules) before publication. Operator: **Praxor Studio** (SA0656426-A). Product: **CapyChannel**.
@@ -6,7 +8,7 @@
 
 # Privacy Policy
 
-**Last updated:** 16 September 2026  
+**Last updated:** 27 September 2026  
 
 **Operator / Data Controller (working designation):** Praxor Studio (SA0656426-A) — **[TBD: confirm controller vs processor roles for any sub-processors]**  
 **Product:** CapyChannel  
@@ -43,7 +45,7 @@ Depending on your role, we may collect:
 - Login credentials (passwords stored hashed or via auth provider — **[TBD: auth method]**);  
 - A profile photo, if you add one;  
 - If you sign in with Google: the name, email address, and profile photo that Google shares with us — **[TBD: confirm whether Google sign-in is offered at launch]**;  
-- Business registration or tax identifiers when needed for billing/payouts — **[to fill in later]**;  
+- We do not ask for business registration or tax identifiers in the product today. Stripe may collect them for a payout account (Section 2.5);  
 - Role (Advertiser, Distributor Op, or both).
 
 ### 2.2 Browser / session eligibility and operational signals (Distributor Ops)
@@ -88,7 +90,11 @@ If a future feature would change this (e.g. optional screenshot of the *ad slot 
 
 ### 2.5 Payments and payouts
 
-**[to fill in later]**
+**Payments.** You pay for a top-up on a checkout page run by **Stripe**. Your card details go to Stripe, not to us. We keep a record of each top-up: the amount, the time it was paid, Stripe's references for the checkout and the payment, and any refund.
+
+**Payouts.** To be paid, a Distributor Op opens a Stripe account in their own name through Stripe's hosted onboarding (available in {payoutCountries}). Stripe collects the identity, address, bank account, and any tax details it needs, and holds them under its own privacy policy; we do not receive your bank account number. We keep the Stripe account's ID and country, whether you finished onboarding, and whether Stripe has enabled payouts. For each payout we keep the amount, its value in {payoutCurrency}, the exchange rate and its date, Stripe's reference for the transfer, and the outcome of our review.
+
+**Your wallet.** We keep a record of every movement of money in your wallet: top-ups, slot charges and their refunds, earnings from plays, payouts, and expiries.
 
 ### 2.6 Usage, logs, and support
 
@@ -118,7 +124,7 @@ Anyone who can see a screen may scan the code shown with an ad. No account is ne
 We use information to:
 
 - Provide, operate, and improve the Service (match ads to eligible browser sessions / web players, measure delivery, show dashboards);  
-- Process payments and payouts — **[to fill in later]**;  
+- Process payments, refunds, and payouts through Stripe, keep the records of your wallet, and review payout requests for fraud;  
 - Review creatives against the Ads Policy, and review screens before approval;  
 - Detect fraud, invalid traffic, abuse, and security incidents;  
 - Communicate service, billing, and policy notices;  
@@ -154,7 +160,7 @@ Our sites and dashboards may use cookies or local storage for:
 
 We may share information with:
 
-- **Service providers / sub-processors** (hosting, email, file storage, sign-in, weather, analytics, fraud tools) under contracts — **[TBD: list or link sub-processor list]**. Payment and payout providers: **[to fill in later]**;  
+- **Service providers / sub-processors** under contracts: **Stripe** (payments, refunds, and payouts); **Railway** (application hosting and database, Singapore region); **Vercel** (website and dashboard hosting); **Cloudflare R2** (file storage); **Resend** (email); **Google** (optional sign-in); and **Open-Meteo** (weather, called by the screen). We use no analytics or advertising-tracking tools. **[TBD: counsel to confirm controller or processor role for each]**;  
 - **Advertisers** — aggregate campaign results; limited data if needed for dispute/fraud;  
 - **Distributor Ops** — ads and campaign metadata needed to display creatives in the browser / web player;  
 - **Professional advisers** (lawyers, accountants) under confidentiality;  
@@ -236,7 +242,7 @@ This section applies when the EU General Data Protection Regulation or the UK GD
 | Create and run your account; provide dashboards | Performance of a contract (Art. 6(1)(b)) |
 | Serve approved ads to screens, measure delivery, and record scans | Performance of a contract (Art. 6(1)(b)) |
 | Review creatives and screens before approval | Performance of a contract (Art. 6(1)(b)); legitimate interests in a safe and lawful network (Art. 6(1)(f)) |
-| Process payments and payouts | **[to fill in later]** |
+| Process payments, refunds, and payouts | Performance of a contract (Art. 6(1)(b)); keeping financial records: legal obligation (Art. 6(1)(c)); reviewing payout requests for fraud: legitimate interests (Art. 6(1)(f)) |
 | Detect fraud, invalid traffic, abuse, and security incidents, including rate limiting of scans | Legitimate interests in protecting the Service and its users (Art. 6(1)(f)) |
 | Send service, security, and policy notices | Performance of a contract (Art. 6(1)(b)); legitimate interests (Art. 6(1)(f)) |
 | Comply with law and enforce the Terms | Legal obligation (Art. 6(1)(c)); legitimate interests (Art. 6(1)(f)) |
@@ -283,13 +289,13 @@ This section applies to residents of California (“**consumers**”). It adds t
 
 ### 14.1 Personal information we collect
 
-In the 12 months before the “Last updated” date, we collected the categories of personal information below. We collect it from you, from the screens you register, from your browser or device, from phones that scan a code, and from a sign-in provider if you choose one. Sources for payments and payouts: **[to fill in later]**.
+In the 12 months before the “Last updated” date, we collected the categories of personal information below. We collect it from you, from the screens you register, from your browser or device, from phones that scan a code, and from a sign-in provider if you choose one. For payments and payouts, we also receive information from Stripe.
 
 | Category | Examples | Why we collect it | Disclosed to |
 |---|---|---|---|
 | Identifiers | Name, email address, account ID, IP address, screen pairing code and access key | Provide the Service; security and fraud prevention; communications | Service providers (hosting, email, sign-in) |
-| Customer records (Cal. Civ. Code § 1798.80(e)) | Name and email address; payment and payout details **[to fill in later]** | Provide the Service; payments and payouts **[to fill in later]** | Service providers |
-| Commercial information | Campaigns, listings, and campaign settings; purchase records **[to fill in later]** | Provide the Service | Service providers (hosting) |
+| Customer records (Cal. Civ. Code § 1798.80(e)) | Name and email address; top-up and payout records, Stripe account ID and status (Section 2.5) | Provide the Service; payments, refunds, and payouts | Service providers (hosting); Stripe |
+| Commercial information | Campaigns, listings, and campaign settings; top-ups, slot bookings, and refunds | Provide the Service; payments and refunds | Service providers (hosting); Stripe |
 | Internet or other electronic network activity | Login sessions (IP address, browser user agent), screen reports and last-report times, network prefixes, delivery and scan records | Provide and secure the Service; fraud prevention | Service providers (hosting) |
 | Geolocation data | Screen location as entered; screen coordinates for the weather display (kept on the screen and sent to the weather service) | Screen review; weather display; fraud prevention | Service providers (hosting); weather service **[TBD: counsel to confirm its status]** |
 | Audio, electronic, visual, or similar information | Screen photos, profile photos, logos | Screen review; provide the Service | Service providers (file storage, hosting) |
@@ -301,7 +307,7 @@ We use sensitive personal information only for purposes the CCPA permits, such a
 
 ### 14.2 Sale and sharing
 
-We do not sell personal information, and we do not share it for cross-context behavioral advertising. We have no actual knowledge that we sell or share the personal information of consumers under 16. **[TBD: counsel to confirm once analytics tools and payment providers are chosen.]**
+We do not sell personal information, and we do not share it for cross-context behavioral advertising. We have no actual knowledge that we sell or share the personal information of consumers under 16. We use no analytics tools, and our payment provider is Stripe. **[TBD: counsel to confirm.]**
 
 We treat a Global Privacy Control (GPC) signal from your browser as a valid request to opt out of sale and sharing.
 

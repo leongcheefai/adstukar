@@ -80,7 +80,8 @@ export function sitemapRules(webRoot: string) {
     const [, section, id] = path.split("/");
     if (section === "blog") return blog.filter((e) => e.id === id).map((e) => e.file);
     if (section === "help") return help.filter((e) => e.id === id).map((e) => e.file);
-    return [join(src, `content/legal${path}.md`), join(src, `pages${path}.astro`)];
+    // The legal pages quote the economy, so a change to an amount is a change to them.
+    return [join(src, `content/legal${path}.mdx`), join(src, `pages${path}.astro`), economy];
   }
 
   return {

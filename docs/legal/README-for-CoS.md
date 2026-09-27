@@ -8,6 +8,23 @@
 
 ---
 
+## Changes applied (27 Sep 2026)
+
+The wallet and payment system is complete, and Stripe is live. Every **`[to fill in later]`** is now filled from the product code.
+
+| Topic | Change applied in drafts |
+|-------|--------------------------|
+| **Where the drafts live** | `apps/web/src/content/legal/*.mdx`. They are MDX now, so every amount (rate, caps, hold, minimum payout, expiry, top-up bounds, refund window, card fee, slot price) is read from `packages/config/src/economy.ts` — the same source as the FAQ and the product. **A change to an amount there changes the published Terms**, so it needs the notice the Terms promise. |
+| **Refund Policy** | New draft, `refund.mdx`, at `/refund`: top-up refunds (unspent part, window, less the card fee, USD), slot refunds (to the wallet before approval; none once started), how to ask, timing, what is not refunded. |
+| **Terms** | §3 payout verification (Stripe onboarding); §5 measurement (what a play is, when a report counts, when a play earns, scans); §6 earnings (rate, pending, hold, minimum, review, Stripe Connect, Malaysia only, paid in MYR at Bank Negara's rate, expiry, taxes); §7.2 payments (top-ups, slots, refunds); §10 providers; §14 closure and balances. |
+| **Privacy** | §2.1, §2.5 (what we keep about payments and payouts; card and bank details stay with Stripe), §3, §6 sub-processors, §13.1 legal basis, §14.1 categories and sources. |
+| **Ads Policy** | §2, §6, §7 (slot refunds on rejection or removal), §8 (effect on earnings), §10 measurement. |
+| **New decisions flagged** | `[TBD]` for: chargebacks; SST and invoicing; whether settled earnings may be cancelled for fraud (the product does not do this); balances left at closure; refund when we remove an ad through no fault of the advertiser; refund answer time. |
+
+The product wording (web/browser sessions, "Distributor Op", impressions) is **not** changed yet. See Review findings 1 and 2.
+
+---
+
 ## Changes applied (16 Sep 2026)
 
 Applied after decisions from Wai Hong on 16 Sep 2026.
