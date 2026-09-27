@@ -9,7 +9,11 @@ import {
 import { serverEnv, trustedOrigins } from "@repo/env";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { APIError } from "better-auth/api";
 import { admin } from "better-auth/plugins";
+import { ACCOUNT_NOT_CLOSABLE, accountClosable } from "./closure";
+
+export { ACCOUNT_NOT_CLOSABLE, accountClosable } from "./closure";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -64,8 +68,16 @@ export const auth = betterAuth({
         await sendChangeEmailConfirmationEmail(newEmail, url, user.email);
       },
     },
-    deletion: {
+    // Better Auth reads `deleteUser`. Under any other key the endpoint answers 404.
+    deleteUser: {
       enabled: true,
+      // Runs on both paths: the direct delete and the emailed link. The
+      // dashboard asks `GET /me/closure` first, so a member rarely meets this.
+      beforeDelete: async (user: { id: string }) => {
+        if (!(await accountClosable(user.id))) {
+          throw new APIError("FORBIDDEN", { message: ACCOUNT_NOT_CLOSABLE });
+        }
+      },
       sendDeleteAccountVerification: async ({
         user,
         url,

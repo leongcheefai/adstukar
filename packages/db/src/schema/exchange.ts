@@ -259,9 +259,12 @@ export const ledgerEntry = pgTable(
   "ledger_entry",
   {
     id: text("id").primaryKey(),
+    // Restrict, never cascade: the ledger is append-only, and deleting a member
+    // must not take their money history with them. The account-deletion guard in
+    // `@repo/auth` refuses first, with a message; this is the floor under it.
     userId: text("user_id")
       .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
+      .references(() => user.id, { onDelete: "restrict" }),
     delta: integer("delta").notNull(),
     state: ledgerStateEnum("state").notNull(),
     reason: ledgerReasonEnum("reason").notNull(),

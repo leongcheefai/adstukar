@@ -404,6 +404,9 @@ importers:
       better-auth:
         specifier: ^1.2.0
         version: 1.6.9(drizzle-kit@0.31.10)(drizzle-orm@0.45.2(gel@2.2.0)(kysely@0.28.16)(postgres@3.4.9))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(vitest@2.1.9(@types/node@22.19.17)(jsdom@25.0.1)(lightningcss@1.32.0))
+      drizzle-orm:
+        specifier: ^0.45.0
+        version: 0.45.2(gel@2.2.0)(kysely@0.28.16)(postgres@3.4.9)
     devDependencies:
       '@repo/config':
         specifier: workspace:*

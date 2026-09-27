@@ -15,7 +15,8 @@
     "@repo/db": "workspace:*",
     "@repo/emails": "workspace:*",
     "@repo/env": "workspace:*",
-    "better-auth": "^1.2.0"
+    "better-auth": "^1.2.0",
+    "drizzle-orm": "^0.45.0"
   },
   "devDependencies": {
     "@repo/config": "workspace:*",
