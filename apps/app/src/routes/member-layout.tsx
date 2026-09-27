@@ -9,7 +9,7 @@ export function MemberLayout() {
       <div className="bg-[#08080a]">
         <CapyChannelScreen />
       </div>
-      {/* `/login`, `/signup` and `/forgot-password`: each only redirects to `?auth=`. */}
+      {/* `/login`, `/signup`, `/forgot-password` and `/reset-password`: each only redirects to `?auth=`. */}
       <Outlet />
     </CoachProvider>
   );
