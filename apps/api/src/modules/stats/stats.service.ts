@@ -1,4 +1,4 @@
-import type { StatsOverview } from "@repo/contracts";
+import type { NetworkStats, StatsOverview } from "@repo/contracts";
 import { db, schema } from "@repo/db";
 import { and, count, eq, gte, inArray, sql } from "drizzle-orm";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
@@ -127,25 +127,43 @@ export async function getStatsOverview(
   };
 }
 
-const NETWORK_PLAYS_TTL_MS = 30_000;
-let networkPlaysCache: { plays: number; at: number } | null = null;
+const NETWORK_STATS_TTL_MS = 30_000;
+/**
+ * How recently a screen must have reported to count as online. CapyTV reports
+ * after every play, a dwell of seconds, so a live screen lands well inside it,
+ * and a screen that lost its network drops out within minutes.
+ */
+export const SCREEN_ONLINE_WINDOW_MS = 5 * 60_000;
+let networkStatsCache: { stats: NetworkStats; at: number } | null = null;
 
 /**
- * Counted paid plays on the whole network. House cards do not count: they
- * move no money, and the number on the marketing site is for advertisers.
+ * The two figures the marketing site prints. Plays are counted paid plays on
+ * the whole network: house cards move no money, and the number is for
+ * advertisers. Screens online are approved devices whose last report falls
+ * inside the window. Public and unauthenticated, so the answer is cached.
  */
-export async function getNetworkPlays(): Promise<number> {
-  const now = Date.now();
-  if (networkPlaysCache && now - networkPlaysCache.at < NETWORK_PLAYS_TTL_MS) {
-    return networkPlaysCache.plays;
+export async function getNetworkStats(now: Date = new Date()): Promise<NetworkStats> {
+  const at = now.getTime();
+  if (networkStatsCache && at - networkStatsCache.at < NETWORK_STATS_TTL_MS) {
+    return networkStatsCache.stats;
   }
 
-  const [row] = await db
+  const [plays] = await db
     .select({ n: count() })
     .from(schema.play)
     .where(and(eq(schema.play.state, "counted"), eq(schema.play.house, false)));
 
-  const plays = Number(row?.n ?? 0);
-  networkPlaysCache = { plays, at: now };
-  return plays;
+  const [screens] = await db
+    .select({ n: count() })
+    .from(schema.device)
+    .where(
+      and(
+        eq(schema.device.state, "approved"),
+        gte(schema.device.lastSeenAt, new Date(at - SCREEN_ONLINE_WINDOW_MS)),
+      ),
+    );
+
+  const stats = { plays: Number(plays?.n ?? 0), screensOnline: Number(screens?.n ?? 0) };
+  networkStatsCache = { stats, at };
+  return stats;
 }

@@ -1,23 +1,25 @@
 import { slotOffer } from "@repo/config/money";
 import { project } from "@repo/config/project";
 import { useEffect, useRef, useState } from "react";
+import type { NetworkFigures } from "../../lib/network-stats";
 
 /**
  * The site's ticker: one sentence on a black strap, the way CapyTV draws its
- * crawl, but carrying the site's own words and the live network total rather
- * than invented listings. Pure: the figure comes in as a prop.
+ * crawl, but carrying the site's own words and the live network figures rather
+ * than invented listings. Pure: the figures come in as a prop.
  *
  * `variant` sets where it lives and therefore its scale:
  *  - foot: fixed to the bottom of the viewport
  *  - hero: the foot of the "On air" hero, in flow
  *
- * The number changes width once, when it lands, so the run holds a blank of
- * the same width until then and the lap does not jump. If the API cannot be
- * reached the clause is dropped: a welcome with no figure is still a welcome,
- * and a dash is a broken page.
+ * The numbers change width once, when they land, so the run holds a blank
+ * until then and the lap does not jump. If the API cannot be reached both
+ * clauses are dropped: a welcome with no figure is still a welcome, and a dash
+ * is a broken page.
  */
 export interface TickerProps {
-  plays: number | null | undefined;
+  /** `undefined` while loading, `null` when the API cannot be reached. */
+  stats: NetworkFigures;
   variant: "foot" | "hero";
 }
 
@@ -36,34 +38,38 @@ const FALLBACK_SECONDS = 40;
 const WELCOME = `Welcome to ${project.name}s`;
 const PITCH = "Earn while you do your things";
 const TOTAL = "Total ads view:";
-const ONLINE = "Online users:";
-/** Not measured anywhere yet, so the strap carries the brand's own figure. */
-const ONLINE_USERS = 2_345;
+const ONLINE = "Screens online:";
 /** The slot price is an economy number, so the strap reads it from there. */
 const NEWS = `News: a slot on every screen is ${slotOffer()}`;
 
-function Run({ plays }: { plays: number | null | undefined }) {
+function Figure({ label, value }: { label: string; value: number | undefined }) {
+  return (
+    <span className="ticker-total">
+      {label}{" "}
+      <b className="tabular-nums" data-loading={value === undefined ? "" : undefined}>
+        {value === undefined ? "" : value.toLocaleString("en-US")}
+      </b>
+    </span>
+  );
+}
+
+function Run({ stats }: { stats: NetworkFigures }) {
   return (
     <span className="ticker-item">
       <span>{WELCOME}</span>
       <span>{PITCH}</span>
-      {plays !== null && (
-        <span className="ticker-total">
-          {TOTAL}{" "}
-          <b className="tabular-nums" data-loading={plays === undefined ? "" : undefined}>
-            {plays === undefined ? "" : plays.toLocaleString("en-US")}
-          </b>
-        </span>
+      {stats !== null && (
+        <>
+          <Figure label={TOTAL} value={stats?.plays} />
+          <Figure label={ONLINE} value={stats?.screensOnline} />
+        </>
       )}
-      <span className="ticker-total">
-        {ONLINE} <b className="tabular-nums">{ONLINE_USERS.toLocaleString("en-US")}</b>
-      </span>
       <span>{NEWS}</span>
     </span>
   );
 }
 
-export function Ticker({ plays, variant }: TickerProps) {
+export function Ticker({ stats, variant }: TickerProps) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [seconds, setSeconds] = useState(FALLBACK_SECONDS);
 
@@ -82,11 +88,9 @@ export function Ticker({ plays, variant }: TickerProps) {
     return () => observer.disconnect();
   }, []);
 
-  const online = `${ONLINE} ${ONLINE_USERS.toLocaleString("en-US")}`;
-  const sentence =
-    typeof plays === "number"
-      ? `${WELCOME} ${PITCH} ${TOTAL} ${plays.toLocaleString("en-US")} ${online} ${NEWS}`
-      : `${WELCOME} ${PITCH} ${online} ${NEWS}`;
+  const sentence = stats
+    ? `${WELCOME} ${PITCH} ${TOTAL} ${stats.plays.toLocaleString("en-US")} ${ONLINE} ${stats.screensOnline.toLocaleString("en-US")} ${NEWS}`
+    : `${WELCOME} ${PITCH} ${NEWS}`;
 
   return (
     <div
@@ -100,7 +104,7 @@ export function Ticker({ plays, variant }: TickerProps) {
       <div className="ticker-window" aria-hidden="true">
         <div className="ticker-track" ref={trackRef}>
           {COPY_IDS.map((copy) => (
-            <Run key={copy} plays={plays} />
+            <Run key={copy} stats={stats} />
           ))}
         </div>
       </div>
