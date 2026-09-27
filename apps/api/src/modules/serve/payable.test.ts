@@ -16,11 +16,16 @@ const paid: PayableInput = {
   listingState: "approved",
   campaignState: "active",
   verifiedAt: new Date("2026-09-01T00:00:00Z"),
+  refusedByDistributor: false,
 };
 
 describe("playPays", () => {
   it("pays a running slot with an approved creative on a verified, active campaign", () => {
     expect(playPays(paid)).toBe(true);
+  });
+
+  it("pays nothing for a creative the distributor refused after the batch was cut", () => {
+    expect(playPays({ ...paid, refusedByDistributor: true })).toBe(false);
   });
 
   it("pays nothing for a house card", () => {

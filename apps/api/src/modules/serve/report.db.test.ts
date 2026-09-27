@@ -37,6 +37,33 @@ describe("recordReport", () => {
     expect(await ledgerOf(advertiser.id)).toHaveLength(0);
   });
 
+  it("counts a play the distributor vetoed after it was served, and pays nothing", async () => {
+    const { distributor, device, listing, playId } = await servedPlay();
+    await db.insert(schema.vetoedListing).values({
+      id: "veto-after-serve",
+      deviceId: device.id,
+      listingId: listing.id,
+    });
+
+    const result = await recordReport({ playId, key: device.apiKey });
+
+    expect(result.counted).toBe(true);
+    expect(await ledgerOf(distributor.id)).toHaveLength(0);
+  });
+
+  it("pays nothing for a play whose creative carries a term excluded after it was served", async () => {
+    const { distributor, device, playId } = await servedPlay();
+    await db.insert(schema.excludedTerm).values({
+      id: "term-after-serve",
+      deviceId: device.id,
+      phrase: "makers",
+    });
+
+    await recordReport({ playId, key: device.apiKey });
+
+    expect(await ledgerOf(distributor.id)).toHaveLength(0);
+  });
+
   it("posts nothing twice on a retry", async () => {
     const { distributor, device, playId } = await servedPlay();
 
