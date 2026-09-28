@@ -8,8 +8,9 @@ import { listPresets } from "./presets.service";
 export const presetsRouter = new Hono<{ Variables: AppVariables }>();
 
 /**
- * The pictures and clips an admin put in every member's library. Any member
- * reads them; only an admin adds, renames, or removes one (`/admin/presets`).
+ * The wallpaper collections an admin put on every member's set, and their
+ * photos. Any member reads them; only an admin adds, edits, moves, or removes
+ * one (`/admin/presets`).
  */
 presetsRouter.get("/", async (c) => {
   const user = c.get("user");

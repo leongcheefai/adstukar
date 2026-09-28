@@ -83,7 +83,7 @@ const ADMIN_SECTIONS: SettingsSection[] = [
     label: "Presets",
     title: "Presets",
     description:
-      "Photos and clips at the front of every member's Images/Video library. Members play them; only an admin adds, renames, or removes one.",
+      "Wallpaper collections on every member's set. Each is one tile with a name and a link: a click on any of its photos opens it. Members play them; only an admin changes one.",
   },
   {
     id: "releases",

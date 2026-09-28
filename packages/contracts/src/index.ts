@@ -12,6 +12,7 @@ export * from "./entities/payout-request";
 export * from "./entities/slot";
 export * from "./entities/topup";
 export * from "./entities/preset-media";
+export * from "./entities/preset-collection";
 export * from "./inputs/feedback";
 export * from "./inputs/uploads";
 export * from "./inputs/campaigns";

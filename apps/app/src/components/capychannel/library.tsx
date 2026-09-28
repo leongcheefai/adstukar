@@ -1,13 +1,12 @@
 import { Info } from "@phosphor-icons/react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@repo/ui";
-import { type ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
+import { type ChangeEvent, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   ACCEPT,
   CAPS,
   type LibraryItem,
   type MediaKind,
-  fromPreset,
   kindOf,
   readConsent,
   readLibrary,
@@ -17,7 +16,6 @@ import {
   writeConsent,
   writeLibrary,
 } from "../../lib/library";
-import { usePresets } from "../../lib/presets";
 import { uploadChannelMedia } from "../../lib/uploads";
 import { UploadConsentDialog } from "./upload-consent";
 
@@ -40,9 +38,6 @@ type Pending = {
  * The red x on a thumbnail shows on hover and takes the file off this set.
  * Upload opens the file picker, after the member has agreed once that files
  * go to our server.
- *
- * The presets an admin put in every library come first. They select and play
- * like the member's own files, and carry no x: only the admin desk removes one.
  */
 export function Library({
   userId,
@@ -59,9 +54,6 @@ export function Library({
   const [consentOpen, setConsentOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const previews = useRef(new Set<string>());
-  const { data: presetList } = usePresets();
-  const presets = useMemo(() => (presetList?.items ?? []).map(fromPreset), [presetList]);
-  const all = [...presets, ...items];
 
   useEffect(() => {
     setItems(readLibrary(userId));
@@ -185,11 +177,11 @@ export function Library({
   }
 
   const count = selected.size;
-  const empty = all.length === 0 && pending.length === 0;
+  const empty = items.length === 0 && pending.length === 0;
   // A short library still reads as a row with room in it.
   const blanks = BLANK_SLOTS.slice(
     0,
-    Math.max(0, BLANK_SLOTS.length - all.length - pending.length),
+    Math.max(0, BLANK_SLOTS.length - items.length - pending.length),
   );
 
   return (
@@ -222,15 +214,10 @@ export function Library({
             <div key={slot} className="boot-lib-tile boot-lib-blank" aria-hidden="true" />
           ))}
 
-          {all.map((item) => {
+          {items.map((item) => {
             const on = selected.has(item.id);
             return (
-              <div
-                key={item.id}
-                className="boot-lib-tile"
-                data-selected={on || undefined}
-                data-preset={item.preset || undefined}
-              >
+              <div key={item.id} className="boot-lib-tile" data-selected={on || undefined}>
                 <button
                   type="button"
                   className="boot-lib-pick"
@@ -252,18 +239,16 @@ export function Library({
                     </svg>
                   </span>
                 </button>
-                {item.preset ? null : (
-                  <button
-                    type="button"
-                    className="boot-lib-x"
-                    aria-label={`Delete ${item.name}`}
-                    onClick={() => remove(item)}
-                  >
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M7.5 7.5l9 9M16.5 7.5l-9 9" />
-                    </svg>
-                  </button>
-                )}
+                <button
+                  type="button"
+                  className="boot-lib-x"
+                  aria-label={`Delete ${item.name}`}
+                  onClick={() => remove(item)}
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M7.5 7.5l9 9M16.5 7.5l-9 9" />
+                  </svg>
+                </button>
               </div>
             );
           })}
@@ -329,8 +314,8 @@ export function Library({
         <button
           type="button"
           className="boot-lib-play"
-          disabled={all.length === 0}
-          onClick={() => onPlay(toPlay(all, selected))}
+          disabled={items.length === 0}
+          onClick={() => onPlay(toPlay(items, selected))}
         >
           {count > 0 ? `Play ${count}` : "Play"}
         </button>

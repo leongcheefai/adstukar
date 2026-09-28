@@ -6,9 +6,10 @@ const PHOTO_DWELL_MS = 10_000;
 
 /**
  * One collection, one photo at a time. A photo fills the set, cropped: it is
- * a backdrop, not the member's own file. "Photo by" and the author sit in the
- * lower right corner, above the ad bar, and a click anywhere on it opens the
- * collection's page in a new tab.
+ * a backdrop, not the member's own file. "Photo by" and the author (or the
+ * collection's name, when it credits no one) sit in the lower right corner,
+ * above the ad bar, and a click anywhere on it opens the collection's page in
+ * a new tab.
  */
 export function WallpaperChannel({
   collection,
@@ -42,6 +43,7 @@ export function WallpaperChannel({
   }, [many, photos, index]);
 
   const photo = photos.length > 0 ? photos[index % photos.length] : undefined;
+  const credit = collection.author ? `Photo by ${collection.author}` : collection.name;
 
   return (
     <div className="chan chan-wall">
@@ -52,11 +54,11 @@ export function WallpaperChannel({
           href={collection.url}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label={`Photo by ${collection.author}. Opens their page in a new tab`}
+          aria-label={`${credit}. Opens the collection's page in a new tab`}
         >
           <img className="chan-media" src={photo.src} alt="" />
           <span className="chan-wall-credit" aria-hidden="true">
-            Photo by {collection.author}
+            {credit}
           </span>
         </a>
       ) : null}

@@ -34,12 +34,13 @@ export async function uploadChannelMedia(
 
 /**
  * Admin: a preset goes up the way a member's file does, then the API records
- * the key. It reads the stored object before it writes the row, so the size
- * and the type on the preset are the ones storage holds.
+ * the key into its collection. It reads the stored object before it writes the
+ * row, so the size and the type on the preset are the ones storage holds.
  */
 export async function uploadPreset(
   file: File,
   name: string,
+  collectionId: string,
   onProgress: (fraction: number) => void,
 ): Promise<PresetMedia> {
   const { uploadUrl, key } = await apiFetch<PresignPresetResponse>("/admin/presets/presign", {
@@ -47,7 +48,10 @@ export async function uploadPreset(
     body: { contentType: file.type, size: file.size },
   });
   await putToStorage(uploadUrl, file, onProgress);
-  return apiFetch<PresetMedia>("/admin/presets", { method: "POST", body: { key, name } });
+  return apiFetch<PresetMedia>("/admin/presets", {
+    method: "POST",
+    body: { key, name, collectionId },
+  });
 }
 
 /**

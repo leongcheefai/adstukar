@@ -83,9 +83,9 @@ export async function presignVideoUpload(
 }
 
 /**
- * A picture or a clip an admin puts in every member's library. It takes the
- * caps a member's own file takes, under its own prefix, so the key alone says
- * the object is a preset (`PRESET_KEY` in the contracts).
+ * A picture an admin puts in a wallpaper collection. It takes the cap a
+ * member's own picture takes, under its own prefix, so the key alone says the
+ * object is a preset (`PRESET_KEY` in the contracts).
  */
 export async function presignPresetUpload(
   adminId: string,
