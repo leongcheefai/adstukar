@@ -1,7 +1,5 @@
-import { useEffect, useState } from "react";
+import { useNetworkStats } from "../../lib/stats";
 import { AccountMenu } from "./account-menu";
-
-const LIVE_MS = 2600;
 
 export function TvBar({
   menuOpen,
@@ -17,15 +15,9 @@ export function TvBar({
   /** Red dot on the account: the dashboard has never been opened. */
   dot?: boolean;
 }) {
-  const [online, setOnline] = useState(1284);
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      if (document.hidden) return;
-      setOnline((n) => Math.min(9999, Math.max(1000, n + Math.round((Math.random() - 0.5) * 18))));
-    }, LIVE_MS);
-    return () => clearInterval(id);
-  }, []);
+  // Approved screens that reported in the last few minutes. Hidden until the
+  // first answer lands, so the bar never prints a number it made up.
+  const online = useNetworkStats().data?.screensOnline;
 
   return (
     <div className="tv-bar">
@@ -36,10 +28,12 @@ export function TvBar({
         Back
       </button>
       <div className="tv-right">
-        <p className="tv-live">
-          <i className="tv-live-dot" aria-hidden />
-          <b>{online.toLocaleString("en-US")}</b> online
-        </p>
+        {online !== undefined && (
+          <p className="tv-live">
+            <i className="tv-live-dot" aria-hidden />
+            <b>{online.toLocaleString("en-US")}</b> {online === 1 ? "screen" : "screens"} online
+          </p>
+        )}
         <AccountMenu open={menuOpen} onOpenChange={onMenuOpenChange} hint={hint} dot={dot} />
       </div>
     </div>
