@@ -1,7 +1,9 @@
 import { zValidator } from "@hono/zod-validator";
 import {
+  createPresetCollectionOutput,
   createPresetInput,
   createPresetOutput,
+  deletePresetCollectionOutput,
   deletePresetOutput,
   feedbackQueueOutput,
   moderateDeviceOutput,
@@ -10,6 +12,7 @@ import {
   payoutQueueOutput,
   payoutQuoteOutput,
   poolOutput,
+  presetCollectionInput,
   presignPresetInput,
   presignPresetOutput,
   refundTopupOutput,
@@ -17,6 +20,7 @@ import {
   resolveFeedbackOutput,
   reviewPayoutOutput,
   topupQueueOutput,
+  updatePresetCollectionOutput,
   updatePresetInput,
   updatePresetOutput,
 } from "@repo/contracts";
@@ -26,7 +30,14 @@ import type * as z from "zod/v4";
 import type { AppVariables } from "../../lib/context";
 import { listFeedbackQueue, setFeedbackResolved } from "../feedback/feedback.service";
 import { listPayoutQueue, payPayout, quotePayout, rejectPayout } from "../payouts/payouts.service";
-import { createPreset, deletePreset, renamePreset } from "../presets/presets.service";
+import {
+  createCollection,
+  createPreset,
+  deleteCollection,
+  deletePreset,
+  updateCollection,
+  updatePreset,
+} from "../presets/presets.service";
 import { listTopupQueue, refundTopup } from "../topups/topups.service";
 import { presignPresetUpload } from "../uploads/uploads.service";
 import {
@@ -145,11 +156,45 @@ adminRouter.post("/feedback/:id/reopen", async (c) => {
 });
 
 /**
- * The preset desk: pictures and clips every member's library starts with. A
- * file goes up in two steps, as a member's does: presign, PUT to storage, then
- * record the key. The API reads the stored object before it writes the row.
- * The desk reads the list from `GET /presets`, the one every library reads.
+ * The preset desk: the wallpaper collections every member's set offers. A
+ * collection carries a name, the page each of its photos opens, and a credit.
+ * A photo goes up in two steps, as a member's does: presign, PUT to storage,
+ * then record the key into a collection. The API reads the stored object
+ * before it writes the row. The desk reads the list from `GET /presets`, the
+ * one every set reads.
  */
+adminRouter.post("/presets/collections", zValidator("json", presetCollectionInput), async (c) => {
+  const admin = c.get("user");
+  if (!admin) throw new HTTPException(401, { message: "Unauthorized" });
+  const row = await createCollection(admin.id, c.req.valid("json"));
+  return c.json(
+    createPresetCollectionOutput.parse(row satisfies z.input<typeof createPresetCollectionOutput>),
+    201,
+  );
+});
+
+adminRouter.patch(
+  "/presets/collections/:id",
+  zValidator("json", presetCollectionInput),
+  async (c) => {
+    const row = await updateCollection(c.req.param("id"), c.req.valid("json"));
+    return c.json(
+      updatePresetCollectionOutput.parse(
+        row satisfies z.input<typeof updatePresetCollectionOutput>,
+      ),
+    );
+  },
+);
+
+adminRouter.delete("/presets/collections/:id", async (c) => {
+  const result = await deleteCollection(c.req.param("id"));
+  return c.json(
+    deletePresetCollectionOutput.parse(
+      result satisfies z.input<typeof deletePresetCollectionOutput>,
+    ),
+  );
+});
+
 adminRouter.post("/presets/presign", zValidator("json", presignPresetInput), async (c) => {
   const admin = c.get("user");
   if (!admin) throw new HTTPException(401, { message: "Unauthorized" });
@@ -165,7 +210,7 @@ adminRouter.post("/presets", zValidator("json", createPresetInput), async (c) =>
 });
 
 adminRouter.patch("/presets/:id", zValidator("json", updatePresetInput), async (c) => {
-  const row = await renamePreset(c.req.param("id"), c.req.valid("json"));
+  const row = await updatePreset(c.req.param("id"), c.req.valid("json"));
   return c.json(updatePresetOutput.parse(row satisfies z.input<typeof updatePresetOutput>));
 });
 

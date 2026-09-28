@@ -1,3 +1,4 @@
+import type { PresetList } from "@repo/contracts/types";
 import type { ReactNode } from "react";
 import convertibleThumb from "../../../assets/wallpapers/jack-berry/convertible-thumb.jpg";
 import convertible from "../../../assets/wallpapers/jack-berry/convertible.jpg";
@@ -55,18 +56,41 @@ export type WallpaperPhoto = { src: string; thumb: string };
 /**
  * A collection is one photographer's photos. The chooser shows it as one tile
  * with the name under it, and the set plays its photos one at a time, with
- * "Photo by" and the author on each. A click on the photo opens `url`. The
- * first photo is the cover.
+ * "Photo by" and the author on each, or the name when there is no author. A
+ * click on any photo opens `url`. The first photo is the cover.
  */
 export type WallpaperCollection = {
   id: string;
   name: string;
-  author: string;
+  author: string | null;
   url: string;
   photos: readonly WallpaperPhoto[];
 };
 
-/** Demo content: the link is the photographer's page. */
+/**
+ * The collections an admin set on the preset desk, in its order. A collection
+ * with no photo has nothing to play, so it stays off the chooser. The set
+ * shows a photo cropped to fill, so the full file serves as its own thumbnail.
+ */
+export function presetCollections(list: PresetList): WallpaperCollection[] {
+  return list.collections
+    .map((collection) => ({
+      id: collection.id,
+      name: collection.name,
+      author: collection.author,
+      url: collection.url,
+      photos: list.items
+        .filter((item) => item.collectionId === collection.id && item.kind === "image")
+        .map((item) => ({ src: item.url, thumb: item.url })),
+    }))
+    .filter((collection) => collection.photos.length > 0);
+}
+
+/**
+ * Demo content, bundled with the app: the link is the photographer's page.
+ * The chooser shows it only while the preset desk holds no collection with a
+ * photo, so a new install still has a wallpaper to play.
+ */
 export const WALLPAPER_COLLECTIONS: readonly WallpaperCollection[] = [
   {
     id: "jack-berry",

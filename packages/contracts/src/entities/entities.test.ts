@@ -1,8 +1,9 @@
 import { release } from "@repo/db/schema";
 import { createSelectSchema } from "drizzle-zod";
 import { describe, expect, it } from "vitest";
-import { createPresetInput } from "../inputs/presets";
+import { createPresetInput, presetCollectionInput } from "../inputs/presets";
 import { feedbackContract } from "./feedback";
+import { presetCollectionContract } from "./preset-collection";
 import { presetMediaContract } from "./preset-media";
 import { releaseContract } from "./release";
 import { slotContract } from "./slot";
@@ -58,6 +59,7 @@ describe("derived entity contracts", () => {
       key: "presets/a1/00000000-0000-0000-0000-000000000000.mp4",
       url: "https://cdn.test/sea.mp4",
       size: 1234,
+      collectionId: "c1",
       createdBy: "a1",
       createdAt: new Date("2026-09-25T00:00:00.000Z"),
     });
@@ -67,13 +69,42 @@ describe("derived entity contracts", () => {
       name: "Sea",
       url: "https://cdn.test/sea.mp4",
       size: 1234,
+      collectionId: "c1",
       createdAt: "2026-09-25T00:00:00.000Z",
     });
   });
 
+  it("keeps a collection's author and serializes its date, and keeps the admin off the wire", () => {
+    const result = presetCollectionContract.parse({
+      id: "c1",
+      name: "Jack Berry Collection",
+      url: "https://unsplash.com/@jackseeberry",
+      author: null,
+      createdBy: "a1",
+      createdAt: new Date("2026-09-25T00:00:00.000Z"),
+    });
+    expect(result).toEqual({
+      id: "c1",
+      name: "Jack Berry Collection",
+      url: "https://unsplash.com/@jackseeberry",
+      author: null,
+      createdAt: "2026-09-25T00:00:00.000Z",
+    });
+  });
+
+  it("links a collection over HTTPS only, and reads a blank author as none", () => {
+    const parse = (url: string, author?: string) =>
+      presetCollectionInput.safeParse({ name: "x", url, author });
+    expect(parse("https://unsplash.com/@first_designs").success).toBe(true);
+    expect(parse("http://unsplash.com/@first_designs").success).toBe(false);
+    expect(parse("javascript:alert(1)").success).toBe(false);
+    expect(parse("https://unsplash.com/@first_designs", "  ").data?.author).toBeNull();
+  });
+
   it("takes a preset key only from the presets prefix", () => {
     const uuid = "0b1c2d3e-4f50-6172-8394-a5b6c7d8e9f0";
-    const ok = (key: string) => createPresetInput.safeParse({ key, name: "x" }).success;
+    const ok = (key: string) =>
+      createPresetInput.safeParse({ key, name: "x", collectionId: "c1" }).success;
     expect(ok(`presets/admin1/${uuid}.mp4`)).toBe(true);
     expect(ok(`avatars/admin1/${uuid}.png`)).toBe(false);
     expect(ok(`presets/admin1/../avatars/${uuid}.png`)).toBe(false);

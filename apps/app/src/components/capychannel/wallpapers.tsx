@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { lastInputWasKeyboard } from "../../lib/input-mode";
+import { usePresets } from "../../lib/presets";
 import {
   WALLPAPER_COLLECTIONS,
   type WallpaperCollection,
   type WallpaperPhoto,
+  presetCollections,
 } from "./channels/catalog";
 
 /** How long each photo holds while a tile previews its collection. */
@@ -17,6 +19,10 @@ const PREVIEW_MS = 1000;
  * pointer, or under a keyboard focus, loops through its photos; the name of
  * the collection sits under it. The set is ours, so there is no Upload and no
  * delete.
+ *
+ * The collections are the ones an admin set on the preset desk. While that
+ * list loads the row is empty; when it holds nothing to play, or fails, the
+ * bundled demo collection stands in.
  */
 export function Wallpapers({
   onBack,
@@ -27,7 +33,13 @@ export function Wallpapers({
 }) {
   const [selected, setSelected] = useState<string | null>(null);
   const [previewing, setPreviewing] = useState<string | null>(null);
-  const chosen = WALLPAPER_COLLECTIONS.find((collection) => collection.id === selected);
+  const { data, isPending } = usePresets();
+  const collections = useMemo<readonly WallpaperCollection[]>(() => {
+    const fromDesk = data ? presetCollections(data) : [];
+    if (fromDesk.length > 0) return fromDesk;
+    return isPending ? [] : WALLPAPER_COLLECTIONS;
+  }, [data, isPending]);
+  const chosen = collections.find((collection) => collection.id === selected);
 
   function stopPreview(id: string) {
     setPreviewing((current) => (current === id ? null : current));
@@ -45,7 +57,7 @@ export function Wallpapers({
 
       <div className="boot-lib-strip">
         <div className="boot-lib-row">
-          {WALLPAPER_COLLECTIONS.map((collection, i) => {
+          {collections.map((collection, i) => {
             const on = collection.id === selected;
             return (
               <div key={collection.id} className="boot-lib-item">
@@ -102,6 +114,15 @@ export function Wallpapers({
 }
 
 /**
+ * Whether a reel mounts photo `i`: the cover, the one showing, the one fading
+ * out, and the next one, so it loads before its turn. A desk collection uses
+ * full photos as thumbnails, and a long one would load them all at once.
+ */
+function near(i: number, index: number, count: number): boolean {
+  return i === 0 || i === index || i === (index + 1) % count || i === (index - 1 + count) % count;
+}
+
+/**
  * A collection's thumbnails, stacked, the cover on top. While `live` they take
  * turns, starting at once so the hover answers; after, the cover comes back.
  */
@@ -120,9 +141,11 @@ function Reel({ photos, live }: { photos: readonly WallpaperPhoto[]; live: boole
 
   return (
     <span className="boot-lib-thumb boot-lib-reel">
-      {photos.map((photo, i) => (
-        <img key={photo.thumb} src={photo.thumb} alt="" data-on={i === index || undefined} />
-      ))}
+      {photos.map((photo, i) =>
+        near(i, index, photos.length) ? (
+          <img key={photo.thumb} src={photo.thumb} alt="" data-on={i === index || undefined} />
+        ) : null,
+      )}
     </span>
   );
 }

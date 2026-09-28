@@ -105,8 +105,15 @@ export type {
   PresignVideoResponse,
 } from "./modules/uploads";
 export type { MediaKind, PresetMedia } from "./entities/preset-media";
-export type { CreatePresetInput, PresignPresetInput, UpdatePresetInput } from "./inputs/presets";
+export type { PresetCollection } from "./entities/preset-collection";
 export type {
+  CreatePresetInput,
+  PresetCollectionInput,
+  PresignPresetInput,
+  UpdatePresetInput,
+} from "./inputs/presets";
+export type {
+  DeletePresetCollectionResponse,
   DeletePresetResponse,
   PresetList,
   PresignPresetResponse,
