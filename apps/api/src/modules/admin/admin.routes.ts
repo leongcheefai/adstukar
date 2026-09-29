@@ -1,5 +1,8 @@
 import { zValidator } from "@hono/zod-validator";
 import {
+  compSlotInput,
+  compSlotOutput,
+  compedSlotsOutput,
   createPresetCollectionOutput,
   createPresetInput,
   createPresetOutput,
@@ -38,6 +41,7 @@ import {
   updateCollection,
   updatePreset,
 } from "../presets/presets.service";
+import { compSlot, listCompedSlots } from "../slots/slots.service";
 import { listTopupQueue, refundTopup } from "../topups/topups.service";
 import { presignPresetUpload } from "../uploads/uploads.service";
 import {
@@ -87,6 +91,23 @@ adminRouter.post("/devices/:id/reject", zValidator("json", rejectInput), async (
 adminRouter.get("/pool", async (c) => {
   const pool = await weekPool();
   return c.json(poolOutput.parse(pool satisfies z.input<typeof poolOutput>));
+});
+
+/**
+ * Complimentary slots: an admin gives a member a slot for nothing, up to
+ * `economy.slot.compMax` live at once (docs/adr/0014). The slot is the
+ * member's own and runs as a paid one does; only the charge is missing.
+ */
+adminRouter.get("/slots/comped", async (c) => {
+  const result = await listCompedSlots();
+  return c.json(compedSlotsOutput.parse(result satisfies z.input<typeof compedSlotsOutput>));
+});
+
+adminRouter.post("/slots/comped", zValidator("json", compSlotInput), async (c) => {
+  const admin = c.get("user");
+  if (!admin) throw new HTTPException(401, { message: "Unauthorized" });
+  const row = await compSlot(admin.id, c.req.valid("json"));
+  return c.json(compSlotOutput.parse(row satisfies z.input<typeof compSlotOutput>), 201);
 });
 
 /**

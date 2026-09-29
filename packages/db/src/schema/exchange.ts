@@ -431,6 +431,10 @@ export const topup = pgTable(
  *
  * `amount` is stamped at booking, so a change to the price never rewrites
  * what a member already paid.
+ *
+ * A comped slot is one an admin gave a member for nothing (docs/adr/0014).
+ * It carries no charge, so `amount` is 0 and no ledger row points at it. It
+ * runs, pays the screens, and ends exactly as a paid one does.
  */
 export const slot = pgTable(
   "slot",
@@ -446,8 +450,12 @@ export const slot = pgTable(
     /** Where the band sits on the loop. The first position is 1. */
     position: integer("position").notNull(),
     state: slotStateEnum("state").notNull().default("booked"),
-    /** What the charge took. Always positive. */
+    /** What the charge took. Positive on a paid slot, 0 on a comped one. */
     amount: integer("amount").notNull(),
+    /** An admin gave this slot for nothing. */
+    comped: boolean("comped").notNull().default(false),
+    /** The admin who gave it. Null on a paid slot. */
+    compedBy: text("comped_by").references(() => user.id, { onDelete: "set null" }),
     bookedAt: timestamp("booked_at").notNull(),
     startsAt: timestamp("starts_at"),
     endsAt: timestamp("ends_at"),

@@ -132,6 +132,12 @@ export const economy = {
     priceUsdCents: 2_000,
     /** Days one booking holds its slot. */
     termDays: 7,
+    /**
+     * Live slots an admin may give away at once (docs/adr/0014). A comped slot
+     * pays the screens with no revenue behind it, and it holds a position a
+     * paying advertiser could have bought, so the gift is bounded.
+     */
+    compMax: 5,
     /** Characters of the brand name a band shows. Every band is one width, so the copy is cut to fit. */
     nameMaxLength: 20,
     /** Characters of the tagline a band shows. */

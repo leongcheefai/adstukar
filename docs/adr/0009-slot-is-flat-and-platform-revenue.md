@@ -3,6 +3,8 @@
 > Status: amended by docs/adr/0010. The flat price stays. The venue screens now
 > play the ring too, and the platform pays each screen a fixed rate from the
 > slot money, so the per-play economy this record left untouched is retired.
+> Amended by docs/adr/0014: an admin may give a slot at no charge, up to five
+> live at once. It runs as a paid one does.
 
 An advertiser buys one slot on the CapyTV ticker for one term at one flat price
 (`economy.slot`: 20 slots, $20, 7 days). The whole price goes to the platform.
