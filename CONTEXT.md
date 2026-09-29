@@ -172,14 +172,27 @@ panel offers. Every amount is at the same rate and none carries a bonus.
 
 **Payout**:
 A distributor's request to turn earned money into a payment. A member asks, an
-admin reviews the history and approves, and Stripe sends the money to the
-member's connected account (docs/adr/0005, docs/adr/0008).
+admin reviews the history and approves, and the rail for the member's country
+sends the money (docs/adr/0005, docs/adr/0008, docs/adr/0015).
 _Avoid_: Withdrawal, cash-out
 
+**Rail**:
+The way an approved payout leaves. The country of the payout method decides
+it, never the member and never the admin: Stripe Connect for Malaysia,
+Airwallex for the other eight countries, a bank transfer an admin sends by
+hand for Brunei (docs/adr/0015).
+_Avoid_: Provider, channel, gateway
+
+**Payout method**:
+What a distributor put on file so a rail can pay them. It goes on file the day
+a member cashes out, not at signup. It is one of: a Stripe account, an
+Airwallex beneficiary, or typed bank details. A member has one.
+_Avoid_: Payout account, payout details, bank account
+
 **Stripe account**:
-The connected Stripe account a distributor is paid to. It goes on file the day
-a member cashes out, not at signup. Stripe holds the identity and the bank
-details; we hold the id, the country, and whether Stripe has cleared it.
+The payout method for Malaysia: the connected Stripe account a distributor is
+paid to. Stripe holds the identity and the bank details; we hold the id, the
+country, and whether Stripe has cleared it.
 _Avoid_: Payout account, payout details
 
 **Withdrawable**:
