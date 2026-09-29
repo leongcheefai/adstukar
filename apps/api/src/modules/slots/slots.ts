@@ -69,3 +69,11 @@ export function availability(slots: { state: SlotState }[]): SlotAvailability {
   const taken = Math.min(total, slots.filter((s) => isLive(s.state)).length);
   return { total, taken, left: total - taken };
 }
+
+/**
+ * How many more slots an admin may give away, given how many comped slots are
+ * live now. A comped slot that ended or was refunded gives its place back.
+ */
+export function compsLeft(liveComped: number): number {
+  return Math.max(0, economy.slot.compMax - liveComped);
+}

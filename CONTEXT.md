@@ -44,6 +44,13 @@ creative back to review, and an archive ends the term (docs/adr/0009). A slot th
 money leaves Stripe; a top-up refund is a different act (see Refund).
 _Avoid_: spot. "Position" is the number on the ring, not the booking.
 
+**Complimentary slot**:
+A slot an admin gave a member for nothing (docs/adr/0014). It carries no
+charge and no ledger row, and `slot.comped` marks it. It runs, pays the
+screens, and ends as a paid slot does. At most `economy.slot.compMax` are live
+at once.
+_Avoid_: free slot, grant, trial
+
 **Ring**:
 The fixed count of positions the CapyTV ticker prints, `GET /slots/loop` on
 the wire. Every screen prints the same ring. Not the Loop: that is the batch

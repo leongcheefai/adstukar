@@ -5,7 +5,8 @@ import { toWire } from "../lib/wire";
 
 /**
  * One booking, as the member sees it. The owner id stays off the wire: the
- * row only ever travels inside the owner's own list.
+ * row only ever travels inside the owner's own list, and so does the admin
+ * who comped it. `comped` alone says the slot was a gift.
  */
 export const slotContract = toWire(
   createSelectSchema(slot).pick({
@@ -14,6 +15,7 @@ export const slotContract = toWire(
     position: true,
     state: true,
     amount: true,
+    comped: true,
     bookedAt: true,
     startsAt: true,
     endsAt: true,

@@ -8,6 +8,7 @@ import { payoutRequestContract } from "../entities/payout-request";
 import { stripeAccountContract } from "../entities/stripe-account";
 import { topupContract } from "../entities/topup";
 import { toWire } from "../lib/wire";
+import { slotWithCampaignOutput } from "./slots";
 import { topupHistoryItemContract } from "./topups";
 
 const owner = z.object({
@@ -169,3 +170,20 @@ export const poolOutput = toWire(
 );
 
 export type Pool = z.output<typeof poolOutput>;
+
+/**
+ * The live slots an admin gave away, with the member each one went to, and
+ * how many more the cap allows (docs/adr/0014).
+ */
+export const compedSlotContract = slotWithCampaignOutput.extend({ owner });
+
+export const compedSlotsOutput = z.object({
+  items: z.array(compedSlotContract),
+  max: z.number().int(),
+  left: z.number().int(),
+});
+
+export const compSlotOutput = compedSlotContract;
+
+export type CompedSlot = z.output<typeof compedSlotContract>;
+export type CompedSlots = z.output<typeof compedSlotsOutput>;

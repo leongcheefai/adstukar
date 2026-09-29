@@ -54,7 +54,13 @@ const DAY = new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short" 
 /** The two lines under the badge: how much of the term is left, and its dates. */
 function termCopy(slot: Slot): { left: string; dates: string } {
   if (slot.status === "refunded") {
-    return { left: "Not started", dates: "The charge went back to your wallet" };
+    return {
+      left: "Not started",
+      // A comped slot took no charge, so nothing went back.
+      dates: slot.item.slot.comped
+        ? "Closed before the term started"
+        : "The charge went back to your wallet",
+    };
   }
   if (slot.status === "ended") {
     return {
@@ -153,6 +159,12 @@ export function SlotRow({
                 aria-label="Verified domain"
                 className="shrink-0 text-primary"
               />
+            )}
+            {/* An admin gave this slot for nothing (docs/adr/0014). */}
+            {slot.item.slot.comped && (
+              <Badge variant="neutral" className="shrink-0">
+                Complimentary
+              </Badge>
             )}
           </p>
           <p className="truncate text-sm text-muted-foreground">
@@ -254,7 +266,9 @@ export function SlotRow({
               {ended
                 ? "The term is over, so this only clears the row."
                 : "The ad leaves the ticker at once, and the slot goes back to the loop."}{" "}
-              The record stays, because your wallet history references it.
+              {slot.item.slot.comped
+                ? "The record stays."
+                : "The record stays, because your wallet history references it."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

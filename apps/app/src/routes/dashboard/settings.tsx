@@ -1,6 +1,7 @@
 import { CaretRight } from "@phosphor-icons/react";
 import { cn } from "@repo/ui";
 import { useSearchParams } from "react-router";
+import { CompedSlotsSection } from "../../components/settings/comped-slots-section";
 import { DangerSection } from "../../components/settings/danger-section";
 import { FeedbackSection } from "../../components/settings/feedback-section";
 import { ModerationSection } from "../../components/settings/moderation-section";
@@ -65,6 +66,13 @@ const ADMIN_SECTIONS: SettingsSection[] = [
       "Distributors waiting to cash out, oldest first. Read the history behind each one, then approve to send a Stripe Transfer in ringgit, or refuse to return the money.",
   },
   {
+    id: "comped",
+    label: "Complimentary slots",
+    title: "Complimentary slots",
+    description:
+      "Slots you give a member for nothing. Each runs as a paid one does, and the screens that play it are paid from the pool.",
+  },
+  {
     id: "topups",
     label: "Top-ups",
     title: "Top-ups",
@@ -99,6 +107,8 @@ function SectionBody({ id }: { id: string }) {
       return <ModerationSection />;
     case "payouts":
       return <PayoutsSection />;
+    case "comped":
+      return <CompedSlotsSection />;
     case "topups":
       return <TopupsSection />;
     case "feedback":

@@ -47,7 +47,7 @@ export type { LoopQuery, ReportInput } from "./inputs/serve";
 export type { ListLedgerQuery } from "./inputs/ledger";
 export type { RejectInput } from "./inputs/admin";
 export type { ConnectStripeInput } from "./inputs/payouts";
-export type { BookSlotInput } from "./inputs/slots";
+export type { BookSlotInput, CompSlotInput } from "./inputs/slots";
 export type { CreateTopupInput } from "./inputs/topups";
 export type {
   PresignDevicePhotoInput,
@@ -71,6 +71,8 @@ export type {
 export type { NetworkStats, StatsDay, StatsOverview } from "./modules/stats";
 export type { ListLedgerResponse } from "./modules/ledger";
 export type {
+  CompedSlot,
+  CompedSlots,
   DeviceReview,
   ListingReview,
   ModerationQueue,

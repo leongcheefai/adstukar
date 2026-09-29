@@ -1,6 +1,6 @@
 import { economy } from "@repo/config/economy";
 import { describe, expect, it } from "vitest";
-import { type LoopSlot, availability, canRefund, isLive, loopOf } from "./slots";
+import { type LoopSlot, availability, canRefund, compsLeft, isLive, loopOf } from "./slots";
 
 function running(position: number, over: Partial<LoopSlot> = {}): LoopSlot {
   return {
@@ -91,5 +91,14 @@ describe("availability", () => {
       { state: "refunded" },
     ]);
     expect(result).toEqual({ total: economy.slot.count, taken: 2, left: economy.slot.count - 2 });
+  });
+});
+
+describe("compsLeft", () => {
+  it("allows up to the cap, and never goes below zero", () => {
+    expect(compsLeft(0)).toBe(economy.slot.compMax);
+    expect(compsLeft(economy.slot.compMax - 1)).toBe(1);
+    expect(compsLeft(economy.slot.compMax)).toBe(0);
+    expect(compsLeft(economy.slot.compMax + 1)).toBe(0);
   });
 });
