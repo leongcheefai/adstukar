@@ -1,3 +1,5 @@
+import { economy } from "@repo/config/economy";
+import { type Dispatch, type SetStateAction, useEffect, useRef, useState } from "react";
 import { domainOf } from "./url";
 
 /**
@@ -57,4 +59,62 @@ export async function lookUpSite(url: string, signal: AbortSignal): Promise<Site
     }
   }
   return { name: nameFromUrl(url), logoUrl };
+}
+
+export type LookupState = "idle" | "checking" | "ok" | "failed";
+
+/** How long the URL field stays quiet before the site check starts. */
+const LOOKUP_DELAY_MS = 600;
+
+const NAME_MAX = economy.slot.nameMaxLength;
+
+/**
+ * The site check behind a form that takes a destination URL. It waits for the
+ * member to stop typing, and a newer URL stops the check of an older one. It
+ * fills a field only when the field is empty or still holds what an earlier
+ * check put there, so it never writes over the member's own words or logo.
+ *
+ * `target` is the normalised URL to check, or "" when there is nothing to
+ * check yet.
+ */
+export function useSiteLookup(
+  target: string,
+  fields: {
+    setName: Dispatch<SetStateAction<string>>;
+    setLogoUrl: Dispatch<SetStateAction<string>>;
+  },
+): LookupState {
+  const { setName, setLogoUrl } = fields;
+  const [state, setState] = useState<LookupState>("idle");
+  /** What the last check put in the form, so a later check may replace it. */
+  const filled = useRef({ name: "", logoUrl: "" });
+
+  useEffect(() => {
+    if (!target) {
+      setState("idle");
+      return;
+    }
+    const stop = new AbortController();
+    const wait = setTimeout(() => {
+      setState("checking");
+      lookUpSite(target, stop.signal)
+        .then((site) => {
+          if (stop.signal.aborted) return;
+          const found = { name: site.name.slice(0, NAME_MAX), logoUrl: site.logoUrl ?? "" };
+          setName((was) => (was === "" || was === filled.current.name ? found.name : was));
+          setLogoUrl((was) => (was === "" || was === filled.current.logoUrl ? found.logoUrl : was));
+          filled.current = found;
+          setState("ok");
+        })
+        .catch(() => {
+          if (!stop.signal.aborted) setState("failed");
+        });
+    }, LOOKUP_DELAY_MS);
+    return () => {
+      clearTimeout(wait);
+      stop.abort();
+    };
+  }, [target, setName, setLogoUrl]);
+
+  return state;
 }

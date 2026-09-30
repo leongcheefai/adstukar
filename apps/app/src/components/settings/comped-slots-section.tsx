@@ -28,7 +28,11 @@ import {
 import { type FormEvent, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useCompSlot, useCompedSlots } from "../../lib/admin";
+import { useSiteLookup } from "../../lib/site-lookup";
 import { useSlotLoop } from "../../lib/slots-api";
+import { isProbablyUrl, normalizeUrl } from "../../lib/url";
+import { LogoPicker } from "../campaigns/logo-picker";
+import { LOOKUP_MESSAGE, LookupMark } from "../campaigns/lookup-mark";
 
 const DAY = new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short" });
 
@@ -74,8 +78,10 @@ function CompedRow({ item }: { item: CompedSlot }) {
 
 /**
  * The form an admin fills for a friend: whose account the slot goes to, and
- * the ad they would have typed themselves. The member edits it later as their
- * own, and the ad still goes through review before the term starts.
+ * the ad they would have typed themselves. The website goes first, because the
+ * site check fills the brand and the logo from it, the way the member's own
+ * booking form does. The member edits it later as their own, and the ad still
+ * goes through review before the term starts.
  */
 function CompDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const comp = useCompSlot();
@@ -84,6 +90,7 @@ function CompDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
   const [tagline, setTagline] = useState("");
+  const [logoUrl, setLogoUrl] = useState("");
   const [position, setPosition] = useState<string>("");
 
   const openPositions = (loop?.bands ?? []).filter((b) => b.kind === "open").map((b) => b.position);
@@ -94,11 +101,13 @@ function CompDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
     setName("");
     setUrl("");
     setTagline("");
+    setLogoUrl("");
     setPosition("");
   }, [open]);
 
-  const link = url.trim();
-  const linkOk = /^https:\/\/\S+\.\S+/i.test(link);
+  const link = normalizeUrl(url);
+  const linkOk = isProbablyUrl(link);
+  const lookup = useSiteLookup(open && linkOk ? link : "", { setName, setLogoUrl });
   const ready =
     email.trim() !== "" && name.trim() !== "" && tagline.trim() !== "" && linkOk && position !== "";
 
@@ -111,6 +120,7 @@ function CompDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
         name: name.trim(),
         url: link,
         tagline: tagline.trim(),
+        logoUrl: logoUrl.trim() ? logoUrl.trim() : null,
         position: Number(position),
       },
       {
@@ -150,6 +160,38 @@ function CompDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
             </p>
           </div>
           <div className="space-y-2">
+            <Label htmlFor="comp-url">Website</Label>
+            <div className="relative">
+              <Input
+                id="comp-url"
+                type="text"
+                inputMode="url"
+                value={url}
+                placeholder="https://friend.com"
+                onChange={(event) => setUrl(event.target.value)}
+                onBlur={() => linkOk && setUrl(link)}
+                autoComplete="url"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                aria-invalid={url.trim() !== "" && !linkOk}
+                className="pr-10"
+              />
+              <LookupMark state={lookup} />
+            </div>
+            {url.trim() !== "" && !linkOk ? (
+              <p className="text-xs text-destructive">That does not read as a web address.</p>
+            ) : LOOKUP_MESSAGE[lookup] ? (
+              <p aria-live="polite" className="text-xs text-destructive">
+                {LOOKUP_MESSAGE[lookup]}
+              </p>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                The brand and the logo fill in from the site where it serves them.
+              </p>
+            )}
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="comp-name">Brand</Label>
             <Input
               id="comp-name"
@@ -168,19 +210,8 @@ function CompDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="comp-url">Website</Label>
-            <Input
-              id="comp-url"
-              type="url"
-              inputMode="url"
-              value={url}
-              placeholder="https://friend.com"
-              onChange={(event) => setUrl(event.target.value)}
-              aria-invalid={link !== "" && !linkOk}
-            />
-            {link !== "" && !linkOk ? (
-              <p className="text-xs text-destructive">The link must start with https://</p>
-            ) : null}
+            <Label htmlFor="comp-logo">Logo</Label>
+            <LogoPicker id="comp-logo" value={logoUrl} onChange={setLogoUrl} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="comp-position">Position</Label>
