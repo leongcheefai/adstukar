@@ -33,7 +33,7 @@ const servedPlay = {
   listing: servedListingContract.nullable(),
   /**
    * Set only on a house play, and only when the distributor wrote one. CapyTV
-   * shows the CapyAds card instead when it is null.
+   * shows the CapyChannel card instead when it is null.
    */
   promotion: promotionContract.nullable(),
 };

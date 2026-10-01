@@ -7,7 +7,7 @@ Drizzle ORM schema, the Postgres client singleton, and migration tooling. Every 
 - `drizzle.config.ts` reads `process.env.DATABASE_URL` directly (Drizzle Kit CLI runs outside the app context and cannot use `serverEnv`) — all application code uses `serverEnv` from `@repo/env`
 - `auth.ts` schema table shapes must stay in sync with Better Auth's adapter — do not rename columns without checking Better Auth's adapter requirements
 - No build step — exports point to TypeScript source directly
-- `exchange.ts` holds the CapyAds tables (`campaign`, `listing`, `device`, `placement`, `excluded_term`, `vetoed_listing`, `play`, `ledger_entry`, `payout_account`, `payout_request`, `topup`, `slot`); enum tuples for them live in `enums.ts`
+- `exchange.ts` holds the CapyChannel tables (`campaign`, `listing`, `device`, `placement`, `excluded_term`, `vetoed_listing`, `play`, `ledger_entry`, `payout_account`, `payout_request`, `topup`, `slot`); enum tuples for them live in `enums.ts`
 - `device.open_hour` / `device.close_hour` / `device.timezone` hold the hours the venue states it is open. They are nullable together: one hour without the other states no window, and the contract refuses a half-stated one
 - `topup` records one top-up. It opens as `pending` before the Stripe call, so a checkout can never exist without the row the webhook looks for. `stripe_payment_intent_id` keys the ledger entry, and the `stripe_*` columns stay off every contract
 - `payout_request` carries a partial unique index on `user_id` where `state = 'requested'`, so a member can never hold two open payouts. `payout_account.destination` is an account number or a PayPal address, so no contract picks it outside the member's own route and the admin queue

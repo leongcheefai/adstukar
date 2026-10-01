@@ -1,7 +1,7 @@
 import type Stripe from "stripe";
 
 /**
- * The pure side of Stripe Connect: what CapyAds asks Stripe for, and what it
+ * The pure side of Stripe Connect: what CapyChannel asks Stripe for, and what it
  * reads back. Nothing here talks to Stripe or to the database, so the shapes
  * are tested without either.
  */

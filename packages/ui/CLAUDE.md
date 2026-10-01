@@ -18,7 +18,7 @@ The brand and ink ramps are `oklch()`, one hue (264.2) for both, so lightness st
 ### Per-app theme overrides
 `src/styles/theme-dashboard.css` holds the neutral shadcn preset (`b27GdjG4`) for `apps/app` only. It is the one allowed exception to the "edit `tokens.css` only" rule, because a single file cannot give two apps different palettes.
 
-- `apps/web` imports `@repo/ui/styles` only, so the landing page gets the CapyAds blue brand theme.
+- `apps/web` imports `@repo/ui/styles` only, so the landing page gets the CapyChannel blue brand theme.
 - `apps/app` imports `@repo/ui/styles` and then `@repo/ui/styles/theme-dashboard`. Import order is what makes the override win — both files use `:root` and `.dark`, so the later file applies.
 - The file overrides the shadcn semantic, chart, sidebar, and radius tokens. Everything else — type scale, spacing, elevation, motion, icon sizes — still comes from `tokens.css`.
 - It defines `--destructive-foreground` and `--radius-full` by hand. The preset omits both, but `index.css` maps them.

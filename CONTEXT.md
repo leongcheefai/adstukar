@@ -1,6 +1,6 @@
-# CapyAds — domain glossary
+# CapyChannel — domain glossary
 
-CapyAds is an ad network for small screens. An advertiser pays to have listings
+CapyChannel is an ad network for small screens. An advertiser pays to have listings
 played on screens that other members own, and those members earn from the plays.
 Use these terms as written. The code, the dashboard, and the docs share them.
 
@@ -99,7 +99,7 @@ _Avoid_: Playlist, queue, rotation
 
 **House card**:
 A free card played when no paid listing is eligible. It is the distributor's own
-promotion, or the CapyAds card. It moves no money.
+promotion, or the CapyChannel card. It moves no money.
 
 **Veto**:
 A distributor's refusal of a listing on their own devices.

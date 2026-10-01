@@ -33,7 +33,7 @@ export default defineConfig({
       {
         // The landing lab's Save button posts here. `apply: "serve"` keeps it
         // out of every build, so a deployed site has no write path at all.
-        name: "capyads-lab-save",
+        name: "capychannel-lab-save",
         apply: "serve",
         configureServer(server) {
           server.middlewares.use("/__lab/save", (req, res) => {

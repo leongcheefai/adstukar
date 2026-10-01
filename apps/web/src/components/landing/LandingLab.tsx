@@ -36,7 +36,7 @@ import { LiveTicker } from "./LiveTicker";
  * keeps it on a rail in this browser so two variations can be compared.
  */
 
-const STORAGE_KEY = "capyads.lab.landing.v1";
+const STORAGE_KEY = "capychannel.lab.landing.v1";
 const RAIL_MAX = 24;
 const WIDTHS = { phone: 390, tablet: 820, desktop: 1280 } as const;
 type Width = keyof typeof WIDTHS;

@@ -79,7 +79,7 @@ export const setVetoedListingsInput = z.object({
 
 /**
  * The distributor's own promotion. Every field goes together: clearing the
- * tagline clears the promotion, and the loop falls back to the CapyAds card.
+ * tagline clears the promotion, and the loop falls back to the CapyChannel card.
  */
 export const setPromotionInput = z.object({
   name: z.string().trim().min(1).max(economy.promotion.nameMaxLength).nullish(),

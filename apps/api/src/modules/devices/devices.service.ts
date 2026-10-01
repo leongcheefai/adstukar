@@ -271,7 +271,7 @@ export async function setVetoedListings(
  * so it moves no money and never goes through moderation.
  *
  * The fields go together: a promotion with no name or no tagline is no promotion,
- * and the loop falls back to the CapyAds card.
+ * and the loop falls back to the CapyChannel card.
  */
 export async function setPromotion(userId: string, deviceId: string, input: SetPromotionInput) {
   await getOwnedDevice(userId, deviceId);

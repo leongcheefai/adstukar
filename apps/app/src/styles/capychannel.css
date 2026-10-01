@@ -657,11 +657,11 @@
   --ad-surface: oklch(0.16 0.012 265);
   --ad-ring: 0 0 0 1px rgb(255 255 255 / 0.1);
 
-  /* CapyAds brand, sampled from the brand deck. #011CD8 is the exact blue. */
+  /* CapyChannel brand, sampled from the brand deck. #011CD8 is the exact blue. */
   --capy-blue: oklch(0.414 0.266 264.3);
 }
 
-/* CapyAds owns the frame, the advertiser owns the content. The blue appears on
+/* CapyChannel owns the frame, the advertiser owns the content. The blue appears on
    the disclosure chip and nowhere else — painting more of the strip blue would
    fight four advertiser hues for a frame the chip already marks. */
 

@@ -16,7 +16,7 @@ export type { PresignAvatarResponse } from "./modules/uploads";
 export type { CreateFeedbackInput, FeedbackType } from "./inputs/feedback";
 export type { PresignAvatarInput } from "./inputs/uploads";
 
-// ── CapyAds exchange ─────────────────────────────────────────────────────────
+// ── CapyChannel exchange ─────────────────────────────────────────────────────────
 export type { Campaign, CampaignState } from "./entities/campaign";
 export type { Listing, ListingState } from "./entities/listing";
 export type {

@@ -169,7 +169,7 @@
   --ink-950: oklch(0.163 0.023 264.2);
   --white: #ffffff;
 
-  /* CapyAds blue — the single accent. --brand-500 is the deck blue #001CD8
+  /* CapyChannel blue — the single accent. --brand-500 is the deck blue #001CD8
      exactly. White on it reads 9.7:1, and it reads 9.7:1 on white, so the same
      colour carries both a filled button and body-sized link text. */
   --brand-50: oklch(0.955 0.018 264.2);

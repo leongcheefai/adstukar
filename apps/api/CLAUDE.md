@@ -1,7 +1,7 @@
 # apps/api
 
 ## Purpose
-Hono API server on Node.js. Handles auth (Better Auth), the CapyAds exchange (campaigns, listings, devices, placements, serve/report/scan, ledger, stats, moderation, jobs), and the two Stripe webhooks: one lands a top-up, one reads a connected account. Runs on port 3001 in development.
+Hono API server on Node.js. Handles auth (Better Auth), the CapyChannel exchange (campaigns, listings, devices, placements, serve/report/scan, ledger, stats, moderation, jobs), and the two Stripe webhooks: one lands a top-up, one reads a connected account. Runs on port 3001 in development.
 
 ## Exchange modules
 | Module | Routes | Auth |

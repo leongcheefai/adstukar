@@ -5,7 +5,7 @@
 
 An advertiser pays for one thing: a slot on the ring, at a flat price for a
 term (`economy.slot`, docs/adr/0009). Every venue screen plays the ring. A
-screen earns a fixed rate per play at its tier (`economy.earn`), and CapyAds
+screen earns a fixed rate per play at its tier (`economy.earn`), and CapyChannel
 pays that rate out of the slot money. The per-play advertiser economy on venue
 screens (docs/adr/0002) is retired.
 
