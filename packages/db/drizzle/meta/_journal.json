@@ -162,6 +162,13 @@
       "when": 1790682015863,
       "tag": "0022_slot_comped",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1790835282076,
+      "tag": "0023_comped_domain_vouched",
+      "breakpoints": true
     }
   ]
 }

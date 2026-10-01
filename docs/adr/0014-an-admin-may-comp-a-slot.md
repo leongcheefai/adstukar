@@ -24,9 +24,12 @@ does. Only the charge is missing. `POST /admin/slots/comped` opens it, and
   Complimentary, and edits or archives it as their own.
 - `slot.comped` is true, `slot.amount` is 0, and `slot.comped_by` names the
   admin. No `spend` row is posted.
-- The gates stay. The domain check and the listing review start the term, as
-  on a paid slot (docs/adr/0009). The term is `economy.slot.termDays`; it does
-  not renew and does not pause.
+- The review gates the term, as on a paid slot (docs/adr/0009). The domain
+  check it does not: the admin typed the destination, so the campaign opens
+  verified and active, and the member has no token to publish. A comp that
+  waited on the member's proof never ran, because the review refuses an
+  unverified domain and the member had nothing to prove. The term is
+  `economy.slot.termDays`; it does not renew and does not pause.
 - The ring, the report, and the pay to the screens do not read `comped`. A
   play on a comped slot pays the screen the one rate (docs/adr/0013), and the
   platform pays it with no revenue behind it.

@@ -42,7 +42,7 @@ const TAGLINE_MAX = economy.slot.taglineMaxLength;
 
 function termOf(slot: CompedSlot["slot"]): string {
   if (slot.state === "running" && slot.endsAt) return `Until ${DAY.format(new Date(slot.endsAt))}`;
-  return "Waits on the domain check and review";
+  return "Waits on review";
 }
 
 function CompedRow({ item }: { item: CompedSlot }) {
@@ -81,7 +81,8 @@ function CompedRow({ item }: { item: CompedSlot }) {
  * the ad they would have typed themselves. The website goes first, because the
  * site check fills the brand and the logo from it, the way the member's own
  * booking form does. The member edits it later as their own, and the ad still
- * goes through review before the term starts.
+ * goes through review before the term starts; the domain check it skips,
+ * because the admin named the destination.
  */
 function CompDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const comp = useCompSlot();
@@ -140,8 +141,8 @@ function CompDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
           <DialogHeader>
             <DialogTitle>Give a slot</DialogTitle>
             <DialogDescription>
-              The slot goes on the member's own account at no charge. It runs for{" "}
-              {economy.slot.termDays} days once their domain is verified and the ad is approved, and
+              The slot goes on the member's own account at no charge. Your word stands in for the
+              domain check, so it runs for {economy.slot.termDays} days once the ad is approved, and
               the screens that play it are paid as for any other slot.
             </DialogDescription>
           </DialogHeader>

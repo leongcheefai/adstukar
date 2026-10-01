@@ -46,9 +46,9 @@ _Avoid_: spot. "Position" is the number on the ring, not the booking.
 
 **Complimentary slot**:
 A slot an admin gave a member for nothing (docs/adr/0014). It carries no
-charge and no ledger row, and `slot.comped` marks it. It runs, pays the
-screens, and ends as a paid slot does. At most `economy.slot.compMax` are live
-at once.
+charge and no ledger row, and `slot.comped` marks it. Its domain is verified
+on the admin's word; the review still gates it. It runs, pays the screens, and
+ends as a paid slot does. At most `economy.slot.compMax` are live at once.
 _Avoid_: free slot, grant, trial
 
 **Ring**:
