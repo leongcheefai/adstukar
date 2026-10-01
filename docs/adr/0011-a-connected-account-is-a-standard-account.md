@@ -1,6 +1,6 @@
 # The platform is in Malaysia, so a connected account is a Standard account
 
-The CapyAds Stripe platform account is `CapyChannel`, a Malaysia account under
+The Stripe platform account is `CapyChannel`, a Malaysia account under
 Praxor. Stripe does not let a Malaysia platform create a connected account
 where the platform is liable for losses. Every shape ADR 0008 picked or
 considered needs that liability, so the connected account is now a Standard
@@ -38,7 +38,7 @@ so the list is `["MY"]`. Every probe account was deleted.
   to which capabilities an Express account asked for.
 - `economy.payout.countries` is `["MY"]`. The cash-out dialog shows a sentence
   instead of a select while the list has one entry.
-- The dashboard panel no longer says CapyAds covers the Stripe fees, and no
+- The dashboard panel no longer says CapyChannel covers the Stripe fees, and no
   longer counts countries by hand.
 
 ## What does not change

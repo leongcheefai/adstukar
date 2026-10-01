@@ -23,7 +23,7 @@ export interface LoopCandidate {
 
 export interface LoopStep {
   placementId: string;
-  /** null is a house play: the distributor's promotion, or the CapyAds card. */
+  /** null is a house play: the distributor's promotion, or the CapyChannel card. */
   listingId: string | null;
 }
 

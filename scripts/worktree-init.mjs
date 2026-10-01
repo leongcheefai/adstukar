@@ -5,7 +5,7 @@ import { existsSync, readFileSync, realpathSync, symlinkSync, writeFileSync } fr
 import { dirname, join, relative } from "node:path";
 
 const MAX_DATABASE_NAME_LENGTH = 63;
-const HELP = `AdsTukar worktree init
+const HELP = `CapyChannel worktree init
 
 Usage: node scripts/worktree-init.mjs [options]
 
@@ -211,7 +211,7 @@ function initialise(argv, cwd) {
   const options = parseArgs(argv);
   const { worktree, mainCheckout } = resolveWorktree(options.path ?? cwd);
   console.log(
-    `AdsTukar worktree init\n\n  Worktree      ${worktree}\n  Main checkout ${mainCheckout}\n`,
+    `CapyChannel worktree init\n\n  Worktree      ${worktree}\n  Main checkout ${mainCheckout}\n`,
   );
 
   const pnpm = resolvePnpm();

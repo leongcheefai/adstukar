@@ -1,6 +1,6 @@
-# CapyAds charges USD, and a payout leaves in MYR at the Bank Negara rate of the day
+# CapyChannel charges USD, and a payout leaves in MYR at the Bank Negara rate of the day
 
-CapyAds is an international business, so the price an advertiser sees and
+CapyChannel is an international business, so the price an advertiser sees and
 pays is in USD, and the ledger stays in USD (docs/adr/0007). The platform is a
 Malaysia Stripe account and settles MYR only (docs/adr/0011), so a Transfer to
 a distributor is in MYR. The dollars are converted once, on the day the admin
@@ -12,7 +12,7 @@ approves, at Bank Negara Malaysia's 12:00 middle rate.
 |---|---|---|
 | An advertiser pays a top-up or a slot | USD, on the card | Stripe, to MYR at settlement, plus its 2% conversion fee |
 | The ledger holds the amount | USD units, as before | nobody |
-| An admin approves a payout | USD → MYR at the day's rate | CapyAds, in `payPayout` |
+| An admin approves a payout | USD → MYR at the day's rate | CapyChannel, in `payPayout` |
 | Stripe transfers to the distributor | MYR | Stripe, no fee on a Transfer |
 | Stripe pays the distributor's bank | MYR | Stripe, free on the standard schedule |
 

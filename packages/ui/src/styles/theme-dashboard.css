@@ -2,7 +2,7 @@
    Dashboard theme — shadcn preset b27GdjG4 (neutral)
 
    Scope: apps/app only. Import it AFTER "@repo/ui/styles" so these values win.
-   apps/web does not import this file, so the landing page keeps the CapyAds
+   apps/web does not import this file, so the landing page keeps the CapyChannel
    blue brand theme from tokens.css.
 
    This file overrides the shadcn semantic layer only. Every other Voltage

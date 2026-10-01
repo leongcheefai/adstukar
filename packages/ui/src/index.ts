@@ -175,7 +175,7 @@ export type { EmptyStateProps } from "./primitives/empty-state";
 export { Logo } from "./primitives/logo";
 export type { LogoProps } from "./primitives/logo";
 
-// CapyAds
+// CapyChannel
 export { Slider } from "./primitives/slider";
 export { AdCard, AD_CARD_DIMENSIONS, AD_CARD_SCALE, adCardDimensions } from "./patterns/ad-card";
 export type { AdCardFormat, AdCardProps, AdCardSize } from "./patterns/ad-card";

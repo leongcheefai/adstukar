@@ -13,7 +13,7 @@ import { abandonTopup, recordPaidTopup } from "../topups/topups.service";
  *
  * Two endpoints, because Stripe signs events from connected accounts with a
  * Connect endpoint's own secret. `handleWebhook` takes the platform's events:
- * the two checkout events, and nothing else, because CapyAds sells nothing
+ * the two checkout events, and nothing else, because CapyChannel sells nothing
  * else through Stripe (docs/adr/0001). `handleConnectWebhook` takes the events
  * a connected account sends (docs/adr/0008).
  */

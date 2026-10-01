@@ -1,12 +1,14 @@
-# AdsTukar
+# CapyChannel
 
-Show two ads, earn one for yourself. A cross-promotion ad exchange for indie hackers:
-register a product, paste one snippet, show a small sponsored card for another member's
-product, and earn points to show yours in theirs. No money moves in v1.
+An ad network for small screens. Put a screen in your venue and earn a fixed
+rate every time it plays a listing. Advertisers book a slot that plays on every
+screen; screen owners cash out what they earn.
 
-How it works: every verified impression a host shows earns +1 point (settles after 24 h);
-every impression of a member's own card costs −2. A human moderation queue approves each
-product before it serves. Every number lives in `packages/config/src/economy.ts`.
+How it works: an advertiser tops up and books a slot for a campaign. Every
+approved screen that plays the slot earns one fixed rate per play, held for a
+while and then paid out through Stripe. A human moderation queue approves each
+listing and each device before it serves. Every number lives in
+`packages/config/src/economy.ts`.
 
 ## Stack
 
@@ -19,7 +21,7 @@ product before it serves. Every number lives in `packages/config/src/economy.ts`
 | Embed | Vanilla TS snippet, Vite library mode, < 10 kB gzip |
 | Database | Postgres + Drizzle ORM |
 | Auth | Better Auth |
-| Payments | Stripe (dormant in v1 — no money moves) |
+| Payments | Stripe (top-ups and Connect payouts) |
 | Email | Resend + React Email |
 | UI | shadcn/ui + Tailwind CSS |
 

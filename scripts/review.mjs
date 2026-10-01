@@ -5,7 +5,7 @@ import { realpathSync } from "node:fs";
 import { dirname } from "node:path";
 
 const LOCKFILE = "pnpm-lock.yaml";
-const HELP = `AdsTukar review
+const HELP = `CapyChannel review
 
 Usage: node scripts/review.mjs <branch> [options]
        node scripts/review.mjs --list

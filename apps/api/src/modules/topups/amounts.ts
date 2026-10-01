@@ -77,7 +77,7 @@ export interface RefundAmount {
  *
  * The processor keeps its cut of the original sale and does not give it back,
  * so the member gets the rest. A part refund carries its share of the fixed
- * fee, and both halves round up: CapyAds must never pay out more than it took.
+ * fee, and both halves round up: CapyChannel must never pay out more than it took.
  */
 export function refundAmount(
   refundable: number,

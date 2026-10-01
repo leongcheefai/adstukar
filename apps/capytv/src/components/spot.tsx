@@ -17,7 +17,7 @@ interface SpotContent {
   name: string;
   tagline: string;
   logoUrl: string | null;
-  /** The code on screen. Null on the CapyAds card, which has nothing to scan. */
+  /** The code on screen. Null on the CapyChannel card, which has nothing to scan. */
   codeUrl: string | null;
   paid: boolean;
 }

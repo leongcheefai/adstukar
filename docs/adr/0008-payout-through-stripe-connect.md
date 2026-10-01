@@ -24,7 +24,7 @@ gates a request. A row with `payouts_enabled` false blocks with
 `stripe-pending`; no row blocks with `stripe`.
 
 The account is a v1 connected account with `controller` properties: Stripe
-collects the requirements, Stripe carries the losses, CapyAds pays the Stripe
+collects the requirements, Stripe carries the losses, CapyChannel pays the Stripe
 fees, and the member gets the Express dashboard. The account receives and
 never charges, so it asks for the `transfers` capability. Stripe allows that
 alone only in the platform's own country (`economy.payout.platformCountry`);

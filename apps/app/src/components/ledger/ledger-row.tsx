@@ -7,7 +7,7 @@ import { Badge, TableCell, TableRow, Tooltip, TooltipContent, TooltipTrigger } f
 export const REASON_TEXT: Record<LedgerReason, string> = {
   earn: "A listing played on your screen",
   spend: "Your listing played on a screen",
-  fee: "The CapyAds fee on that play",
+  fee: "The CapyChannel fee on that play",
   grant: "Grant",
   topup: "Funds you added",
   payout: "Funds you cashed out",

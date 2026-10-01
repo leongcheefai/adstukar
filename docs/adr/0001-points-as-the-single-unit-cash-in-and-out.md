@@ -1,6 +1,6 @@
 # Points are the single internal unit, and cash crosses the boundary both ways
 
-CapyAds started as a barter exchange: no money moved, and a member paid for ads
+CapyChannel started as a barter exchange: no money moved, and a member paid for ads
 by showing ads (+1 earned, -2 spent). We changed it into a two-sided network. An
 advertiser buys points with money, a distributor earns points, and a distributor
 converts earned points back into money. Points stay the only unit inside the
