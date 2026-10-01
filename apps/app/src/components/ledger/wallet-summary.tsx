@@ -113,15 +113,7 @@ export function WalletSummary() {
               </Button>
             </>
           ) : (
-            <StripeSetup
-              onSetUp={() =>
-                openWhenReady(
-                  payoutsQuery,
-                  () => setCashOutOpen(true),
-                  "We could not load your payout details. Try again in a moment.",
-                )
-              }
-            />
+            <StripeSetup />
           )}
         </div>
       </Card>
