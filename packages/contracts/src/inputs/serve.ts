@@ -23,5 +23,12 @@ export const reportInput = z.object({
   playedAt: z.iso.datetime().optional(),
 });
 
+/** How many laps one ring batch holds. A set may ask for fewer. */
+export const ringQuery = z.object({
+  key: z.string().min(1).max(128),
+  laps: z.coerce.number().int().min(1).max(economy.ring.laps).default(economy.ring.laps),
+});
+
 export type LoopQuery = z.infer<typeof loopQuery>;
 export type ReportInput = z.infer<typeof reportInput>;
+export type RingQuery = z.infer<typeof ringQuery>;

@@ -1,4 +1,4 @@
-import { PLACEMENT_FORMATS, PLACEMENT_SIZES } from "@repo/db/enums";
+import { DEVICE_STATES, PLACEMENT_FORMATS, PLACEMENT_SIZES } from "@repo/db/enums";
 import * as z from "zod/v4";
 
 // Public shape read by CapyTV on a member's screen. Nothing here identifies the
@@ -59,9 +59,45 @@ export const reportOutput = z.object({
   counted: z.boolean(),
 });
 
+/**
+ * One band of the ring as a registered set draws it (docs/adr/0016). A brand
+ * band carries the play its crossing reports; `playId` is null on a brand this
+ * screen shows but is never paid for, such as the owner's own.
+ */
+export const ringBandContract = z.discriminatedUnion("kind", [
+  z.object({ position: z.number().int(), kind: z.literal("open") }),
+  z.object({ position: z.number().int(), kind: z.literal("held") }),
+  z.object({
+    position: z.number().int(),
+    kind: z.literal("brand"),
+    name: z.string(),
+    tagline: z.string(),
+    logoUrl: z.string().nullable(),
+    url: z.string(),
+    playId: z.string().nullable(),
+    expiresAt: z.iso.datetime().nullable(),
+  }),
+]);
+
+/** The whole ring once. A batch holds several laps, each with its own plays. */
+export const ringLapContract = z.object({ bands: z.array(ringBandContract) });
+
+/**
+ * What `GET /ring` answers. A pending or rejected device gets its state and no
+ * laps, so the set can show where its review stands from the same call.
+ */
+export const ringOutput = z.object({
+  state: z.enum(DEVICE_STATES),
+  rejectionReason: z.string().nullable(),
+  laps: z.array(ringLapContract),
+});
+
 export type ServedListing = z.output<typeof servedListingContract>;
 export type Promotion = z.output<typeof promotionContract>;
 export type ServeResponse = z.output<typeof serveOutput>;
 export type LoopItem = z.output<typeof loopItemContract>;
 export type LoopResponse = z.output<typeof loopOutput>;
 export type ReportResponse = z.output<typeof reportOutput>;
+export type RingBand = z.output<typeof ringBandContract>;
+export type RingLap = z.output<typeof ringLapContract>;
+export type RingResponse = z.output<typeof ringOutput>;
