@@ -132,10 +132,7 @@ export function LedgerPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
-        Wallet
-        <Coins size={24} weight="fill" aria-hidden="true" className="text-primary" />
-      </h1>
+      <h1 className="text-2xl font-semibold tracking-tight">Wallet</h1>
 
       <WalletSummary />
 
