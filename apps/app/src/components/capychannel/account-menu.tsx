@@ -21,6 +21,8 @@ export function AccountMenu({
   hint = false,
   dot = false,
   onHintClose,
+  onRegister,
+  onSignIn,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -30,6 +32,10 @@ export function AccountMenu({
   dot?: boolean;
   /** The close button on the tip. */
   onHintClose?: () => void;
+  /** Shown when the set has no device key and a member is signed in (docs/adr/0016). */
+  onRegister?: () => void;
+  /** Shown alone when a registered set plays with no session. */
+  onSignIn?: () => void;
 }) {
   const navigate = useNavigate();
   const { data: session } = useSession();
@@ -91,28 +97,55 @@ export function AccountMenu({
         </div>
       ) : null}
       <div className="tv-account-menu" hidden={!open}>
-        <button
-          type="button"
-          onClick={(event) => {
-            event.stopPropagation();
-            onOpenChange(false);
-            dismiss("source");
-            dismiss("opened");
-            openDashboard();
-          }}
-        >
-          Dashboard
-          {dot ? <span className="tv-dot" aria-hidden /> : null}
-        </button>
-        <button
-          type="button"
-          onClick={(event) => {
-            event.stopPropagation();
-            void logout();
-          }}
-        >
-          Log out
-        </button>
+        {!session && onSignIn ? (
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              onOpenChange(false);
+              onSignIn();
+            }}
+          >
+            Sign in
+          </button>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                onOpenChange(false);
+                dismiss("source");
+                dismiss("opened");
+                openDashboard();
+              }}
+            >
+              Dashboard
+              {dot ? <span className="tv-dot" aria-hidden /> : null}
+            </button>
+            {onRegister ? (
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onOpenChange(false);
+                  onRegister();
+                }}
+              >
+                Earn from this screen
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                void logout();
+              }}
+            >
+              Log out
+            </button>
+          </>
+        )}
       </div>
     </div>
   );

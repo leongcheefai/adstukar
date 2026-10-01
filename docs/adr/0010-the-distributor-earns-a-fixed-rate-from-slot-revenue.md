@@ -2,6 +2,8 @@
 
 > Amended by docs/adr/0013: the tiers are gone. Every screen earns the standard
 > rate, and the third lever below no longer exists.
+> Amended by docs/adr/0016: the rate is 1 unit per play and the cap is 1,000 a
+> day; "one paid listing at a time" is retired.
 
 An advertiser pays for one thing: a slot on the ring, at a flat price for a
 term (`economy.slot`, docs/adr/0009). Every venue screen plays the ring. A

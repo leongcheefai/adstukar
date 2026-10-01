@@ -5,6 +5,8 @@
 > slot money, so the per-play economy this record left untouched is retired.
 > Amended by docs/adr/0014: an admin may give a slot at no charge, up to five
 > live at once. It runs as a paid one does.
+> Amended by docs/adr/0016: an approved set now earns, one play per brand
+> crossing.
 
 An advertiser buys one slot on the CapyTV ticker for one term at one flat price
 (`economy.slot`: 20 slots, $20, 7 days). The whole price goes to the platform.

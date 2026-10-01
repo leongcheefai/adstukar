@@ -1,7 +1,7 @@
-import { PLACEMENT_FORMATS, PLACEMENT_SIZES } from "@repo/db/enums";
+import { DEVICE_STATES, PLACEMENT_FORMATS, PLACEMENT_SIZES } from "@repo/db/enums";
 import * as z from "zod/v4";
 
-// Public shape read by CapyTV on a member's screen. Nothing here identifies the
+// Public shape read by a venue screen. Nothing here identifies the
 // advertiser's account, and no token travels with it.
 export const servedListingContract = z.object({
   name: z.string(),
@@ -32,7 +32,7 @@ const servedPlay = {
   house: z.boolean(),
   listing: servedListingContract.nullable(),
   /**
-   * Set only on a house play, and only when the distributor wrote one. CapyTV
+   * Set only on a house play, and only when the distributor wrote one. The screen
    * shows the CapyChannel card instead when it is null.
    */
   promotion: promotionContract.nullable(),
@@ -48,7 +48,7 @@ export const loopItemContract = z.object({
 });
 
 /**
- * A batch of plays CapyTV holds so the screen keeps running with no network.
+ * A batch of plays a screen holds so the screen keeps running with no network.
  * Every item is already open, so the device only has to report each one.
  */
 export const loopOutput = z.object({
@@ -59,9 +59,45 @@ export const reportOutput = z.object({
   counted: z.boolean(),
 });
 
+/**
+ * One band of the ring as a registered set draws it (docs/adr/0016). A brand
+ * band carries the play its crossing reports; `playId` is null on a brand this
+ * screen shows but is never paid for, such as the owner's own.
+ */
+export const ringBandContract = z.discriminatedUnion("kind", [
+  z.object({ position: z.number().int(), kind: z.literal("open") }),
+  z.object({ position: z.number().int(), kind: z.literal("held") }),
+  z.object({
+    position: z.number().int(),
+    kind: z.literal("brand"),
+    name: z.string(),
+    tagline: z.string(),
+    logoUrl: z.string().nullable(),
+    url: z.string(),
+    playId: z.string().nullable(),
+    expiresAt: z.iso.datetime().nullable(),
+  }),
+]);
+
+/** The whole ring once. A batch holds several laps, each with its own plays. */
+export const ringLapContract = z.object({ bands: z.array(ringBandContract) });
+
+/**
+ * What `GET /ring` answers. A pending or rejected device gets its state and no
+ * laps, so the set can show where its review stands from the same call.
+ */
+export const ringOutput = z.object({
+  state: z.enum(DEVICE_STATES),
+  rejectionReason: z.string().nullable(),
+  laps: z.array(ringLapContract),
+});
+
 export type ServedListing = z.output<typeof servedListingContract>;
 export type Promotion = z.output<typeof promotionContract>;
 export type ServeResponse = z.output<typeof serveOutput>;
 export type LoopItem = z.output<typeof loopItemContract>;
 export type LoopResponse = z.output<typeof loopOutput>;
 export type ReportResponse = z.output<typeof reportOutput>;
+export type RingBand = z.output<typeof ringBandContract>;
+export type RingLap = z.output<typeof ringLapContract>;
+export type RingResponse = z.output<typeof ringOutput>;

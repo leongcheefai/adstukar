@@ -169,6 +169,13 @@
       "when": 1790835282076,
       "tag": "0023_comped_domain_vouched",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1790848206205,
+      "tag": "0024_ticker_placement_backfill",
+      "breakpoints": true
     }
   ]
 }

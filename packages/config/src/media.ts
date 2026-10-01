@@ -3,7 +3,7 @@
  * API, and every file picker read these values; none of them hardcodes a
  * byte count or a MIME type.
  *
- * The caps are set for a screen, not for a gallery. CapyTV is a PWA on a cheap
+ * The caps are set for a screen, not for a gallery. The set is a web page on a cheap
  * kiosk box behind a venue's network (docs/adr/0003), and a paid play holds for
  * `economy.slot.dwellSeconds` at most. A 30 s clip at 1080p and 6 Mbps is about
  * 22 MB, so 50 MB takes any creative a slot can show and refuses a film.

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { NetworkFigures } from "../../lib/network-stats";
 
 /**
- * The site's ticker: one sentence on a black strap, the way CapyTV draws its
+ * The site's ticker: one sentence on a black strap, the way the set draws its
  * crawl, but carrying the site's own words and the live network figures rather
  * than invented listings. Pure: the figures come in as a prop.
  *

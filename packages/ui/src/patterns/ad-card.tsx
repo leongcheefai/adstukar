@@ -3,7 +3,7 @@ import type * as React from "react";
 import { cn } from "../lib/utils";
 
 /**
- * The fixed listing card, as CapyTV composes it over the screen's own content.
+ * The fixed listing card, as a screen composes it over the screen's own content.
  *
  * The format is the region it fills, and the size is how much of the screen that
  * region takes. Understated by design: neutral surface, one label, never louder

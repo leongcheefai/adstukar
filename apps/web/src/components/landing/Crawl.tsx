@@ -1,7 +1,7 @@
 import type { SampleAd } from "../../lib/landing/sample";
 
 /**
- * The crawl: one line of listings on a black strap, the way CapyTV draws it.
+ * The crawl: one line of listings on a black strap, the way the set draws it.
  * It lives inside the drawn set only, sized in container units so it scales
  * with the set; the site's own strap is `Ticker`. Every listing keeps its own
  * hue; the brand stays off the strap. Decorative: the copy is invented, so the

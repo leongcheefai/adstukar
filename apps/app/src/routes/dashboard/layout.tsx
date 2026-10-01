@@ -44,6 +44,12 @@ function navItems(pathname: string): NavItem[] {
       icon: <Coins size={16} />,
     },
     {
+      label: "Screens",
+      href: "/dashboard/screens",
+      active: pathname === "/dashboard/screens",
+      icon: <Television size={16} />,
+    },
+    {
       label: "Settings",
       href: "/dashboard/settings",
       active: pathname === "/dashboard/settings",

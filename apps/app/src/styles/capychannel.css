@@ -1,4 +1,4 @@
-/* CapyTV stage. Scoped to the member-app shell. One bottom-anchored ticker
+/* The set's stage. Scoped to the member-app shell. One bottom-anchored ticker
    over three channels. An ad is a logo, a name, a tagline and a link. */
 
 .capychannel-page,
@@ -118,7 +118,7 @@
 }
 
 /* --------------------------------------------------------------------------
-   Channel layer — the content CapyTV is showing. The channel is content, not
+   Channel layer — the content the set is showing. The channel is content, not
    a design decision, so it keeps the whole stage and the ad bar sits over it.
    -------------------------------------------------------------------------- */
 
@@ -997,7 +997,8 @@
    screen — the ads below them are set two steps larger than that. */
 .tv-back,
 .tv-account-btn,
-.tv-live {
+.tv-live,
+.tv-screen-chip {
   display: flex;
   align-items: center;
   min-height: var(--bar-h);
@@ -1062,6 +1063,24 @@
   padding: 0 calc(2.6 * var(--u));
   white-space: nowrap;
   color: rgb(255 255 255 / 0.72);
+}
+/* Where this set's review stands (docs/adr/0016). The words can be a reason an
+   admin wrote, so the pill stops at a width and cuts the rest. */
+.tv-screen-chip {
+  margin: 0;
+  max-width: 32ch;
+  overflow: hidden;
+  padding: 0 calc(2.6 * var(--u));
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: rgb(255 255 255 / 0.72);
+}
+.tv-screen-chip[data-status="earning"] {
+  color: #fff;
+}
+.tv-screen-chip[data-status="rejected"],
+.tv-screen-chip[data-status="offline"] {
+  color: #fca5a5;
 }
 .tv-live b {
   font-weight: 600;
@@ -1391,7 +1410,7 @@
 
 /* --------------------------------------------------------------------------
    Boot — a tube warming up. A hairline strikes, the picture opens out of it,
-   and CapyTV holds behind static, scanlines and a roll bar. Then the set asks
+   and the set holds behind static, scanlines and a roll bar. Then the set asks
    what to show, and waits: a chooser that times out is not a chooser.
 
    Every base rule here is the SETTLED state and the motion lives in keyframes

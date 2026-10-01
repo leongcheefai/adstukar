@@ -1,5 +1,5 @@
 import { economy } from "@repo/config/economy";
-import type { CampaignState, ListingState, SlotState } from "@repo/db/enums";
+import type { CampaignState, DEVICE_STATES, ListingState, SlotState } from "@repo/db/enums";
 
 const HOUR_MS = 3_600_000;
 
@@ -29,11 +29,17 @@ export interface PayableInput {
    * the batch runs out; it earns nothing from the moment they refused it.
    */
   refusedByDistributor: boolean;
+  /**
+   * The screen's state now. A screen an admin rejected or its owner archived
+   * still holds the plays of its last batch for hours; none of them pays.
+   */
+  deviceState: (typeof DEVICE_STATES)[number];
 }
 
 /** True when the platform pays the distributor for this play (docs/adr/0010). */
 export function playPays(input: PayableInput): boolean {
   if (input.house) return false;
+  if (input.deviceState !== "approved") return false;
   if (input.paidToday >= input.dailyPlayCap) return false;
   if (!withinPaidHours(input)) return false;
   if (input.slotState !== "running") return false;

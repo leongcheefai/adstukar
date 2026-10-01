@@ -65,7 +65,7 @@ function oauthErrorMessage(code: string): string {
 const COPY = {
   login: {
     title: "Sign in",
-    subtitle: "Sign in to start CapyTV.",
+    subtitle: "Sign in to start the set.",
     google: "Sign in with Google",
     submit: "Sign in",
     submitting: "Signing in…",
@@ -75,7 +75,7 @@ const COPY = {
   },
   signup: {
     title: "Create account",
-    subtitle: "Free to join. Pick a channel and start CapyTV.",
+    subtitle: "Free to join. Pick a channel and start the set.",
     google: "Sign up with Google",
     submit: "Create account",
     submitting: "Creating account…",
@@ -108,7 +108,7 @@ export function AuthPage({
   embedded = false,
 }: {
   mode: AuthMode;
-  /** Form only. The CapyTV boot mark already holds the brand. */
+  /** Form only. The set's boot mark already holds the brand. */
   embedded?: boolean;
 }) {
   const navigate = useNavigate();

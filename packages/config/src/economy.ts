@@ -17,16 +17,18 @@ export const economy = {
    * What a venue screen earns for one play. The platform pays it from slot
    * revenue (docs/adr/0010), so the number a distributor reads is the number
    * they keep. There is no fee row, and there is no tier: every approved
-   * screen earns the same rate (docs/adr/0013).
+   * screen earns the same rate (docs/adr/0013). One brand crossing the crawl
+   * is one play (docs/adr/0016), so the rate is the smallest the integer
+   * ledger can pay: one unit.
    */
   earn: {
-    /** Per 1,000 plays, as an amount ($2.00). */
-    perThousandPlays: 2_000,
+    /** Per 1,000 plays, as an amount ($1.00). */
+    perThousandPlays: 1_000,
   },
 
   caps: {
-    /** Plays one device may be paid for in one day. It bounds the money. */
-    dailyPlaysPerDevice: 500,
+    /** Plays one device may be paid for in one day. It bounds the money: $1.00 a day. */
+    dailyPlaysPerDevice: 1_000,
     /**
      * Hours of one day a device may be paid for. It bounds the time: the paid
      * window opens at the device's first play of the day and closes this many
@@ -164,7 +166,7 @@ export const economy = {
   playTtlMinutes: 10,
 
   /**
-   * The batch CapyTV caches so a screen keeps playing when the network drops.
+   * The batch a screen caches so a screen keeps playing when the network drops.
    * Every play in a batch is opened up front, so the batch holds its plays open
    * far longer than a live `/serve` does, and the device may report them late.
    */
@@ -182,7 +184,18 @@ export const economy = {
      * cannot be paid for more than the daily cap, so it can never honestly owe
      * more reports than that.
      */
-    maxPendingReports: 500,
+    maxPendingReports: 1_000,
+  },
+
+  /**
+   * The ring a registered set plays (docs/adr/0016). Each brand that crosses
+   * the crawl is one play, so a batch opens one play per brand per lap.
+   */
+  ring: {
+    /** Laps one `/ring` call opens. About 40 minutes of a full ring. */
+    laps: 10,
+    /** Laps still holding a reportable play when the set asks for the next batch. */
+    refillAtLaps: 3,
   },
 
   /**

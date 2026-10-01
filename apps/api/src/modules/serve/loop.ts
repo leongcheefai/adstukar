@@ -3,7 +3,7 @@ import { rankCandidates } from "./ranking";
 
 /**
  * The cached loop. A screen in a café keeps its network for as long as the café
- * does, so CapyTV takes a batch of plays up front, shows them one at a time, and
+ * does, so a screen takes a batch of plays up front, shows them one at a time, and
  * reports each one when it can. Everything here is pure: the service fetches the
  * rows, this file decides what order they play in.
  */

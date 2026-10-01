@@ -82,7 +82,7 @@ export function webPageSchema(page: {
 }
 
 /**
- * CapyTV, the screen app a venue opens to earn. It is free to run: the screen
+ * The CapyChannel set, the page a venue opens on a screen to earn. It is free to run: the screen
  * is paid, it never pays. Every figure comes from `@repo/config/economy`.
  */
 export function screenAppSchema(siteUrl: URL | string) {
@@ -90,12 +90,12 @@ export function screenAppSchema(siteUrl: URL | string) {
   return {
     "@context": "https://schema.org",
     "@type": "WebApplication",
-    "@id": `${origin}/#capytv`,
-    name: "CapyTV",
+    "@id": `${origin}/#set`,
+    name: `${project.name} set`,
     applicationCategory: "MultimediaApplication",
     operatingSystem: "Any (runs in a web browser)",
     browserRequirements: "A current web browser. No install, no camera, no microphone.",
-    description: `The ${project.name} screen app. Open it in a browser on a TV, monitor, tablet, or laptop, play music or video, and earn ${perThousandPlays(earnPerPlay())} while listings run along the foot of the picture.`,
+    description: `The ${project.name} set. Open it in a browser on a TV, monitor, tablet, or laptop, play music or video, and earn ${perThousandPlays(earnPerPlay())} while listings run along the foot of the picture.`,
     url: origin,
     isAccessibleForFree: true,
     offers: { "@type": "Offer", price: 0, priceCurrency: "USD" },

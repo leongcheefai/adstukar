@@ -6,16 +6,21 @@ import { BootAuth } from "../../components/capychannel/boot-auth";
 import { ChannelPicker } from "../../components/capychannel/channel-picker";
 import type { ChannelPick } from "../../components/capychannel/channels/catalog";
 import { ChannelLayer } from "../../components/capychannel/channels/layer";
+import { RegisterScreenDialog } from "../../components/capychannel/register-screen";
+import { loadScreenPick, saveScreenPick } from "../../components/capychannel/resume";
 import { Ticker } from "../../components/capychannel/ticker";
 import { TvBar } from "../../components/capychannel/tv-bar";
 import { useSession } from "../../lib/auth";
 import { useCoach } from "../../lib/coach";
 import { safeRedirect } from "../../lib/redirect";
+import { useScreen } from "../../lib/screen/use-screen";
 import { useViewportFitCover } from "../../lib/viewport";
 import "../../styles/capychannel.css";
 
 const BAR_IDLE_MS = 3500;
 const BOOT_FADE_MS = 600;
+/** A "Sign in" nobody finishes gives the screen back to unattended play after this. */
+const SIGN_IN_GIVE_UP_MS = 120_000;
 
 function brandHoldMs(): number {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 900 : 2500;
@@ -33,6 +38,12 @@ export function CapyChannelScreen() {
   const navigate = useNavigate();
   const { search } = useLocation();
   const signedIn = Boolean(session);
+  const screen = useScreen();
+  const [registering, setRegistering] = useState(false);
+  const [signingIn, setSigningIn] = useState(false);
+  // A registered set plays with no session (docs/adr/0016): a venue's browser
+  // reloads on its own, and nobody is there to sign in again.
+  const unattended = screen.key !== null && !signedIn && !isPending;
   // The dashboard sends a visitor with no session here with `?redirect=`. Once
   // they sign in, they go back to the page they asked for.
   const redirect = safeRedirect(search);
@@ -73,10 +84,19 @@ export function CapyChannelScreen() {
 
   useEffect(() => {
     if (signedIn) hadSession.current = true;
+    if (signedIn) setSigningIn(false);
   }, [signedIn]);
 
+  // A venue screen must not sit on the sign-in form because someone pressed
+  // "Sign in" and walked away: it earns nothing there.
   useEffect(() => {
-    if (isPending || signedIn) return;
+    if (!signingIn) return;
+    const id = window.setTimeout(() => setSigningIn(false), SIGN_IN_GIVE_UP_MS);
+    return () => window.clearTimeout(id);
+  }, [signingIn]);
+
+  useEffect(() => {
+    if (isPending || signedIn || unattended) return;
     picked.current = false;
     setChannel(null);
     setBootDone(false);
@@ -88,7 +108,7 @@ export function CapyChannelScreen() {
       setPhase("pick");
       hadSession.current = false;
     }
-  }, [isPending, signedIn]);
+  }, [isPending, signedIn, unattended]);
 
   useEffect(() => {
     if (!bootDone) return;
@@ -163,11 +183,32 @@ export function CapyChannelScreen() {
   }
 
   function pick(next: ChannelPick) {
-    if (!signedIn || picked.current) return;
+    if ((!signedIn && !unattended) || picked.current) return;
     picked.current = true;
     setChannel(next);
     setBootDone(true);
+    if (screen.key) saveScreenPick(next);
   }
+
+  // An unattended set starts on its stored channel once the brand has shown.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: pick reads refs; the effect must run on these three only
+  useEffect(() => {
+    if (!unattended || signingIn || phase === "brand" || picked.current) return;
+    pick(loadScreenPick() ?? { id: "tv" });
+  }, [unattended, signingIn, phase]);
+
+  /** "Sign in" on an unattended set: stop the channel and show the sign-in tray. */
+  function signIn() {
+    setSigningIn(true);
+    picked.current = false;
+    setChannel(null);
+    setBootDone(false);
+    setBootHidden(false);
+    setAgain(true);
+    setPhase("pick");
+  }
+
+  const onRegister = signedIn && !screen.key ? () => setRegistering(true) : undefined;
 
   function back() {
     if (!playing) return;
@@ -190,13 +231,18 @@ export function CapyChannelScreen() {
         data-idle={idle && !menuOpen ? "" : undefined}
       >
         <ChannelLayer channel={channel} paused={paused} />
-        {playing ? <Ticker /> : null}
+        {playing ? <Ticker bands={screen.bands} onCrossing={screen.onCrossing} /> : null}
         <TvBar
           menuOpen={menuOpen}
           onMenuOpenChange={setAccountMenu}
           onBack={back}
           hint={playing && showHint}
           dot={playing && showDot}
+          status={screen.status}
+          unsentReports={screen.unsentReports}
+          rejectionReason={screen.rejectionReason}
+          onRegister={onRegister}
+          onSignIn={unattended ? signIn : undefined}
         />
         <button
           type="button"
@@ -221,6 +267,7 @@ export function CapyChannelScreen() {
                 hint={showHint}
                 dot={showDot}
                 onHintClose={() => dismiss("source")}
+                onRegister={onRegister}
               />
             </div>
           </div>
@@ -236,6 +283,11 @@ export function CapyChannelScreen() {
             {session ? <ChannelPicker userId={session.user.id} onPick={pick} /> : <BootAuth />}
           </Boot>
         </div>
+        <RegisterScreenDialog
+          open={registering}
+          onOpenChange={setRegistering}
+          onRegistered={screen.register}
+        />
       </div>
     </div>
   );

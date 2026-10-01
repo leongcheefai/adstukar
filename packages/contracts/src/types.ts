@@ -43,7 +43,7 @@ export type {
   UpdateDeviceInput,
 } from "./inputs/devices";
 export type { CreatePlacementInput, UpdatePlacementInput } from "./inputs/placements";
-export type { LoopQuery, ReportInput } from "./inputs/serve";
+export type { LoopQuery, ReportInput, RingQuery } from "./inputs/serve";
 export type { ListLedgerQuery } from "./inputs/ledger";
 export type { RejectInput } from "./inputs/admin";
 export type { ConnectStripeInput } from "./inputs/payouts";
@@ -63,6 +63,9 @@ export type { DeviceWithTerms, EligibleListing } from "./modules/devices";
 export type {
   LoopItem,
   LoopResponse,
+  RingBand,
+  RingLap,
+  RingResponse,
   Promotion,
   ReportResponse,
   ServeResponse,

@@ -87,7 +87,7 @@ export const listing = pgTable(
 );
 
 /**
- * One physical screen running CapyTV. The distributor owns it. An admin
+ * One physical screen running the CapyChannel set. The distributor owns it. An admin
  * approves it before it earns, at the one rate (docs/adr/0013).
  */
 export const device = pgTable(

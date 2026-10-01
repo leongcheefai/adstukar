@@ -2,9 +2,13 @@ import { describe, expect, it } from "vitest";
 import { amountToCents, centsToAmount, earnPerPlay, economy } from "./economy";
 
 describe("earnPerPlay", () => {
-  it("is the published rate: 2 units, $2.00 per 1,000 plays, for every screen", () => {
-    expect(earnPerPlay()).toBe(2);
-    expect(economy.earn.perThousandPlays).toBe(2_000);
+  it("is the published rate: 1 unit, $1.00 per 1,000 plays, for every screen", () => {
+    expect(earnPerPlay()).toBe(1);
+    expect(economy.earn.perThousandPlays).toBe(1_000);
+  });
+
+  it("caps a screen at $1.00 a day: 1,000 crossings at 1 unit (docs/adr/0016)", () => {
+    expect(economy.caps.dailyPlaysPerDevice).toBe(1_000);
   });
 
   it("is a whole number of units, so the ledger stays integer", () => {

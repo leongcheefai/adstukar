@@ -70,10 +70,12 @@ describe("flagDevice", () => {
     expect(flags.outOfHoursPlays).toBe(0);
   });
 
-  it("flags thousands of plays and no scans", () => {
+  it("does not flag thousands of plays and no scans, because no band shows a code", () => {
+    // The set's bands carry no scan code (docs/adr/0016), so every screen scans
+    // nothing. The ratio still shows; the flag would fire on every screen.
     const flags = flagDevice(stat({ scans: 0 }), alone);
     expect(flags.scanRatio).toBe(0);
-    expect(flags.lowScanRatio).toBe(true);
+    expect(flags.lowScanRatio).toBe(false);
   });
 
   it("says nothing about the scan ratio on too few plays", () => {

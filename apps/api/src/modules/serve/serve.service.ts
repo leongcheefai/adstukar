@@ -1,14 +1,22 @@
 import { earnPerPlay, economy } from "@repo/config/economy";
-import type { LoopResponse, Promotion, ServeResponse, ServedListing } from "@repo/contracts";
+import type {
+  LoopResponse,
+  Promotion,
+  RingResponse,
+  ServeResponse,
+  ServedListing,
+} from "@repo/contracts";
 import { db, schema } from "@repo/db";
 import { serverEnv } from "@repo/env";
 import { and, eq, gte, isNotNull, lt, ne, sql } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import { startOfUtcDay } from "../../lib/day";
 import { type Tx, getBalances, postEntry, settlesAtFrom } from "../ledger/ledger.service";
+import { liveSlots, ringBands } from "../slots/slots.service";
 import { type PlaySource, clampReportedAt, expiresAtFor, planLoop } from "./loop";
 import { playPays } from "./payable";
 import { type Candidate, matchesExcludedTerm, nextPlacement, rankCandidates } from "./ranking";
+import { planRingLap } from "./ring";
 
 type DeviceRow = typeof schema.device.$inferSelect;
 type PlacementRow = typeof schema.placement.$inferSelect;
@@ -253,7 +261,7 @@ export interface ServeContext {
 }
 
 /**
- * Hands CapyTV the next listing for one of the device's regions, and opens the
+ * Hands a screen the next listing for one of the device's regions, and opens the
  * play that will carry the money. Nothing is paid here: the device reports
  * the full dwell first (see `recordReport`).
  */
@@ -285,7 +293,7 @@ export async function serveListing(ctx: ServeContext): Promise<ServeResponse> {
 }
 
 /**
- * Hands CapyTV a whole batch at once, so a screen whose network drops keeps
+ * Hands a screen a whole batch at once, so a screen whose network drops keeps
  * playing and reports the batch when the network returns.
  *
  * Nothing is paid here either, and the checks that matter run again at report
@@ -339,6 +347,82 @@ export async function serveLoop(ctx: ServeContext & { size?: number }): Promise<
       expiresAt: play.expiresAt.toISOString(),
     })),
   };
+}
+
+/** The region a registered set's crawl opens its plays on. */
+async function loadTickerPlacement(deviceId: string): Promise<PlacementRow | null> {
+  const [row] = await db
+    .select()
+    .from(schema.placement)
+    .where(and(eq(schema.placement.deviceId, deviceId), eq(schema.placement.format, "ticker")))
+    .limit(1);
+  return row ?? null;
+}
+
+/**
+ * Hands a registered set the ring it crawls (docs/adr/0016): the bands in
+ * position order, lap after lap, with one open play on every brand this screen
+ * is paid for. Nothing is paid here. As on `/loop`, a batch is an offer of plays,
+ * and the cap, the paid hours and the state of the slot are read at report time.
+ */
+export async function serveRing(ctx: ServeContext & { laps?: number }): Promise<RingResponse> {
+  const now = ctx.now ?? new Date();
+  const laps = ctx.laps ?? economy.ring.laps;
+  const device = await loadDeviceByKey(ctx.key);
+  if (!device || device.state === "archived") {
+    throw new HTTPException(404, { message: "Unknown device key" });
+  }
+  if (device.state !== "approved") {
+    return { state: device.state, rejectionReason: device.rejectionReason, laps: [] };
+  }
+
+  // Registration and migration 0024 give every device one. A device without it
+  // is a broken row, and the set treats the 404 as "not registered".
+  const placement = await loadTickerPlacement(device.id);
+  if (!placement) throw new HTTPException(404, { message: "Device has no ticker region" });
+
+  const [live, filters] = await Promise.all([liveSlots(), loadFilters(device.id)]);
+  const lap = planRingLap({
+    bands: ringBands(live),
+    slots: live.map(({ slot, campaign, listing }) => ({
+      position: slot.position,
+      listingId: listing?.id ?? null,
+      userId: campaign.userId,
+      verified: campaign.verifiedAt !== null,
+    })),
+    ownerId: device.userId,
+    filters,
+  });
+
+  const expiresAt = expiresAtFor("loop", now);
+  const opened: { id: string; listingId: string }[] = [];
+  const out = Array.from({ length: laps }, () => ({
+    bands: lap.map((band) => {
+      if (band.kind !== "brand") return band;
+      const { listingId, ...shown } = band;
+      if (listingId === null) return { ...shown, playId: null, expiresAt: null };
+      const id = crypto.randomUUID();
+      opened.push({ id, listingId });
+      return { ...shown, playId: id, expiresAt: expiresAt.toISOString() };
+    }),
+  }));
+
+  // One statement: a half-written batch would leave open plays the set does not
+  // know about, and the void job would clean them up hours later.
+  if (opened.length > 0) {
+    await db.insert(schema.play).values(
+      opened.map((play) => ({
+        id: play.id,
+        placementId: placement.id,
+        listingId: play.listingId,
+        house: false,
+        expiresAt,
+        createdAt: now,
+      })),
+    );
+  }
+
+  return { state: "approved", rejectionReason: null, laps: out };
 }
 
 /** Everything a play needs to be paid: its placement, its device, its listing, and the live slot. */
@@ -407,7 +491,7 @@ export interface PlayReport {
 }
 
 /**
- * CapyTV reports that the listing held the placement for its full dwell. The play
+ * The screen reports that the listing held the placement for its full dwell. The play
  * counts, and the earn posts in the same transaction. Idempotent: a second
  * report is a no-op.
  */
@@ -469,6 +553,7 @@ export async function recordReport(report: PlayReport): Promise<{ counted: boole
       refusedByDistributor:
         filters.vetoed.has(listing.id) ||
         matchesExcludedTerm(campaign.name, listing.tagline, filters.phrases),
+      deviceState: device.state,
     });
     if (!pays) return { counted: true };
 

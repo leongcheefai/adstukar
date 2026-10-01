@@ -129,7 +129,7 @@ export async function getStatsOverview(
 
 const NETWORK_STATS_TTL_MS = 30_000;
 /**
- * How recently a screen must have reported to count as online. CapyTV reports
+ * How recently a screen must have reported to count as online. The set reports
  * after every play, a dwell of seconds, so a live screen lands well inside it,
  * and a screen that lost its network drops out within minutes.
  */

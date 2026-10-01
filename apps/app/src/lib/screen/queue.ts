@@ -1,5 +1,5 @@
 /**
- * The report queue. A screen in a café keeps its network only as long as the café
+ * The report queue. A set in a café keeps its network only as long as the café
  * does, so a play that cannot be reported now is kept and sent when the network
  * returns. Everything here is pure, so the rules are testable without a browser.
  */

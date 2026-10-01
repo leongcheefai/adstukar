@@ -6,6 +6,8 @@ import {
   loopQuery,
   reportInput,
   reportOutput,
+  ringOutput,
+  ringQuery,
   serveOutput,
   serveQuery,
 } from "@repo/contracts";
@@ -15,11 +17,11 @@ import type * as z from "zod/v4";
 import type { AppVariables } from "../../lib/context";
 import { networkOf } from "../../lib/network";
 import { createRateLimiter } from "../../lib/rate-limit";
-import { recordReport, recordScan, serveListing, serveLoop } from "./serve.service";
+import { recordReport, recordScan, serveListing, serveLoop, serveRing } from "./serve.service";
 
 /**
- * Public endpoints called from CapyTV on a member's screen, and from the phone of
- * a viewer who scans. No session, any origin, rate-limited per device key and per
+ * Public endpoints called from the CapyChannel set on a venue screen, and from the
+ * phone of a viewer who scans. No session, any origin, rate-limited per device key and per
  * IP. Mounted at the root so paths are `/serve`, `/report`, `/scan/:id`.
  */
 export const serveRouter = new Hono<{ Variables: AppVariables }>();
@@ -76,6 +78,18 @@ serveRouter.get("/loop", zValidator("query", loopQuery), async (c) => {
   }
   const result = await serveLoop({ key, size });
   return c.json(loopOutput.parse(result satisfies z.input<typeof loopOutput>), 200, NO_STORE);
+});
+
+// A registered set takes the ring it crawls, lap after lap, with one play per
+// brand per lap (docs/adr/0016). Same buckets as `/loop`: one call opens many plays.
+serveRouter.get("/ring", zValidator("query", ringQuery), async (c) => {
+  const { key, laps } = c.req.valid("query");
+  const ip = clientIp(c);
+  if (!serveByKey.hit(key) || !serveByIp.hit(ip)) {
+    throw new HTTPException(429, { message: "Too many requests" });
+  }
+  const result = await serveRing({ key, laps });
+  return c.json(ringOutput.parse(result satisfies z.input<typeof ringOutput>), 200, NO_STORE);
 });
 
 // A kiosk browser losing its page sends this through `navigator.sendBeacon`, which

@@ -40,20 +40,20 @@ export const FAQ_GROUPS: FaqGroup[] = [
     items: [
       {
         question: "How do I make money?",
-        answer: `Open CapyTV in a browser and play music, a podcast, or a video. Listings crawl along the foot of the picture. Each play earns ${rate}, on every screen. ${project.name} pays it, so the number you read is the number you keep.`,
+        answer: `Open the set in a browser, register the screen, and play music, a podcast, or a video. Listings crawl along the foot of the picture. Each play earns ${rate}, on every screen. ${project.name} pays it, so the number you read is the number you keep.`,
       },
       {
         question: "What kind of screen do I need?",
         answer:
-          "Any display that opens a web page: a smart TV, a stick, a tablet, a laptop, a phone. CapyTV runs in the browser. There is nothing to install from a store.",
+          "Any display that opens a web page: a smart TV, a stick, a tablet, a laptop, a phone. The set runs in the browser. There is nothing to install from a store.",
       },
       {
         question: "What counts as a play?",
         answer:
-          "One listing shown on your screen for its full dwell, reported by CapyTV. A play is not proof that a person looked, so the rate is per play, and a scan is counted but not paid. Only one paid listing is on your screen at a time.",
+          "One listing crossing your screen in full while the page is visible, reported by the set. A play is not proof that a person looked, so the rate is per play. Several listings are on the screen at once, and each crossing is its own play.",
       },
       {
-        question: "Does CapyTV track the room?",
+        question: "Does the set track the room?",
         answer: `No. There is no camera, no microphone, and no audience measurement. The screen asks ${project.name} for a listing, plays it, and reports that it played. That is the whole of it.`,
       },
       {

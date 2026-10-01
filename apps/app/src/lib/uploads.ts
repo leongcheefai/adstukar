@@ -1,5 +1,6 @@
 import type {
   PresetMedia,
+  PresignDevicePhotoResponse,
   PresignLogoResponse,
   PresignPresetResponse,
   PresignVideoResponse,
@@ -27,6 +28,19 @@ export async function uploadChannelMedia(
       method: "POST",
       body: { contentType: file.type, size: file.size },
     },
+  );
+  await putToStorage(uploadUrl, file, onProgress);
+  return publicUrl;
+}
+
+/** The photo of a screen in place, for the admin who reviews the device. */
+export async function uploadDevicePhoto(
+  file: File,
+  onProgress: (fraction: number) => void,
+): Promise<string> {
+  const { uploadUrl, publicUrl } = await apiFetch<PresignDevicePhotoResponse>(
+    "/uploads/device-photo/presign",
+    { method: "POST", body: { contentType: file.type, size: file.size } },
   );
   await putToStorage(uploadUrl, file, onProgress);
   return publicUrl;
