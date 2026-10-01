@@ -35,6 +35,10 @@ function isUniqueViolation(err: unknown): boolean {
  * The campaign, its one creative, and the slot row, inside the caller's
  * transaction. The caller decides what the slot costs: a booking charges the
  * price first and passes it in; a comp passes nothing and names the admin.
+ *
+ * A comp also carries the admin's word for the domain. The admin typed the
+ * destination, so there is no token for the member to publish: the campaign
+ * opens verified and active, and only the review still gates the term.
  */
 async function openSlot(
   tx: Tx,
@@ -44,7 +48,11 @@ async function openSlot(
   terms: { amount: number; compedBy: string | null },
   now: Date,
 ): Promise<SlotWithCampaignRow> {
-  const campaign = await insertCampaign(tx, userId, { name: input.name, url: input.url }, now);
+  const inserted = await insertCampaign(tx, userId, { name: input.name, url: input.url }, now);
+  const campaign =
+    terms.compedBy !== null && !inserted.verifiedAt
+      ? await vouchDomain(tx, inserted.id, now)
+      : inserted;
   const listing = await insertListing(
     tx,
     campaign.id,
@@ -70,6 +78,17 @@ async function openSlot(
   if (!slot) throw new HTTPException(500, { message: "Insert failed" });
 
   return { slot, campaign, listing };
+}
+
+/** The admin's word stands in for the domain check on a comped campaign. */
+async function vouchDomain(tx: Tx, campaignId: string, now: Date): Promise<CampaignRow> {
+  const [row] = await tx
+    .update(schema.campaign)
+    .set({ verifiedAt: now, state: "active", updatedAt: now })
+    .where(eq(schema.campaign.id, campaignId))
+    .returning();
+  if (!row) throw new HTTPException(500, { message: "Campaign vanished before it was vouched" });
+  return row;
 }
 
 /** The database's refusal of a taken position, said the way a person reads it. */
@@ -126,8 +145,9 @@ const liveComped = and(
 /**
  * An admin gives a slot to a member for nothing (docs/adr/0014). It opens
  * exactly as a booking does, minus the charge: no ledger row, `amount` 0. The
- * domain check and the review still gate the term, and the term, the ring and
- * the pay to the screens are the ones every slot gets.
+ * admin's word stands in for the domain check, the review still gates the
+ * term, and the term, the ring and the pay to the screens are the ones every
+ * slot gets.
  *
  * The cap on live comps is read and written under one lock, so two admins who
  * press at once cannot both take the last place.

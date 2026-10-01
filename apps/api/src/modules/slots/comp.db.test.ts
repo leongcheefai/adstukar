@@ -22,7 +22,10 @@ describe("compSlot", () => {
     const admin = await makeMember("admin");
     const friend = await makeMember();
 
-    const { slot, campaign, owner } = await compSlot(admin.id, { ...ad(3), email: friend.email });
+    const { slot, campaign, listing, owner } = await compSlot(admin.id, {
+      ...ad(3),
+      email: friend.email,
+    });
 
     expect(slot).toMatchObject({
       userId: friend.id,
@@ -33,6 +36,11 @@ describe("compSlot", () => {
       compedBy: admin.id,
     });
     expect(campaign.userId).toBe(friend.id);
+    // The admin named the destination, so the domain needs no token from the
+    // member; the review is the one gate left.
+    expect(campaign.verifiedAt).not.toBeNull();
+    expect(campaign.state).toBe("active");
+    expect(listing?.state).toBe("pending");
     expect(owner.email).toBe(friend.email);
     expect(await ledgerOf(friend.id)).toHaveLength(0);
     expect((await weekPool()).slotRevenue).toBe(0);
@@ -77,16 +85,12 @@ describe("compSlot", () => {
     await compSlot(admin.id, { ...ad(max + 1), email: friend.email });
   });
 
-  it("runs after the same gates as a paid slot, and pays the screen that plays it", async () => {
+  it("runs once the review approves it, and pays the screen that plays it", async () => {
     const admin = await makeMember("admin");
     const friend = await makeMember();
     const distributor = await makeMember();
-    const { slot, campaign, listing } = await compSlot(admin.id, { ...ad(1), email: friend.email });
+    const { slot, listing } = await compSlot(admin.id, { ...ad(1), email: friend.email });
     if (!listing) throw new Error("comp opened no listing");
-    await db
-      .update(schema.campaign)
-      .set({ state: "active", verifiedAt: new Date() })
-      .where(eq(schema.campaign.id, campaign.id));
 
     await approveListing(listing.id);
 
