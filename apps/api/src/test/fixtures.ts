@@ -1,6 +1,12 @@
 import { economy } from "@repo/config/economy";
 import { db, schema } from "@repo/db";
-import type { CampaignState, ListingState, SlotState } from "@repo/db/enums";
+import type {
+  CampaignState,
+  DEVICE_STATES,
+  ListingState,
+  PLACEMENT_FORMATS,
+  SlotState,
+} from "@repo/db/enums";
 import { tableNames } from "@repo/db/testing";
 import { asc, eq, sql } from "drizzle-orm";
 
@@ -42,12 +48,19 @@ export async function makeMember(role: string | null = null) {
   return row;
 }
 
-/** An approved screen with one band region. The key is what CapyTV sends. */
+/** A screen with one region: approved, on a band region, unless told otherwise. */
 export async function makeDevice(
   userId: string,
-  opts: { dailyPlayCap?: number; gapSeconds?: number } = {},
+  opts: {
+    dailyPlayCap?: number;
+    gapSeconds?: number;
+    format?: (typeof PLACEMENT_FORMATS)[number];
+    state?: (typeof DEVICE_STATES)[number];
+    rejectionReason?: string;
+  } = {},
 ) {
   const id = next("device");
+  const state = opts.state ?? "approved";
   const [device] = await db
     .insert(schema.device)
     .values({
@@ -57,9 +70,10 @@ export async function makeDevice(
       deviceId: next("CAPY"),
       apiKey: next("dk"),
       location: "Front counter",
-      state: "approved",
+      state,
+      rejectionReason: opts.rejectionReason ?? null,
       dailyPlayCap: opts.dailyPlayCap ?? economy.caps.dailyPlaysPerDevice,
-      approvedAt: new Date(),
+      approvedAt: state === "approved" ? new Date() : null,
     })
     .returning();
   if (!device) throw new Error("device insert failed");
@@ -68,7 +82,7 @@ export async function makeDevice(
     .values({
       id: next("placement"),
       deviceId: device.id,
-      format: "band",
+      format: opts.format ?? "band",
       size: "medium",
       dwellSeconds: economy.placement.dwellSeconds.default,
       gapSeconds: opts.gapSeconds ?? economy.placement.gapSeconds.min,

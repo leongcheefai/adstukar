@@ -100,29 +100,41 @@ export async function getOwnedDevice(userId: string, deviceId: string) {
 
 export async function createDevice(userId: string, input: CreateDeviceInput) {
   const now = new Date();
-  const [row] = await db
-    .insert(schema.device)
-    .values({
+  const row = await db.transaction(async (tx) => {
+    const [device] = await tx
+      .insert(schema.device)
+      .values({
+        id: crypto.randomUUID(),
+        userId,
+        name: input.name,
+        deviceId: generateDeviceId(),
+        // The key the set stores at registration and runs on for good. A pending
+        // key opens no play, so it is safe to hand over before approval.
+        apiKey: generateApiKey(),
+        venueType: input.venueType,
+        location: input.location,
+        photoUrl: input.photoUrl ?? null,
+        openHour: input.openHour ?? null,
+        closeHour: input.closeHour ?? null,
+        timezone: input.timezone ?? null,
+        dailyPlayCap: economy.caps.dailyPlaysPerDevice,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .returning();
+    if (!device) throw new HTTPException(500, { message: "Insert failed" });
+    // The crawl is the one region a set plays (docs/adr/0016). The member never
+    // sees it; `/ring` opens every play on it.
+    await tx.insert(schema.placement).values({
       id: crypto.randomUUID(),
-      userId,
-      name: input.name,
-      deviceId: generateDeviceId(),
-      // A placeholder. The column is unique and NOT NULL, so a row needs one from
-      // the start, but approval mints the key CapyTV actually runs on and the
-      // dashboard shows nothing until then.
-      apiKey: generateApiKey(),
-      venueType: input.venueType,
-      location: input.location,
-      photoUrl: input.photoUrl ?? null,
-      openHour: input.openHour ?? null,
-      closeHour: input.closeHour ?? null,
-      timezone: input.timezone ?? null,
-      dailyPlayCap: economy.caps.dailyPlaysPerDevice,
-      createdAt: now,
-      updatedAt: now,
-    })
-    .returning();
-  if (!row) throw new HTTPException(500, { message: "Insert failed" });
+      deviceId: device.id,
+      format: "ticker",
+      size: "medium",
+      dwellSeconds: economy.placement.dwellSeconds.default,
+      gapSeconds: economy.placement.gapSeconds.default,
+    });
+    return device;
+  });
   return single(row);
 }
 

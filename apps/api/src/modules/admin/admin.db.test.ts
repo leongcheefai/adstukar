@@ -1,7 +1,7 @@
 import { db, schema } from "@repo/db";
 import { beforeEach, describe, expect, it } from "vitest";
-import { ledgerOf, makeMember, makeSlot, truncateAll } from "../../test/fixtures";
-import { approveListing } from "./admin.service";
+import { ledgerOf, makeDevice, makeMember, makeSlot, truncateAll } from "../../test/fixtures";
+import { approveDevice, approveListing } from "./admin.service";
 import { weekPool } from "./pool.service";
 
 describe("approveListing", () => {
@@ -18,6 +18,20 @@ describe("approveListing", () => {
 
     expect(row.state).toBe("approved");
     expect(await ledgerOf(advertiser.id)).toHaveLength(0);
+  });
+});
+
+describe("approveDevice", () => {
+  beforeEach(truncateAll);
+
+  it("keeps the key the set registered with, so the set keeps running", async () => {
+    const owner = await makeMember();
+    const { device } = await makeDevice(owner.id, { state: "pending" });
+
+    const row = await approveDevice(device.id);
+
+    expect(row.state).toBe("approved");
+    expect(row.apiKey).toBe(device.apiKey);
   });
 });
 

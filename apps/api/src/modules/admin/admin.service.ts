@@ -2,7 +2,6 @@ import { economy } from "@repo/config/economy";
 import { db, schema } from "@repo/db";
 import { and, asc, eq, ne } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
-import { generateApiKey } from "../devices/keys";
 import { refundSlot, startSlot } from "../slots/term";
 
 /**
@@ -85,18 +84,14 @@ export async function rejectListing(listingId: string, reason: string, now: Date
 }
 
 /**
- * Approval clears the device to earn, at the one rate (docs/adr/0013). It also
- * issues the key CapyTV runs on: registration writes a placeholder, and the key
- * a distributor is ever shown is the one an approval minted.
- *
- * A second approval — a moved screen came back for review — keeps the key it
- * already has, so re-approving a working screen does not black it out until
- * somebody walks over and pairs it again.
+ * Approval clears the device to earn, at the one rate (docs/adr/0013). The key
+ * stays the one the set registered with (docs/adr/0016): the set stores it at
+ * registration, and a pending key opens no play, so there is nothing to mint.
  */
 export async function approveDevice(deviceId: string, now: Date = new Date()) {
   return db.transaction(async (tx) => {
     const [found] = await tx
-      .select({ approvedAt: schema.device.approvedAt })
+      .select({ id: schema.device.id })
       .from(schema.device)
       .where(and(eq(schema.device.id, deviceId), ne(schema.device.state, "archived")))
       .limit(1)
@@ -111,7 +106,6 @@ export async function approveDevice(deviceId: string, now: Date = new Date()) {
         approvedAt: now,
         updatedAt: now,
         dailyPlayCap: economy.caps.dailyPlaysPerDevice,
-        ...(found.approvedAt === null ? { apiKey: generateApiKey() } : {}),
       })
       .where(eq(schema.device.id, deviceId))
       .returning();
