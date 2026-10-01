@@ -33,10 +33,10 @@ export const app = new Hono<{ Variables: AppVariables }>();
 
 app.use("*", logger());
 
-// CapyTV runs on member devices and a scan comes from a stranger's phone, so these
-// four accept any origin (they never use the session cookie). Everything else stays
+// The set runs on venue screens and a scan comes from a stranger's phone, so these
+// accept any origin (they never use the session cookie). Everything else stays
 // locked to the dashboard and marketing origins.
-const PUBLIC_PREFIXES = ["/serve", "/loop", "/report", "/scan/"];
+const PUBLIC_PREFIXES = ["/serve", "/loop", "/ring", "/report", "/scan/"];
 const TRUSTED_ORIGINS = new Set(trustedOrigins);
 // Printed once at boot: a sign-in refused at preflight is almost always an
 // `APP_URL` or `WEB_URL` that does not name the site the browser is on.

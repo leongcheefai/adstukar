@@ -1,12 +1,12 @@
 import { economy, slotPrice } from "@repo/config/economy";
-import type { BookSlotInput, CompSlotInput } from "@repo/contracts";
+import type { BookSlotInput, CompSlotInput, LoopBand } from "@repo/contracts";
 import { db, schema } from "@repo/db";
 import { type SQL, and, count, desc, eq, inArray, sql } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import { insertCampaign, listingsFor } from "../campaigns/campaigns.service";
 import { type Tx, lockMember, postSpend } from "../ledger/ledger.service";
 import { insertListing } from "../listings/listings.service";
-import { availability, compsLeft, loopOf } from "./slots";
+import { type LoopSlot, availability, compsLeft, loopOf } from "./slots";
 
 type SlotRow = typeof schema.slot.$inferSelect;
 type CampaignRow = typeof schema.campaign.$inferSelect;
@@ -217,10 +217,9 @@ export async function listOwnSlots(userId: string): Promise<{ items: SlotWithCam
   return { items: await slotsWithCreative(eq(schema.slot.userId, userId)) };
 }
 
-/** The ring every screen prints, and how full it is. */
-export async function loop() {
-  const live = await slotsWithCreative(inArray(schema.slot.state, ["booked", "running"]));
-  const slots = live.map(({ slot, campaign, listing }) => ({
+/** What the ring prints for one live slot. */
+function toLoopSlot({ slot, campaign, listing }: SlotWithCampaignRow): LoopSlot {
+  return {
     position: slot.position,
     state: slot.state,
     active: campaign.state === "active",
@@ -229,7 +228,22 @@ export async function loop() {
     tagline: listing?.tagline ?? null,
     logoUrl: listing?.logoUrl ?? null,
     url: campaign.url,
-  }));
+  };
+}
+
+/** Every slot that holds a position on the ring, with its campaign and creative. */
+export async function liveSlots(): Promise<SlotWithCampaignRow[]> {
+  return slotsWithCreative(inArray(schema.slot.state, ["booked", "running"]));
+}
+
+/** The ring in position order, from slots already read. `/ring` reads them once for two uses. */
+export function ringBands(live: SlotWithCampaignRow[]): LoopBand[] {
+  return loopOf(live.map(toLoopSlot));
+}
+
+/** The ring every screen prints, and how full it is. */
+export async function loop() {
+  const slots = (await liveSlots()).map(toLoopSlot);
   return { bands: loopOf(slots), availability: availability(slots) };
 }
 
