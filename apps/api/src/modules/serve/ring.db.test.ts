@@ -112,4 +112,32 @@ describe("serveRing", () => {
     expect(earned[0]?.delta).toBe(1);
     expect(earnPerPlay()).toBe(1);
   });
+
+  it("pays nothing for a play from the batch once the screen is archived", async () => {
+    const advertiser = await makeMember();
+    await makeSlot(advertiser.id, { position: 1 });
+    const owner = await makeMember();
+    const { device } = await makeDevice(owner.id, { format: "ticker" });
+    const [playId] = brandPlays(await serveRing({ key: device.apiKey, laps: 1 }));
+    if (!playId) throw new Error("no play opened");
+    await db
+      .update(schema.device)
+      .set({ state: "archived" })
+      .where(eq(schema.device.id, device.id));
+
+    expect((await recordReport({ playId, key: device.apiKey })).counted).toBe(true);
+    expect(await ledgerOf(owner.id)).toHaveLength(0);
+  });
+
+  it("answers a status check with no laps and opens nothing", async () => {
+    const advertiser = await makeMember();
+    await makeSlot(advertiser.id, { position: 1 });
+    const owner = await makeMember();
+    const { device } = await makeDevice(owner.id, { format: "ticker" });
+
+    const ring = await serveRing({ key: device.apiKey, laps: 0 });
+
+    expect(ring).toEqual({ state: "approved", rejectionReason: null, laps: [] });
+    expect(await db.select().from(schema.play)).toHaveLength(0);
+  });
 });

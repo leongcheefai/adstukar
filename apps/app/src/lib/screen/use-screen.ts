@@ -102,35 +102,36 @@ export function useScreen(): Screen {
     setReview(null);
   }, []);
 
-  const refill = useCallback(async () => {
-    if (!key || fetching.current) return;
-    fetching.current = true;
-    try {
-      const fresh = await fetchRing(key);
-      setReview({ state: fresh.state, reason: fresh.rejectionReason });
-      setLaps((held) => merge(held, fresh.laps, new Date()));
-      setOnline(true);
-    } catch (error) {
-      if (error instanceof UnknownScreenError) forgetScreen();
-      else setOnline(false);
-    } finally {
-      fetching.current = false;
-    }
-  }, [key, forgetScreen]);
+  const refill = useCallback(
+    async (laps?: number) => {
+      if (!key || fetching.current) return;
+      fetching.current = true;
+      try {
+        const fresh = await fetchRing(key, laps);
+        setReview({ state: fresh.state, reason: fresh.rejectionReason });
+        setLaps((held) => merge(held, fresh.laps, new Date()));
+        setOnline(true);
+      } catch (error) {
+        if (error instanceof UnknownScreenError) forgetScreen();
+        else setOnline(false);
+      } finally {
+        fetching.current = false;
+      }
+    },
+    [key, forgetScreen],
+  );
 
-  // A screen under review asks every interval: it opens no play, and it learns of
-  // its approval within a minute. An approved screen asks only when its batch runs
-  // low, because every call opens plays.
+  // The set asks every interval, so a review, a rejection or an archive reaches
+  // it within a minute. A screen that earns takes a batch only when its laps run
+  // low, because every lap opens plays; otherwise it asks for zero laps, a status
+  // check that opens nothing. Each answer also brings the set back online after a
+  // report that failed.
   useEffect(() => {
     if (!key || !lockHeld) return;
     const tick = () => {
-      // A report that failed marks the set offline. Without this, an approved set
-      // would wait for its next refill, many minutes away, to try the queue again.
-      if (navigator.onLine) setOnline(true);
-      const approved = reviewRef.current?.state === "approved";
-      if (!approved || lapsLeft(lapsRef.current, new Date()) <= economy.ring.refillAtLaps) {
-        void refill();
-      }
+      const earning = reviewRef.current?.state === "approved";
+      const low = lapsLeft(lapsRef.current, new Date()) <= economy.ring.refillAtLaps;
+      void refill(earning && !low ? 0 : undefined);
     };
     tick();
     const id = setInterval(tick, economy.loop.refillIntervalSeconds * 1000);

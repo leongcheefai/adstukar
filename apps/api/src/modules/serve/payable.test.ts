@@ -17,6 +17,7 @@ const paid: PayableInput = {
   campaignState: "active",
   verifiedAt: new Date("2026-09-01T00:00:00Z"),
   refusedByDistributor: false,
+  deviceState: "approved",
 };
 
 describe("playPays", () => {
@@ -27,6 +28,13 @@ describe("playPays", () => {
   it("pays nothing for a creative the distributor refused after the batch was cut", () => {
     expect(playPays({ ...paid, refusedByDistributor: true })).toBe(false);
   });
+
+  it.each(["archived", "rejected", "pending"] as const)(
+    "pays nothing for a play a %s screen still holds from its batch",
+    (deviceState) => {
+      expect(playPays({ ...paid, deviceState })).toBe(false);
+    },
+  );
 
   it("pays nothing for a house card", () => {
     expect(playPays({ ...paid, house: true })).toBe(false);

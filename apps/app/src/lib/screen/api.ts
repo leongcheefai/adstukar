@@ -10,9 +10,11 @@ import type { QueuedReport } from "./queue";
 /** The key is unknown or the screen was archived. Nothing to retry. */
 export class UnknownScreenError extends Error {}
 
-export async function fetchRing(key: string): Promise<RingResponse> {
+/** Takes a batch of laps. Zero laps is a status check: the review state, and no play opens. */
+export async function fetchRing(key: string, laps?: number): Promise<RingResponse> {
   const url = new URL("/ring", env.VITE_API_URL);
   url.searchParams.set("key", key);
+  if (laps !== undefined) url.searchParams.set("laps", String(laps));
   const res = await fetch(url, { cache: "no-store" });
   if (res.status === 404) throw new UnknownScreenError("This screen is not registered.");
   if (!res.ok) throw new Error(`Ring failed (${res.status})`);

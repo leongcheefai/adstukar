@@ -23,10 +23,13 @@ export const reportInput = z.object({
   playedAt: z.iso.datetime().optional(),
 });
 
-/** How many laps one ring batch holds. A set may ask for fewer. */
+/**
+ * How many laps one ring batch holds. A set may ask for fewer. Zero is a status
+ * check: the set learns where its review stands and no play opens.
+ */
 export const ringQuery = z.object({
   key: z.string().min(1).max(128),
-  laps: z.coerce.number().int().min(1).max(economy.ring.laps).default(economy.ring.laps),
+  laps: z.coerce.number().int().min(0).max(economy.ring.laps).default(economy.ring.laps),
 });
 
 export type LoopQuery = z.infer<typeof loopQuery>;

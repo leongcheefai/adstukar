@@ -553,6 +553,7 @@ export async function recordReport(report: PlayReport): Promise<{ counted: boole
       refusedByDistributor:
         filters.vetoed.has(listing.id) ||
         matchesExcludedTerm(campaign.name, listing.tagline, filters.phrases),
+      deviceState: device.state,
     });
     if (!pays) return { counted: true };
 
