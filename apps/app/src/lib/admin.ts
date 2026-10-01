@@ -2,6 +2,7 @@ import type {
   CompSlotInput,
   CompedSlot,
   CompedSlots,
+  DeviceForAdmin,
   Feedback,
   FeedbackQueue,
   Listing,
@@ -21,7 +22,7 @@ const feedbackKey = ["admin", "feedback"] as const;
 const poolKey = ["admin", "pool"] as const;
 const compsKey = ["admin", "slots", "comped"] as const;
 
-/** The listings that wait for a person to read them. */
+/** The listings and the screens that wait for a person to review them. */
 export function useModerationQueue() {
   return useQuery({
     queryKey: queueKey,
@@ -48,6 +49,27 @@ export function useRejectListing() {
   return useMutation({
     mutationFn: ({ id, reason }: { id: string; reason: string }) =>
       apiFetch<Listing>(`/admin/listings/${id}/reject`, { method: "POST", body: { reason } }),
+    onSuccess: invalidate,
+  });
+}
+
+export function useApproveDevice() {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: (id: string) =>
+      apiFetch<DeviceForAdmin>(`/admin/devices/${id}/approve`, { method: "POST" }),
+    onSuccess: invalidate,
+  });
+}
+
+export function useRejectDevice() {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) =>
+      apiFetch<DeviceForAdmin>(`/admin/devices/${id}/reject`, {
+        method: "POST",
+        body: { reason },
+      }),
     onSuccess: invalidate,
   });
 }

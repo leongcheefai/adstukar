@@ -1,5 +1,5 @@
 import { ArrowSquareOut, Check, Tray, X } from "@phosphor-icons/react";
-import type { ListingReview } from "@repo/contracts/types";
+import type { DeviceReview, ListingReview } from "@repo/contracts/types";
 import {
   AdCard,
   Badge,
@@ -18,7 +18,13 @@ import {
 } from "@repo/ui";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useApproveListing, useModerationQueue, useRejectListing } from "../../lib/admin";
+import {
+  useApproveDevice,
+  useApproveListing,
+  useModerationQueue,
+  useRejectDevice,
+  useRejectListing,
+} from "../../lib/admin";
 import { PoolCard } from "./pool-card";
 
 /** The band at its smallest, then halved: the review is about the words, and a
@@ -54,7 +60,7 @@ function ListingPreview({ item }: { item: ListingReview }) {
 }
 
 /** What the reject dialog is acting on. One dialog serves both queues. */
-type RejectTarget = { id: string; label: string };
+type RejectTarget = { kind: "listing" | "device"; id: string; label: string };
 
 function ListingRow({
   item,
@@ -107,7 +113,78 @@ function ListingRow({
             <Button
               size="sm"
               variant="outline"
-              onClick={() => onReject({ id: listing.id, label: campaign.name })}
+              onClick={() => onReject({ kind: "listing", id: listing.id, label: campaign.name })}
+            >
+              <X size={14} />
+              Reject
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function hour(value: number): string {
+  return `${String(value).padStart(2, "0")}:00`;
+}
+
+/** One screen waiting for review. The photo is the evidence: a screen in a real venue. */
+function DeviceRow({
+  item,
+  onReject,
+}: { item: DeviceReview; onReject: (target: RejectTarget) => void }) {
+  const approve = useApproveDevice();
+  const { device, owner } = item;
+  const hours =
+    device.openHour !== null && device.closeHour !== null
+      ? `${hour(device.openHour)}–${hour(device.closeHour)}${device.timezone ? ` (${device.timezone})` : ""}`
+      : "No hours stated";
+  return (
+    <Card>
+      <CardContent className="flex flex-col gap-4 pt-6 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0 space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="font-medium">{device.name}</p>
+            <Badge variant="outline">{device.venueType}</Badge>
+          </div>
+          <p className="text-sm text-muted-foreground">{device.location}</p>
+          <p className="text-sm text-muted-foreground">Open {hours}</p>
+          <p className="text-xs text-muted-foreground">
+            {owner.name} · <span className="font-mono">{owner.email}</span> · registered{" "}
+            {new Date(device.createdAt).toLocaleDateString()}
+          </p>
+        </div>
+        <div className="flex shrink-0 flex-col gap-3 lg:items-end">
+          {device.photoUrl ? (
+            <a href={device.photoUrl} target="_blank" rel="noopener noreferrer">
+              <img
+                src={device.photoUrl}
+                alt={`The screen at ${device.location}`}
+                className="h-32 w-48 rounded-md object-cover"
+              />
+            </a>
+          ) : (
+            <Badge variant="warning">No photo yet</Badge>
+          )}
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              onClick={() =>
+                approve.mutate(device.id, {
+                  onSuccess: () => toast.success(`${device.name} approved`),
+                  onError: (err) => toast.error(err.message),
+                })
+              }
+              disabled={approve.isPending || !device.photoUrl}
+            >
+              <Check size={14} />
+              Approve
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => onReject({ kind: "device", id: device.id, label: device.name })}
             >
               <X size={14} />
               Reject
@@ -122,16 +199,18 @@ function ListingRow({
 export function ModerationSection() {
   const { data: queue, isLoading } = useModerationQueue();
   const rejectListing = useRejectListing();
+  const rejectDevice = useRejectDevice();
   const [target, setTarget] = useState<RejectTarget | null>(null);
   const [reason, setReason] = useState("");
 
-  const pending = rejectListing.isPending;
-  const empty = queue && queue.listings.length === 0;
+  const pending = rejectListing.isPending || rejectDevice.isPending;
+  const empty = queue && queue.listings.length === 0 && queue.devices.length === 0;
 
   function submitReject(e: React.FormEvent) {
     e.preventDefault();
     if (!target) return;
-    rejectListing.mutate(
+    const reject = target.kind === "listing" ? rejectListing : rejectDevice;
+    reject.mutate(
       { id: target.id, reason: reason.trim() },
       {
         onSuccess: () => {
@@ -166,6 +245,15 @@ export function ModerationSection() {
         </section>
       )}
 
+      {queue && queue.devices.length > 0 && (
+        <section className="space-y-3">
+          <h3 className="text-sm font-medium">Screens</h3>
+          {queue.devices.map((item) => (
+            <DeviceRow key={item.device.id} item={item} onReject={setTarget} />
+          ))}
+        </section>
+      )}
+
       <Dialog open={target !== null} onOpenChange={(open) => !open && setTarget(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -182,7 +270,11 @@ export function ModerationSection() {
                 rows={4}
                 required
                 maxLength={500}
-                placeholder="The landing page does not match the tagline."
+                placeholder={
+                  target?.kind === "device"
+                    ? "The photo does not show a screen in a venue."
+                    : "The landing page does not match the tagline."
+                }
               />
             </div>
             <Button type="submit" className="w-full" disabled={pending}>
