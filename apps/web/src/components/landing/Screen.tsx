@@ -3,7 +3,7 @@ import type { LandingSample } from "../../lib/landing/sample";
 import { Crawl } from "./Crawl";
 
 /**
- * A CapyTV screen, drawn: the venue's own content full-frame, the bar the
+ * A screen running the set, drawn: the venue's own content full-frame, the bar the
  * app puts along the top, and the crawl on the bottom edge. Every size inside
  * is in container units, so the set is judged at true proportions whether it
  * is a hero or a card. Decorative as a whole; the caption beside it carries

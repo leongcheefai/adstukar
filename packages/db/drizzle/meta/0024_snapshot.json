@@ -92,13 +92,9 @@
         "account_user_id_user_id_fk": {
           "name": "account_user_id_user_id_fk",
           "tableFrom": "account",
-          "columnsFrom": [
-            "user_id"
-          ],
+          "columnsFrom": ["user_id"],
           "tableTo": "user",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -173,13 +169,9 @@
         "session_user_id_user_id_fk": {
           "name": "session_user_id_user_id_fk",
           "tableFrom": "session",
-          "columnsFrom": [
-            "user_id"
-          ],
+          "columnsFrom": ["user_id"],
           "tableTo": "user",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -188,9 +180,7 @@
       "uniqueConstraints": {
         "session_token_unique": {
           "name": "session_token_unique",
-          "columns": [
-            "token"
-          ],
+          "columns": ["token"],
           "nullsNotDistinct": false
         }
       },
@@ -275,9 +265,7 @@
       "uniqueConstraints": {
         "user_email_unique": {
           "name": "user_email_unique",
-          "columns": [
-            "email"
-          ],
+          "columns": ["email"],
           "nullsNotDistinct": false
         }
       },
@@ -420,26 +408,18 @@
         "feedback_user_id_user_id_fk": {
           "name": "feedback_user_id_user_id_fk",
           "tableFrom": "feedback",
-          "columnsFrom": [
-            "user_id"
-          ],
+          "columnsFrom": ["user_id"],
           "tableTo": "user",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "feedback_resolved_by_user_id_fk": {
           "name": "feedback_resolved_by_user_id_fk",
           "tableFrom": "feedback",
-          "columnsFrom": [
-            "resolved_by"
-          ],
+          "columnsFrom": ["resolved_by"],
           "tableTo": "user",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "set null"
         }
@@ -576,13 +556,9 @@
         "preset_collection_created_by_user_id_fk": {
           "name": "preset_collection_created_by_user_id_fk",
           "tableFrom": "preset_collection",
-          "columnsFrom": [
-            "created_by"
-          ],
+          "columnsFrom": ["created_by"],
           "tableTo": "user",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "set null"
         }
@@ -705,26 +681,18 @@
         "preset_media_collection_id_preset_collection_id_fk": {
           "name": "preset_media_collection_id_preset_collection_id_fk",
           "tableFrom": "preset_media",
-          "columnsFrom": [
-            "collection_id"
-          ],
+          "columnsFrom": ["collection_id"],
           "tableTo": "preset_collection",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "set null"
         },
         "preset_media_created_by_user_id_fk": {
           "name": "preset_media_created_by_user_id_fk",
           "tableFrom": "preset_media",
-          "columnsFrom": [
-            "created_by"
-          ],
+          "columnsFrom": ["created_by"],
           "tableTo": "user",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "set null"
         }
@@ -840,13 +808,9 @@
         "campaign_user_id_user_id_fk": {
           "name": "campaign_user_id_user_id_fk",
           "tableFrom": "campaign",
-          "columnsFrom": [
-            "user_id"
-          ],
+          "columnsFrom": ["user_id"],
           "tableTo": "user",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -1057,13 +1021,9 @@
         "device_user_id_user_id_fk": {
           "name": "device_user_id_user_id_fk",
           "tableFrom": "device",
-          "columnsFrom": [
-            "user_id"
-          ],
+          "columnsFrom": ["user_id"],
           "tableTo": "user",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -1072,16 +1032,12 @@
       "uniqueConstraints": {
         "device_device_id_unique": {
           "name": "device_device_id_unique",
-          "columns": [
-            "device_id"
-          ],
+          "columns": ["device_id"],
           "nullsNotDistinct": false
         },
         "device_api_key_unique": {
           "name": "device_api_key_unique",
-          "columns": [
-            "api_key"
-          ],
+          "columns": ["api_key"],
           "nullsNotDistinct": false
         }
       },
@@ -1133,13 +1089,9 @@
         "excluded_term_device_id_device_id_fk": {
           "name": "excluded_term_device_id_device_id_fk",
           "tableFrom": "excluded_term",
-          "columnsFrom": [
-            "device_id"
-          ],
+          "columnsFrom": ["device_id"],
           "tableTo": "device",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -1327,26 +1279,18 @@
         "ledger_entry_user_id_user_id_fk": {
           "name": "ledger_entry_user_id_user_id_fk",
           "tableFrom": "ledger_entry",
-          "columnsFrom": [
-            "user_id"
-          ],
+          "columnsFrom": ["user_id"],
           "tableTo": "user",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "restrict"
         },
         "ledger_entry_play_id_play_id_fk": {
           "name": "ledger_entry_play_id_play_id_fk",
           "tableFrom": "ledger_entry",
-          "columnsFrom": [
-            "play_id"
-          ],
+          "columnsFrom": ["play_id"],
           "tableTo": "play",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "set null"
         }
@@ -1355,9 +1299,7 @@
       "uniqueConstraints": {
         "ledger_entry_idempotency_key_unique": {
           "name": "ledger_entry_idempotency_key_unique",
-          "columns": [
-            "idempotency_key"
-          ],
+          "columns": ["idempotency_key"],
           "nullsNotDistinct": false
         }
       },
@@ -1458,13 +1400,9 @@
         "listing_campaign_id_campaign_id_fk": {
           "name": "listing_campaign_id_campaign_id_fk",
           "tableFrom": "listing",
-          "columnsFrom": [
-            "campaign_id"
-          ],
+          "columnsFrom": ["campaign_id"],
           "tableTo": "campaign",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -1643,39 +1581,27 @@
         "payout_request_user_id_user_id_fk": {
           "name": "payout_request_user_id_user_id_fk",
           "tableFrom": "payout_request",
-          "columnsFrom": [
-            "user_id"
-          ],
+          "columnsFrom": ["user_id"],
           "tableTo": "user",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "payout_request_ledger_entry_id_ledger_entry_id_fk": {
           "name": "payout_request_ledger_entry_id_ledger_entry_id_fk",
           "tableFrom": "payout_request",
-          "columnsFrom": [
-            "ledger_entry_id"
-          ],
+          "columnsFrom": ["ledger_entry_id"],
           "tableTo": "ledger_entry",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "restrict"
         },
         "payout_request_reviewed_by_user_id_fk": {
           "name": "payout_request_reviewed_by_user_id_fk",
           "tableFrom": "payout_request",
-          "columnsFrom": [
-            "reviewed_by"
-          ],
+          "columnsFrom": ["reviewed_by"],
           "tableTo": "user",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "set null"
         }
@@ -1684,9 +1610,7 @@
       "uniqueConstraints": {
         "payout_request_stripe_transfer_id_unique": {
           "name": "payout_request_stripe_transfer_id_unique",
-          "columns": [
-            "stripe_transfer_id"
-          ],
+          "columns": ["stripe_transfer_id"],
           "nullsNotDistinct": false
         }
       },
@@ -1767,13 +1691,9 @@
         "placement_device_id_device_id_fk": {
           "name": "placement_device_id_device_id_fk",
           "tableFrom": "placement",
-          "columnsFrom": [
-            "device_id"
-          ],
+          "columnsFrom": ["device_id"],
           "tableTo": "device",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -1923,26 +1843,18 @@
         "play_placement_id_placement_id_fk": {
           "name": "play_placement_id_placement_id_fk",
           "tableFrom": "play",
-          "columnsFrom": [
-            "placement_id"
-          ],
+          "columnsFrom": ["placement_id"],
           "tableTo": "placement",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "restrict"
         },
         "play_listing_id_listing_id_fk": {
           "name": "play_listing_id_listing_id_fk",
           "tableFrom": "play",
-          "columnsFrom": [
-            "listing_id"
-          ],
+          "columnsFrom": ["listing_id"],
           "tableTo": "listing",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "set null"
         }
@@ -2135,39 +2047,27 @@
         "slot_user_id_user_id_fk": {
           "name": "slot_user_id_user_id_fk",
           "tableFrom": "slot",
-          "columnsFrom": [
-            "user_id"
-          ],
+          "columnsFrom": ["user_id"],
           "tableTo": "user",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "slot_campaign_id_campaign_id_fk": {
           "name": "slot_campaign_id_campaign_id_fk",
           "tableFrom": "slot",
-          "columnsFrom": [
-            "campaign_id"
-          ],
+          "columnsFrom": ["campaign_id"],
           "tableTo": "campaign",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "restrict"
         },
         "slot_comped_by_user_id_fk": {
           "name": "slot_comped_by_user_id_fk",
           "tableFrom": "slot",
-          "columnsFrom": [
-            "comped_by"
-          ],
+          "columnsFrom": ["comped_by"],
           "tableTo": "user",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "set null"
         }
@@ -2240,13 +2140,9 @@
         "stripe_account_user_id_user_id_fk": {
           "name": "stripe_account_user_id_user_id_fk",
           "tableFrom": "stripe_account",
-          "columnsFrom": [
-            "user_id"
-          ],
+          "columnsFrom": ["user_id"],
           "tableTo": "user",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -2255,16 +2151,12 @@
       "uniqueConstraints": {
         "stripe_account_user_id_unique": {
           "name": "stripe_account_user_id_unique",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "nullsNotDistinct": false
         },
         "stripe_account_stripe_account_id_unique": {
           "name": "stripe_account_stripe_account_id_unique",
-          "columns": [
-            "stripe_account_id"
-          ],
+          "columns": ["stripe_account_id"],
           "nullsNotDistinct": false
         }
       },
@@ -2433,39 +2325,27 @@
         "topup_user_id_user_id_fk": {
           "name": "topup_user_id_user_id_fk",
           "tableFrom": "topup",
-          "columnsFrom": [
-            "user_id"
-          ],
+          "columnsFrom": ["user_id"],
           "tableTo": "user",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "topup_ledger_entry_id_ledger_entry_id_fk": {
           "name": "topup_ledger_entry_id_ledger_entry_id_fk",
           "tableFrom": "topup",
-          "columnsFrom": [
-            "ledger_entry_id"
-          ],
+          "columnsFrom": ["ledger_entry_id"],
           "tableTo": "ledger_entry",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "restrict"
         },
         "topup_refund_ledger_entry_id_ledger_entry_id_fk": {
           "name": "topup_refund_ledger_entry_id_ledger_entry_id_fk",
           "tableFrom": "topup",
-          "columnsFrom": [
-            "refund_ledger_entry_id"
-          ],
+          "columnsFrom": ["refund_ledger_entry_id"],
           "tableTo": "ledger_entry",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "restrict"
         }
@@ -2474,16 +2354,12 @@
       "uniqueConstraints": {
         "topup_stripe_session_id_unique": {
           "name": "topup_stripe_session_id_unique",
-          "columns": [
-            "stripe_session_id"
-          ],
+          "columns": ["stripe_session_id"],
           "nullsNotDistinct": false
         },
         "topup_stripe_payment_intent_id_unique": {
           "name": "topup_stripe_payment_intent_id_unique",
-          "columns": [
-            "stripe_payment_intent_id"
-          ],
+          "columns": ["stripe_payment_intent_id"],
           "nullsNotDistinct": false
         }
       },
@@ -2542,26 +2418,18 @@
         "vetoed_listing_device_id_device_id_fk": {
           "name": "vetoed_listing_device_id_device_id_fk",
           "tableFrom": "vetoed_listing",
-          "columnsFrom": [
-            "device_id"
-          ],
+          "columnsFrom": ["device_id"],
           "tableTo": "device",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "vetoed_listing_listing_id_listing_id_fk": {
           "name": "vetoed_listing_listing_id_listing_id_fk",
           "tableFrom": "vetoed_listing",
-          "columnsFrom": [
-            "listing_id"
-          ],
+          "columnsFrom": ["listing_id"],
           "tableTo": "listing",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -2570,10 +2438,7 @@
       "uniqueConstraints": {
         "vetoed_listing_device_listing_key": {
           "name": "vetoed_listing_device_listing_key",
-          "columns": [
-            "device_id",
-            "listing_id"
-          ],
+          "columns": ["device_id", "listing_id"],
           "nullsNotDistinct": false
         }
       },
@@ -2586,153 +2451,77 @@
     "public.feedback_type": {
       "name": "feedback_type",
       "schema": "public",
-      "values": [
-        "bug",
-        "feature",
-        "other"
-      ]
+      "values": ["bug", "feature", "other"]
     },
     "public.media_kind": {
       "name": "media_kind",
       "schema": "public",
-      "values": [
-        "image",
-        "video"
-      ]
+      "values": ["image", "video"]
     },
     "public.campaign_state": {
       "name": "campaign_state",
       "schema": "public",
-      "values": [
-        "draft",
-        "active",
-        "paused",
-        "archived"
-      ]
+      "values": ["draft", "active", "paused", "archived"]
     },
     "public.device_state": {
       "name": "device_state",
       "schema": "public",
-      "values": [
-        "pending",
-        "approved",
-        "rejected",
-        "archived"
-      ]
+      "values": ["pending", "approved", "rejected", "archived"]
     },
     "public.ledger_lot": {
       "name": "ledger_lot",
       "schema": "public",
-      "values": [
-        "bought",
-        "earned",
-        "granted"
-      ]
+      "values": ["bought", "earned", "granted"]
     },
     "public.ledger_reason": {
       "name": "ledger_reason",
       "schema": "public",
-      "values": [
-        "earn",
-        "spend",
-        "fee",
-        "grant",
-        "topup",
-        "payout",
-        "refund",
-        "expiry",
-        "void"
-      ]
+      "values": ["earn", "spend", "fee", "grant", "topup", "payout", "refund", "expiry", "void"]
     },
     "public.ledger_state": {
       "name": "ledger_state",
       "schema": "public",
-      "values": [
-        "pending",
-        "settled",
-        "void"
-      ]
+      "values": ["pending", "settled", "void"]
     },
     "public.listing_state": {
       "name": "listing_state",
       "schema": "public",
-      "values": [
-        "pending",
-        "approved",
-        "rejected",
-        "paused",
-        "archived"
-      ]
+      "values": ["pending", "approved", "rejected", "paused", "archived"]
     },
     "public.payout_state": {
       "name": "payout_state",
       "schema": "public",
-      "values": [
-        "requested",
-        "paid",
-        "rejected"
-      ]
+      "values": ["requested", "paid", "rejected"]
     },
     "public.placement_format": {
       "name": "placement_format",
       "schema": "public",
-      "values": [
-        "band",
-        "float",
-        "ticker"
-      ]
+      "values": ["band", "float", "ticker"]
     },
     "public.placement_size": {
       "name": "placement_size",
       "schema": "public",
-      "values": [
-        "small",
-        "medium",
-        "large"
-      ]
+      "values": ["small", "medium", "large"]
     },
     "public.play_state": {
       "name": "play_state",
       "schema": "public",
-      "values": [
-        "open",
-        "counted",
-        "void"
-      ]
+      "values": ["open", "counted", "void"]
     },
     "public.slot_state": {
       "name": "slot_state",
       "schema": "public",
-      "values": [
-        "booked",
-        "running",
-        "ended",
-        "refunded"
-      ]
+      "values": ["booked", "running", "ended", "refunded"]
     },
     "public.topup_state": {
       "name": "topup_state",
       "schema": "public",
-      "values": [
-        "pending",
-        "paid",
-        "refunded",
-        "abandoned"
-      ]
+      "values": ["pending", "paid", "refunded", "abandoned"]
     },
     "public.venue_type": {
       "name": "venue_type",
       "schema": "public",
-      "values": [
-        "cafe",
-        "restaurant",
-        "salon",
-        "gym",
-        "clinic",
-        "retail",
-        "office",
-        "other"
-      ]
+      "values": ["cafe", "restaurant", "salon", "gym", "clinic", "retail", "office", "other"]
     }
   },
   "schemas": {},

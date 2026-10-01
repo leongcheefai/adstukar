@@ -261,7 +261,7 @@ export interface ServeContext {
 }
 
 /**
- * Hands CapyTV the next listing for one of the device's regions, and opens the
+ * Hands a screen the next listing for one of the device's regions, and opens the
  * play that will carry the money. Nothing is paid here: the device reports
  * the full dwell first (see `recordReport`).
  */
@@ -293,7 +293,7 @@ export async function serveListing(ctx: ServeContext): Promise<ServeResponse> {
 }
 
 /**
- * Hands CapyTV a whole batch at once, so a screen whose network drops keeps
+ * Hands a screen a whole batch at once, so a screen whose network drops keeps
  * playing and reports the batch when the network returns.
  *
  * Nothing is paid here either, and the checks that matter run again at report
@@ -491,7 +491,7 @@ export interface PlayReport {
 }
 
 /**
- * CapyTV reports that the listing held the placement for its full dwell. The play
+ * The screen reports that the listing held the placement for its full dwell. The play
  * counts, and the earn posts in the same transaction. Idempotent: a second
  * report is a no-op.
  */

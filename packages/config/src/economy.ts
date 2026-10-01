@@ -166,7 +166,7 @@ export const economy = {
   playTtlMinutes: 10,
 
   /**
-   * The batch CapyTV caches so a screen keeps playing when the network drops.
+   * The batch a screen caches so a screen keeps playing when the network drops.
    * Every play in a batch is opened up front, so the batch holds its plays open
    * far longer than a live `/serve` does, and the device may report them late.
    */

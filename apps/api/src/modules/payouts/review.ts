@@ -4,7 +4,7 @@ import { economy } from "@repo/config/economy";
  * The fraud review an admin reads before each payout batch. The rules are pure;
  * the queries that feed them live in `payouts.service.ts`.
  *
- * CapyTV is a PWA, so there is no device attestation. Approval, the daily play
+ * The set is a web page, so there is no device attestation. Approval, the daily play
  * cap, the payout hold and these signals are the whole defence (docs/adr/0003).
  * Every signal here is a flag for a person to weigh, never a refusal.
  */

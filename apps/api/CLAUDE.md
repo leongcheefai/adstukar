@@ -32,9 +32,10 @@ live `/serve`, hours from a `/loop` — and `POST /report` accepts a `playedAt` 
 clamps to the life of the play, so a queued report counts against the day it ran
 and a device cannot move its own history.
 
-Approving a device clears it to earn and, the first time, mints the api key CapyTV
-runs on. Registration writes a placeholder into the unique NOT NULL column and
-the dashboard shows nothing until approval.
+Registration mints the api key the set stores and runs on, and adds the device's
+`ticker` placement. Approving a device clears it to earn and keeps that key
+(`docs/adr/0016`): a pending key opens no play, so `GET /ring` only tells it
+where its review stands.
 
 Only a moved screen goes back for review: `updateDevice` re-pends on a new
 location or venue type, because approval was given to the room. A new name, a new
@@ -162,6 +163,6 @@ against the `bought` lot.
 
 ## Gotchas
 - `POST /report` reads a **text/plain** body (`navigator.sendBeacon` cannot send JSON content types) and parses it by hand — do not add `zValidator("json")` there
-- `/serve`, `/loop`, `/report` and `/scan/*` accept any origin, because CapyTV runs on member devices. Every other route keeps the `APP_URL`/`WEB_URL` allow-list; the check lives in `PUBLIC_PREFIXES` and the `cors()` origin function in `src/lib/app.ts`. A new public screen route must be added there too
+- `/serve`, `/loop`, `/ring`, `/report` and `/scan/*` accept any origin, because the set runs on venue screens. Every other route keeps the `APP_URL`/`WEB_URL` allow-list; the check lives in `PUBLIC_PREFIXES` and the `cors()` origin function in `src/lib/app.ts`. A new public screen route must be added there too
 - Both webhook endpoints, `POST /billing/webhook` and `POST /billing/connect-webhook`, must receive the **raw body** for signature verification — do not add JSON body-parsing middleware to them. Each verifies with its own secret.
 - Stripe API version is pinned in `src/lib/stripe.ts` — update after checking Stripe changelog for breaking changes

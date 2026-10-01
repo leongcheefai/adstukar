@@ -34,7 +34,7 @@ export const GET: APIRoute = async () => {
     `- An advertiser books a slot on the ring: ${slotOffer()}. The slot plays on every screen. There is no per-play bill.`,
     `- A screen is paid for up to ${economy.caps.dailyPlaysPerDevice.toLocaleString("en-US")} plays a day, and for up to ${economy.caps.paidHoursPerDay} hours a day.`,
     `- Earnings settle after ${economy.settlementDelayHours} hours. A payout starts from ${usd(economy.payout.minimum)}, after a ${economy.payout.holdDays}-day hold.`,
-    "- The wallet holds US dollars. CapyTV, the screen app, runs in a web browser, with no camera and no microphone.",
+    "- The wallet holds US dollars. The set, the screen page, runs in a web browser, with no camera and no microphone.",
     "- A person reviews every listing and every screen before it goes live.",
     "",
     "## Help",

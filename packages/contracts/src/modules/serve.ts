@@ -1,7 +1,7 @@
 import { DEVICE_STATES, PLACEMENT_FORMATS, PLACEMENT_SIZES } from "@repo/db/enums";
 import * as z from "zod/v4";
 
-// Public shape read by CapyTV on a member's screen. Nothing here identifies the
+// Public shape read by a venue screen. Nothing here identifies the
 // advertiser's account, and no token travels with it.
 export const servedListingContract = z.object({
   name: z.string(),
@@ -32,7 +32,7 @@ const servedPlay = {
   house: z.boolean(),
   listing: servedListingContract.nullable(),
   /**
-   * Set only on a house play, and only when the distributor wrote one. CapyTV
+   * Set only on a house play, and only when the distributor wrote one. The screen
    * shows the CapyChannel card instead when it is null.
    */
   promotion: promotionContract.nullable(),
@@ -48,7 +48,7 @@ export const loopItemContract = z.object({
 });
 
 /**
- * A batch of plays CapyTV holds so the screen keeps running with no network.
+ * A batch of plays a screen holds so the screen keeps running with no network.
  * Every item is already open, so the device only has to report each one.
  */
 export const loopOutput = z.object({

@@ -52,7 +52,7 @@ ends as a paid slot does. At most `economy.slot.compMax` are live at once.
 _Avoid_: free slot, grant, trial
 
 **Ring**:
-The fixed count of positions the CapyTV ticker prints, `GET /slots/loop` on
+The fixed count of positions the set's crawl prints, `GET /slots/loop` on
 the wire. Every screen prints the same ring. Not the Loop: that is the batch
 of plays a venue screen caches.
 _Avoid_: loop (for the ring), carousel
@@ -71,12 +71,14 @@ Listings and devices that wait for an admin decision.
 
 ## Where ads appear
 
-**CapyTV**:
-The screen app a distributor installs. It shows content, and it plays listings
-over that content.
+**Set**:
+The page at the dashboard's root. A member plays a channel on it, and the ring
+crawls along its foot. Registered and approved, it is a venue screen, and each
+brand that crosses the crawl is a play (docs/adr/0016).
+_Avoid_: CapyTV, player app
 
 **Device**:
-One physical screen that runs CapyTV. Holds the venue type, the location, the
+One physical screen that runs the set. Holds the venue type, the location, the
 state, and the daily play cap.
 _Avoid_: Screen, TV, player, kiosk
 
@@ -92,7 +94,7 @@ How long one listing stays on a placement.
 The quiet time between two plays on a device.
 
 **Loop**:
-The batch of plays CapyTV takes at once and holds on the device. The screen plays
+The batch of plays a screen takes at once and holds on the device. The screen plays
 the loop one at a time and reports each play, so a screen that loses its network
 keeps running and reports when the network returns.
 _Avoid_: Playlist, queue, rotation

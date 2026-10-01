@@ -8,6 +8,18 @@
 
 ---
 
+## Changes applied (1 Oct 2026)
+
+The set is the screen (`docs/adr/0016`). CapyTV is gone.
+
+| Topic | Change applied in drafts |
+|-------|--------------------------|
+| **The screen** | A screen runs the **CapyChannel set**, the same web page members open, in the screen's browser. Every "CapyTV" in the four drafts now says so. |
+| **What a play is** | Terms §5, Ads Policy §10 and the FAQ: a play is one listing crossing a screen in full while the page is visible. Several listings are on a screen at once. The rule "one paid listing at a time" is gone. |
+| **The numbers** | The rate is **$1.00 per 1,000 plays** and the cap is **1,000 plays a day** (both read from `economy.ts`, so the drafts follow). This is a change to a published amount, so it needs the notice the Terms promise if the old numbers were ever published. |
+| **Scan code** | The bands carry **no scan code** today. Ads Policy §3 marks this `[TBD]`. The scan sections (Terms §5, Privacy §2.8, Ads Policy §5) still describe a code: counsel to decide whether they stay for a later code or go. |
+| **Cookie Policy** | A registered screen keeps its key, its batch, its unsent reports and the channel it last played. The weather and news-feed settings are gone. |
+
 ## Changes applied (27 Sep 2026)
 
 The wallet and payment system is complete, and Stripe is live. Every **`[to fill in later]`** is now filled from the product code.

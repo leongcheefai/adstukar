@@ -34,7 +34,7 @@ export const MARKETING_PAGES: MarketingPage[] = [
     slug: "help",
     path: "/help",
     title: pageTitle("Help Center"),
-    description: `How to use ${project.name}: set up a screen with CapyTV, book an ad slot, add funds, and cash out what your screen earns.`,
+    description: `How to use ${project.name}: set up a screen with the set, book an ad slot, add funds, and cash out what your screen earns.`,
   },
   {
     slug: "terms",
@@ -46,7 +46,7 @@ export const MARKETING_PAGES: MarketingPage[] = [
     slug: "privacy",
     path: "/privacy",
     title: pageTitle("Privacy Policy"),
-    description: `What personal data ${project.name} collects, why, and how you can control it. CapyTV has no camera, no microphone, and no audience measurement.`,
+    description: `What personal data ${project.name} collects, why, and how you can control it. The set has no camera, no microphone, and no audience measurement.`,
   },
   {
     slug: "ads-policy",

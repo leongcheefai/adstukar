@@ -48,7 +48,7 @@ export const PLACEMENT_FORMATS = ["band", "float", "ticker"] as const;
 export const PLACEMENT_SIZES = ["small", "medium", "large"] as const;
 
 /**
- * A play opens when CapyTV takes a listing, and counts when the device reports
+ * A play opens when a screen takes a listing, and counts when the device reports
  * the full dwell. It voids when the report never arrives.
  */
 export const PLAY_STATES = ["open", "counted", "void"] as const;

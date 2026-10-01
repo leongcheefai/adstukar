@@ -1,4 +1,4 @@
-/* CapyTV stage. Scoped to the member-app shell. One bottom-anchored ticker
+/* The set's stage. Scoped to the member-app shell. One bottom-anchored ticker
    over three channels. An ad is a logo, a name, a tagline and a link. */
 
 .capychannel-page,
@@ -118,7 +118,7 @@
 }
 
 /* --------------------------------------------------------------------------
-   Channel layer — the content CapyTV is showing. The channel is content, not
+   Channel layer — the content the set is showing. The channel is content, not
    a design decision, so it keeps the whole stage and the ad bar sits over it.
    -------------------------------------------------------------------------- */
 
@@ -1410,7 +1410,7 @@
 
 /* --------------------------------------------------------------------------
    Boot — a tube warming up. A hairline strikes, the picture opens out of it,
-   and CapyTV holds behind static, scanlines and a roll bar. Then the set asks
+   and the set holds behind static, scanlines and a roll bar. Then the set asks
    what to show, and waits: a chooser that times out is not a chooser.
 
    Every base rule here is the SETTLED state and the motion lives in keyframes

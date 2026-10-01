@@ -49,7 +49,6 @@ their optional values are added to the root `.env`.
 Open:
 - Dashboard: http://localhost:3000
 - API: http://localhost:3001
-- CapyTV: http://localhost:3002
 - Marketing: http://localhost:4321
 - Embed playground: http://localhost:3001/embed/playground.html?key=<placement api key> (after the embed builds)
 
@@ -57,10 +56,9 @@ First run: `pnpm db:seed` creates the admin who approves listings and devices.
 
 - **To advertise**: book a slot under Campaigns, verify its domain, and approve
   the creative under Settings → Moderation. The slot's term starts then.
-- **To distribute**: register a device with a photo of the screen through the
-  API (the dashboard has no device page yet), approve it through
-  `POST /admin/devices/:id/approve`, add a region to it, then open CapyTV and
-  paste the device key. A running slot plays on it.
+- **To distribute**: open the set at http://localhost:3000, choose "Earn from
+  this screen" in the account menu, and approve the screen under Settings →
+  Moderation. Each running brand that crosses the crawl is a paid play.
 
 ## Commands
 

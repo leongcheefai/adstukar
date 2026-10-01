@@ -11,7 +11,7 @@ export const loopQuery = z.object({
   size: z.coerce.number().int().min(1).max(economy.loop.size).default(economy.loop.size),
 });
 
-/** CapyTV reports a play once the listing has held the placement for its dwell. */
+/** A screen reports a play once the listing has held the placement for its dwell. */
 export const reportInput = z.object({
   playId: z.string().min(1).max(64),
   key: z.string().min(1).max(128),
