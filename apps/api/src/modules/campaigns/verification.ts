@@ -1,4 +1,5 @@
 import { resolveTxt } from "node:dns/promises";
+import { project } from "@repo/config/project";
 import type { VerificationMethod } from "@repo/contracts";
 
 export const VERIFY_PREFIX = "adstukar-verify=";
@@ -26,7 +27,7 @@ export async function verifyByWellKnown(domain: string, token: string): Promise<
     const res = await fetch(`https://${domain}/.well-known/adstukar.txt`, {
       signal: controller.signal,
       redirect: "follow",
-      headers: { "user-agent": "AdsTukar-Verifier/1.0" },
+      headers: { "user-agent": `${project.name}-Verifier/1.0` },
     });
     if (!res.ok) return false;
     const body = (await res.text()).slice(0, 4096);
