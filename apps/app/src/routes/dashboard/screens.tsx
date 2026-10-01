@@ -1,4 +1,5 @@
 import { Television } from "@phosphor-icons/react";
+import { project } from "@repo/config/project";
 import type { DeviceWithTerms } from "@repo/contracts/types";
 import {
   Badge,
@@ -177,7 +178,7 @@ export function ScreensPage() {
         <EmptyState
           icon={<Television />}
           title="No screens yet"
-          description="Open the CapyChannel set on the screen in your venue, then choose “Earn from this screen” in the account menu."
+          description={`Open the ${project.name} set on the screen in your venue, then choose “Earn from this screen” in the account menu.`}
         />
       ) : null}
       {items?.map((item) => (

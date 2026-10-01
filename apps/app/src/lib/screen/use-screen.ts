@@ -1,10 +1,21 @@
 import { economy } from "@repo/config/economy";
-import type { DeviceState, RingBand, RingLap } from "@repo/contracts/types";
+import type { RingBand, RingLap } from "@repo/contracts/types";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { UnknownScreenError, fetchRing, sendReport } from "./api";
 import { type QueuedReport, drainable, enqueue, forget, trim } from "./queue";
 import { lapsLeft, merge, takePlay } from "./ring-batch";
-import { clearScreen, loadKey, loadLaps, loadQueue, saveKey, saveLaps, saveQueue } from "./storage";
+import {
+  type Review,
+  clearScreen,
+  loadKey,
+  loadLaps,
+  loadQueue,
+  loadReview,
+  saveKey,
+  saveLaps,
+  saveQueue,
+  saveReview,
+} from "./storage";
 
 export type ScreenStatus = "none" | "elsewhere" | "pending" | "rejected" | "earning" | "offline";
 
@@ -15,7 +26,7 @@ export interface Screen {
   /** Bands for the crawl when this tab plays a paid ring; null means "show /slots/loop". */
   bands: RingBand[] | null;
   /** Reports still waiting for the network. */
-  pending: number;
+  unsentReports: number;
   register(key: string): void;
   onCrossing(position: number): void;
 }
@@ -32,9 +43,9 @@ export function useScreen(): Screen {
   const [key, setKey] = useState<string | null>(loadKey);
   const [laps, setLaps] = useState<RingLap[]>(loadLaps);
   const [queue, setQueue] = useState<QueuedReport[]>(loadQueue);
-  const [review, setReview] = useState<{ state: DeviceState; reason: string | null } | null>(null);
+  const [review, setReview] = useState<Review | null>(loadReview);
   const [online, setOnline] = useState(() => navigator.onLine);
-  const [holder, setHolder] = useState(false);
+  const [lockHeld, setLockHeld] = useState(false);
 
   // The timers read these, and a timer must not restart because state it only
   // reads changed.
@@ -46,6 +57,7 @@ export function useScreen(): Screen {
 
   useEffect(() => saveLaps(laps), [laps]);
   useEffect(() => saveQueue(queue), [queue]);
+  useEffect(() => saveReview(review), [review]);
 
   useEffect(() => {
     const up = () => setOnline(true);
@@ -63,14 +75,14 @@ export function useScreen(): Screen {
   useEffect(() => {
     if (!key) return;
     if (!navigator.locks) {
-      setHolder(true);
+      setLockHeld(true);
       return;
     }
     let release: (() => void) | undefined;
     let cancelled = false;
     void navigator.locks.request(LOCK, () => {
       if (cancelled) return undefined;
-      setHolder(true);
+      setLockHeld(true);
       return new Promise<void>((resolve) => {
         release = resolve;
       });
@@ -78,7 +90,7 @@ export function useScreen(): Screen {
     return () => {
       cancelled = true;
       release?.();
-      setHolder(false);
+      setLockHeld(false);
     };
   }, [key]);
 
@@ -110,8 +122,11 @@ export function useScreen(): Screen {
   // its approval within a minute. An approved screen asks only when its batch runs
   // low, because every call opens plays.
   useEffect(() => {
-    if (!key || !holder) return;
+    if (!key || !lockHeld) return;
     const tick = () => {
+      // A report that failed marks the set offline. Without this, an approved set
+      // would wait for its next refill, many minutes away, to try the queue again.
+      if (navigator.onLine) setOnline(true);
       const approved = reviewRef.current?.state === "approved";
       if (!approved || lapsLeft(lapsRef.current, new Date()) <= economy.ring.refillAtLaps) {
         void refill();
@@ -120,11 +135,11 @@ export function useScreen(): Screen {
     tick();
     const id = setInterval(tick, economy.loop.refillIntervalSeconds * 1000);
     return () => clearInterval(id);
-  }, [key, holder, refill]);
+  }, [key, lockHeld, refill]);
 
   // Send what the set owes, oldest first, whenever it has a network.
   useEffect(() => {
-    if (!key || !holder || !online || queue.length === 0) return;
+    if (!key || !lockHeld || !online || queue.length === 0) return;
     let cancelled = false;
     void (async () => {
       const sending = drainable(queue, new Date());
@@ -147,11 +162,11 @@ export function useScreen(): Screen {
     return () => {
       cancelled = true;
     };
-  }, [key, holder, online, queue]);
+  }, [key, lockHeld, online, queue]);
 
   const onCrossing = useCallback(
     (position: number) => {
-      if (!holder) return;
+      if (!lockHeld) return;
       const now = new Date();
       const taken = takePlay(lapsRef.current, position, now);
       if (!taken.play) return;
@@ -165,7 +180,7 @@ export function useScreen(): Screen {
         ),
       );
     },
-    [holder],
+    [lockHeld],
   );
 
   const register = useCallback((next: string) => {
@@ -175,7 +190,7 @@ export function useScreen(): Screen {
 
   const status: ScreenStatus = !key
     ? "none"
-    : !holder
+    : !lockHeld
       ? "elsewhere"
       : review?.state === "pending"
         ? "pending"
@@ -194,7 +209,7 @@ export function useScreen(): Screen {
     status,
     rejectionReason: review?.reason ?? null,
     bands: paid ? (laps[0]?.bands ?? null) : null,
-    pending: queue.length,
+    unsentReports: queue.length,
     register,
     onCrossing,
   };

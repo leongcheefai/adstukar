@@ -132,16 +132,22 @@ export function Ticker({
   }, [copies]);
 
   // One crossing is one play (docs/adr/0016). Every printed copy of a brand is
-  // watched; `track` turns their sightings into whole crossings.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: a new copy count prints new elements to observe
+  // watched; `track` turns their sightings into whole crossings. The tracker and
+  // the copies in frame outlive the effect: a reported crossing hands the crawl a
+  // new batch, and starting over then would drop every crossing in progress.
+  const trackerRef = useRef(emptyTracker());
+  // The copies in the frame now. The first callback reports every copy, the ones
+  // outside too; only a change of one copy's state is a sighting.
+  const seenRef = useRef(new WeakSet<Element>());
+  // What the crawl prints, not the batch it comes from: the effect must observe
+  // again only when the printed bands change.
+  const printed = paidBands ? paidBands.map((b) => `${b.position}:${b.kind}`).join(",") : null;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: a new copy count or a new run prints new elements to observe
   useEffect(() => {
     const frame = windowRef.current;
     const trackEl = trackRef.current;
-    if (!onCrossing || !paidBands || !frame || !trackEl) return;
-    let tracker = emptyTracker();
-    // The copies in the frame now. The first callback reports every copy, the
-    // ones outside too; only a change of one copy's state is a sighting.
-    const seen = new Set<Element>();
+    if (!onCrossing || printed === null || !frame || !trackEl) return;
+    const seen = seenRef.current;
     const observer = new IntersectionObserver(
       (entries) => {
         const root = frame.getBoundingClientRect();
@@ -160,13 +166,13 @@ export function Ticker({
           ];
         });
         const result = track(
-          tracker,
+          trackerRef.current,
           sightings,
           performance.now(),
           document.visibilityState === "visible",
           MIN_CROSSING_MS,
         );
-        tracker = result.tracker;
+        trackerRef.current = result.tracker;
         for (const position of result.counted) onCrossing(position);
       },
       { root: frame, threshold: 0 },
@@ -175,14 +181,16 @@ export function Ticker({
       observer.observe(el);
     }
     const onVisibility = () => {
-      if (document.visibilityState !== "visible") tracker = spoilAll(tracker);
+      if (document.visibilityState !== "visible") {
+        trackerRef.current = spoilAll(trackerRef.current);
+      }
     };
     document.addEventListener("visibilitychange", onVisibility);
     return () => {
       observer.disconnect();
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [paidBands, copies, onCrossing]);
+  }, [printed, copies, onCrossing]);
 
   function onFocusIn(event: FocusEvent<HTMLDivElement>) {
     const ad = (event.target as HTMLElement).closest(".ticker-item");

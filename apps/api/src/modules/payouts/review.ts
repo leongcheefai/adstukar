@@ -89,6 +89,13 @@ export function countBy(values: (string | null | undefined)[]): Map<string, numb
   return counts;
 }
 
+/** The set prints no scan code today. Turn this on with the code, and the flag returns. */
+const SCAN_CODE_ON_SCREEN = false;
+
+function lowRatio(plays: number, ratio: number): boolean {
+  return plays >= economy.payout.scanRatioMinPlays && ratio < economy.payout.lowScanRatio;
+}
+
 export function flagDevice(stat: DeviceStat, context: ReviewContext): DeviceFlags {
   const ratio = scanRatio(stat.plays, stat.scans);
   const network = stat.lastNetwork ? (context.networkCounts.get(stat.lastNetwork) ?? 0) : 0;
@@ -96,8 +103,9 @@ export function flagDevice(stat: DeviceStat, context: ReviewContext): DeviceFlag
 
   return {
     scanRatio: ratio,
-    lowScanRatio:
-      stat.plays >= economy.payout.scanRatioMinPlays && ratio < economy.payout.lowScanRatio,
+    // Off while no band shows a scan code (docs/adr/0016): every screen scans
+    // nothing, so the flag would mark them all and tell the admin nothing.
+    lowScanRatio: SCAN_CODE_ON_SCREEN && lowRatio(stat.plays, ratio),
     activeHours: stat.playsByHour.filter((plays) => plays > 0).length,
     outOfHoursPlays: outOfHoursPlays(stat.playsByHour, stat.openHour, stat.closeHour),
     daysSilent: stat.lastSeenAt

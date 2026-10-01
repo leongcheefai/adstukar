@@ -17,7 +17,7 @@ export function TvBar({
   hint = false,
   dot = false,
   status,
-  pending,
+  unsentReports,
   rejectionReason,
   onRegister,
   onSignIn,
@@ -30,7 +30,7 @@ export function TvBar({
   dot?: boolean;
   status: ScreenStatus;
   /** Reports the set still owes. */
-  pending: number;
+  unsentReports: number;
   rejectionReason: string | null;
   onRegister?: () => void;
   onSignIn?: () => void;
@@ -50,7 +50,8 @@ export function TvBar({
       <div className="tv-right">
         {status === "offline" ? (
           <p className="tv-screen-chip" data-status={status}>
-            Offline · {pending.toLocaleString("en-US")} {pending === 1 ? "play" : "plays"} to send
+            Offline · {unsentReports.toLocaleString("en-US")}{" "}
+            {unsentReports === 1 ? "play" : "plays"} to send
           </p>
         ) : CHIP[status] ? (
           <p

@@ -1,4 +1,4 @@
-import type { RingLap } from "@repo/contracts/types";
+import type { DeviceState, RingLap } from "@repo/contracts/types";
 import type { QueuedReport } from "./queue";
 
 /**
@@ -13,6 +13,7 @@ const KEYS = {
   key: "capychannel.screen.key",
   laps: "capychannel.screen.laps",
   queue: "capychannel.screen.queue",
+  review: "capychannel.screen.review",
 } as const;
 
 function read<T>(name: string, fallback: T): T {
@@ -51,6 +52,19 @@ export function loadQueue(): QueuedReport[] {
 }
 export function saveQueue(queue: QueuedReport[]): void {
   write(KEYS.queue, queue);
+}
+
+/** Where the review stood at the last `/ring` answer, so a reload shows the right chip. */
+export interface Review {
+  state: DeviceState;
+  reason: string | null;
+}
+
+export function loadReview(): Review | null {
+  return read<Review | null>(KEYS.review, null);
+}
+export function saveReview(review: Review | null): void {
+  write(KEYS.review, review);
 }
 
 /** The screen was archived: forget it, so the set goes back to an unpaid set. */

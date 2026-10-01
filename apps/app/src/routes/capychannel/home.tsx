@@ -19,6 +19,8 @@ import "../../styles/capychannel.css";
 
 const BAR_IDLE_MS = 3500;
 const BOOT_FADE_MS = 600;
+/** A "Sign in" nobody finishes gives the screen back to unattended play after this. */
+const SIGN_IN_GIVE_UP_MS = 120_000;
 
 function brandHoldMs(): number {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 900 : 2500;
@@ -84,6 +86,14 @@ export function CapyChannelScreen() {
     if (signedIn) hadSession.current = true;
     if (signedIn) setSigningIn(false);
   }, [signedIn]);
+
+  // A venue screen must not sit on the sign-in form because someone pressed
+  // "Sign in" and walked away: it earns nothing there.
+  useEffect(() => {
+    if (!signingIn) return;
+    const id = window.setTimeout(() => setSigningIn(false), SIGN_IN_GIVE_UP_MS);
+    return () => window.clearTimeout(id);
+  }, [signingIn]);
 
   useEffect(() => {
     if (isPending || signedIn || unattended) return;
@@ -229,7 +239,7 @@ export function CapyChannelScreen() {
           hint={playing && showHint}
           dot={playing && showDot}
           status={screen.status}
-          pending={screen.pending}
+          unsentReports={screen.unsentReports}
           rejectionReason={screen.rejectionReason}
           onRegister={onRegister}
           onSignIn={unattended ? signIn : undefined}
