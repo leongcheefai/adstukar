@@ -1,5 +1,8 @@
 # CapyTV ships as a PWA, and device attestation is deferred
 
+> Amended by docs/adr/0016: the CapyChannel set in a browser is the screen;
+> `apps/capytv` is gone. Attestation stays deferred.
+
 CapyTV is our own content screen app — clock, weather, a local feed — with the
 ad overlay composed on top. Content is the reason a venue leaves the screen on,
 so we ship it rather than depending on partner apps that do not exist yet.
