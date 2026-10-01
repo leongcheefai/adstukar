@@ -997,7 +997,8 @@
    screen — the ads below them are set two steps larger than that. */
 .tv-back,
 .tv-account-btn,
-.tv-live {
+.tv-live,
+.tv-screen-chip {
   display: flex;
   align-items: center;
   min-height: var(--bar-h);
@@ -1062,6 +1063,24 @@
   padding: 0 calc(2.6 * var(--u));
   white-space: nowrap;
   color: rgb(255 255 255 / 0.72);
+}
+/* Where this set's review stands (docs/adr/0016). The words can be a reason an
+   admin wrote, so the pill stops at a width and cuts the rest. */
+.tv-screen-chip {
+  margin: 0;
+  max-width: 32ch;
+  overflow: hidden;
+  padding: 0 calc(2.6 * var(--u));
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: rgb(255 255 255 / 0.72);
+}
+.tv-screen-chip[data-status="earning"] {
+  color: #fff;
+}
+.tv-screen-chip[data-status="rejected"],
+.tv-screen-chip[data-status="offline"] {
+  color: #fca5a5;
 }
 .tv-live b {
   font-weight: 600;

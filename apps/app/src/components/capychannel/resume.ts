@@ -1,4 +1,4 @@
-import { CHANNEL_IDS, type ChannelId } from "./channels/catalog";
+import { CHANNEL_IDS, type ChannelId, type ChannelPick } from "./channels/catalog";
 
 const KEY = "capychannel:resume";
 
@@ -41,5 +41,34 @@ export function clearResume(): void {
     sessionStorage.removeItem(KEY);
   } catch {
     // Same as save: nothing we can do if storage is blocked.
+  }
+}
+
+const SCREEN_PICK = "capychannel.screen.pick";
+
+/**
+ * The channel a registered set last played. In `localStorage`, unlike the resume
+ * above: a venue's browser restarts, and the set must come back on its channel
+ * with no session (docs/adr/0016). The media URLs in a pick are public, so it
+ * replays signed out.
+ */
+export function saveScreenPick(pick: ChannelPick): void {
+  try {
+    localStorage.setItem(SCREEN_PICK, JSON.stringify(pick));
+  } catch {
+    // A set that cannot remember its channel falls back to the TV channel.
+  }
+}
+
+export function loadScreenPick(): ChannelPick | null {
+  try {
+    const raw = localStorage.getItem(SCREEN_PICK);
+    if (!raw) return null;
+    const parsed: unknown = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return null;
+    const id = (parsed as { id?: unknown }).id;
+    return typeof id === "string" && isChannelId(id) ? (parsed as ChannelPick) : null;
+  } catch {
+    return null;
   }
 }

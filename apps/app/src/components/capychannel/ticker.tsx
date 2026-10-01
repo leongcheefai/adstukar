@@ -1,12 +1,13 @@
 import { Plus } from "@phosphor-icons/react";
 import { economy } from "@repo/config/economy";
 import type { LoopBand } from "@repo/contracts/types";
-import { type FocusEvent, useLayoutEffect, useRef, useState } from "react";
+import { type FocusEvent, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { DASHBOARD_WINDOW } from "../../lib/dashboard-tab";
+import { type Sighting, emptyTracker, sideOf, spoilAll, track } from "../../lib/screen/crossings";
 import { clipCopy } from "../../lib/slots";
 import { useSlotLoop } from "../../lib/slots-api";
 import { CapyLockup, HomeLink } from "./lockup";
-import { CRAWL_FALLBACK_MS, copiesForFrame, crawlTimeMs, lapMs } from "./ticker-math";
+import { CRAWL_FALLBACK_MS, CROSS_MS, copiesForFrame, crawlTimeMs, lapMs } from "./ticker-math";
 
 type BrandBand = Extract<LoopBand, { kind: "brand" }>;
 
@@ -30,6 +31,7 @@ function Item({ band, dup }: { band: BrandBand; dup: boolean }) {
   return (
     <a
       className="ticker-item"
+      data-position={band.position}
       href={band.url}
       target="_blank"
       rel="noopener noreferrer"
@@ -87,9 +89,20 @@ function Run({ bands, dup }: { bands: LoopBand[]; dup: boolean }) {
   );
 }
 
-export function Ticker() {
+/** A crossing shorter than this is a jump in the crawl, not a band anybody watched. */
+const MIN_CROSSING_MS = CROSS_MS * 0.9;
+
+export function Ticker({
+  bands: paidBands = null,
+  onCrossing,
+}: {
+  /** A registered set's paid ring (docs/adr/0016). Null shows the public ring. */
+  bands?: LoopBand[] | null;
+  /** Called once per counted crossing, with the band's ring position. */
+  onCrossing?: (position: number) => void;
+} = {}) {
   const { data: loop } = useSlotLoop();
-  const bands = loop?.bands ?? EMPTY_LOOP;
+  const bands = paidBands ?? loop?.bands ?? EMPTY_LOOP;
   const windowRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const [copies, setCopies] = useState(2);
@@ -117,6 +130,59 @@ export function Ticker() {
     watch.observe(frame);
     return () => watch.disconnect();
   }, [copies]);
+
+  // One crossing is one play (docs/adr/0016). Every printed copy of a brand is
+  // watched; `track` turns their sightings into whole crossings.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: a new copy count prints new elements to observe
+  useEffect(() => {
+    const frame = windowRef.current;
+    const trackEl = trackRef.current;
+    if (!onCrossing || !paidBands || !frame || !trackEl) return;
+    let tracker = emptyTracker();
+    // The copies in the frame now. The first callback reports every copy, the
+    // ones outside too; only a change of one copy's state is a sighting.
+    const seen = new Set<Element>();
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const root = frame.getBoundingClientRect();
+        const sightings: Sighting[] = entries.flatMap((entry) => {
+          const position = Number((entry.target as HTMLElement).dataset.position);
+          if (!Number.isFinite(position)) return [];
+          if (entry.isIntersecting === seen.has(entry.target)) return [];
+          if (entry.isIntersecting) seen.add(entry.target);
+          else seen.delete(entry.target);
+          return [
+            {
+              position,
+              inFrame: entry.isIntersecting,
+              side: sideOf(entry.boundingClientRect, root),
+            },
+          ];
+        });
+        const result = track(
+          tracker,
+          sightings,
+          performance.now(),
+          document.visibilityState === "visible",
+          MIN_CROSSING_MS,
+        );
+        tracker = result.tracker;
+        for (const position of result.counted) onCrossing(position);
+      },
+      { root: frame, threshold: 0 },
+    );
+    for (const el of trackEl.querySelectorAll<HTMLElement>(".ticker-item[data-position]")) {
+      observer.observe(el);
+    }
+    const onVisibility = () => {
+      if (document.visibilityState !== "visible") tracker = spoilAll(tracker);
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      observer.disconnect();
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [paidBands, copies, onCrossing]);
 
   function onFocusIn(event: FocusEvent<HTMLDivElement>) {
     const ad = (event.target as HTMLElement).closest(".ticker-item");
