@@ -4,20 +4,16 @@ import {
   cachedPlayHours,
   logoMaxMb,
   logoTypes,
+  noticeDays,
+  policiesUpdated,
   refundWindowDays,
   slotPrice,
   taglineMaxLength,
 } from "../../lib/legal";
 
-# **DRAFT FOR REVIEW — NOT LEGAL ADVICE**
-
-> This document is a working draft prepared for human legal review (Linear KEV-6). It is **not** legal advice. The rules below adapt the *spirit* of common sponsor/display ad policies (structure informed by SponsorBar-style ads rules) to **CapyChannel** operated by **Praxor Studio** (SA0656426-A). They are **not** a copy of any third-party product’s legal text. CapyChannel shows ads on screens in venues, through the **CapyChannel set** opened on each screen.
-
----
-
 # Ads Policy (Listing & Campaign Rules)
 
-**Last updated:** 27 September 2026  
+**Last updated:** {policiesUpdated}  
 
 **Operator:** Praxor Studio (SA0656426-A)  
 **Product:** CapyChannel  
@@ -31,7 +27,7 @@ This Ads Policy sets the rules for listings and campaigns on **CapyChannel**. Ad
 
 This Policy applies together with the Terms of Service and Privacy Policy.
 
-**What a listing is:** you do not upload a designed ad. You give a **name**, a **tagline** of up to {taglineMaxLength} characters, an optional **logo**, and the **website** it links to. The CapyChannel set draws the listing in a band of the crawl along the foot of the screen, and the band links to your website. **[TBD: the bands carry no scan code today (docs/adr/0016); counsel to decide whether the scan sections of this policy stay for a later code.]** The band shows the first {bandNameLength} characters of the name and the first {bandTaglineLength} of the tagline, so put the key words first.
+**What a listing is:** you do not upload a designed ad. You give a **name**, a **tagline** of up to {taglineMaxLength} characters, an optional **logo**, and the **website** it links to. The CapyChannel set draws the listing in a band of the crawl along the foot of the screen, and the band links to your website. The band shows the first {bandNameLength} characters of the name and the first {bandTaglineLength} of the tagline, so put the key words first.
 
 ---
 
@@ -51,7 +47,7 @@ Every listing **must**:
 
 1. **Identify a real company or product** — Use the real brand/product name. Do not use placeholder or fake brand names to trick viewers.  
 2. **Include a short, accurate slogan or value proposition (tagline)** — Claims must match what the destination actually offers.  
-3. **Use English for the name and tagline** — Other languages on the website are fine. **[TBD: confirm English-only for listings shown in Malaysian venues, or allow Bahasa Malaysia and other languages.]**  
+3. **Use English or Bahasa Malaysia for the name and tagline** — Other languages on the website are fine. We cannot review other languages yet, so we reject a listing that uses them.  
 4. **Use an HTTPS destination URL** that the Advertiser controls or is authorized to promote; the landing page must load without forcing an unexpected download or install.  
 5. **Promote a credible product or service** — Not a fabricated or nonsensical offer.  
 6. **Be consistent with the destination** — The name, tagline, and logo must match the website.  
@@ -68,9 +64,9 @@ Listings and websites are **not accepted** if they involve, promote, or facilita
 |----------|------------------|
 | **Adult / sexual content** | Pornography, sexual services, explicit imagery |
 | **Vulgar or offensive** | Profanity-forward listings intended to shock |
-| **Gambling / real-money gaming** | Casinos, sportsbooks, real-money poker, etc. — **[TBD: any licensed exception for Malaysia counsel]** |
+| **Gambling / real-money gaming** | Casinos, sportsbooks, lotteries, real-money poker, and similar games, licensed or not |
 | **Crypto / digital assets** | Cryptocurrency, tokens, NFTs, crypto exchanges, wallets, mining, or “buy crypto / get rich with crypto” style offers |
-| **Political persuasion** | Campaign ads, ballot measures, candidate fundraising — **[TBD: whether any civic/psa exception]** |
+| **Political persuasion** | Campaign ads, party or candidate promotion, and fundraising. **Exception:** a non-partisan public service notice from a government body, for example a reminder to register to vote |
 | **Weapons / illegal arms** | Firearms sales pitches, illegal weapons |
 | **Malware / hacking tools / surveillance abuse** | Spyware, stalkerware, unauthorized access tools |
 | **Deceptive financial claims** | Guaranteed returns, fake “get rich” schemes, unlicensed investment solicitation |
@@ -80,27 +76,26 @@ Listings and websites are **not accepted** if they involve, promote, or facilita
 | **Discrimination / hate** | Attacks on protected characteristics; hate speech |
 | **Graphic violence** | Gratuitous gore or cruelty |
 | **Scams / unrelated destinations** | A listing that does not match the website; bait-and-switch |
-| **Tobacco, vapes, and smoking products** | Cigarettes, cigars, e-cigarettes, vapes, heated tobacco products, and brand promotions for them — **[TBD: counsel to confirm against the Control of Smoking Products for Public Health Act 2024]** |
-| **Alcohol** | Beer, wine, spirits, and offers whose main purpose is to sell alcohol — **[TBD: whether any venue-limited exception applies]** |
-| **Medicines and health products** | Medicines, traditional medicines, and health products or supplements with medical claims, unless the ad holds every approval the law requires — **[TBD: counsel to confirm against the Medicines (Advertisement and Sale) Act 1956, and whether ads for clinics and other health services need prior approval]** |
-| **Moneylending and unlicensed credit** | Illegal lenders (“Ah Long”), and loans or credit from lenders without the licence the law requires — **[TBD: whether licensed moneylenders may advertise; counsel to confirm against the Moneylenders Act 1951]** |
-| **Pyramid and unlicensed direct-selling schemes** | Pyramid schemes, and schemes that pay mainly for recruiting other people — **[TBD: counsel to confirm against the Direct Sales and Anti-Pyramid Scheme Act 1993]** |
-| **False halal claims** | Halal words, logos, or claims that the product or business is not certified to use — **[TBD: counsel to confirm against the Trade Descriptions Act 2011 and its halal orders]** |
-| **Race, religion, and royalty** | Content that insults, mocks, or stirs hostility about race, religion, or the royal institutions — **[TBD: counsel to confirm scope]** |
-| **Other illegal products** | Anything unlawful in Malaysia or where the screen is — **[TBD: geo-policy matrix]** |
+| **Tobacco, vapes, and smoking products** | Cigarettes, cigars, e-cigarettes, vapes, heated tobacco products, and brand promotions for them |
+| **Alcohol** | Beer, wine, spirits, and offers whose main purpose is to sell alcohol. We intend to allow alcohol only on screens in venues for adults, such as bars. Until the product can limit a listing to those venues, we do not accept alcohol listings |
+| **Medicines and health products** | Medicines, traditional medicines, and health products or supplements with medical claims, unless the ad holds every approval the law requires. We may ask for the approval before we review the listing |
+| **Moneylending and unlicensed credit** | Illegal lenders (“Ah Long”), and loans or credit from lenders without the licence the law requires. **Exception:** a moneylender licensed by the Ministry of Local Government Development (KPKT) may advertise if the listing's website shows the licence number |
+| **Pyramid and unlicensed direct-selling schemes** | Pyramid schemes, and schemes that pay mainly for recruiting other people |
+| **False halal claims** | Halal words, logos, or claims that the product or business is not certified to use |
+| **Race, religion, and royalty** | Content that insults, mocks, or stirs hostility about race, religion, or the royal institutions |
+| **Other illegal products** | Anything unlawful in Malaysia, or in the country where the advertiser or the screen is |
 
-**Venue fit:** Ads can appear on screens in places such as cafes, restaurants, salons, gyms, clinics, shops, and offices, where people of all ages, including children, can see them. Every listing must suit a general audience. **[TBD: whether some categories may run only in venues that suit them, and how Distributors set venue restrictions]**
+**Venue fit:** Ads can appear on screens in places such as cafes, restaurants, salons, gyms, clinics, shops, and offices, where people of all ages, including children, can see them. Every listing plays on every screen, so every listing must suit a general audience. A Distributor may also refuse a listing for their own screen.
 
 Praxor may expand this list. When in doubt, ask **support@capychannel.site** before you submit a listing.
 
 ---
 
-## 5. The logo and the code
+## 5. The logo
 
 The CapyChannel set draws every listing the same way, so there is no audio, video, animation, script, or tracking pixel in a listing, and none can be added.
 
-- **The logo** must not contain a scannable code, a website address other than yours, or anything that imitates a screen's own content or a system message (for example a clock, a weather reading, a warning, or a news headline);  
-- **A code**, where one is shown with a listing, is made by us. A scan passes through our servers, which count it, and then opens your website. You may not ask viewers to scan a different code.
+**The logo** must not contain a scannable code, a website address other than yours, or anything that imitates a screen's own content or a system message (for example a clock, a warning, or a news headline).
 
 ---
 
@@ -121,11 +116,11 @@ Landing pages must:
 - Submission does **not** guarantee approval.  
 - A person reviews every listing before it plays. The check that you control the website's domain is automatic.  
 - We may **reject or remove** listings or campaigns for policy, legal, brand-safety, fraud, or technical reasons — including after initial approval if new information appears.  
-- **Unspent balances, refunds, and adjustments:** a slot ({slotPrice}) whose ad we reject **before** the slot starts goes back to your wallet in full. Once a slot has started, its price is not refunded if we later remove the ad for a breach of this Policy. **[TBD: decide whether a slot is refunded, in full or in part, when we remove an ad for a reason that is not the advertiser's fault.]** Unspent top-ups can be refunded within {refundWindowDays} days of payment under the **Refund Policy**.  
+- **Unspent balances, refunds, and adjustments:** a slot ({slotPrice}) whose ad we reject **before** the slot starts goes back to your wallet in full. Once a slot has started, its price is not refunded if we later remove the ad for a breach of this Policy. If we remove a started ad for a reason that is not your fault, the price of the unused days goes back to your wallet. Unspent top-ups can be refunded within {refundWindowDays} days of payment under the **Refund Policy**.  
 - **A removal is not instant on every screen.** A removed or rejected listing is sent to no screen again, but a screen that already holds it in its offline batch may show it for up to **{cachedPlayHours} hours**.  
 - Repeat or severe violations may lead to account suspension under the Terms.
 
-Review turnaround targets: **[TBD: SLA if any]**.
+We aim to review a listing within **2 business days**. This is a target, not a promise.
 
 ---
 
@@ -135,26 +130,26 @@ Distributors must:
 
 - Run the official CapyChannel set only, opened from the CapyChannel website, and not a modified copy;  
 - Not cover, crop, or distort the ticker or the listings on it;  
-- Not generate fake plays or scans — for example, a screen that faces no one, a screen left playing where no one can see it, or scans made only to raise a screen's numbers;  
+- Not generate fake plays — for example, a screen that faces no one, or a screen left playing where no one can see it;  
 - Not reverse-engineer or interfere with the reports the set sends.
 
-**Your own promotion.** When no paid listing is due, a screen plays the Distributor's own promotion. No one reviews it before it plays, but it must follow Sections 3, 4, and 6 of this Policy, and we may remove it. **[TBD: confirm this rule, and whether promotions need review.]**
+**Your own promotion.** When no paid listing is due, a screen plays the Distributor's own promotion. No one reviews it before it plays, but it must follow Sections 3, 4, and 6 of this Policy, and we may remove it. The Distributor is responsible for it.
 
-Violations may lead to termination. **Effect on earnings:** plays on a screen that breaks these rules do not earn under the Terms of Service (Section 5), and we may refuse a payout request for that screen (Section 6). **[TBD: whether settled earnings from such plays may be cancelled — see Terms Section 6.]**
+Violations may lead to termination. **Effect on earnings:** plays on a screen that breaks these rules do not earn under the Terms of Service (Section 5), and we may refuse a payout request for that screen and cancel earnings from those plays that have not been paid out (Section 6).
 
 ---
 
 ## 9. Intellectual property and rights clearance
 
-Advertisers warrant they own or have licensed all elements of the listing (name, tagline, logo, and trademarks) and the right to promote the destination. Praxor may request proof. IP complaints: **[TBD: DMCA-like / notice channel — adapt for Malaysia]** (contact: **support@capychannel.site**).
+Advertisers warrant they own or have licensed all elements of the listing (name, tagline, logo, and trademarks) and the right to promote the destination. Praxor may request proof. **Rights complaints.** If you think a listing uses your trademark, copyright, or name without permission, email **support@capychannel.site** with the subject line “Rights complaint”. Name the listing, the right you hold, and how to reach you. We may remove the listing while we look at the complaint, and we tell the Advertiser.
 
 ---
 
 ## 10. Measurement
 
-A slot is a flat price for a fixed term. There is no charge per play, per scan, or per visit.
+A slot is a flat price for a fixed term. There is no charge per play or per visit.
 
-A play is counted when a screen reports that the listing crossed it in full while the page was visible, and a scan when a viewer scans the listing's code. The Terms of Service (Section 5) set out how plays are counted. We report plays and scans to advertisers as totals. We do not promise any number of plays, screens, scans, or visits.
+A play is counted when a screen reports that the listing crossed it in full while the page was visible. The Terms of Service (Section 5) set out how plays are counted. We report plays to advertisers as totals. We do not promise any number of plays, screens, or visits.
 
 ---
 
@@ -162,7 +157,7 @@ A play is counted when a screen reports that the listing crossed it in full whil
 
 We may update this Ads Policy at any time. We will revise the “Last updated” date when we do.
 
-**We do not announce routine or minor policy updates.** We will provide notice (for example by email or in-product message) only for **major updates** that materially change Advertiser or Distributor obligations — **[TBD: counsel / channels]** — except where mandatory law requires otherwise.
+**We do not announce routine or minor policy updates.** We email you at least **{noticeDays} days** before a **major update** that materially changes what Advertisers or Distributors must do. A change that the law requires may take effect at once.
 
 Continued campaign activity after the effective date means acceptance of the updated rules for new and ongoing delivery, except where mandatory law requires otherwise.
 
@@ -178,9 +173,4 @@ This document is published in English. Where any translation of it exists, the E
 
 **Praxor Studio (SA0656426-A)**  
 Ads review / appeals / support: **support@capychannel.site**  
-Mailing address: **[TBD: mailing address]**  
 Product site: **https://capychannel.site**
-
----
-
-*End of Ads Policy draft — for human counsel review only (KEV-6).*

@@ -1,12 +1,69 @@
 # CapyChannel legal drafts — notes for Chief of Staff / counsel
 
-**Status:** DRAFT FOR REVIEW — NOT LEGAL ADVICE  
-**Date prepared:** 13 September 2026 · **Last updated:** 16 September 2026  
+**Status:** PUBLISHED WITH SAFE DEFAULTS (5 October 2026) — counsel review still open  
+**Date prepared:** 13 September 2026 · **Last updated:** 5 October 2026  
 **For:** Human review tracked as **Linear KEV-6** (do **not** auto-publish; do **not** message Linear from the drafting agent)  
 **Operator:** Praxor Studio — registration **SA0656426-A** (Malaysia ROB-style number as given; **not** framed as a US Delaware corporation)  
 **Product public name:** **CapyChannel** — confirmed 16 September 2026
 
 ---
+
+## Changes applied (5 Oct 2026)
+
+The owner decided to launch with safe defaults, and to have a lawyer review the pages after launch. Every `[TBD]` is gone, and so is the draft banner on each page. The scan sections are gone too, because the bands carry no scan code. The weather and Open-Meteo text is gone, because the set has no weather display. The notice period and the "Last updated" date live once in `apps/web/src/lib/legal.ts`. The pages give no postal address: `support@capychannel.site` is the only contact.
+
+### The owner's decisions
+
+| Topic | Decision | Where |
+|---|---|---|
+| Chargeback | Suspend the account while the dispute is open, and remove the disputed amount from the wallet. A slot paid by it may end | Refund §7, Terms §7.2 |
+| Fraud | Cancel earnings, pending or settled, from fraud or a breach, before they leave as a payout | Terms §6, Ads Policy §8 |
+| Liability cap | The greater of 12 months of fees or RM 500 | Terms §12 |
+| Notice | 30 days by email before a major change. A change the law requires may apply at once | Terms §16, Privacy §16, Ads Policy §11, Refund §9 |
+| Closure | Earnings past the hold go out, even below the minimum. Bought money past the window and earnings still pending or on hold are forfeited | Terms §14 |
+| Removed ad, no fault | The unused days of the term go back to the wallet | Refund §3, Ads Policy §7, Terms §7.2 |
+| Language of a listing | English or Bahasa Malaysia | Ads Policy §3 |
+| Restricted categories | Licensed moneylenders (KPKT licence number on the website) and non-partisan public service notices from a government body are allowed. Alcohol waits for a venue filter | Ads Policy §4 |
+| Countries | Advertisers anywhere sanctions allow; screens in Malaysia only | Terms §2 |
+| Marketing email | None at launch | Privacy §3 |
+| Response times | A target, not a promise: 2 business days for a listing, 5 for a refund request | Ads Policy §7, Refund §4 |
+| Retention | Account data 90 days after closure; money records 7 years; logs 30 days; screen photos 90 days after the screen is archived | Privacy §7 |
+| Screen photos | Stay at a public, unguessable link; the policy says so | Privacy §2.2 |
+| SST | Praxor is not registered; prices carry no SST | Terms §7.2 |
+
+### Safe defaults that counsel must check
+
+| # | Default | Where | Why it needs counsel |
+|---|---|---|---|
+| 1 | The Privacy Policy is in English only, and promises a Bahasa Malaysia version soon | Privacy §17 | PDPA s.7(3) wants the notice in both languages. **Translate it first.** |
+| 2 | Consent at sign-up, or a PDPA exception, as the basis for processing | Privacy §3 | Map each purpose to the PDPA principles |
+| 3 | No EU or UK representative, no DPO | Privacy §13 | GDPR Art. 27 and PDPA s.12A (2024 amendment) thresholds |
+| 4 | CCPA section kept as a voluntary commitment | Privacy §14 | Praxor is far below the thresholds |
+| 5 | PDPA requests answered in 21 days, with no fee | Privacy §15 | PDPA s.31 and the fee regulations |
+| 6 | Transfers out of Malaysia under provider contracts | Privacy §9 | PDPA s.129 as amended in 2024 |
+| 7 | Stripe and Google named as independent controllers; the rest as processors | Privacy §6 | Confirm the role of each provider |
+| 8 | A 30-day window to dispute a record | Terms §5 | Reasonableness under the Contracts Act 1950 |
+| 9 | Distributors are independent users, not employees, agents, or partners | Terms §1 | Platform-worker wording under Malaysian law |
+| 10 | The Distributor's duties: venue permission, council permit, music licence, no people in the photo, own promotion | Terms §6 | Complete the list |
+| 11 | The disclaimer and the carve-out for the Consumer Protection Act 1999 | Terms §11, Refund §8 | Whether the CPA applies to business advertisers |
+| 12 | The indemnity, with a carve-out for Praxor's breach, negligence, or wilful misconduct | Terms §13 | Scope |
+| 13 | No arbitration; the courts of Malaysia | Terms §17 | Whether to add mediation |
+| 14 | Tax: the Distributor declares their own tax; we may deduct tax where the law requires | Terms §6 | Withholding (s.109B) and e-invoicing for payments to Distributors |
+| 15 | The prohibited categories, without statute names | Ads Policy §4 | Check against the Control of Smoking Products for Public Health Act 2024, the Medicines (Advertisement and Sale) Act 1956, the Moneylenders Act 1951, the Direct Sales and Anti-Pyramid Scheme Act 1993, and the Trade Descriptions Act 2011 halal orders |
+| 16 | A rights complaint by email, subject "Rights complaint" | Ads Policy §9 | Copyright Act 1987 notice rules |
+| 17 | No cookie banner, because every cookie is strictly necessary | Cookies §6, Privacy §5 | ePrivacy and GDPR for EEA visitors |
+| 18 | Logs: our own hold no IP address; the host's may, for up to 30 days | Privacy §2.6 | Confirm Railway's log retention on our plan |
+| 19 | No postal address; email is the only contact | Every page | Whether the PDPA notice or the Consumer Protection (Electronic Trade Transactions) Regulations 2012 need a telephone number or a postal address next to the email |
+
+### What the product must do to keep these promises
+
+| Promise | Gap |
+|---|---|
+| A refund of the unused days of a slot when we remove an ad that is not at fault | No code. An admin cannot post it today |
+| A payout below the minimum at closure | `eligibility.ts` refuses a request below `economy.payout.minimum` |
+| Cancel settled earnings for fraud | No admin action. It needs a compensating row through the ledger service |
+| Suspend an account during a chargeback, and debit the wallet | `user.banned` exists; the debit does not |
+| Delete account data 90 days after closure, and screen photos 90 days after the screen is archived | No job |
 
 ## Changes applied (1 Oct 2026)
 

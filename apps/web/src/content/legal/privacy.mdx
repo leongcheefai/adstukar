@@ -1,18 +1,17 @@
-import { payoutCountries, payoutCurrency } from "../../lib/legal";
-
-# **DRAFT FOR REVIEW — NOT LEGAL ADVICE**
-
-> This document is a working draft prepared for human legal review (Linear KEV-6). It is **not** legal advice and must be reviewed by qualified counsel (including for Malaysian Personal Data Protection Act (PDPA) alignment, the EU and UK General Data Protection Regulation (GDPR), the California Consumer Privacy Act (CCPA), and any cross-border transfer rules) before publication. Operator: **Praxor Studio** (SA0656426-A). Product: **CapyChannel**.
-
----
+import {
+  noticeDays,
+  payoutCountries,
+  payoutCurrency,
+  policiesUpdated,
+} from "../../lib/legal";
 
 # Privacy Policy
 
-**Last updated:** 27 September 2026  
+**Last updated:** {policiesUpdated}  
 
-**Operator / Data Controller (working designation):** Praxor Studio (SA0656426-A) — **[TBD: confirm controller vs processor roles for any sub-processors]**  
+**Data controller (data user under the PDPA):** Praxor Studio (SA0656426-A)  
 **Product:** CapyChannel  
-**Contact:** **support@capychannel.site** · **[TBD: mailing address]** · Primary domain: **capychannel.site**
+**Contact:** **support@capychannel.site** · Primary domain: **capychannel.site**
 
 ---
 
@@ -25,7 +24,6 @@ It applies to:
 
 - **Advertisers** who create accounts, run campaigns, and book slots;  
 - **Distributors** who register screens and run the CapyChannel set on them;  
-- **People who scan a code** shown with an ad on a screen (see Section 2.8);  
 - Visitors to our marketing or product sites — primary domain: **capychannel.site**.
 
 **How the Service runs:** everything runs in a web browser. Members use the dashboard on the website, and a screen runs the CapyChannel set, the same web page, in the screen's browser. We do not offer an app-store app.
@@ -43,7 +41,7 @@ Depending on your role, we may collect:
 - Your name and email address. We do not ask for a phone number or a business name;  
 - Your password, if you sign in with one. We store only a one-way hash of it, never the password itself;  
 - A profile photo, if you add one;  
-- If you sign in with Google: the name, email address, and profile photo that Google shares with us — **[TBD: confirm whether Google sign-in is offered at launch]**;  
+- If you sign in with Google: the name, email address, and profile photo that Google shares with us;  
 - We do not ask for business registration or tax identifiers in the product today. Stripe may collect them for a payout account (Section 2.5).
 
 ### 2.2 Screens (Distributors)
@@ -51,7 +49,7 @@ Depending on your role, we may collect:
 When a screen runs the CapyChannel set, we collect:
 
 - The access key issued for the screen, which the set sends with every request;  
-- Each play: which listing played, on which screen, when, and whether its code was scanned;  
+- Each play: which listing played, on which screen, and when;  
 - The time the screen last reported;  
 - The network a screen reports from, stored as a network prefix instead of a full IP address (the first three parts of an IPv4 address, or the first four groups of an IPv6 address). A prefix can still point to a single home or venue, so we treat it as personal data.
 
@@ -59,12 +57,10 @@ We do not store the screen's browser type or operating system.
 
 When you register a screen for review, we also collect:
 
-- The screen’s name, venue type, and location as you enter it — **[TBD: location precision]**;  
-- A photo of the screen in place, which we use to review the screen. Please avoid including people in the photo. The photo is stored in our file storage at a link that cannot be guessed; anyone who has the link can open it — **[TBD: decide whether screen photos move to private storage, then confirm who can access them]**;  
+- The screen’s name, venue type, and location, as precise as you type it. We need enough to find the venue when we review the screen; we do not need a unit number;  
+- A photo of the screen in place, which we use to review the screen. Please avoid including people in the photo. The photo is stored in our file storage at a public link that cannot be guessed. Only the administrators who review screens see the link, but anyone who has it can open the photo;  
 - The venue’s stated open hours and time zone;  
 - Your own promotion (name, tagline, link, logo), your excluded terms, and the listings you veto.
-
-**Settings kept on the screen:** The latitude and longitude for the weather display, and the address of a news feed, stay in the screen’s browser storage and are not sent to our servers. The screen sends the coordinates directly to a weather service to get the forecast, and loads the news feed directly from the address you enter.
 
 ### 2.3 What we do **NOT** collect by default (important)
 
@@ -76,7 +72,7 @@ Unless we later enable a feature that you clearly opt into and we update this Po
 - **Contacts, photos, or files**, other than the logos you upload as an Advertiser, the pictures and videos you upload to your library in the dashboard, the screen photo you upload for review (Section 2.2), and an optional profile photo;  
 - **Full browsing history** outside the Service.
 
-If a future feature would change this (e.g. optional screenshot of the *ad slot only* for quality assurance), it will be marked **[TBD]** here until counsel and product approve, and users will be notified.
+If a future feature changes this, we update this Policy and tell you before the feature collects anything (Section 16).
 
 ### 2.4 Advertiser campaign data
 
@@ -97,7 +93,7 @@ If a future feature would change this (e.g. optional screenshot of the *ad slot 
 ### 2.6 Usage, logs, and support
 
 - For each signed-in session: the IP address and browser user agent, and when the session started and ends;  
-- Server request logs (the address requested, the time, and the result), kept by us and our hosting provider — **[TBD: confirm how long Railway keeps request logs, and whether they hold IP addresses]**;  
+- Server request logs (the address requested, the time, and the result). Our own logs do not hold your IP address; our hosting provider's logs may hold it. Both are kept for up to 30 days;  
 - Support tickets, feedback you send through the dashboard, and correspondence;  
 - Cookies and similar technologies (see Section 5).
 
@@ -105,39 +101,29 @@ If a future feature would change this (e.g. optional screenshot of the *ad slot 
 
 We produce totals that do not identify you, such as the number of paid plays across the network and the number of screens online, which the website shows.
 
-### 2.8 People who scan a code on a screen
-
-Anyone who can see a screen may scan the code shown with an ad. No account is needed.
-
-- When you scan, your phone sends a request to our servers, and we redirect you to the Advertiser’s website;  
-- We use your phone’s IP address briefly to limit abuse (rate limiting). We do not store it in our database — **[TBD: confirm whether hosting-provider request logs keep IP addresses, and for how long]**;  
-- We record that the ad was scanned and when. We do not record who scanned it;  
-- A code on a Distributor’s own promotion links directly to their website and does not pass through our servers;  
-- The destination website has its own privacy practices (see Section 12).
-
 ---
 
 ## 3. How we use information
 
 We use information to:
 
-- Provide, operate, and improve the Service (send listings to screens, count plays and scans, show dashboards);  
+- Provide, operate, and improve the Service (send listings to screens, count plays, show dashboards);  
 - Process payments, refunds, and payouts through Stripe, keep the records of your wallet, and review payout requests for fraud;  
 - Review listings against the Ads Policy, and review screens before approval;  
 - Detect fraud, invalid traffic, abuse, and security incidents;  
 - Communicate service, billing, and policy notices;  
 - Comply with law and enforce Terms;  
 - Produce aggregate reporting for Advertisers (see Section 4);  
-- With consent where required, send marketing — **[TBD: marketing consent approach]**.
+- We do **not** send marketing email. If we start, we will ask for your consent first, and you can withdraw it at any time.
 
-**Legal bases:** For people in the EEA and the UK, Section 13.1 lists the legal basis for each purpose. For Malaysia — **[TBD: map each purpose to the PDPA principles with counsel]**.
+**Legal bases:** For people in the EEA and the UK, Section 13.1 lists the legal basis for each purpose. For Malaysia, we process your personal data with your consent, which you give when you create an account or register a screen, or where the PDPA allows us to process it without consent, for example to perform our contract with you or to comply with the law.
 
 ---
 
 ## 4. Ads targeting and reporting
 
 - **No targeting of people.** A slot plays on every approved screen in the network. The only filters are the ones each Distributor sets on their own screens (excluded terms and vetoed listings). We do not build profiles of viewers or members, and we do not sell personal data.  
-- **Reporting:** Advertisers see **daily totals** of their plays and scans. They do not see which screens played their listings or who owns them, unless we must share that to investigate fraud or under legal process. Distributors see daily totals of the plays on their screens, and the listings that may play there, so that they can veto one.
+- **Reporting:** Advertisers see **daily totals** of their plays. They do not see which screens played their listings or who owns them, unless we must share that to investigate fraud or under legal process. Distributors see daily totals of the plays on their screens, and the listings that may play there, so that they can veto one.
 
 ---
 
@@ -145,7 +131,7 @@ We use information to:
 
 We use only the cookies and browser storage the Service needs to work: a sign-in cookie, and browser storage for your settings in the dashboard and on each screen. We use no analytics or advertising cookies. Our **Cookie Policy** lists them.
 
-**[TBD: counsel to confirm that no cookie banner is needed, given that only essential cookies are used.]** You can control cookies in your browser settings; you cannot sign in without the sign-in cookie.
+We do not show a cookie banner, because we use no cookie that is not strictly necessary. You can control cookies in your browser settings; you cannot sign in without the sign-in cookie.
 
 ---
 
@@ -153,14 +139,14 @@ We use only the cookies and browser storage the Service needs to work: a sign-in
 
 We may share information with:
 
-- **Service providers / sub-processors** under contracts: **Stripe** (payments, refunds, and payouts); **Railway** (application hosting and database, Singapore region); **Vercel** (website and dashboard hosting); **Cloudflare R2** (file storage); **Resend** (email); **Google** (optional sign-in); and **Open-Meteo** (weather, called by the screen). We use no analytics or advertising-tracking tools. **[TBD: counsel to confirm controller or processor role for each]**;  
+- **Service providers / sub-processors** under contracts: **Stripe** (payments, refunds, and payouts); **Railway** (application hosting and database, Singapore region); **Vercel** (website and dashboard hosting); **Cloudflare R2** (file storage); **Resend** (email); and **Google** (optional sign-in). Each processes personal data for us under its contract, except Stripe and Google, which also act as controllers for the data they collect under their own privacy policies. We use no analytics or advertising-tracking tools;  
 - **Advertisers** — aggregate campaign results; limited data if needed for dispute/fraud;  
 - **Distributors** — the listings that may play on their screens (logo, name, tagline, and website address), so that they can see what their screens show and veto a listing;  
 - **Professional advisers** (lawyers, accountants) under confidentiality;  
 - **Authorities** when required by law or to protect rights, safety, and security;  
 - **Business transfers** (merger, acquisition, reorganization) with notice where required.
 
-We do **not** sell personal data as that term is commonly understood for a “do not sell” regime; if we ever engage in practices that require such a disclosure under a specific law, we will update this Policy — **[TBD: counsel on “sale” / PDPA disclosure wording]**. For California, see Section 14.2.
+We do **not** sell personal data, and we do not give it to anyone for their own marketing. For California, see Section 14.2.
 
 ---
 
@@ -168,11 +154,11 @@ We do **not** sell personal data as that term is commonly understood for a “do
 
 We retain information for as long as needed for the purposes above, including:
 
-- Account life plus **[TBD: retention period after closure]**;  
-- Transaction and earnings records for tax/audit — **[TBD: years]**;  
-- Logs for security — **[TBD: log retention]**;  
-- Screen photos and screen review records — **[TBD: retention period]**;  
-- Listings and logos as needed for campaigns and dispute history.
+- **Account data** (your profile, settings, and uploads): while your account is open, and **90 days** after it closes;  
+- **Money records** (top-ups, slot charges, earnings, payouts, refunds, and the plays they rest on): **7 years**, because Malaysian tax law requires it;  
+- **Server logs:** up to **30 days**;  
+- **Screen photos:** until **90 days** after the screen is archived. The review records of a screen are money records when the screen earned;  
+- Listings and logos: as long as the campaign is open, then as account data. A listing that a slot paid for is part of the money records.
 
 We then delete or de-identify when no longer needed, subject to legal holds.
 
@@ -186,7 +172,7 @@ We use administrative, technical, and organizational measures appropriate to the
 
 ## 9. International transfers
 
-Praxor is based in **Malaysia**. Our application and database run in **Singapore** (Railway). Our websites are served from Vercel's global network. Files are stored with Cloudflare R2 — **[TBD: confirm the bucket's location]**. Email is sent through Resend, and payments through Stripe; both process data in the United States and other countries. Where required, we will use appropriate contractual or other safeguards — **[TBD: PDPA transfer compliance steps for counsel]**. For transfers of personal data subject to the GDPR, see Section 13.3.
+Praxor is based in **Malaysia**. Our application and database run in **Singapore** (Railway). Our websites are served from Vercel's global network. Files are stored with Cloudflare R2, which may keep them in any of its regions. Email is sent through Resend, and payments through Stripe; both process data in the United States and other countries. We transfer personal data out of Malaysia only to providers that protect it to a standard at least as high as the PDPA, under their contracts with us, or where the PDPA otherwise allows it. For transfers of personal data subject to the GDPR, see Section 13.3.
 
 ---
 
@@ -198,7 +184,7 @@ Depending on applicable law (including Malaysia’s PDPA and any other law that 
 - Correct inaccurate data;  
 - Withdraw consent where processing is consent-based;  
 - Request deletion or restriction in certain cases;  
-- Lodge a complaint with a relevant authority — **[TBD: name Malaysian authority / process]**.
+- Lodge a complaint with a relevant authority. In Malaysia, this is the **Personal Data Protection Commissioner** (Jabatan Perlindungan Data Peribadi).
 
 People in the EEA or the UK have the GDPR rights in Section 13. California residents have the CCPA rights in Section 14. To exercise any right, follow Section 15. We may need to verify your identity. Some requests may be limited where we must retain data for legal, security, or contractual reasons.
 
@@ -208,7 +194,7 @@ People in the EEA or the UK have the GDPR rights in Section 13. California resid
 
 The Service is only for users **18 years of age and above**. It is not directed to anyone under 18. We do not knowingly collect personal data from anyone under 18. If you believe we have, contact us to delete it.
 
-People of any age may see a screen or scan a code on it. We do not store personal data that identifies a person who scans a code (Section 2.8).
+People of any age may see a screen. The CapyChannel set collects nothing about the people in front of it (Section 2.3).
 
 ---
 
@@ -220,30 +206,26 @@ Ads link to Advertiser-controlled destinations. Their privacy practices are thei
 
 ## 13. People in the EEA and the UK (GDPR)
 
-**[TBD: counsel to confirm when the EU GDPR and the UK GDPR apply to Praxor, which is established in Malaysia — for example, when the Service is offered to people in the EEA or the UK — and whether Praxor must appoint an EU and/or UK representative (GDPR Article 27).]**
-
 This section applies when the EU General Data Protection Regulation or the UK GDPR (together, the “**GDPR**”) applies to our processing of your personal data. It adds to the rest of this Policy.
 
-- **Controller:** Praxor Studio (SA0656426-A), **support@capychannel.site**, **[TBD: mailing address]**  
-- **EU / UK representative:** **[TBD]**  
-- **Data protection officer:** **[TBD: whether one is required]**
+- **Controller:** Praxor Studio (SA0656426-A), **support@capychannel.site**  
+- **EU / UK representative:** we have not appointed one. Our Service is for screens in Malaysia, and we do not target people in the EEA or the UK. Contact us directly at the address above;  
+- **Data protection officer:** we have not appointed one, because the law does not require one for our processing. Send any privacy question to the address above.
 
 ### 13.1 Legal bases
 
 | Purpose (Section 3) | Legal basis |
 |---|---|
 | Create and run your account; provide dashboards | Performance of a contract (Art. 6(1)(b)) |
-| Serve approved ads to screens, measure delivery, and record scans | Performance of a contract (Art. 6(1)(b)) |
+| Serve approved ads to screens and measure delivery | Performance of a contract (Art. 6(1)(b)) |
 | Review listings and screens before approval | Performance of a contract (Art. 6(1)(b)); legitimate interests in a safe and lawful network (Art. 6(1)(f)) |
 | Process payments, refunds, and payouts | Performance of a contract (Art. 6(1)(b)); keeping financial records: legal obligation (Art. 6(1)(c)); reviewing payout requests for fraud: legitimate interests (Art. 6(1)(f)) |
-| Detect fraud, invalid traffic, abuse, and security incidents, including rate limiting of scans | Legitimate interests in protecting the Service and its users (Art. 6(1)(f)) |
+| Detect fraud, invalid traffic, abuse, and security incidents, including rate limiting | Legitimate interests in protecting the Service and its users (Art. 6(1)(f)) |
 | Send service, security, and policy notices | Performance of a contract (Art. 6(1)(b)); legitimate interests (Art. 6(1)(f)) |
 | Comply with law and enforce the Terms | Legal obligation (Art. 6(1)(c)); legitimate interests (Art. 6(1)(f)) |
 | Produce aggregate reporting for Advertisers | Legitimate interests (Art. 6(1)(f)) |
-| Send marketing | Consent (Art. 6(1)(a)), where required |
+| Send marketing (we do not today) | Consent (Art. 6(1)(a)) |
 | Improve the Service | Legitimate interests (Art. 6(1)(f)) |
-
-**[TBD: counsel to confirm each basis, and to record a balancing test for each legitimate interest.]**
 
 If we rely on legitimate interests, you may object (Section 13.2). If we rely on consent, you may withdraw it at any time; this does not affect processing that took place before you withdrew.
 
@@ -262,11 +244,11 @@ Subject to the conditions and exceptions in the GDPR, you have the right to:
 - **Withdraw consent** — at any time, where processing is based on consent (Art. 7(3));  
 - **Complain** — lodge a complaint with a supervisory authority, in particular in the country where you live or work, or where you believe the infringement took place (Art. 77). In the UK, this is the Information Commissioner’s Office (ICO).
 
-**Automated decisions:** We do not make decisions based solely on automated processing that produce legal effects concerning you or similarly significantly affect you (Art. 22). A person reviews listings and screens before approval. **[TBD: counsel to confirm once the fraud-review and payout rules are final.]**
+**Automated decisions:** We do not make decisions based solely on automated processing that produce legal effects concerning you or similarly significantly affect you (Art. 22). A person reviews listings and screens before approval, and a person decides every payout request.
 
 ### 13.3 International transfers
 
-Praxor is based in Malaysia, and our providers process data in other countries (Section 9). When the GDPR restricts a transfer, we use an appropriate safeguard, such as the European Commission’s Standard Contractual Clauses, or the UK International Data Transfer Agreement or Addendum — **[TBD: counsel to confirm transfer mechanisms]**. You may ask for a copy of these safeguards (Section 15).
+Praxor is based in Malaysia, and our providers process data in other countries (Section 9). When the GDPR restricts a transfer, we use an appropriate safeguard, such as the European Commission’s Standard Contractual Clauses, or the UK International Data Transfer Agreement or Addendum. You may ask for a copy of these safeguards (Section 15).
 
 ### 13.4 How long we take to respond
 
@@ -276,31 +258,29 @@ We answer GDPR requests without undue delay and within one month of receipt. If 
 
 ## 14. California residents (CCPA)
 
-**[TBD: counsel to confirm whether the California Consumer Privacy Act, as amended by the California Privacy Rights Act (the “CCPA”), applies to Praxor. It applies to a for-profit business that does business in California and meets at least one threshold: annual gross revenue above USD 26,625,000 (inflation-adjusted); buying, selling, or sharing the personal information of 100,000 or more California consumers or households; or earning 50% or more of annual revenue from selling or sharing personal information. If no threshold is met, counsel to decide whether to keep this section as a voluntary commitment.]**
-
-This section applies to residents of California (“**consumers**”). It adds to the rest of this Policy.
+This section applies to residents of California (“**consumers**”). It adds to the rest of this Policy. Praxor does not meet the thresholds of the California Consumer Privacy Act, as amended by the California Privacy Rights Act (the “**CCPA**”), today. We follow this section anyway.
 
 ### 14.1 Personal information we collect
 
-In the 12 months before the “Last updated” date, we collected the categories of personal information below. We collect it from you, from the screens you register, from your browser or device, from phones that scan a code, and from a sign-in provider if you choose one. For payments and payouts, we also receive information from Stripe.
+In the 12 months before the “Last updated” date, we collected the categories of personal information below. We collect it from you, from the screens you register, from your browser or device, and from a sign-in provider if you choose one. For payments and payouts, we also receive information from Stripe.
 
 | Category | Examples | Why we collect it | Disclosed to |
 |---|---|---|---|
 | Identifiers | Name, email address, account ID, IP address, screen pairing code and access key | Provide the Service; security and fraud prevention; communications | Service providers (hosting, email, sign-in) |
 | Customer records (Cal. Civ. Code § 1798.80(e)) | Name and email address; top-up and payout records, Stripe account ID and status (Section 2.5) | Provide the Service; payments, refunds, and payouts | Service providers (hosting); Stripe |
 | Commercial information | Campaigns, listings, and campaign settings; top-ups, slot bookings, and refunds | Provide the Service; payments and refunds | Service providers (hosting); Stripe |
-| Internet or other electronic network activity | Login sessions (IP address, browser user agent), screen reports and last-report times, network prefixes, delivery and scan records | Provide and secure the Service; fraud prevention | Service providers (hosting) |
-| Geolocation data | Screen location as entered; screen coordinates for the weather display (kept on the screen and sent to the weather service) | Screen review; weather display; fraud prevention | Service providers (hosting); weather service **[TBD: counsel to confirm its status]** |
+| Internet or other electronic network activity | Login sessions (IP address, browser user agent), screen reports and last-report times, network prefixes, delivery records | Provide and secure the Service; fraud prevention | Service providers (hosting) |
+| Geolocation data | Screen location as entered | Screen review; fraud prevention | Service providers (hosting) |
 | Audio, electronic, visual, or similar information | Screen photos, profile photos, logos | Screen review; provide the Service | Service providers (file storage, hosting) |
 | Sensitive personal information | Account login (email address and password) | Only to sign you in and secure your account | Service providers (hosting) |
 
-We do not collect the other CCPA categories, such as protected classification characteristics, biometric information, or inferences drawn to create a profile — **[TBD: counsel to confirm the full category list]**. We keep each category for the periods in Section 7 — **[TBD: set a retention period or criteria for each category]**.
+We do not collect the other CCPA categories, such as protected classification characteristics, biometric information, or inferences drawn to create a profile. We keep each category for the periods in Section 7.
 
 We use sensitive personal information only for purposes the CCPA permits, such as providing the Service and keeping it secure, and not to infer characteristics about you.
 
 ### 14.2 Sale and sharing
 
-We do not sell personal information, and we do not share it for cross-context behavioral advertising. We have no actual knowledge that we sell or share the personal information of consumers under 16. We use no analytics tools, and our payment provider is Stripe. **[TBD: counsel to confirm.]**
+We do not sell personal information, and we do not share it for cross-context behavioral advertising. We have no actual knowledge that we sell or share the personal information of consumers under 16. We use no analytics tools, and our payment provider is Stripe.
 
 We treat a Global Privacy Control (GPC) signal from your browser as a valid request to opt out of sale and sharing.
 
@@ -327,8 +307,7 @@ We confirm receipt of a request to know, delete, or correct within 10 business d
 ### 14.6 Other California notices
 
 - **Shine the Light (Cal. Civ. Code § 1798.83):** We do not disclose personal information to third parties for their own direct marketing purposes.  
-- We review and update this section at least once every 12 months.  
-- **[TBD: counsel to check whether the CCPA regulations on automated decision-making technology, risk assessments, or cybersecurity audits apply.]**
+- We review and update this section at least once every 12 months.
 
 ---
 
@@ -336,12 +315,12 @@ We confirm receipt of a request to know, delete, or correct within 10 business d
 
 Anyone can make a privacy request, including a request under the PDPA, the GDPR, or the CCPA.
 
-1. **Send your request** by email to **support@capychannel.site** with the subject line “Privacy request” — **[TBD: dedicated privacy address or web form]**. Say what you want (for example: access, a copy of your data, correction, deletion, or objection), and give the email address of your account, if you have one. **[TBD: counsel to confirm that an email address is enough; the CCPA allows email-only requests for a business that operates only online and has a direct relationship with the consumer.]**
+1. **Send your request** by email to **support@capychannel.site** with the subject line “Privacy request”. Say what you want (for example: access, a copy of your data, correction, deletion, or objection), and give the email address of your account, if you have one.
 2. **We verify your identity** before we act, usually by confirming the request from the email address on your account. If you have no account, we may ask for details that let us match your request to data we hold. We use those details only to verify and answer your request.
-3. **We respond** within the time the law that applies to you requires: see Section 13.4 for GDPR requests and Section 14.5 for California requests. For PDPA requests — **[TBD: counsel to confirm response times]**.
+3. **We respond** within the time the law that applies to you requires: see Section 13.4 for GDPR requests and Section 14.5 for California requests. For PDPA requests, we respond within **21 days**, as the PDPA requires.
 4. **If we cannot fully act** on your request — for example, because the law requires us to keep certain records (Section 7) — we will explain why, unless the law prevents us.
 
-We do not charge for a request, except where the law allows a fee — **[TBD: counsel to confirm fee policy, including any PDPA fees]**.
+We do not charge for a request.
 
 ---
 
@@ -349,15 +328,13 @@ We do not charge for a request, except where the law allows a fee — **[TBD: co
 
 We may update this Privacy Policy at any time. We will revise the “Last updated” date when we do.
 
-**We do not announce routine or minor policy updates.** We will provide notice (for example by email or in-product message) only for **major updates** that materially change how we handle personal data — **[TBD: counsel / channels]** — except where mandatory law (including the PDPA, the GDPR, and the CCPA) requires notice or consent.
+**We do not announce routine or minor policy updates.** We email you at least **{noticeDays} days** before a **major update** that materially changes how we handle personal data, and we ask for your consent first where the law requires it.
 
 ---
 
 ## 17. Language
 
-This document is published in English. Where any translation of it exists, the English version is the authoritative one and governs in the event of a conflict.
-
-**[TBD: counsel to confirm this against PDPA Section 7, which requires the privacy notice in Bahasa Malaysia and English.]**
+This document is published in English. A Bahasa Malaysia version follows soon. Until it is published, email us and we explain any part of this Policy in Bahasa Malaysia. Where the two versions differ, the English version governs.
 
 ---
 
@@ -365,9 +342,4 @@ This document is published in English. Where any translation of it exists, the E
 
 **Praxor Studio (SA0656426-A)**  
 Privacy / legal / support inquiries: **support@capychannel.site**  
-Mailing address: **[TBD: mailing address]**  
 Product site: **https://capychannel.site**
-
----
-
-*End of Privacy Policy draft — for human counsel review only (KEV-6).*

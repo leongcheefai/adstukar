@@ -1,6 +1,8 @@
 import {
   expiryMonths,
   holdDays,
+  noticeDays,
+  policiesUpdated,
   processorFee,
   refundWindowDays,
   slotPrice,
@@ -8,15 +10,9 @@ import {
   topupMinimum,
 } from "../../lib/legal";
 
-# **DRAFT FOR REVIEW — NOT LEGAL ADVICE**
-
-> This document is a working draft prepared for human legal review (Linear KEV-6). It is **not** legal advice and must be reviewed by qualified counsel before use. It describes how refunds work in the product today. Operator: **Praxor Studio** (Malaysia business registration **SA0656426-A**). Product: **CapyChannel**.
-
----
-
 # Refund Policy
 
-**Last updated:** 27 September 2026
+**Last updated:** {policiesUpdated}
 
 **Operator:** Praxor Studio (SA0656426-A)
 **Product:** CapyChannel
@@ -61,7 +57,8 @@ We charge in **US dollars** and refund in US dollars. If your card is in another
 A slot costs **{slotPrice}** and is paid from your wallet when you book.
 
 - If you remove the ad **before it is approved**, or our review **does not approve** it, the full price goes back to your **wallet** (not to your card).
-- Once the slot has **started**, its price is not refunded, including if you remove the ad before the term ends. The slot has already held a place on every screen.
+- Once the slot has **started**, its price is not refunded if you remove the ad, or if we remove it because it breaks the Ads Policy. The slot has already held a place on every screen.
+- If we remove a started ad for a reason that is **not your fault** (for example, a complaint about an ad that follows the Ads Policy, a change in the law, or a fault on our side), we return the price of the **unused days** of the term to your **wallet**.
 - A slot cannot be paused.
 
 Money a slot returns to your wallet is treated like the rest of your wallet: a card refund of it follows Section 2.
@@ -72,7 +69,7 @@ Money a slot returns to your wallet is treated like the rest of your wallet: a c
 
 Email **support@capychannel.site** from the address on your account. Name the top-up (its date and amount). An administrator reviews each request; there is no self-service refund button.
 
-We aim to answer within **[TBD: e.g. 5 business days]**.
+We aim to answer within **5 business days**. This is a target, not a promise.
 
 ---
 
@@ -87,25 +84,31 @@ When we approve a refund, the amount leaves your wallet at once and we send the 
 - Money you earned from your screens (see Section 6 of the Terms of Service). It expires {expiryMonths} months after it settles and may be withdrawn after a {holdDays}-day hold.
 - Promotional or granted credit, if we ever issue any.
 - The part of a payment the card processor keeps (Section 2.2).
-- The price of a slot that has started (Section 3).
+- The price of a slot that has started, except the unused days when we remove an ad that is not at fault (Section 3).
 
 ---
 
 ## 7. Chargebacks
 
-**[TBD: decide the rule for a card chargeback. For example: we may suspend the account while a dispute is open, and remove the disputed amount from the wallet.]**
+Please ask us for a refund before you dispute a payment with your bank. If you start a **chargeback** or a payment dispute:
+
+- we may **suspend** your account while the dispute is open;
+- we remove the disputed amount from your **wallet**, and a slot that this money paid for may end;
+- if the dispute closes in our favour, we restore the amount to your wallet and lift the suspension, unless the account breaks the Terms of Service for another reason.
+
+If the disputed amount is larger than the balance in your wallet, you owe us the difference.
 
 ---
 
 ## 8. Your rights under the law
 
-Nothing in this policy limits a right you have under Malaysian consumer law or other law that cannot be waived. **[TBD: counsel to confirm against the Consumer Protection Act 1999, and whether it applies to business advertisers.]**
+Nothing in this policy limits a right you have under the Consumer Protection Act 1999 or any other law that cannot be waived.
 
 ---
 
 ## 9. Changes
 
-We may change this policy. A change that reduces what can be refunded applies only to top-ups made after it takes effect. **[TBD: notice period, to match Section 16 of the Terms.]**
+We may change this policy. We email you at least **{noticeDays} days** before a change that reduces what can be refunded, and the change applies only to top-ups made after it takes effect.
 
 ---
 

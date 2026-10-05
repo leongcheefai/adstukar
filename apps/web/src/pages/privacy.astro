@@ -3,8 +3,8 @@ import { Content } from "../content/legal/privacy.mdx";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { requirePage } from "../lib/pages";
 
-/* The text is the draft in src/content/legal, pasted as written. It carries
-   its own title, date, and draft notice, so the page adds none of its own. */
+/* The text lives in src/content/legal. It carries its own title and date,
+   so the page adds none of its own. */
 const page = requirePage("privacy");
 ---
 

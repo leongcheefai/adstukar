@@ -48,3 +48,8 @@ export const logoMaxMb = media.image.maxBytes / (1024 * 1024);
 /** Minutes a live play may wait for its report, and hours a cached one may. */
 export const livePlayMinutes = economy.playTtlMinutes;
 export const cachedPlayHours = economy.loop.playTtlMinutes / 60;
+
+/** When the policies last changed. A major change needs the notice the Terms promise. */
+export const policiesUpdated = "5 October 2026";
+/** Days of notice before a major change to the Terms, the fees, or the refund rules. */
+export const noticeDays = 30;
