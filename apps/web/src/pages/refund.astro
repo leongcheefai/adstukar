@@ -3,8 +3,8 @@ import { Content } from "../content/legal/refund.mdx";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { requirePage } from "../lib/pages";
 
-/* The text is the draft in src/content/legal. It carries its own title, date,
-   and draft notice, and reads every amount from @repo/config/economy. */
+/* The text lives in src/content/legal. It carries its own title and date,
+   and reads every amount from @repo/config/economy. */
 const page = requirePage("refund");
 ---
 

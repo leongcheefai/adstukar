@@ -6,10 +6,12 @@ import {
   holdDays,
   listingsPerCampaign,
   livePlayMinutes,
+  noticeDays,
   paidHours,
   payoutCountries,
   payoutCurrency,
   payoutMinimum,
+  policiesUpdated,
   refundWindowDays,
   settlementHours,
   slotPrice,
@@ -17,19 +19,13 @@ import {
   topupMinimum,
 } from "../../lib/legal";
 
-# **DRAFT FOR REVIEW — NOT LEGAL ADVICE**
-
-> This document is a working draft prepared for human legal review (Linear KEV-6). It is **not** legal advice, does not create a binding contract by itself until counsel-approved and published, and must be reviewed by qualified counsel before use. Operator: **Praxor Studio** (Malaysia business registration **SA0656426-A**). Product: **CapyChannel**.
-
----
-
 # Terms of Service
 
-**Last updated:** 27 September 2026  
+**Last updated:** {policiesUpdated}  
 
 **Operator:** Praxor Studio (SA0656426-A)  
 **Product:** CapyChannel  
-**Contact:** **support@capychannel.site** · **[TBD: mailing address]** · Support: **support@capychannel.site** · Primary domain: **capychannel.site**
+**Contact:** **support@capychannel.site** · Primary domain: **capychannel.site**
 
 ---
 
@@ -44,13 +40,13 @@ By creating an account, booking a slot, or showing ads on a screen as a Distribu
 
 | Role | Description |
 |------|-------------|
-| **Advertiser** | Books a **slot** so that its **listings** (a logo, a name, and a short tagline that links to the Advertiser's verified website) play on the screens in the network. Viewers reach the website by scanning the code shown with the listing. |
+| **Advertiser** | Books a **slot** so that its **listings** (a logo, a name, and a short tagline that links to the Advertiser's verified website) play on the screens in the network. |
 | **Distributor** | Registers one or more **screens** in places such as cafes, restaurants, salons, gyms, clinics, shops, and offices, runs the CapyChannel set on them, and earns a fixed rate for each paid play (Section 6). |
 | **Operator** | Praxor Studio operates **CapyChannel**. |
 
 You may act in one or more roles. These Terms apply to all roles except where a section states otherwise.
 
-We do **not** employ Distributors as employees by virtue of these Terms; the relationship is that of independent users of the Service, subject to applicable law. **[TBD: counsel to confirm independent-contractor / platform wording under Malaysian law.]**
+Distributors and Advertisers are independent users of the Service. Nothing in these Terms makes you our employee, agent, or partner, and you may not act for us or bind us.
 
 ---
 
@@ -65,7 +61,7 @@ You must:
 
 The Service is only for users **18 years of age and above**. We do not knowingly allow anyone under 18 to create an account or use the Service.
 
-The Service is intended primarily for use in connection with lawful advertising distribution. Availability in specific countries may be limited — **[TBD: geo availability / restricted territories]**.
+The Service is for lawful advertising only. **Where it is available:** an Advertiser may be in any country where the law and the sanctions that apply to Praxor allow us to serve them. A screen may register and earn only in **{payoutCountries}**, because payouts go only there (Section 6).
 
 **How the Service runs:** Everything runs in a web browser. Members use the dashboard on the website. A screen runs the **CapyChannel set**, the same web page members open, in the screen's browser; there is nothing to install from an app store. Every screen is reviewed by a person, from a photo of the screen in place, before it can earn.
 
@@ -75,7 +71,7 @@ The Service is intended primarily for use in connection with lawful advertising 
 
 You must provide accurate registration information and keep it updated. You are responsible for safeguarding credentials and for activity under your account.
 
-We may require identity or tax verification for Advertisers and/or Distributors — **[TBD: KYC / verification requirements and providers]**.
+**Verification.** We check that an Advertiser controls the domain of each campaign's website, and Stripe checks each card payment. We do not otherwise check an Advertiser's identity. We may ask any member for proof of identity, of a business, or of tax status when we review a listing, a screen, a refund, or a payout, and we may refuse the request until we have it.
 
 **Payout verification.** Before your first payout you open a Stripe account in your own name through Stripe's hosted onboarding. Stripe checks your identity, address, and bank account, and decides whether payouts to that account are enabled. We cannot pay you until Stripe has enabled them. We may ask for more information when we review a payout request (Section 6).
 
@@ -107,17 +103,23 @@ You may not: reverse engineer the Service except as permitted by law; scrape or 
 
 A play that fails any of these still counts as shown, and earns nothing.
 
-**Scans.** When a viewer scans the code on a listing, we record the scan and send the viewer to the advertiser's site. A scan earns nothing and costs nothing. We use scans, among other signals, to review payouts (Section 6).
+**Our records.** Our systems measure plays and earnings, and our records decide them, except where they are shown to be wrong. If you think a record is wrong, email us within **30 days** of the play, the charge, or the payout. After that, the record is final, except where the law gives you a longer time.
 
-**Our records.** Plays, scans, and earnings are measured by our systems, and our records decide them, except where they are shown to be wrong. **[TBD: counsel to confirm the wording of this clause and a window for disputing a record.]**
-
-**No guarantee.** We do not promise any number of plays, screens, scans, or visits to an advertiser, or any level of earnings to a Distributor.
+**No guarantee.** We do not promise any number of plays, screens, or visits to an advertiser, or any level of earnings to a Distributor.
 
 ---
 
 ## 6. Distributors — screens and earnings
 
-**Your screens.** You may register a screen only where you have the right to place it and to show ads on it. **[TBD: counsel to confirm the Distributor duties to state here — the venue owner's permission, local council advertising permits for a screen that faces a public area, licences for any music or video the screen plays in a business, no identifiable people in the screen photo, and responsibility for the news feed and for the Distributor's own promotion, which no one reviews (CoS review finding 4).]** A screen that moves to another place or venue type goes back for review.
+**Your screens.** You may register a screen only where you have the right to place it and to show ads on it. You are responsible for:
+
+- the permission of the venue owner, if the venue is not yours;
+- any permit or licence that the local council requires for a screen that faces a public area;
+- a licence for any music or video that the screen plays in a business;
+- a screen photo with no person who can be identified in it; and
+- your own promotion (Ads Policy, Section 8), and anything else the screen shows next to the CapyChannel set.
+
+A screen that moves to another place or venue type goes back for review.
 
 **Rate.** Each play that earns under Section 5 earns **{earnRate}**, the same on every approved screen. Praxor pays it from what advertisers pay for slots. No fee is taken from it.
 
@@ -127,17 +129,19 @@ A play that fails any of these still counts as shown, and earns nothing.
 
 **Payout requests.** You may request a payout when at least **{payoutMinimum}** of your earnings has served the hold. A request takes the whole amount you can withdraw at that moment, in whole cents, and removes it from your wallet at once. You may have one open request at a time.
 
-**Review.** An administrator reviews each request before it is paid. The review looks at, among other things, how often a screen's plays are scanned, plays outside the venue's stated opening hours, and screens that share an address or a network. We may refuse a request. When we refuse one, the amount returns to your wallet. **[TBD: decide whether, and when, we may cancel settled earnings found to come from fraud or a breach of these Terms. The product does not do this today.]**
+**Review.** An administrator reviews each request before it is paid. The review looks at, among other things, plays outside the venue's stated opening hours, and screens that share an address or a network. We may refuse a request. When we refuse one, the amount returns to your wallet.
+
+**Cancelled earnings.** If we find that earnings come from fraud, from fake plays, or from a breach of these Terms or the Ads Policy, we may cancel those earnings, pending or settled, at any time before they leave as a payout. We tell you which earnings we cancel and why.
 
 **How you are paid.** We pay through Stripe Connect, to the Stripe account you opened under Section 3. Payouts are available only to Stripe accounts in **{payoutCountries}**. Your wallet is in US dollars; we pay in **{payoutCurrency}**, converted at Bank Negara Malaysia's 12:00 middle rate on the day we approve the request. Stripe then pays your bank on its own schedule. Stripe's terms, and any fees Stripe charges your account, apply.
 
 **Expiry.** Settled earnings that you do not withdraw expire **{expiryMonths} months** after they settle.
 
-**Taxes.** You are responsible for any tax on your earnings. **[TBD: counsel on Malaysian income tax, withholding, and e-invoicing obligations for payments to Distributors.]**
+**Taxes.** You are responsible for declaring and paying any tax on your earnings. We may ask for your tax details, and we may deduct tax from a payout where the law requires us to.
 
 **Earnings are not refunded.** Earned money leaves your wallet only as a payout. It cannot be refunded to a card or spent on a slot.
 
-**Changes to the rate.** We may change the rate, the caps, the hold, the minimum, or the expiry. A change applies only to plays counted after it takes effect, and we will give notice under Section 16.
+**Changes to the rate.** We may change the rate, the caps, the hold, the minimum, or the expiry. A change applies only to plays counted after it takes effect, and we give notice under Section 16.
 
 ---
 
@@ -153,13 +157,13 @@ An Advertiser creates a **campaign** for one website, proves it controls the web
 
 **Top-ups.** You pay by adding money to your wallet (a **top-up**) in US dollars, any amount from **{topupMinimum}** to **{topupMaximum}**, by card through Stripe. No top-up carries a bonus. Money you add does not expire, and it cannot be withdrawn as a payout.
 
-**Slots.** One slot costs **{slotPrice}**. The price comes out of your wallet when you book. The slot's term starts when your campaign's domain is verified and your listing is approved, and it runs to its end; a slot cannot be paused. There is no charge per play or per scan.
+**Slots.** One slot costs **{slotPrice}**. The price comes out of your wallet when you book. The slot's term starts when your campaign's domain is verified and your listing is approved, and it runs to its end; a slot cannot be paused. There is no charge per play.
 
-**Refunds.** The unspent part of a top-up can be refunded within **{refundWindowDays} days** of the payment, less what the card processor kept. The price of a slot goes back to your wallet if you remove the ad before it is approved or it is not approved; once the slot has started, its price is not refunded. The **Refund Policy** sets out the details, and forms part of these Terms.
+**Refunds.** The unspent part of a top-up can be refunded within **{refundWindowDays} days** of the payment, less what the card processor kept. The price of a slot goes back to your wallet if you remove the ad before it is approved or it is not approved; once the slot has started, its price is not refunded, except the unused days when we remove an ad that is not at fault. The **Refund Policy** sets out the details, and forms part of these Terms.
 
-**Chargebacks.** **[TBD: the rule for a card chargeback, to match the Refund Policy.]**
+**Chargebacks.** If you dispute a payment with your bank, we may suspend your account while the dispute is open, and remove the disputed amount from your wallet. The **Refund Policy** (Section 7) sets out the details.
 
-**Taxes.** **[TBD: whether prices include or exclude Malaysian service tax (SST) or other taxes, and invoicing.]**
+**Taxes.** Praxor is not registered for Malaysian service tax (SST), so our prices carry no SST. If the law requires us to register, we add the tax to new charges and give notice under Section 16. You are responsible for any tax that applies to you where you are.
 
 ---
 
@@ -168,7 +172,7 @@ An Advertiser creates a **campaign** for one website, proves it controls the web
 You must not:
 
 - Violate the Ads Policy or applicable law;
-- Generate or encourage fake, automated, or unwatched plays or scans — for example, a screen that faces no one, or scans made only to raise a screen's numbers;
+- Generate or encourage fake, automated, or unwatched plays — for example, a screen that faces no one;
 - Interfere with measurement, screen review, or the reports the CapyChannel set sends, or run a modified or unofficial screen app;
 - Attempt unauthorized access to accounts, systems, or other users’ data;
 - Impersonate others or misrepresent affiliation with Praxor;
@@ -200,15 +204,15 @@ Feedback you provide may be used by Praxor without obligation to you.
 
 ## 10. Third-party services
 
-The Service relies on third-party providers, including: **Stripe** (payments, refunds, and payouts); **Railway** (application hosting and database, Singapore region); **Vercel** (website and dashboard hosting); **Cloudflare R2** (file storage); **Resend** (email); **Google** (optional sign-in); and **Open-Meteo** (weather shown on screens). Their terms and privacy practices apply to their services. Praxor is not responsible for third-party outages beyond its reasonable control.
+The Service relies on third-party providers, including: **Stripe** (payments, refunds, and payouts); **Railway** (application hosting and database, Singapore region); **Vercel** (website and dashboard hosting); **Cloudflare R2** (file storage); **Resend** (email); and **Google** (optional sign-in). Their terms and privacy practices apply to their services. Praxor is not responsible for third-party outages beyond its reasonable control.
 
 ---
 
 ## 11. Disclaimers
 
-THE SERVICE IS PROVIDED **“AS IS”** AND **“AS AVAILABLE.”** TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, PRAXOR DISCLAIMS WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. WE DO NOT WARRANT UNINTERRUPTED OR ERROR-FREE OPERATION, SPECIFIC NUMBERS OF PLAYS OR SCANS, EARNINGS, OR AD PERFORMANCE.
+THE SERVICE IS PROVIDED **“AS IS”** AND **“AS AVAILABLE.”** TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, PRAXOR DISCLAIMS WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. WE DO NOT WARRANT UNINTERRUPTED OR ERROR-FREE OPERATION, SPECIFIC NUMBERS OF PLAYS, EARNINGS, OR AD PERFORMANCE.
 
-Nothing in these Terms excludes liability that cannot be excluded under Malaysian consumer or other mandatory law — **[TBD: counsel to align disclaimer language with Malaysian law]**.
+Nothing in these Terms excludes or limits a right, a guarantee, or a liability that cannot be excluded under the Consumer Protection Act 1999 or other mandatory law.
 
 ---
 
@@ -216,7 +220,7 @@ Nothing in these Terms excludes liability that cannot be excluded under Malaysia
 
 TO THE MAXIMUM EXTENT PERMITTED BY LAW:
 
-- PRAXOR’S TOTAL LIABILITY ARISING OUT OF OR RELATED TO THE SERVICE OR THESE TERMS SHALL NOT EXCEED THE GREATER OF (A) AMOUNTS YOU PAID TO PRAXOR FOR THE SERVICE IN THE **[TBD: e.g. 12]** MONTHS BEFORE THE CLAIM, OR (B) **[TBD: floor amount in MYR]**; AND  
+- PRAXOR’S TOTAL LIABILITY ARISING OUT OF OR RELATED TO THE SERVICE OR THESE TERMS SHALL NOT EXCEED THE GREATER OF (A) AMOUNTS YOU PAID TO PRAXOR FOR THE SERVICE IN THE **12** MONTHS BEFORE THE CLAIM, OR (B) **RM 500**; AND  
 - PRAXOR SHALL NOT BE LIABLE FOR INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR LOST PROFITS, REVENUE, OR DATA, EVEN IF ADVISED OF THE POSSIBILITY.
 
 Some jurisdictions do not allow certain limitations; in those cases, limitations apply to the fullest extent permitted.
@@ -225,7 +229,7 @@ Some jurisdictions do not allow certain limitations; in those cases, limitations
 
 ## 13. Indemnity
 
-You agree to defend and indemnify Praxor and its personnel against claims, damages, and costs (including reasonable legal fees) arising from: your listings, uploads, or campaigns; your screens, where you place them, and what they show; your breach of these Terms or the Ads Policy; or your violation of third-party rights or law — except to the extent caused by Praxor’s willful misconduct. **[TBD: counsel review of indemnity scope.]**
+You agree to defend and indemnify Praxor and its personnel against claims, damages, and costs (including reasonable legal fees) arising from: your listings, uploads, or campaigns; your screens, where you place them, and what they show; your breach of these Terms or the Ads Policy; or your violation of third-party rights or law — except to the extent caused by Praxor’s breach of these Terms, negligence, or willful misconduct.
 
 ---
 
@@ -233,9 +237,9 @@ You agree to defend and indemnify Praxor and its personnel against claims, damag
 
 You may stop using the Service at any time. You may delete your account from the dashboard if it has never moved money and its screens have never played. Otherwise, email **support@capychannel.site** to close it; we keep the records of money that moved, as the law and our accounts require.
 
-**Outstanding balances at closure.** Before we close an account, you may ask for a refund of unspent top-ups still inside the refund window (Refund Policy), and request a payout of earnings that have served the hold and reach the minimum (Section 6). **[TBD: what happens to any balance left after that — for example, bought money past the window, or earnings below the minimum or still on hold.]**
+**Outstanding balances at closure.** Before we close an account, you may ask for a refund of unspent top-ups still inside the refund window (Refund Policy), and request a payout of earnings that have served the hold and reach the minimum (Section 6). At closure, we also pay out settled earnings that have served the hold, even below the minimum. Any balance left after that is **forfeited**: bought money past the refund window, and earnings still pending or on hold. We tell you the amount before we close the account.
 
-**We reserve the right** to suspend or terminate your account or access to the Service immediately (with or without prior notice) if we reasonably believe you have engaged in fraud, fraudulent traffic, abuse, manipulation of plays, scans, or earnings, material breach of these Terms or the Ads Policy, unlawful activity, chargeback abuse, or other activity that creates legal, security, or financial risk to Praxor, other users, or the public.
+**We reserve the right** to suspend or terminate your account or access to the Service immediately (with or without prior notice) if we reasonably believe you have engaged in fraud, fraudulent traffic, abuse, manipulation of plays or earnings, material breach of these Terms or the Ads Policy, unlawful activity, chargeback abuse, or other activity that creates legal, security, or financial risk to Praxor, other users, or the public.
 
 **We do not close accounts solely for inactivity.** Unused accounts may remain open until you request closure or we terminate for a reason described above (or as required by law).
 
@@ -253,7 +257,7 @@ Personal data is handled as described in our **Privacy Policy**. By using the Se
 
 We may update these Terms at any time. We will revise the “Last updated” date when we do.
 
-**We do not announce routine or minor policy updates.** We will provide notice (for example by email or in-product message) only for **major updates** that materially change your rights or obligations — **[TBD: counsel to define “major” examples; channels]** — except where mandatory law requires notice or affirmative consent.
+**We do not announce routine or minor policy updates.** We email you at least **{noticeDays} days** before a **major update**. A major update is one that materially changes your rights or obligations: for example, the rate, the caps, the hold, the slot price, the refund rules, or what may be advertised. A change that the law requires may take effect at once.
 
 Continued use of the Service after the effective date of an update constitutes acceptance of the updated Terms, except where mandatory law requires affirmative consent.
 
@@ -263,12 +267,10 @@ Continued use of the Service after the effective date of an update constitutes a
 
 These Terms are governed by the laws of **Malaysia**, without regard to conflict-of-law rules that would require another law.
 
-**Preferred dispute path (Malaysia-friendly draft for counsel):**
+**Disputes:**
 
 1. Contact us first at **support@capychannel.site** to attempt good-faith resolution;  
 2. If unresolved, disputes may be submitted to the **courts of Malaysia**.
-
-**Optional for counsel (not adopted by default in this draft):** the parties may agree in writing to mediation and/or arbitration seated in Malaysia. Any class-action waiver or binding arbitration scheme must be expressly added after Malaysian counsel review and marked clearly if used — **[TBD: optional mediation/arbitration clause for counsel — do not treat US-style class-waiver arbitration as default]**.
 
 Nothing in this section prevents either party from seeking interim injunctive relief in a court of competent jurisdiction for IP or misuse of the Service.
 
@@ -288,11 +290,5 @@ Nothing in this section prevents either party from seeking interim injunctive re
 ## 19. Contact
 
 **Praxor Studio (SA0656426-A)**  
-**[TBD: mailing address]**  
-Email (legal / support): **support@capychannel.site**  
-Support: **support@capychannel.site**  
+Email (legal and support): **support@capychannel.site**  
 Product site: **https://capychannel.site**
-
----
-
-*End of Terms of Service draft — for human counsel review only (KEV-6).*
